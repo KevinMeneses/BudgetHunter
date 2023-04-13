@@ -1,4 +1,4 @@
-package com.meneses.budgethunter.ui
+package com.meneses.budgethunter
 
 import androidx.navigation.NavOptionsBuilder
 import com.meneses.budgethunter.model.Budget
@@ -43,7 +43,7 @@ val budgetDetailLists = listOf(
     )
 )
 
-val budgetList = listOf(
+val budgetList = mutableListOf(
     Budget(
         id = 0,
         name = "Mensual",

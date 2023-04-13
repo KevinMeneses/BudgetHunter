@@ -1,4 +1,4 @@
-package com.meneses.budgethunter.ui.theme
+package com.meneses.budgethunter.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle

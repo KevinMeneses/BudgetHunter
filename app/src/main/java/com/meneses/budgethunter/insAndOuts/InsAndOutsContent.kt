@@ -1,4 +1,4 @@
-package com.meneses.budgethunter.ui.insAndOuts
+package com.meneses.budgethunter.insAndOuts
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
@@ -24,11 +24,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.meneses.budgethunter.model.BudgetDetail
-import com.meneses.budgethunter.ui.budgetDetailLists
-import com.meneses.budgethunter.ui.commons.DefDivider
-import com.meneses.budgethunter.ui.destinations.DetailScreenDestination
-import com.meneses.budgethunter.ui.theme.AppColors
-import com.meneses.budgethunter.ui.totalIncome
+import com.meneses.budgethunter.budgetDetailLists
+import com.meneses.budgethunter.commons.DefDivider
+import com.meneses.budgethunter.destinations.DetailScreenDestination
+import com.meneses.budgethunter.theme.AppColors
+import com.meneses.budgethunter.totalIncome
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 
 

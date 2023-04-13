@@ -1,4 +1,4 @@
-package com.meneses.budgethunter.ui.insAndOuts
+package com.meneses.budgethunter.insAndOuts
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -22,9 +22,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.meneses.budgethunter.ui.commons.DefDivider
-import com.meneses.budgethunter.ui.commons.EMPTY
-import com.meneses.budgethunter.ui.theme.AppColors
+import com.meneses.budgethunter.commons.DefDivider
+import com.meneses.budgethunter.commons.EMPTY
+import com.meneses.budgethunter.theme.AppColors
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable

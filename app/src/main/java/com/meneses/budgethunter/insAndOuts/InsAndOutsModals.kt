@@ -1,7 +1,6 @@
-package com.meneses.budgethunter.ui.insAndOuts
+package com.meneses.budgethunter.insAndOuts
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -9,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedTextField
@@ -24,11 +22,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.meneses.budgethunter.model.BudgetDetail
-import com.meneses.budgethunter.ui.budgetListFilterOptions
-import com.meneses.budgethunter.ui.commons.EMPTY
-import com.meneses.budgethunter.ui.commons.Modal
-import com.meneses.budgethunter.ui.commons.OutlinedDropdown
-import com.meneses.budgethunter.ui.theme.AppColors
+import com.meneses.budgethunter.budgetListFilterOptions
+import com.meneses.budgethunter.commons.EMPTY
+import com.meneses.budgethunter.commons.Modal
+import com.meneses.budgethunter.commons.OutlinedDropdown
+import com.meneses.budgethunter.theme.AppColors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

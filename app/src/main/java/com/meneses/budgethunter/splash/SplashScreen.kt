@@ -1,4 +1,4 @@
-package com.meneses.budgethunter.ui.splash
+package com.meneses.budgethunter.splash
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -11,12 +11,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
-import com.meneses.budgethunter.ui.destinations.BudgetListScreenDestination
-import com.meneses.budgethunter.ui.destinations.SplashScreenDestination
-import com.meneses.budgethunter.ui.fakeNavigation
-import com.meneses.budgethunter.ui.theme.AppColors
-import com.meneses.budgethunter.ui.theme.BudgetHunterTheme
-import com.meneses.budgethunter.ui.theme.Typography
+import com.meneses.budgethunter.destinations.BudgetListScreenDestination
+import com.meneses.budgethunter.destinations.SplashScreenDestination
+import com.meneses.budgethunter.fakeNavigation
+import com.meneses.budgethunter.theme.AppColors
+import com.meneses.budgethunter.theme.BudgetHunterTheme
+import com.meneses.budgethunter.theme.Typography
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.coroutines.delay

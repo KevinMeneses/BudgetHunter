@@ -1,4 +1,4 @@
-package com.meneses.budgethunter.ui.detail
+package com.meneses.budgethunter.detail
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -29,9 +29,9 @@ import com.maxkeppeler.sheets.calendar.CalendarDialog
 import com.maxkeppeler.sheets.calendar.models.CalendarConfig
 import com.maxkeppeler.sheets.calendar.models.CalendarSelection
 import com.meneses.budgethunter.model.BudgetDetail
-import com.meneses.budgethunter.ui.budgetDetailTypeList
-import com.meneses.budgethunter.ui.commons.EMPTY
-import com.meneses.budgethunter.ui.commons.OutlinedDropdown
+import com.meneses.budgethunter.budgetDetailTypeList
+import com.meneses.budgethunter.commons.EMPTY
+import com.meneses.budgethunter.commons.OutlinedDropdown
 
 @Composable
 fun DetailForm(

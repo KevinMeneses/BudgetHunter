@@ -1,4 +1,4 @@
-package com.meneses.budgethunter.ui.budgetList
+package com.meneses.budgethunter.budgetList
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
@@ -21,22 +21,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.meneses.budgethunter.model.Budget
-import com.meneses.budgethunter.ui.commons.EMPTY
-import com.meneses.budgethunter.ui.commons.Modal
-import com.meneses.budgethunter.ui.commons.OutlinedDropdown
-import com.meneses.budgethunter.ui.theme.AppColors
+import com.meneses.budgethunter.commons.EMPTY
+import com.meneses.budgethunter.commons.Modal
+import com.meneses.budgethunter.commons.OutlinedDropdown
+import com.meneses.budgethunter.theme.AppColors
 
 @Composable
 fun FilterListModal(
     show: Boolean,
+    filter: Budget?,
     onDismiss: () -> Unit,
     onClear: () -> Unit,
-    onButtonClick: (Budget) -> Unit,
+    onApplyClick: (Budget) -> Unit,
 ) {
     if (show) {
         Modal(onDismiss = onDismiss) {
             var name by remember {
-                mutableStateOf(EMPTY)
+                mutableStateOf(filter?.name ?: EMPTY)
             }
 
             val frequencyList = remember {
@@ -44,7 +45,7 @@ fun FilterListModal(
             }
 
             var frequency by remember {
-                mutableStateOf<Budget.Frequency?>(null)
+                mutableStateOf(filter?.frequency)
             }
 
             ModalContent(
@@ -66,19 +67,19 @@ fun FilterListModal(
                         containerColor = AppColors.background,
                         contentColor = AppColors.onBackground
                     ),
-                    onClick = onClear
+                    onClick = {
+                        onClear()
+                        onDismiss()
+                    }
                 ) {
                     Text(text = "Limpiar")
                 }
 
                 Button(
                     onClick = {
-                        val budget = Budget(
-                            id = 0,
-                            name = name,
-                            frequency = frequency
-                        )
-                        onButtonClick(budget)
+                        val budget = Budget(name = name, frequency = frequency)
+                        onApplyClick(budget)
+                        onDismiss()
                     }
                 ) {
                     Text(text = "Aplicar")
@@ -92,7 +93,7 @@ fun FilterListModal(
 fun NewBudgetModal(
     show: Boolean,
     onDismiss: () -> Unit,
-    onButtonClick: (Budget) -> Unit
+    onCreateClick: (Budget) -> Unit
 ) {
     if (show) {
         Modal(onDismiss = onDismiss) {
@@ -119,12 +120,10 @@ fun NewBudgetModal(
 
             Button(
                 onClick = {
-                    val budget = Budget(
-                        id = 0,
-                        name = name,
-                        frequency = frequency
-                    )
-                    onButtonClick(budget)
+                    if (name.isBlank()) return@Button
+                    val budget = Budget(name = name, frequency = frequency)
+                    onCreateClick(budget)
+                    onDismiss()
                 }
             ) {
                 Text(text = "Crear")

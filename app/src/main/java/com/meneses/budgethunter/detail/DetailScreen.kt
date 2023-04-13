@@ -1,4 +1,4 @@
-package com.meneses.budgethunter.ui.detail
+package com.meneses.budgethunter.detail
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
@@ -9,8 +9,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.ui.tooling.preview.Preview
 import com.meneses.budgethunter.model.BudgetDetail
-import com.meneses.budgethunter.ui.commons.AppBar
-import com.meneses.budgethunter.ui.fakeNavigation
+import com.meneses.budgethunter.commons.AppBar
+import com.meneses.budgethunter.fakeNavigation
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 

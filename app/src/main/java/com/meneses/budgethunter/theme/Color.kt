@@ -1,4 +1,4 @@
-package com.meneses.budgethunter.ui.theme
+package com.meneses.budgethunter.theme
 
 import androidx.compose.ui.graphics.Color
 

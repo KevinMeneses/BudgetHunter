@@ -1,4 +1,4 @@
-package com.meneses.budgethunter.ui.insAndOuts
+package com.meneses.budgethunter.insAndOuts
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -16,10 +16,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.tooling.preview.Preview
 import com.meneses.budgethunter.model.Budget
-import com.meneses.budgethunter.ui.commons.AppBar
-import com.meneses.budgethunter.ui.commons.EMPTY
-import com.meneses.budgethunter.ui.destinations.DetailScreenDestination
-import com.meneses.budgethunter.ui.fakeNavigation
+import com.meneses.budgethunter.commons.AppBar
+import com.meneses.budgethunter.commons.EMPTY
+import com.meneses.budgethunter.destinations.DetailScreenDestination
+import com.meneses.budgethunter.fakeNavigation
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.coroutines.launch

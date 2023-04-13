@@ -1,4 +1,4 @@
-package com.meneses.budgethunter.ui.commons
+package com.meneses.budgethunter.commons
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.ui.Modifier
