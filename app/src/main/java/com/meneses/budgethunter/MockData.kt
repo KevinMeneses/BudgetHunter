@@ -1,45 +1,45 @@
 package com.meneses.budgethunter
 
 import androidx.navigation.NavOptionsBuilder
-import com.meneses.budgethunter.model.Budget
-import com.meneses.budgethunter.model.BudgetDetail
+import com.meneses.budgethunter.budgetList.domain.Budget
+import com.meneses.budgethunter.insAndOuts.domain.BudgetItem
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 
-val budgetDetailLists = listOf(
-    BudgetDetail(
+val budgetItemLists = mutableListOf(
+    BudgetItem(
         amount = 20000.0,
         description = "Papitas",
-        type = BudgetDetail.Type.OUTCOME
+        type = BudgetItem.Type.OUTCOME
     ),
-    BudgetDetail(
+    BudgetItem(
         amount = 50000.0,
         description = "Pollo",
-        type = BudgetDetail.Type.OUTCOME
+        type = BudgetItem.Type.OUTCOME
     ),
-    BudgetDetail(
+    BudgetItem(
         amount = 10000.0,
         description = "Gaseosa",
-        type = BudgetDetail.Type.OUTCOME
+        type = BudgetItem.Type.OUTCOME
     ),
-    BudgetDetail(
+    BudgetItem(
         amount = 8000.0,
         description = null,
-        type = BudgetDetail.Type.OUTCOME
+        type = BudgetItem.Type.OUTCOME
     ),
-    BudgetDetail(
+    BudgetItem(
         amount = 20000.0,
         description = "Pago salida",
-        type = BudgetDetail.Type.INCOME
+        type = BudgetItem.Type.INCOME
     ),
-    BudgetDetail(
+    BudgetItem(
         amount = 17000.0,
         description = "Carne",
-        type = BudgetDetail.Type.OUTCOME
+        type = BudgetItem.Type.OUTCOME
     ),
-    BudgetDetail(
+    BudgetItem(
         amount = 12000.0,
         description = "Frijoles",
-        type = BudgetDetail.Type.OUTCOME
+        type = BudgetItem.Type.OUTCOME
     )
 )
 
@@ -61,12 +61,12 @@ val budgetList = mutableListOf(
     )
 )
 
-val budgetDetailTypeList = listOf(
-    BudgetDetail.Type.OUTCOME.value,
-    BudgetDetail.Type.INCOME.value
+val budgetItemTypeList = listOf(
+    BudgetItem.Type.OUTCOME.value,
+    BudgetItem.Type.INCOME.value
 )
 
-val budgetListFilterOptions = budgetDetailTypeList
+val budgetListFilterOptions = budgetItemTypeList
     .toMutableList()
     .apply { add("Todo") }
 

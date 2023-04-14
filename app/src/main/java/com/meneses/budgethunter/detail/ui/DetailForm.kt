@@ -1,4 +1,4 @@
-package com.meneses.budgethunter.detail
+package com.meneses.budgethunter.detail.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -28,14 +28,14 @@ import com.maxkeppeker.sheets.core.models.base.rememberSheetState
 import com.maxkeppeler.sheets.calendar.CalendarDialog
 import com.maxkeppeler.sheets.calendar.models.CalendarConfig
 import com.maxkeppeler.sheets.calendar.models.CalendarSelection
-import com.meneses.budgethunter.model.BudgetDetail
-import com.meneses.budgethunter.budgetDetailTypeList
+import com.meneses.budgethunter.insAndOuts.domain.BudgetItem
+import com.meneses.budgethunter.budgetItemTypeList
 import com.meneses.budgethunter.commons.EMPTY
-import com.meneses.budgethunter.commons.OutlinedDropdown
+import com.meneses.budgethunter.commons.ui.OutlinedDropdown
 
 @Composable
 fun DetailForm(
-    budgetDetail: BudgetDetail?,
+    budgetItem: BudgetItem?,
     paddingValues: PaddingValues
 ) {
     Column(
@@ -46,10 +46,10 @@ fun DetailForm(
             .padding(paddingValues)
             .padding(all = 20.dp)
     ) {
-        AmountField(budgetDetail?.amount)
-        DescriptionField(budgetDetail?.description)
-        TypeSelector(budgetDetail?.type)
-        DateField(budgetDetail?.date)
+        AmountField(budgetItem?.amount)
+        DescriptionField(budgetItem?.description)
+        TypeSelector(budgetItem?.type)
+        DateField(budgetItem?.date)
         Spacer(modifier = Modifier.height(10.dp))
     }
 }
@@ -98,15 +98,15 @@ private fun DateField(date: String?) {
 }
 
 @Composable
-private fun TypeSelector(type: BudgetDetail.Type?) {
+private fun TypeSelector(type: BudgetItem.Type?) {
     var selectedType by remember {
         mutableStateOf(type?.value ?: EMPTY)
     }
     OutlinedDropdown(
         value = selectedType,
         label = "Tipo",
-        dropdownOptions = budgetDetailTypeList,
-        onSelectOption = { selectedType = budgetDetailTypeList[it] }
+        dropdownOptions = budgetItemTypeList,
+        onSelectOption = { selectedType = budgetItemTypeList[it] }
     )
 }
 

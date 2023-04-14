@@ -1,12 +1,14 @@
-package com.meneses.budgethunter.model
+package com.meneses.budgethunter.budgetList.domain
 
 import android.os.Parcelable
+import com.meneses.budgethunter.commons.EMPTY
 import kotlinx.parcelize.Parcelize
 
 @Parcelize
 data class Budget(
     val id: Int? = null,
-    val name: String,
+    val amount: Double = 0.0,
+    val name: String = EMPTY,
     val frequency: Frequency? = null
 ) : Parcelable {
     enum class Frequency(val value: String) {

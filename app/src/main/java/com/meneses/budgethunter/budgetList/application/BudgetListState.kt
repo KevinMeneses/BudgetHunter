@@ -1,6 +1,6 @@
-package com.meneses.budgethunter.budgetList
+package com.meneses.budgethunter.budgetList.application
 
-import com.meneses.budgethunter.model.Budget
+import com.meneses.budgethunter.budgetList.domain.Budget
 
 data class BudgetListState(
     val budgetList: List<Budget> = emptyList(),

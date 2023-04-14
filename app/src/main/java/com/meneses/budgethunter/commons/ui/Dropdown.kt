@@ -1,4 +1,4 @@
-package com.meneses.budgethunter.commons
+package com.meneses.budgethunter.commons.ui
 
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*

@@ -1,4 +1,4 @@
-package com.meneses.budgethunter.insAndOuts
+package com.meneses.budgethunter.insAndOuts.ui
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
@@ -21,19 +21,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.meneses.budgethunter.model.BudgetDetail
-import com.meneses.budgethunter.budgetListFilterOptions
 import com.meneses.budgethunter.commons.EMPTY
-import com.meneses.budgethunter.commons.Modal
-import com.meneses.budgethunter.commons.OutlinedDropdown
+import com.meneses.budgethunter.insAndOuts.domain.BudgetItem
+import com.meneses.budgethunter.commons.ui.Modal
+import com.meneses.budgethunter.commons.ui.OutlinedDropdown
+import com.meneses.budgethunter.insAndOuts.application.InsAndOutsState
 import com.meneses.budgethunter.theme.AppColors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BudgetModal(
     show: Boolean,
+    budgetAmount: Double,
     onDismiss: () -> Unit,
-    onSaveClick: (String) -> Unit
+    onSaveClick: (Double) -> Unit
 ) {
     if (show) {
         Modal(onDismiss = onDismiss) {
@@ -43,16 +44,22 @@ fun BudgetModal(
                 modifier = Modifier.padding(bottom = 20.dp)
             )
 
-            var amount by remember { mutableStateOf(EMPTY) }
+            var budget by remember {
+                mutableStateOf(budgetAmount.toBigDecimal().toPlainString())
+            }
+
             OutlinedTextField(
-                value = amount,
-                onValueChange = { amount = it },
+                value = budget,
+                onValueChange = { budget = it },
                 label = { Text(text = "Monto") },
                 modifier = Modifier.padding(bottom = 25.dp)
             )
 
             Button(
-                onClick = { onSaveClick(amount) },
+                onClick = {
+                    onSaveClick(budget.toDoubleOrNull() ?: 0.0)
+                    onDismiss()
+                },
                 content = { Text(text = "Guardar") }
             )
         }
@@ -62,9 +69,10 @@ fun BudgetModal(
 @Composable
 fun FilterModal(
     show: Boolean,
+    filter: BudgetItem.Type?,
     onDismiss: () -> Unit,
     onClean: () -> Unit,
-    onApply: () -> Unit
+    onApply: (BudgetItem.Type) -> Unit
 ) {
     if (show) {
         Modal(onDismiss = onDismiss) {
@@ -74,7 +82,15 @@ fun FilterModal(
                 modifier = Modifier.padding(bottom = 20.dp)
             )
 
-            ListTypeDropdown()
+            var budgetType by remember {
+                mutableStateOf(filter)
+            }
+
+            ListTypeDropdown(
+                type = budgetType,
+                onSelectItem = { budgetType = it }
+            )
+
             Spacer(modifier = Modifier.height(30.dp))
 
             Row(
@@ -87,12 +103,18 @@ fun FilterModal(
                         containerColor = AppColors.background,
                         contentColor = AppColors.onBackground
                     ),
-                    onClick = onClean,
+                    onClick = {
+                        onClean()
+                        onDismiss()
+                    },
                     content = { Text(text = "Limpiar") }
                 )
 
                 Button(
-                    onClick = onApply,
+                    onClick = {
+                        onApply(budgetType ?: return@Button)
+                        onDismiss()
+                    },
                     content = { Text(text = "Aplicar") }
                 )
             }
@@ -133,7 +155,10 @@ fun DeleteConfirmationModal(
                         containerColor = AppColors.error,
                         contentColor = AppColors.onError
                     ),
-                    onClick = onAccept,
+                    onClick = {
+                        onAccept()
+                        onDismiss()
+                    },
                     content = {
                         Text(text = "Eliminar")
                     }
@@ -144,15 +169,14 @@ fun DeleteConfirmationModal(
 }
 
 @Composable
-private fun ListTypeDropdown() {
-    var dropdownSelectedItem by remember {
-        mutableStateOf(BudgetDetail.Type.OUTCOME.value)
-    }
-
+private fun ListTypeDropdown(
+    type: BudgetItem.Type?,
+    onSelectItem: (BudgetItem.Type) -> Unit
+) {
     OutlinedDropdown(
-        value = dropdownSelectedItem,
+        value = type?.value ?: EMPTY,
         label = "Tipo",
-        dropdownOptions = budgetListFilterOptions,
-        onSelectOption = { dropdownSelectedItem = budgetListFilterOptions[it] }
+        dropdownOptions = BudgetItem.getItemTypes().map { it.value },
+        onSelectOption = { onSelectItem(BudgetItem.getItemTypes()[it]) }
     )
 }

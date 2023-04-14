@@ -1,4 +1,4 @@
-package com.meneses.budgethunter.budgetList
+package com.meneses.budgethunter.budgetList.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -16,7 +16,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -25,8 +24,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.meneses.budgethunter.commons.EMPTY
-import com.meneses.budgethunter.commons.dashedBorder
-import com.meneses.budgethunter.model.Budget
+import com.meneses.budgethunter.commons.ui.dashedBorder
+import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.theme.AppColors
 
 @Composable

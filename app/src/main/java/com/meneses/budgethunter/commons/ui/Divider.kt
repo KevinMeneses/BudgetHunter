@@ -1,4 +1,4 @@
-package com.meneses.budgethunter.commons
+package com.meneses.budgethunter.commons.ui
 
 import androidx.compose.material3.Divider
 import androidx.compose.runtime.Composable

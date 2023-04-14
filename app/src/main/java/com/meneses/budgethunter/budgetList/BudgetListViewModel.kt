@@ -2,7 +2,8 @@ package com.meneses.budgethunter.budgetList
 
 import androidx.lifecycle.ViewModel
 import com.meneses.budgethunter.budgetList
-import com.meneses.budgethunter.model.Budget
+import com.meneses.budgethunter.budgetList.application.BudgetListState
+import com.meneses.budgethunter.budgetList.domain.Budget
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update

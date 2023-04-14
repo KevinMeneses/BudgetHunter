@@ -1,4 +1,4 @@
-package com.meneses.budgethunter.insAndOuts
+package com.meneses.budgethunter.insAndOuts.ui
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
@@ -23,20 +23,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.meneses.budgethunter.model.BudgetDetail
-import com.meneses.budgethunter.budgetDetailLists
-import com.meneses.budgethunter.commons.DefDivider
-import com.meneses.budgethunter.destinations.DetailScreenDestination
+import com.meneses.budgethunter.insAndOuts.domain.BudgetItem
+import com.meneses.budgethunter.budgetItemLists
+import com.meneses.budgethunter.commons.ui.DefDivider
+import com.meneses.budgethunter.insAndOuts.application.InsAndOutsState
 import com.meneses.budgethunter.theme.AppColors
 import com.meneses.budgethunter.totalIncome
-import com.ramcosta.composedestinations.navigation.DestinationsNavigator
-
 
 @Composable
 fun InsAndOutsContent(
-    navigator: DestinationsNavigator,
+    budgetAmount: Double,
+    budgetItems: List<BudgetItem>,
     paddingValues: PaddingValues,
-    onBudgetClick: () -> Unit
+    onBudgetClick: () -> Unit,
+    onItemClick: (BudgetItem) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -52,9 +52,15 @@ fun InsAndOutsContent(
         Column(
             modifier = Modifier.weight(0.9f, true)
         ) {
-            BudgetSection(onClick = onBudgetClick)
+            BudgetSection(
+                amount = budgetAmount,
+                onClick = onBudgetClick
+            )
             Spacer(modifier = Modifier.height(20.dp))
-            ListSection(navigator)
+            ListSection(
+                budgetItems = budgetItems,
+                onItemClick = onItemClick
+            )
             Spacer(modifier = Modifier.height(20.dp))
             FooterSection()
         }
@@ -63,11 +69,10 @@ fun InsAndOutsContent(
 
 @Composable
 fun BudgetSection(
+    amount: Double,
     onClick: () -> Unit
 ) {
-    val budget = remember {
-        totalIncome.toBigDecimal().toPlainString()
-    }
+    val budget = amount.toBigDecimal().toPlainString()
 
     Card(
         modifier = Modifier.clickable(onClick = onClick),
@@ -100,7 +105,10 @@ fun BudgetSection(
 }
 
 @Composable
-private fun ColumnScope.ListSection(navigator: DestinationsNavigator) {
+private fun ColumnScope.ListSection(
+    budgetItems: List<BudgetItem>,
+    onItemClick: (BudgetItem) -> Unit
+) {
     Card(
         modifier = Modifier.weight(0.8f, true),
         colors = CardDefaults.elevatedCardColors(
@@ -111,21 +119,18 @@ private fun ColumnScope.ListSection(navigator: DestinationsNavigator) {
         LazyColumn(
             modifier = Modifier.padding(horizontal = 10.dp)
         ) {
-            items(budgetDetailLists.size) { index ->
-                val budgetDetail = remember { budgetDetailLists[index] }
+            items(budgetItems.size) { index ->
                 Row(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable {
-                            navigator.navigate(DetailScreenDestination(budgetDetail))
-                        }
+                        .clickable { onItemClick(budgetItems[index]) }
                         .padding(vertical = 10.dp)
                 ) {
-                    Text(text = budgetDetail.description ?: "Sin descripcion")
-                    Text(text = budgetDetail.amount.toString())
+                    Text(text = budgetItems[index].description ?: "Sin descripcion")
+                    Text(text = budgetItems[index].amount.toString())
                 }
-                if (index != budgetDetailLists.size - 1) DefDivider()
+                if (index != budgetItems.size - 1) DefDivider()
             }
         }
     }
@@ -134,7 +139,7 @@ private fun ColumnScope.ListSection(navigator: DestinationsNavigator) {
 @Composable
 fun FooterSection() {
     val totalBudget = remember {
-        val listFiltered = budgetDetailLists.filter { it.type == BudgetDetail.Type.OUTCOME }.map { it.amount }
+        val listFiltered = budgetItemLists.filter { it.type == BudgetItem.Type.OUTCOME }.map { it.amount }
         listFiltered.reduce { acc, actual -> acc + actual }.toString()
     }
     val balance = remember {

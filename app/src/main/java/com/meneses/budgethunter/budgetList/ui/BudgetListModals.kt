@@ -1,4 +1,4 @@
-package com.meneses.budgethunter.budgetList
+package com.meneses.budgethunter.budgetList.ui
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
@@ -20,10 +20,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.meneses.budgethunter.model.Budget
+import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.commons.EMPTY
-import com.meneses.budgethunter.commons.Modal
-import com.meneses.budgethunter.commons.OutlinedDropdown
+import com.meneses.budgethunter.commons.ui.Modal
+import com.meneses.budgethunter.commons.ui.OutlinedDropdown
 import com.meneses.budgethunter.theme.AppColors
 
 @Composable
