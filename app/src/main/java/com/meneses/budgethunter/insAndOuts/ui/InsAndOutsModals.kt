@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -19,6 +20,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.meneses.budgethunter.commons.EMPTY
@@ -45,14 +47,19 @@ fun BudgetModal(
             )
 
             var budget by remember {
-                mutableStateOf(budgetAmount.toBigDecimal().toPlainString())
+                val amount = if (budgetAmount == 0.0) EMPTY
+                else budgetAmount.toBigDecimal().toPlainString()
+                mutableStateOf(amount)
             }
 
             OutlinedTextField(
                 value = budget,
                 onValueChange = { budget = it },
                 label = { Text(text = "Monto") },
-                modifier = Modifier.padding(bottom = 25.dp)
+                modifier = Modifier.padding(bottom = 25.dp),
+                keyboardOptions = KeyboardOptions.Default.copy(
+                    keyboardType = KeyboardType.Number
+                )
             )
 
             Button(

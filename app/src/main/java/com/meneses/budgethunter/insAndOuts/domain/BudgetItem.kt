@@ -5,6 +5,8 @@ import kotlinx.parcelize.Parcelize
 
 @Parcelize
 data class BudgetItem(
+    val id: Int,
+    val budgetId: Int,
     val amount: Double,
     val description: String?,
     val type: Type,

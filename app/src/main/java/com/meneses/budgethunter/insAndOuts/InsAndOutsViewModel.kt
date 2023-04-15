@@ -16,10 +16,11 @@ class InsAndOutsViewModel: ViewModel() {
     val uiState = _uiState.asStateFlow()
 
     fun getBudgetItems(budget: Budget) {
+        val itemList = budgetItemLists.filter { it.budgetId == budget.id }
         _uiState.update {
             it.copy(
                 budget = budget,
-                itemList = budgetItemLists
+                itemList = itemList
             )
         }
     }
@@ -52,8 +53,8 @@ class InsAndOutsViewModel: ViewModel() {
     }
 
     fun filterList(type: BudgetItem.Type) {
-        val list = budgetItemLists.filter { it.type == type }
-
+        val itemList = budgetItemLists.filter { it.budgetId == _uiState.value.budget.id }
+        val list = itemList.filter { it.type == type }
         _uiState.update {
             it.copy(
                 itemList = list,
@@ -63,9 +64,10 @@ class InsAndOutsViewModel: ViewModel() {
     }
 
     fun clearFilter() {
+        val itemList = budgetItemLists.filter { it.budgetId == _uiState.value.budget.id }
         _uiState.update {
             it.copy(
-                itemList = budgetItemLists,
+                itemList = itemList,
                 filter = null
             )
         }

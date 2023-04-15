@@ -8,9 +8,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.ui.tooling.preview.Preview
-import com.meneses.budgethunter.insAndOuts.domain.BudgetItem
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.meneses.budgethunter.commons.ui.AppBar
+import com.meneses.budgethunter.detail.DetailViewModel
 import com.meneses.budgethunter.fakeNavigation
+import com.meneses.budgethunter.insAndOuts.domain.BudgetItem
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 
@@ -25,8 +27,17 @@ private fun Preview() {
 @Composable
 fun DetailScreen(
     navigator: DestinationsNavigator,
-    budgetItem: BudgetItem? = null
+    budgetItem: BudgetItem? = null,
+    myViewModel: DetailViewModel = viewModel()
 ) {
+    val uiState by myViewModel.uiState.collectAsState()
+
+    LaunchedEffect(Unit) {
+        if (budgetItem != null && uiState.detail?.id != budgetItem.id) {
+            myViewModel.setDetail(budgetItem)
+        }
+    }
+
     Scaffold(
         topBar = {
             val title = remember {
@@ -39,7 +50,9 @@ fun DetailScreen(
                 leftButtonIcon = Icons.Default.ArrowBack,
                 rightButtonIcon = Icons.Default.Done,
                 onLeftButtonClick = { navigator.popBackStack() },
-                onRightButtonClick = { navigator.popBackStack() }
+                onRightButtonClick = {
+                    navigator.popBackStack()
+                }
             )
         }
     ) {

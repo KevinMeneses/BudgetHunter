@@ -38,13 +38,15 @@ fun InsAndOutsScreen(
     budget: Budget,
     myViewModel: InsAndOutsViewModel = viewModel()
 ) {
-    LaunchedEffect(key1 = Unit) {
-        myViewModel.getBudgetItems(budget)
-    }
-
     val uiState by myViewModel.uiState.collectAsState()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val coroutineScope = rememberCoroutineScope()
+
+    LaunchedEffect(Unit) {
+        if (uiState.budget.id != budget.id) {
+            myViewModel.getBudgetItems(budget)
+        }
+    }
 
     ModalNavigationDrawer(
         drawerContent = {

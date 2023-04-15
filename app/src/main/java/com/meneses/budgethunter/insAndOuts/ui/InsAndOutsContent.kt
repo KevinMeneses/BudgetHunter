@@ -23,12 +23,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.meneses.budgethunter.commons.EMPTY
 import com.meneses.budgethunter.insAndOuts.domain.BudgetItem
-import com.meneses.budgethunter.budgetItemLists
 import com.meneses.budgethunter.commons.ui.DefDivider
-import com.meneses.budgethunter.insAndOuts.application.InsAndOutsState
 import com.meneses.budgethunter.theme.AppColors
-import com.meneses.budgethunter.totalIncome
 
 @Composable
 fun InsAndOutsContent(
@@ -62,7 +60,10 @@ fun InsAndOutsContent(
                 onItemClick = onItemClick
             )
             Spacer(modifier = Modifier.height(20.dp))
-            FooterSection()
+            FooterSection(
+                budgetItems = budgetItems,
+                budgetAmount = budgetAmount
+            )
         }
     }
 }
@@ -72,7 +73,11 @@ fun BudgetSection(
     amount: Double,
     onClick: () -> Unit
 ) {
-    val budget = amount.toBigDecimal().toPlainString()
+    val budget = if (amount == 0.0) {
+        "Agregar un presupuesto"
+    } else {
+        "Presupuesto\n" + amount.toBigDecimal().toPlainString()
+    }
 
     Card(
         modifier = Modifier.clickable(onClick = onClick),
@@ -93,7 +98,7 @@ fun BudgetSection(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Presupuesto\n$budget",
+                text = budget,
                 modifier = Modifier.padding(vertical = 10.dp),
                 textAlign = TextAlign.Center,
                 fontWeight = FontWeight.SemiBold,
@@ -120,15 +125,19 @@ private fun ColumnScope.ListSection(
             modifier = Modifier.padding(horizontal = 10.dp)
         ) {
             items(budgetItems.size) { index ->
+                val budgetItem = budgetItems[index]
                 Row(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { onItemClick(budgetItems[index]) }
+                        .clickable { onItemClick(budgetItem) }
                         .padding(vertical = 10.dp)
                 ) {
-                    Text(text = budgetItems[index].description ?: "Sin descripcion")
-                    Text(text = budgetItems[index].amount.toString())
+                    Text(text = budgetItem.description ?: "Sin descripcion")
+                    val operatorSign =
+                        if (budgetItem.type == BudgetItem.Type.OUTCOME) "-"
+                        else EMPTY
+                    Text(text = operatorSign + budgetItem.amount.toString())
                 }
                 if (index != budgetItems.size - 1) DefDivider()
             }
@@ -137,14 +146,23 @@ private fun ColumnScope.ListSection(
 }
 
 @Composable
-fun FooterSection() {
-    val totalBudget = remember {
-        val listFiltered = budgetItemLists.filter { it.type == BudgetItem.Type.OUTCOME }.map { it.amount }
-        listFiltered.reduce { acc, actual -> acc + actual }.toString()
-    }
-    val balance = remember {
-        (totalIncome - totalBudget.toDouble()).toString()
-    }
+fun FooterSection(
+    budgetItems: List<BudgetItem>,
+    budgetAmount: Double
+) {
+    val outcomes = budgetItems
+        .filter { it.type == BudgetItem.Type.OUTCOME }
+        .map { it.amount }
+        .reduceOrNull { acc, actual -> acc + actual }
+        ?: 0.0
+
+    val incomes = budgetItems
+        .filter { it.type == BudgetItem.Type.INCOME }
+        .map { it.amount }
+        .reduceOrNull { acc, actual -> acc + actual }
+        ?: 0.0
+
+    val balance = budgetAmount + incomes - outcomes
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -160,11 +178,11 @@ fun FooterSection() {
             color = AppColors.onPrimaryContainer
         )
     ) {
-        AmountText("Total gastos:", totalBudget)
+        val operatorSign = if (outcomes == 0.0) EMPTY else "-"
+        AmountText("Total gastos:", "$operatorSign$outcomes")
         DefDivider(color = AppColors.onSecondaryContainer)
-        AmountText("Balance:", balance)
+        AmountText("Balance:", balance.toString())
     }
-
 }
 
 @Composable

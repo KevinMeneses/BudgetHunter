@@ -7,36 +7,50 @@ import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 
 val budgetItemLists = mutableListOf(
     BudgetItem(
+        id = 0,
+        budgetId = 0,
         amount = 20000.0,
         description = "Papitas",
         type = BudgetItem.Type.OUTCOME
     ),
     BudgetItem(
+        id = 1,
+        budgetId = 0,
         amount = 50000.0,
         description = "Pollo",
         type = BudgetItem.Type.OUTCOME
     ),
     BudgetItem(
+        id = 0,
+        budgetId = 1,
         amount = 10000.0,
         description = "Gaseosa",
         type = BudgetItem.Type.OUTCOME
     ),
     BudgetItem(
+        id = 1,
+        budgetId = 1,
         amount = 8000.0,
         description = null,
         type = BudgetItem.Type.OUTCOME
     ),
     BudgetItem(
+        id = 0,
+        budgetId = 2,
         amount = 20000.0,
         description = "Pago salida",
         type = BudgetItem.Type.INCOME
     ),
     BudgetItem(
+        id = 1,
+        budgetId = 2,
         amount = 17000.0,
         description = "Carne",
         type = BudgetItem.Type.OUTCOME
     ),
     BudgetItem(
+        id = 2,
+        budgetId = 2,
         amount = 12000.0,
         description = "Frijoles",
         type = BudgetItem.Type.OUTCOME
@@ -50,12 +64,12 @@ val budgetList = mutableListOf(
         frequency = Budget.Frequency.MONTHLY
     ),
     Budget(
-        id = 0,
+        id = 1,
         name = "Paseo",
         frequency = Budget.Frequency.UNIQUE
     ),
     Budget(
-        id = 0,
+        id = 2,
         name = "Anual",
         frequency = Budget.Frequency.ANNUAL
     )
