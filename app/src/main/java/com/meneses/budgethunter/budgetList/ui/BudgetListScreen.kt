@@ -59,8 +59,8 @@ fun BudgetListScreen(
         show = uiState.addModalVisibility,
         onDismiss = { myViewModel.setAddModalVisibility(false) },
         onCreateClick = {
-            myViewModel.createBudget(it)
-            navigator.navigate(InsAndOutsScreenDestination(it))
+            val savedBudget = myViewModel.createBudget(it)
+            navigator.navigate(InsAndOutsScreenDestination(savedBudget))
         }
     )
 

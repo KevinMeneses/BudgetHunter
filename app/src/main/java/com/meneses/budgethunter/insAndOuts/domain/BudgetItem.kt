@@ -1,15 +1,16 @@
 package com.meneses.budgethunter.insAndOuts.domain
 
 import android.os.Parcelable
+import com.meneses.budgethunter.commons.EMPTY
 import kotlinx.parcelize.Parcelize
 
 @Parcelize
 data class BudgetItem(
-    val id: Int,
+    val id: Int = -1,
     val budgetId: Int,
-    val amount: Double,
-    val description: String?,
-    val type: Type,
+    val amount: Double? = null,
+    val description: String? = EMPTY,
+    val type: Type = Type.OUTCOME,
     val date: String? = null
 ) : Parcelable {
     enum class Type(val value: String) {

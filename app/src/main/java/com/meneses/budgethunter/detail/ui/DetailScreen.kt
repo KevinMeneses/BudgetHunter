@@ -19,7 +19,7 @@ import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 private fun Preview() {
-    DetailScreen(fakeNavigation)
+    DetailScreen(fakeNavigation, BudgetItem(id = -1, budgetId = -1))
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -27,13 +27,13 @@ private fun Preview() {
 @Composable
 fun DetailScreen(
     navigator: DestinationsNavigator,
-    budgetItem: BudgetItem? = null,
+    budgetItem: BudgetItem,
     myViewModel: DetailViewModel = viewModel()
 ) {
     val uiState by myViewModel.uiState.collectAsState()
 
     LaunchedEffect(Unit) {
-        if (budgetItem != null && uiState.detail?.id != budgetItem.id) {
+        if (uiState.detail?.id != budgetItem.id) {
             myViewModel.setDetail(budgetItem)
         }
     }
@@ -41,7 +41,7 @@ fun DetailScreen(
     Scaffold(
         topBar = {
             val title = remember {
-                if (budgetItem == null) "Nuevo presupuesto"
+                if (budgetItem.id == -1) "Nuevo presupuesto"
                 else "Modificar presupuesto"
             }
 
@@ -51,11 +51,18 @@ fun DetailScreen(
                 rightButtonIcon = Icons.Default.Done,
                 onLeftButtonClick = { navigator.popBackStack() },
                 onRightButtonClick = {
+                    myViewModel.saveBudgetDetail()
                     navigator.popBackStack()
                 }
             )
         }
-    ) {
-        DetailForm(budgetItem, it)
+    ) { paddingValues ->
+        DetailForm(
+            budgetItem = uiState.detail ?: budgetItem,
+            paddingValues = paddingValues,
+            onBudgetItemChanged = {
+                myViewModel.setDetail(it)
+            }
+        )
     }
 }

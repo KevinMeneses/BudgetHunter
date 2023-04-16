@@ -10,18 +10,23 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
-class InsAndOutsViewModel: ViewModel() {
+class InsAndOutsViewModel : ViewModel() {
 
     private val _uiState = MutableStateFlow(InsAndOutsState())
     val uiState = _uiState.asStateFlow()
 
-    fun getBudgetItems(budget: Budget) {
-        val itemList = budgetItemLists.filter { it.budgetId == budget.id }
+    fun setBudget(budget: Budget) {
         _uiState.update {
-            it.copy(
-                budget = budget,
-                itemList = itemList
-            )
+            it.copy(budget = budget)
+        }
+    }
+
+    fun getBudgetItems() {
+        val itemList = budgetItemLists.filter {
+            it.budgetId == _uiState.value.budget.id
+        }
+        _uiState.update {
+            it.copy(itemList = itemList)
         }
     }
 

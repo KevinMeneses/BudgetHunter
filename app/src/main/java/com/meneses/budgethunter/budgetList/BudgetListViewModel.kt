@@ -35,9 +35,12 @@ class BudgetListViewModel : ViewModel() {
         }
     }
 
-    fun createBudget(budget: Budget) {
-        budgetList.add(budget)
+    fun createBudget(budget: Budget): Budget {
+        val id = budgetList.size
+        val budgetToSave = budget.copy(id = id)
+        budgetList.add(budgetToSave)
         getAllBudgets()
+        return budgetToSave
     }
 
     fun filterList(filter: Budget) {

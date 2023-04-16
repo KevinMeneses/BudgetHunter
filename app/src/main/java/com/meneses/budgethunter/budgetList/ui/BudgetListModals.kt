@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -19,6 +20,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.commons.EMPTY
@@ -152,7 +154,10 @@ private fun ModalContent(
         value = name,
         modifier = Modifier.padding(bottom = 30.dp),
         onValueChange = onNameChanged,
-        label = { Text(text = "Nombre") }
+        label = { Text(text = "Nombre") },
+        keyboardOptions = KeyboardOptions(
+            capitalization = KeyboardCapitalization.Words
+        )
     )
 
     OutlinedDropdown(

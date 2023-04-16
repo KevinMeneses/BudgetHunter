@@ -20,6 +20,7 @@ import com.meneses.budgethunter.commons.ui.AppBar
 import com.meneses.budgethunter.destinations.DetailScreenDestination
 import com.meneses.budgethunter.fakeNavigation
 import com.meneses.budgethunter.insAndOuts.InsAndOutsViewModel
+import com.meneses.budgethunter.insAndOuts.domain.BudgetItem
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.coroutines.launch
@@ -44,8 +45,10 @@ fun InsAndOutsScreen(
 
     LaunchedEffect(Unit) {
         if (uiState.budget.id != budget.id) {
-            myViewModel.getBudgetItems(budget)
+            myViewModel.setBudget(budget)
         }
+
+        myViewModel.getBudgetItems()
     }
 
     ModalNavigationDrawer(
@@ -78,7 +81,13 @@ fun InsAndOutsScreen(
                             drawerState.open()
                         }
                     },
-                    onRightButtonClick = { navigator.navigate(DetailScreenDestination()) }
+                    onRightButtonClick = {
+                        navigator.navigate(
+                            DetailScreenDestination(
+                                BudgetItem(budgetId = budget.id)
+                            )
+                        )
+                    }
                 )
             }
         ) { paddingValues ->

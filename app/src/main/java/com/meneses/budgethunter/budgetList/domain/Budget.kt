@@ -6,7 +6,7 @@ import kotlinx.parcelize.Parcelize
 
 @Parcelize
 data class Budget(
-    val id: Int? = null,
+    val id: Int = -1,
     val amount: Double = 0.0,
     val name: String = EMPTY,
     val frequency: Frequency? = null

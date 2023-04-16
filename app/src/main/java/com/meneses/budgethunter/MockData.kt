@@ -75,17 +75,6 @@ val budgetList = mutableListOf(
     )
 )
 
-val budgetItemTypeList = listOf(
-    BudgetItem.Type.OUTCOME.value,
-    BudgetItem.Type.INCOME.value
-)
-
-val budgetListFilterOptions = budgetItemTypeList
-    .toMutableList()
-    .apply { add("Todo") }
-
-const val totalIncome = 10000000.0
-
 val fakeNavigation = object : DestinationsNavigator {
     override fun clearBackStack(route: String): Boolean {
         TODO("Not yet implemented")

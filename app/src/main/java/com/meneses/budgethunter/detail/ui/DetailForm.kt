@@ -16,27 +16,26 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.maxkeppeker.sheets.core.models.base.rememberSheetState
 import com.maxkeppeler.sheets.calendar.CalendarDialog
 import com.maxkeppeler.sheets.calendar.models.CalendarConfig
 import com.maxkeppeler.sheets.calendar.models.CalendarSelection
-import com.meneses.budgethunter.insAndOuts.domain.BudgetItem
-import com.meneses.budgethunter.budgetItemTypeList
 import com.meneses.budgethunter.commons.EMPTY
 import com.meneses.budgethunter.commons.ui.OutlinedDropdown
+import com.meneses.budgethunter.insAndOuts.domain.BudgetItem
+import java.time.LocalDate
 
 @Composable
 fun DetailForm(
-    budgetItem: BudgetItem?,
-    paddingValues: PaddingValues
+    budgetItem: BudgetItem,
+    paddingValues: PaddingValues,
+    onBudgetItemChanged: (BudgetItem) -> Unit
 ) {
     Column(
         verticalArrangement = Arrangement.SpaceEvenly,
@@ -46,21 +45,50 @@ fun DetailForm(
             .padding(paddingValues)
             .padding(all = 20.dp)
     ) {
-        AmountField(budgetItem?.amount)
-        DescriptionField(budgetItem?.description)
-        TypeSelector(budgetItem?.type)
-        DateField(budgetItem?.date)
-        Spacer(modifier = Modifier.height(10.dp))
+        AmountField(
+            amount = budgetItem.amount,
+            onAmountChanged = {
+                onBudgetItemChanged(
+                    budgetItem.copy(amount = it)
+                )
+            }
+        )
+        DescriptionField(
+            description = budgetItem.description,
+            onDescriptionChanged = {
+                onBudgetItemChanged(
+                    budgetItem.copy(description = it)
+                )
+            }
+        )
+        TypeSelector(
+            type = budgetItem.type,
+            onTypeSelected = {
+                onBudgetItemChanged(
+                    budgetItem.copy(type = it)
+                )
+            }
+        )
+        DateField(
+            date = budgetItem.date,
+            onDateSelected = {
+                onBudgetItemChanged(
+                    budgetItem.copy(date = it)
+                )
+            }
+        )
+        Spacer(
+            modifier = Modifier.height(10.dp)
+        )
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun DateField(date: String?) {
-    var dateState by remember {
-        mutableStateOf(date ?: EMPTY)
-    }
-
+private fun DateField(
+    date: String?,
+    onDateSelected: (String) -> Unit
+) {
     val calendarState = rememberSheetState()
 
     CalendarDialog(
@@ -70,7 +98,7 @@ private fun DateField(date: String?) {
             yearSelection = true
         ),
         selection = CalendarSelection.Date {
-            dateState = it.toString()
+            onDateSelected(it.toString())
         }
     )
 
@@ -79,10 +107,10 @@ private fun DateField(date: String?) {
         onExpandedChange = {
             if (it) calendarState.show()
         }
-    ){
+    ) {
         OutlinedTextField(
             modifier = Modifier.menuAnchor(),
-            value = dateState,
+            value = date ?: LocalDate.now().toString(),
             readOnly = true,
             label = { Text(text = "Fecha") },
             onValueChange = {},
@@ -98,32 +126,33 @@ private fun DateField(date: String?) {
 }
 
 @Composable
-private fun TypeSelector(type: BudgetItem.Type?) {
-    var selectedType by remember {
-        mutableStateOf(type?.value ?: EMPTY)
+private fun TypeSelector(
+    type: BudgetItem.Type?,
+    onTypeSelected: (BudgetItem.Type) -> Unit
+) {
+    val itemTypes = remember {
+        BudgetItem.getItemTypes()
     }
     OutlinedDropdown(
-        value = selectedType,
+        value = type?.value ?: EMPTY,
         label = "Tipo",
-        dropdownOptions = budgetItemTypeList,
-        onSelectOption = { selectedType = budgetItemTypeList[it] }
+        dropdownOptions = itemTypes.map { it.value },
+        onSelectOption = { onTypeSelected(itemTypes[it]) }
     )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun AmountField(amount: Double?) {
-    var amountState by remember {
-        mutableStateOf(amount)
-    }
+private fun AmountField(
+    amount: Double?,
+    onAmountChanged: (Double) -> Unit
+) {
     OutlinedTextField(
-        value = amountState?.toString() ?: "",
+        value = amount?.toString() ?: EMPTY,
         onValueChange = {
-            amountState = it.toDouble()
+            onAmountChanged(it.toDoubleOrNull() ?: 0.0)
         },
-        label = {
-            Text(text = "Monto")
-        },
+        label = { Text(text = "Monto") },
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Number
         )
@@ -132,18 +161,16 @@ private fun AmountField(amount: Double?) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun DescriptionField(description: String?) {
-    var descriptionState by remember {
-        mutableStateOf(description ?: EMPTY)
-    }
-
+private fun DescriptionField(
+    description: String?,
+    onDescriptionChanged: (String) -> Unit
+) {
     OutlinedTextField(
-        value = descriptionState,
-        onValueChange = {
-            descriptionState = it
-        },
-        label = {
-            Text(text = "Descripcion")
-        }
+        value = description ?: EMPTY,
+        onValueChange = onDescriptionChanged,
+        label = { Text(text = "Descripcion") },
+        keyboardOptions = KeyboardOptions(
+            capitalization = KeyboardCapitalization.Words
+        )
     )
 }
