@@ -41,7 +41,7 @@ fun DetailScreen(
     Scaffold(
         topBar = {
             val title = remember {
-                if (budgetItem.id == -1) "Nuevo presupuesto"
+                if (budgetItem.amount == null) "Nuevo presupuesto"
                 else "Modificar presupuesto"
             }
 
@@ -51,8 +51,10 @@ fun DetailScreen(
                 rightButtonIcon = Icons.Default.Done,
                 onLeftButtonClick = { navigator.popBackStack() },
                 onRightButtonClick = {
-                    myViewModel.saveBudgetDetail()
-                    navigator.popBackStack()
+                    if (uiState.detail?.amount != null) {
+                        myViewModel.saveBudgetDetail()
+                        navigator.popBackStack()
+                    }
                 }
             )
         }

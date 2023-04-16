@@ -20,8 +20,7 @@ class DetailViewModel : ViewModel() {
 
     fun saveBudgetDetail() {
         budgetItemLists.removeIf {
-            it.id == _uiState.value.detail?.id &&
-                    it.budgetId == _uiState.value.detail?.budgetId
+            it.id == _uiState.value.detail?.id
         }
         _uiState.value.detail?.let { budgetItemLists.add(it) }
     }

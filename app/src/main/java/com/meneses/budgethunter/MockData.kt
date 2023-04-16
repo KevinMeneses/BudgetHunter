@@ -21,35 +21,35 @@ val budgetItemLists = mutableListOf(
         type = BudgetItem.Type.OUTCOME
     ),
     BudgetItem(
-        id = 0,
+        id = 2,
         budgetId = 1,
         amount = 10000.0,
         description = "Gaseosa",
         type = BudgetItem.Type.OUTCOME
     ),
     BudgetItem(
-        id = 1,
+        id = 3,
         budgetId = 1,
         amount = 8000.0,
         description = null,
         type = BudgetItem.Type.OUTCOME
     ),
     BudgetItem(
-        id = 0,
+        id = 4,
         budgetId = 2,
         amount = 20000.0,
         description = "Pago salida",
         type = BudgetItem.Type.INCOME
     ),
     BudgetItem(
-        id = 1,
+        id = 5,
         budgetId = 2,
         amount = 17000.0,
         description = "Carne",
         type = BudgetItem.Type.OUTCOME
     ),
     BudgetItem(
-        id = 2,
+        id = 6,
         budgetId = 2,
         amount = 12000.0,
         description = "Frijoles",
@@ -57,19 +57,22 @@ val budgetItemLists = mutableListOf(
     )
 )
 
-val budgetList = mutableListOf(
+val budgetListMock = mutableListOf(
     Budget(
         id = 0,
+        amount = 200000.0,
         name = "Mensual",
         frequency = Budget.Frequency.MONTHLY
     ),
     Budget(
         id = 1,
+        amount = 120000.0,
         name = "Paseo",
         frequency = Budget.Frequency.UNIQUE
     ),
     Budget(
         id = 2,
+        amount = 900000.0,
         name = "Anual",
         frequency = Budget.Frequency.ANNUAL
     )

@@ -15,6 +15,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.meneses.budgethunter.budgetItemLists
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.commons.ui.AppBar
 import com.meneses.budgethunter.destinations.DetailScreenDestination
@@ -82,11 +83,9 @@ fun InsAndOutsScreen(
                         }
                     },
                     onRightButtonClick = {
-                        navigator.navigate(
-                            DetailScreenDestination(
-                                BudgetItem(budgetId = budget.id)
-                            )
-                        )
+                        val budgetItem = BudgetItem(id = budgetItemLists.size, budgetId = budget.id)
+                        val destination = DetailScreenDestination(budgetItem)
+                        navigator.navigate(destination)
                     }
                 )
             }

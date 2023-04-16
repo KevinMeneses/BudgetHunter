@@ -5,6 +5,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.tooling.preview.Preview
@@ -48,9 +49,8 @@ fun BudgetListScreen(
             paddingValues = it,
             onAddBudgetClick = { myViewModel.setAddModalVisibility(true) },
             onBudgetClick = { index ->
-                navigator.navigate(
-                    InsAndOutsScreenDestination(uiState.budgetList[index])
-                )
+                val budget = uiState.budgetList[index]
+                myViewModel.navigateToBudget(budget)
             }
         )
     }
@@ -58,10 +58,7 @@ fun BudgetListScreen(
     NewBudgetModal(
         show = uiState.addModalVisibility,
         onDismiss = { myViewModel.setAddModalVisibility(false) },
-        onCreateClick = {
-            val savedBudget = myViewModel.createBudget(it)
-            navigator.navigate(InsAndOutsScreenDestination(savedBudget))
-        }
+        onCreateClick = { myViewModel.createBudget(it) }
     )
 
     FilterListModal(
@@ -71,4 +68,15 @@ fun BudgetListScreen(
         onClear = { myViewModel.clearFilter() },
         onApplyClick = { myViewModel.filterList(it) }
     )
+
+    uiState.navigateToBudget?.let {
+        val destination = InsAndOutsScreenDestination(it)
+        navigator.navigate(destination)
+    }
+
+    DisposableEffect(key1 = Unit) {
+        onDispose {
+            myViewModel.onDispose()
+        }
+    }
 }

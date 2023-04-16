@@ -2,7 +2,7 @@ package com.meneses.budgethunter.insAndOuts
 
 import androidx.lifecycle.ViewModel
 import com.meneses.budgethunter.budgetItemLists
-import com.meneses.budgethunter.budgetList
+import com.meneses.budgethunter.budgetListMock
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.insAndOuts.application.InsAndOutsState
 import com.meneses.budgethunter.insAndOuts.domain.BudgetItem
@@ -28,6 +28,9 @@ class InsAndOutsViewModel : ViewModel() {
         _uiState.update {
             it.copy(itemList = itemList)
         }
+        _uiState.value.filter?.let {
+            filterList(it)
+        }
     }
 
     fun setBudgetModalVisibility(visible: Boolean) {
@@ -50,9 +53,9 @@ class InsAndOutsViewModel : ViewModel() {
 
     fun setBudgetAmount(amount: Double) {
         _uiState.update {
-            budgetList.remove(it.budget)
+            budgetListMock.remove(it.budget)
             val budget = it.budget.copy(amount = amount)
-            budgetList.add(budget)
+            budgetListMock.add(budget)
             it.copy(budget = budget)
         }
     }
@@ -80,6 +83,6 @@ class InsAndOutsViewModel : ViewModel() {
 
     fun deleteBudget() {
         val budget = _uiState.value.budget
-        budgetList.remove(budget)
+        budgetListMock.remove(budget)
     }
 }

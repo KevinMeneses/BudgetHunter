@@ -179,9 +179,9 @@ fun FooterSection(
         )
     ) {
         val operatorSign = if (outcomes == 0.0) EMPTY else "-"
-        AmountText("Total gastos:", "$operatorSign$outcomes")
+        AmountText("Total gastos:", "$operatorSign${outcomes.toBigDecimal().toPlainString()}")
         DefDivider(color = AppColors.onSecondaryContainer)
-        AmountText("Balance:", balance.toString())
+        AmountText("Balance:", balance.toBigDecimal().toPlainString())
     }
 }
 
