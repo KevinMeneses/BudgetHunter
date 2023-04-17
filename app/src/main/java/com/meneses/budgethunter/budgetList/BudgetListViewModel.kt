@@ -69,6 +69,9 @@ class BudgetListViewModel(
 
     fun clearFilter() {
         budgetRepository.getAllBudgets()
+        _uiState.update {
+            it.copy(filter = null)
+        }
     }
 
     fun onDispose() {

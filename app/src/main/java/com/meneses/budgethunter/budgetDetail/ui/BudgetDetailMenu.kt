@@ -1,4 +1,4 @@
-package com.meneses.budgethunter.insAndOuts.ui
+package com.meneses.budgethunter.budgetDetail.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -29,14 +29,14 @@ import com.meneses.budgethunter.theme.AppColors
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 private fun Preview() {
-    InsAndOutsMenu(
+    BudgetDetailMenu(
         onFilterClick = {},
         onDeleteClick = {}
     )
 }
 
 @Composable
-fun InsAndOutsMenu(
+fun BudgetDetailMenu(
     onFilterClick: () -> Unit,
     onDeleteClick: () -> Unit
 ) {

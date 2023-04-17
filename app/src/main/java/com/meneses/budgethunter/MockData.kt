@@ -2,58 +2,58 @@ package com.meneses.budgethunter
 
 import androidx.navigation.NavOptionsBuilder
 import com.meneses.budgethunter.budgetList.domain.Budget
-import com.meneses.budgethunter.insAndOuts.domain.BudgetItem
+import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 
-val budgetItemLists = mutableListOf(
-    BudgetItem(
+val budgetEntryList = mutableListOf(
+    BudgetEntry(
         id = 0,
         budgetId = 0,
         amount = 20000.0,
         description = "Papitas",
-        type = BudgetItem.Type.OUTCOME
+        type = BudgetEntry.Type.OUTCOME
     ),
-    BudgetItem(
+    BudgetEntry(
         id = 1,
         budgetId = 0,
         amount = 50000.0,
         description = "Pollo",
-        type = BudgetItem.Type.OUTCOME
+        type = BudgetEntry.Type.OUTCOME
     ),
-    BudgetItem(
+    BudgetEntry(
         id = 2,
         budgetId = 1,
         amount = 10000.0,
         description = "Gaseosa",
-        type = BudgetItem.Type.OUTCOME
+        type = BudgetEntry.Type.OUTCOME
     ),
-    BudgetItem(
+    BudgetEntry(
         id = 3,
         budgetId = 1,
         amount = 8000.0,
         description = null,
-        type = BudgetItem.Type.OUTCOME
+        type = BudgetEntry.Type.OUTCOME
     ),
-    BudgetItem(
+    BudgetEntry(
         id = 4,
         budgetId = 2,
         amount = 20000.0,
         description = "Pago salida",
-        type = BudgetItem.Type.INCOME
+        type = BudgetEntry.Type.INCOME
     ),
-    BudgetItem(
+    BudgetEntry(
         id = 5,
         budgetId = 2,
         amount = 17000.0,
         description = "Carne",
-        type = BudgetItem.Type.OUTCOME
+        type = BudgetEntry.Type.OUTCOME
     ),
-    BudgetItem(
+    BudgetEntry(
         id = 6,
         budgetId = 2,
         amount = 12000.0,
         description = "Frijoles",
-        type = BudgetItem.Type.OUTCOME
+        type = BudgetEntry.Type.OUTCOME
     )
 )
 

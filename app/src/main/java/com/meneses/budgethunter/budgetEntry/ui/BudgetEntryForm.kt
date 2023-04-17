@@ -1,4 +1,4 @@
-package com.meneses.budgethunter.detail.ui
+package com.meneses.budgethunter.budgetEntry.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -28,14 +28,14 @@ import com.maxkeppeler.sheets.calendar.models.CalendarConfig
 import com.maxkeppeler.sheets.calendar.models.CalendarSelection
 import com.meneses.budgethunter.commons.EMPTY
 import com.meneses.budgethunter.commons.ui.OutlinedDropdown
-import com.meneses.budgethunter.insAndOuts.domain.BudgetItem
+import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import java.time.LocalDate
 
 @Composable
-fun DetailForm(
-    budgetItem: BudgetItem,
+fun BudgetEntryForm(
+    budgetEntry: BudgetEntry,
     paddingValues: PaddingValues,
-    onBudgetItemChanged: (BudgetItem) -> Unit
+    onBudgetItemChanged: (BudgetEntry) -> Unit
 ) {
     Column(
         verticalArrangement = Arrangement.SpaceEvenly,
@@ -46,34 +46,34 @@ fun DetailForm(
             .padding(all = 20.dp)
     ) {
         AmountField(
-            amount = budgetItem.amount,
+            amount = budgetEntry.amount,
             onAmountChanged = {
                 onBudgetItemChanged(
-                    budgetItem.copy(amount = it)
+                    budgetEntry.copy(amount = it)
                 )
             }
         )
         DescriptionField(
-            description = budgetItem.description,
+            description = budgetEntry.description,
             onDescriptionChanged = {
                 onBudgetItemChanged(
-                    budgetItem.copy(description = it)
+                    budgetEntry.copy(description = it)
                 )
             }
         )
         TypeSelector(
-            type = budgetItem.type,
+            type = budgetEntry.type,
             onTypeSelected = {
                 onBudgetItemChanged(
-                    budgetItem.copy(type = it)
+                    budgetEntry.copy(type = it)
                 )
             }
         )
         DateField(
-            date = budgetItem.date,
+            date = budgetEntry.date,
             onDateSelected = {
                 onBudgetItemChanged(
-                    budgetItem.copy(date = it)
+                    budgetEntry.copy(date = it)
                 )
             }
         )
@@ -127,11 +127,11 @@ private fun DateField(
 
 @Composable
 private fun TypeSelector(
-    type: BudgetItem.Type?,
-    onTypeSelected: (BudgetItem.Type) -> Unit
+    type: BudgetEntry.Type?,
+    onTypeSelected: (BudgetEntry.Type) -> Unit
 ) {
     val itemTypes = remember {
-        BudgetItem.getItemTypes()
+        BudgetEntry.getItemTypes()
     }
     OutlinedDropdown(
         value = type?.value ?: EMPTY,

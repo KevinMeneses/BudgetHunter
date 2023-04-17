@@ -1,4 +1,4 @@
-package com.meneses.budgethunter.insAndOuts.ui
+package com.meneses.budgethunter.budgetDetail.ui
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
@@ -24,10 +24,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.meneses.budgethunter.commons.EMPTY
-import com.meneses.budgethunter.insAndOuts.domain.BudgetItem
+import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.commons.ui.Modal
 import com.meneses.budgethunter.commons.ui.OutlinedDropdown
-import com.meneses.budgethunter.insAndOuts.application.InsAndOutsState
 import com.meneses.budgethunter.theme.AppColors
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -76,10 +75,10 @@ fun BudgetModal(
 @Composable
 fun FilterModal(
     show: Boolean,
-    filter: BudgetItem.Type?,
+    filter: BudgetEntry.Type?,
     onDismiss: () -> Unit,
     onClean: () -> Unit,
-    onApply: (BudgetItem.Type) -> Unit
+    onApply: (BudgetEntry.Type) -> Unit
 ) {
     if (show) {
         Modal(onDismiss = onDismiss) {
@@ -177,13 +176,13 @@ fun DeleteConfirmationModal(
 
 @Composable
 private fun ListTypeDropdown(
-    type: BudgetItem.Type?,
-    onSelectItem: (BudgetItem.Type) -> Unit
+    type: BudgetEntry.Type?,
+    onSelectItem: (BudgetEntry.Type) -> Unit
 ) {
     OutlinedDropdown(
         value = type?.value ?: EMPTY,
         label = "Tipo",
-        dropdownOptions = BudgetItem.getItemTypes().map { it.value },
-        onSelectOption = { onSelectItem(BudgetItem.getItemTypes()[it]) }
+        dropdownOptions = BudgetEntry.getItemTypes().map { it.value },
+        onSelectOption = { onSelectItem(BudgetEntry.getItemTypes()[it]) }
     )
 }

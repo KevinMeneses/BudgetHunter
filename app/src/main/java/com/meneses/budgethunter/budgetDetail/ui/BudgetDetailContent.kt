@@ -1,4 +1,4 @@
-package com.meneses.budgethunter.insAndOuts.ui
+package com.meneses.budgethunter.budgetDetail.ui
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
@@ -17,24 +17,23 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.meneses.budgethunter.commons.EMPTY
-import com.meneses.budgethunter.insAndOuts.domain.BudgetItem
+import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.commons.ui.DefDivider
 import com.meneses.budgethunter.theme.AppColors
 
 @Composable
-fun InsAndOutsContent(
+fun BudgetDetailContent(
     budgetAmount: Double,
-    budgetItems: List<BudgetItem>,
+    budgetEntries: List<BudgetEntry>,
     paddingValues: PaddingValues,
     onBudgetClick: () -> Unit,
-    onItemClick: (BudgetItem) -> Unit
+    onItemClick: (BudgetEntry) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -56,12 +55,12 @@ fun InsAndOutsContent(
             )
             Spacer(modifier = Modifier.height(20.dp))
             ListSection(
-                budgetItems = budgetItems,
+                budgetEntries = budgetEntries,
                 onItemClick = onItemClick
             )
             Spacer(modifier = Modifier.height(20.dp))
-            FooterSection(
-                budgetItems = budgetItems,
+            BalanceSection(
+                budgetEntries = budgetEntries,
                 budgetAmount = budgetAmount
             )
         }
@@ -111,8 +110,8 @@ fun BudgetSection(
 
 @Composable
 private fun ColumnScope.ListSection(
-    budgetItems: List<BudgetItem>,
-    onItemClick: (BudgetItem) -> Unit
+    budgetEntries: List<BudgetEntry>,
+    onItemClick: (BudgetEntry) -> Unit
 ) {
     Card(
         modifier = Modifier.weight(0.8f, true),
@@ -124,8 +123,8 @@ private fun ColumnScope.ListSection(
         LazyColumn(
             modifier = Modifier.padding(horizontal = 10.dp)
         ) {
-            items(budgetItems.size) { index ->
-                val budgetItem = budgetItems[index]
+            items(budgetEntries.size) { index ->
+                val budgetItem = budgetEntries[index]
                 Row(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     modifier = Modifier
@@ -135,29 +134,29 @@ private fun ColumnScope.ListSection(
                 ) {
                     Text(text = budgetItem.description.takeIf { !it.isNullOrBlank() } ?: "Sin descripcion")
                     val operatorSign =
-                        if (budgetItem.type == BudgetItem.Type.OUTCOME) "-"
+                        if (budgetItem.type == BudgetEntry.Type.OUTCOME) "-"
                         else EMPTY
                     Text(text = operatorSign + budgetItem.amount.toString())
                 }
-                if (index != budgetItems.size - 1) DefDivider()
+                if (index != budgetEntries.size - 1) DefDivider()
             }
         }
     }
 }
 
 @Composable
-fun FooterSection(
-    budgetItems: List<BudgetItem>,
+fun BalanceSection(
+    budgetEntries: List<BudgetEntry>,
     budgetAmount: Double
 ) {
-    val outcomes = budgetItems
-        .filter { it.type == BudgetItem.Type.OUTCOME }
+    val outcomes = budgetEntries
+        .filter { it.type == BudgetEntry.Type.OUTCOME }
         .map { it.amount }
         .reduceOrNull { acc, actual -> (acc ?: 0.0) + (actual ?: 0.0) }
         ?: 0.0
 
-    val incomes = budgetItems
-        .filter { it.type == BudgetItem.Type.INCOME }
+    val incomes = budgetEntries
+        .filter { it.type == BudgetEntry.Type.INCOME }
         .map { it.amount }
         .reduceOrNull { acc, actual -> (acc ?: 0.0) + (actual ?: 0.0) }
         ?: 0.0

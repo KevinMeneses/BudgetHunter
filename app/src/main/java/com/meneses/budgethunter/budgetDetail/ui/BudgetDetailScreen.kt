@@ -1,4 +1,4 @@
-package com.meneses.budgethunter.insAndOuts.ui
+package com.meneses.budgethunter.budgetDetail.ui
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -10,19 +10,18 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.meneses.budgethunter.budgetItemLists
+import com.meneses.budgethunter.budgetDetail.BudgetDetailViewModel
+import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
+import com.meneses.budgethunter.budgetEntryList
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.commons.ui.AppBar
-import com.meneses.budgethunter.destinations.DetailScreenDestination
+import com.meneses.budgethunter.destinations.BudgetEntryScreenDestination
 import com.meneses.budgethunter.fakeNavigation
-import com.meneses.budgethunter.insAndOuts.InsAndOutsViewModel
-import com.meneses.budgethunter.insAndOuts.domain.BudgetItem
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.coroutines.launch
@@ -30,16 +29,16 @@ import kotlinx.coroutines.launch
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 private fun Preview() {
-    InsAndOutsScreen(fakeNavigation, Budget())
+    BudgetDetailScreen(fakeNavigation, Budget())
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Destination
 @Composable
-fun InsAndOutsScreen(
+fun BudgetDetailScreen(
     navigator: DestinationsNavigator,
     budget: Budget,
-    myViewModel: InsAndOutsViewModel = viewModel()
+    myViewModel: BudgetDetailViewModel = viewModel()
 ) {
     val uiState by myViewModel.uiState.collectAsStateWithLifecycle()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -50,12 +49,16 @@ fun InsAndOutsScreen(
             myViewModel.setBudget(budget)
         }
 
-        myViewModel.getBudgetItems()
+        myViewModel.getBudgetEntries()
+
+        uiState.filter?.let {
+            myViewModel.filterEntries(it)
+        }
     }
 
     ModalNavigationDrawer(
         drawerContent = {
-            InsAndOutsMenu(
+            BudgetDetailMenu(
                 onFilterClick = {
                     coroutineScope.launch {
                         drawerState.close()
@@ -84,19 +87,19 @@ fun InsAndOutsScreen(
                         }
                     },
                     onRightButtonClick = {
-                        val budgetItem = BudgetItem(id = budgetItemLists.size, budgetId = budget.id)
-                        val destination = DetailScreenDestination(budgetItem)
+                        val budgetEntry = BudgetEntry(id = budgetEntryList.size, budgetId = budget.id)
+                        val destination = BudgetEntryScreenDestination(budgetEntry)
                         navigator.navigate(destination)
                     }
                 )
             }
         ) { paddingValues ->
-            InsAndOutsContent(
+            BudgetDetailContent(
                 budgetAmount = uiState.budget.amount,
-                budgetItems = uiState.itemList,
+                budgetEntries = uiState.entries,
                 paddingValues = paddingValues,
                 onBudgetClick = { myViewModel.setBudgetModalVisibility(true) },
-                onItemClick = { navigator.navigate(DetailScreenDestination(it)) }
+                onItemClick = { navigator.navigate(BudgetEntryScreenDestination(it)) }
             )
         }
 
@@ -112,7 +115,7 @@ fun InsAndOutsScreen(
             filter = uiState.filter,
             onDismiss = { myViewModel.setFilterModalVisibility(false) },
             onClean = { myViewModel.clearFilter() },
-            onApply = { myViewModel.filterList(it) }
+            onApply = { myViewModel.filterEntries(it) }
         )
 
         DeleteConfirmationModal(

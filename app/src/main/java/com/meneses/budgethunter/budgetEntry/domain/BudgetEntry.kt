@@ -1,11 +1,11 @@
-package com.meneses.budgethunter.insAndOuts.domain
+package com.meneses.budgethunter.budgetEntry.domain
 
 import android.os.Parcelable
 import com.meneses.budgethunter.commons.EMPTY
 import kotlinx.parcelize.Parcelize
 
 @Parcelize
-data class BudgetItem(
+data class BudgetEntry(
     val id: Int = -1,
     val budgetId: Int,
     val amount: Double? = null,

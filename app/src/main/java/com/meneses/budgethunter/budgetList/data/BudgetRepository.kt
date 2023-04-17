@@ -8,4 +8,6 @@ interface BudgetRepository {
     fun getAllBudgets()
     fun getBudgetsBy(budget: Budget)
     fun createBudget(budget: Budget): Budget
+    fun updateBudget(budget: Budget)
+    fun deleteBudget(budget: Budget)
 }

@@ -34,4 +34,13 @@ class LocalBudgetRepository: BudgetRepository {
         budgetListMock.add(budgetToSave)
         return budgetToSave
     }
+
+    override fun updateBudget(budget: Budget) {
+        budgetListMock.removeIf { it.id == budget.id }
+        budgetListMock.add(budget.id, budget)
+    }
+
+    override fun deleteBudget(budget: Budget) {
+        budgetListMock.remove(budget)
+    }
 }

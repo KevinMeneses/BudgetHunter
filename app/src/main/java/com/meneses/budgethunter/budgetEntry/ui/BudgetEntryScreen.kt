@@ -1,4 +1,4 @@
-package com.meneses.budgethunter.detail.ui
+package com.meneses.budgethunter.budgetEntry.ui
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
@@ -11,38 +11,38 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.meneses.budgethunter.commons.ui.AppBar
-import com.meneses.budgethunter.detail.DetailViewModel
+import com.meneses.budgethunter.budgetEntry.BudgetEntryViewModel
 import com.meneses.budgethunter.fakeNavigation
-import com.meneses.budgethunter.insAndOuts.domain.BudgetItem
+import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 private fun Preview() {
-    DetailScreen(fakeNavigation, BudgetItem(id = -1, budgetId = -1))
+    BudgetEntryScreen(fakeNavigation, BudgetEntry(id = -1, budgetId = -1))
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Destination
 @Composable
-fun DetailScreen(
+fun BudgetEntryScreen(
     navigator: DestinationsNavigator,
-    budgetItem: BudgetItem,
-    myViewModel: DetailViewModel = viewModel()
+    budgetEntry: BudgetEntry,
+    myViewModel: BudgetEntryViewModel = viewModel()
 ) {
     val uiState by myViewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
-        if (uiState.detail?.id != budgetItem.id) {
-            myViewModel.setDetail(budgetItem)
+        if (uiState.budgetEntry?.id != budgetEntry.id) {
+            myViewModel.setBudgetEntry(budgetEntry)
         }
     }
 
     Scaffold(
         topBar = {
             val title = remember {
-                if (budgetItem.amount == null) "Nuevo presupuesto"
+                if (budgetEntry.amount == null) "Nuevo presupuesto"
                 else "Modificar presupuesto"
             }
 
@@ -52,19 +52,19 @@ fun DetailScreen(
                 rightButtonIcon = Icons.Default.Done,
                 onLeftButtonClick = { navigator.popBackStack() },
                 onRightButtonClick = {
-                    if (uiState.detail?.amount != null) {
-                        myViewModel.saveBudgetDetail()
+                    if (uiState.budgetEntry?.amount != null) {
+                        myViewModel.saveBudgetEntry()
                         navigator.popBackStack()
                     }
                 }
             )
         }
     ) { paddingValues ->
-        DetailForm(
-            budgetItem = uiState.detail ?: budgetItem,
+        BudgetEntryForm(
+            budgetEntry = uiState.budgetEntry ?: budgetEntry,
             paddingValues = paddingValues,
             onBudgetItemChanged = {
-                myViewModel.setDetail(it)
+                myViewModel.setBudgetEntry(it)
             }
         )
     }

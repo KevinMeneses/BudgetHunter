@@ -6,16 +6,15 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.meneses.budgethunter.budgetList.BudgetListViewModel
 import com.meneses.budgethunter.commons.ui.AppBar
-import com.meneses.budgethunter.theme.BudgetHunterTheme
-import com.meneses.budgethunter.destinations.InsAndOutsScreenDestination
+import com.meneses.budgethunter.destinations.BudgetDetailScreenDestination
 import com.meneses.budgethunter.fakeNavigation
+import com.meneses.budgethunter.theme.BudgetHunterTheme
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 
@@ -71,7 +70,7 @@ fun BudgetListScreen(
     )
 
     uiState.navigateToBudget?.let {
-        val destination = InsAndOutsScreenDestination(it)
+        val destination = BudgetDetailScreenDestination(it)
         navigator.navigate(destination)
     }
 
