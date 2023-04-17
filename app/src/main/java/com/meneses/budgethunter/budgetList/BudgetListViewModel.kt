@@ -50,6 +50,7 @@ class BudgetListViewModel(
 
     fun createBudget(budget: Budget) {
         val budgetSaved = budgetRepository.createBudget(budget)
+        budgetRepository.getAllBudgets()
         navigateToBudget(budgetSaved)
     }
 

@@ -32,7 +32,6 @@ class LocalBudgetRepository: BudgetRepository {
         val id = budgetListMock.size
         val budgetToSave = budget.copy(id = id)
         budgetListMock.add(budgetToSave)
-        getAllBudgets()
         return budgetToSave
     }
 }
