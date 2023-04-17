@@ -9,6 +9,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.meneses.budgethunter.budgetList.BudgetListViewModel
 import com.meneses.budgethunter.commons.ui.AppBar
@@ -33,7 +34,7 @@ fun BudgetListScreen(
     navigator: DestinationsNavigator,
     myViewModel: BudgetListViewModel = viewModel()
 ) {
-    val uiState by myViewModel.uiState.collectAsState()
+    val uiState by myViewModel.uiState.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {

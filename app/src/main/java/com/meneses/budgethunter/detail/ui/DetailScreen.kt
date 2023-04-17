@@ -8,6 +8,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.meneses.budgethunter.commons.ui.AppBar
 import com.meneses.budgethunter.detail.DetailViewModel
@@ -30,7 +31,7 @@ fun DetailScreen(
     budgetItem: BudgetItem,
     myViewModel: DetailViewModel = viewModel()
 ) {
-    val uiState by myViewModel.uiState.collectAsState()
+    val uiState by myViewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
         if (uiState.detail?.id != budgetItem.id) {

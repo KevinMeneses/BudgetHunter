@@ -14,6 +14,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.meneses.budgethunter.budgetItemLists
 import com.meneses.budgethunter.budgetList.domain.Budget
@@ -40,7 +41,7 @@ fun InsAndOutsScreen(
     budget: Budget,
     myViewModel: InsAndOutsViewModel = viewModel()
 ) {
-    val uiState by myViewModel.uiState.collectAsState()
+    val uiState by myViewModel.uiState.collectAsStateWithLifecycle()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val coroutineScope = rememberCoroutineScope()
 
