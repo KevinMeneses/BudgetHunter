@@ -40,15 +40,15 @@ fun BudgetListScreen(
             AppBar(
                 title = "Presupuestos",
                 rightButtonIcon = Icons.Default.Search,
-                onRightButtonClick = { myViewModel.setFilterModalVisibility(true) }
+                onRightButtonClick = myViewModel::showFilterModal
             )
         }
     ) {
         BudgetListContent(
             list = uiState.budgetList,
             paddingValues = it,
-            onAddBudgetClick = { myViewModel.setAddModalVisibility(true) },
-            onBudgetClick = { index ->
+            onAddBudgetClick = myViewModel::showAddModal,
+            onBudgetClick = fun (index) {
                 val budget = uiState.budgetList[index]
                 myViewModel.navigateToBudget(budget)
             }
@@ -57,16 +57,16 @@ fun BudgetListScreen(
 
     NewBudgetModal(
         show = uiState.addModalVisibility,
-        onDismiss = { myViewModel.setAddModalVisibility(false) },
-        onCreateClick = { myViewModel.createBudget(it) }
+        onDismiss = myViewModel::hideAddModal,
+        onCreateClick = myViewModel::createBudget
     )
 
     FilterListModal(
         show = uiState.filterModalVisibility,
         filter = uiState.filter,
-        onDismiss = { myViewModel.setFilterModalVisibility(false) },
-        onClear = { myViewModel.clearFilter() },
-        onApplyClick = { myViewModel.filterList(it) }
+        onDismiss = myViewModel::hideFilterModal,
+        onClear = myViewModel::clearFilter,
+        onApplyClick = myViewModel::filterList
     )
 
     uiState.navigateToBudget?.let {

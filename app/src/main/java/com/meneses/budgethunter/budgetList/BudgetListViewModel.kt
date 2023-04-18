@@ -36,13 +36,21 @@ class BudgetListViewModel(
         }
     }
 
-    fun setAddModalVisibility(visible: Boolean) {
+    fun showAddModal() = setAddModalVisibility(true)
+
+    fun hideAddModal() = setAddModalVisibility(false)
+
+    private fun setAddModalVisibility(visible: Boolean) {
         _uiState.update {
             it.copy(addModalVisibility = visible)
         }
     }
 
-    fun setFilterModalVisibility(visible: Boolean) {
+    fun showFilterModal() = setFilterModalVisibility(true)
+
+    fun hideFilterModal() = setFilterModalVisibility(false)
+
+    private fun setFilterModalVisibility(visible: Boolean) {
         _uiState.update {
             it.copy(filterModalVisibility = visible)
         }

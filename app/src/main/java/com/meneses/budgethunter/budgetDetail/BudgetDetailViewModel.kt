@@ -50,19 +50,31 @@ class BudgetDetailViewModel(
         budgetEntryRepository.getEntriesByBudgetId(id)
     }
 
-    fun setBudgetModalVisibility(visible: Boolean) {
+    fun showBudgetModal() = setBudgetModalVisibility(true)
+
+    fun hideBudgetModal() = setBudgetModalVisibility(false)
+
+    private fun setBudgetModalVisibility(visible: Boolean) {
         _uiState.update {
             it.copy(isBudgetModalVisible = visible)
         }
     }
 
-    fun setFilterModalVisibility(visible: Boolean) {
+    fun showFilterModal() = setFilterModalVisibility(true)
+
+    fun hideFilterModal() = setFilterModalVisibility(false)
+
+    private fun setFilterModalVisibility(visible: Boolean) {
         _uiState.update {
             it.copy(isFilterModalVisible = visible)
         }
     }
 
-    fun setDeleteModalVisibility(visible: Boolean) {
+    fun showDeleteModal() = setDeleteModalVisibility(true)
+
+    fun hideDeleteModal() = setDeleteModalVisibility(false)
+
+    private fun setDeleteModalVisibility(visible: Boolean) {
         _uiState.update {
             it.copy(isDeleteModalVisible = visible)
         }

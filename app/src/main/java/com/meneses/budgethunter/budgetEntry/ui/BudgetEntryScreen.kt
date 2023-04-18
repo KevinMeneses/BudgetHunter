@@ -50,8 +50,8 @@ fun BudgetEntryScreen(
                 title = title,
                 leftButtonIcon = Icons.Default.ArrowBack,
                 rightButtonIcon = Icons.Default.Done,
-                onLeftButtonClick = { navigator.popBackStack() },
-                onRightButtonClick = {
+                onLeftButtonClick = navigator::popBackStack,
+                onRightButtonClick = fun() {
                     if (uiState.budgetEntry?.amount != null) {
                         myViewModel.saveBudgetEntry()
                         navigator.popBackStack()
@@ -63,9 +63,7 @@ fun BudgetEntryScreen(
         BudgetEntryForm(
             budgetEntry = uiState.budgetEntry ?: budgetEntry,
             paddingValues = paddingValues,
-            onBudgetItemChanged = {
-                myViewModel.setBudgetEntry(it)
-            }
+            onBudgetItemChanged = myViewModel::setBudgetEntry
         )
     }
 }

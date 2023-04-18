@@ -59,16 +59,16 @@ fun BudgetDetailScreen(
     ModalNavigationDrawer(
         drawerContent = {
             BudgetDetailMenu(
-                onFilterClick = {
+                onFilterClick = fun() {
                     coroutineScope.launch {
                         drawerState.close()
-                        myViewModel.setFilterModalVisibility(true)
+                        myViewModel.showFilterModal()
                     }
                 },
-                onDeleteClick = {
+                onDeleteClick = fun() {
                     coroutineScope.launch {
                         drawerState.close()
-                        myViewModel.setDeleteModalVisibility(true)
+                        myViewModel.showDeleteModal()
                     }
                 }
             )
@@ -81,13 +81,14 @@ fun BudgetDetailScreen(
                     title = budget.name,
                     leftButtonIcon = Icons.Default.Menu,
                     rightButtonIcon = Icons.Default.Add,
-                    onLeftButtonClick = {
+                    onLeftButtonClick = fun() {
                         coroutineScope.launch {
                             drawerState.open()
                         }
                     },
-                    onRightButtonClick = {
-                        val budgetEntry = BudgetEntry(id = budgetEntryList.size, budgetId = budget.id)
+                    onRightButtonClick = fun() {
+                        val budgetEntry =
+                            BudgetEntry(id = budgetEntryList.size, budgetId = budget.id)
                         val destination = BudgetEntryScreenDestination(budgetEntry)
                         navigator.navigate(destination)
                     }
@@ -98,34 +99,36 @@ fun BudgetDetailScreen(
                 budgetAmount = uiState.budget.amount,
                 budgetEntries = uiState.entries,
                 paddingValues = paddingValues,
-                onBudgetClick = { myViewModel.setBudgetModalVisibility(true) },
-                onItemClick = { navigator.navigate(BudgetEntryScreenDestination(it)) }
+                onBudgetClick = myViewModel::showBudgetModal,
+                onItemClick = fun(budgetEntry) {
+                    val destination = BudgetEntryScreenDestination(budgetEntry)
+                    navigator.navigate(destination)
+                }
             )
         }
 
         BudgetModal(
             show = uiState.isBudgetModalVisible,
             budgetAmount = uiState.budget.amount,
-            onDismiss = { myViewModel.setBudgetModalVisibility(false) },
-            onSaveClick = { myViewModel.setBudgetAmount(it) }
+            onDismiss = myViewModel::hideBudgetModal,
+            onSaveClick = myViewModel::setBudgetAmount
         )
 
         FilterModal(
             show = uiState.isFilterModalVisible,
             filter = uiState.filter,
-            onDismiss = { myViewModel.setFilterModalVisibility(false) },
-            onClean = { myViewModel.clearFilter() },
-            onApply = { myViewModel.filterEntries(it) }
+            onDismiss = myViewModel::hideFilterModal,
+            onClean = myViewModel::clearFilter,
+            onApply = myViewModel::filterEntries
         )
 
         DeleteConfirmationModal(
             show = uiState.isDeleteModalVisible,
-            onDismiss = { myViewModel.setDeleteModalVisibility(false) },
-            onAccept = {
+            onDismiss = myViewModel::hideDeleteModal,
+            onAccept = fun() {
                 myViewModel.deleteBudget()
                 navigator.popBackStack()
             }
         )
     }
 }
-
