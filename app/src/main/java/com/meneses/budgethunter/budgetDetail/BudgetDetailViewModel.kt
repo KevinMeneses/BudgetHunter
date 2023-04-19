@@ -8,7 +8,7 @@ import com.meneses.budgethunter.budgetEntry.data.BudgetEntryRepository
 import com.meneses.budgethunter.budgetEntry.data.LocalBudgetEntryRepository
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.budgetList.data.BudgetRepository
-import com.meneses.budgethunter.budgetList.data.LocalBudgetRepository
+import com.meneses.budgethunter.budgetList.data.BudgetLocalRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,7 +18,7 @@ import kotlinx.coroutines.launch
 
 class BudgetDetailViewModel(
     private val budgetEntryRepository: BudgetEntryRepository = LocalBudgetEntryRepository(),
-    private val budgetRepository: BudgetRepository = LocalBudgetRepository(),
+    private val budgetRepository: BudgetRepository = BudgetLocalRepository(),
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
 
