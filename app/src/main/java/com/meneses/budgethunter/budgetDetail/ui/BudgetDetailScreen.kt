@@ -125,7 +125,7 @@ fun BudgetDetailScreen(
         DeleteConfirmationModal(
             show = uiState.isDeleteModalVisible,
             onDismiss = myViewModel::hideDeleteModal,
-            onAccept = fun() {
+            onConfirm = fun() {
                 myViewModel.deleteBudget()
                 navigator.popBackStack()
             }

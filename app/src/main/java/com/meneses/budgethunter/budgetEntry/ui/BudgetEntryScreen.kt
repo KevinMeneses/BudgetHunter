@@ -1,5 +1,6 @@
 package com.meneses.budgethunter.budgetEntry.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -14,6 +15,7 @@ import com.meneses.budgethunter.commons.ui.AppBar
 import com.meneses.budgethunter.budgetEntry.BudgetEntryViewModel
 import com.meneses.budgethunter.fakeNavigation
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
+import com.meneses.budgethunter.commons.ui.ConfirmationModal
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 
@@ -32,6 +34,9 @@ fun BudgetEntryScreen(
     myViewModel: BudgetEntryViewModel = viewModel()
 ) {
     val uiState by myViewModel.uiState.collectAsStateWithLifecycle()
+    val onBack = remember {
+        fun() { myViewModel.validateChanges(budgetEntry) }
+    }
 
     LaunchedEffect(Unit) {
         if (uiState.budgetEntry?.id != budgetEntry.id) {
@@ -50,7 +55,7 @@ fun BudgetEntryScreen(
                 title = title,
                 leftButtonIcon = Icons.Default.ArrowBack,
                 rightButtonIcon = Icons.Default.Done,
-                onLeftButtonClick = navigator::popBackStack,
+                onLeftButtonClick = onBack,
                 onRightButtonClick = fun() {
                     if (uiState.budgetEntry?.amount != null) {
                         myViewModel.saveBudgetEntry()
@@ -66,4 +71,16 @@ fun BudgetEntryScreen(
             onBudgetItemChanged = myViewModel::setBudgetEntry
         )
     }
+
+    ConfirmationModal(
+        show = uiState.isDiscardChangesModalVisible,
+        message = "Hay cambios sin guardar ¿desea descartar estos cambios?",
+        confirmButtonText = "Descartar",
+        cancelButtonText = "Volver",
+        onDismiss = myViewModel::hideDiscardChangesModal,
+        onConfirm = navigator::popBackStack
+    )
+
+    BackHandler(enabled = true, onBack = onBack)
+    if (uiState.goBack) navigator.popBackStack()
 }

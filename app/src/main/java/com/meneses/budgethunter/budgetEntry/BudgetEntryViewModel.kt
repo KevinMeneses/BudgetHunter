@@ -26,4 +26,20 @@ class BudgetEntryViewModel(
             budgetEntryRepository.putEntry(it)
         }
     }
+
+    fun validateChanges(budgetEntry: BudgetEntry) {
+        _uiState.update {
+            if (budgetEntry == _uiState.value.budgetEntry) {
+                it.copy(goBack = true)
+            } else {
+                it.copy(isDiscardChangesModalVisible = true)
+            }
+        }
+    }
+
+    fun hideDiscardChangesModal() {
+        _uiState.update {
+            it.copy(isDiscardChangesModalVisible = false)
+        }
+    }
 }

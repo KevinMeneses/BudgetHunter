@@ -25,6 +25,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.meneses.budgethunter.commons.EMPTY
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
+import com.meneses.budgethunter.commons.ui.ConfirmationModal
 import com.meneses.budgethunter.commons.ui.Modal
 import com.meneses.budgethunter.commons.ui.OutlinedDropdown
 import com.meneses.budgethunter.theme.AppColors
@@ -132,46 +133,16 @@ fun FilterModal(
 fun DeleteConfirmationModal(
     show: Boolean,
     onDismiss: () -> Unit,
-    onAccept: () -> Unit
+    onConfirm: () -> Unit
 ) {
-    if (show) {
-        Modal(onDismiss = onDismiss) {
-            Text(
-                text = "¿Está seguro que desea eliminar este presupuesto?",
-                modifier = Modifier.padding(bottom = 20.dp),
-                fontWeight = FontWeight.SemiBold,
-                textAlign = TextAlign.Center
-            )
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                Button(
-                    border = BorderStroke(width = 1.dp, color = AppColors.onBackground),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = AppColors.background,
-                        contentColor = AppColors.onBackground
-                    ),
-                    onClick = onDismiss,
-                    content = { Text(text = "Cancelar") }
-                )
-                Button(
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = AppColors.error,
-                        contentColor = AppColors.onError
-                    ),
-                    onClick = {
-                        onAccept()
-                        onDismiss()
-                    },
-                    content = {
-                        Text(text = "Eliminar")
-                    }
-                )
-            }
-        }
-    }
+    ConfirmationModal(
+        show = show,
+        message = "¿Está seguro que desea eliminar este presupuesto?",
+        confirmButtonText = "Eliminar",
+        cancelButtonText = "Cancelar",
+        onDismiss = onDismiss,
+        onConfirm = onConfirm
+    )
 }
 
 @Composable
