@@ -3,8 +3,8 @@ package com.meneses.budgethunter.budgetList
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.meneses.budgethunter.budgetList.application.BudgetListState
-import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.budgetList.data.BudgetLocalRepository
+import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.budgetList.domain.Budget
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -17,9 +17,8 @@ class BudgetListViewModel(
     private val budgetRepository: BudgetRepository = BudgetLocalRepository(),
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
-
-    private val _uiState = MutableStateFlow(BudgetListState())
     val uiState get() = _uiState.asStateFlow()
+    private val _uiState = MutableStateFlow(BudgetListState())
 
     init {
         collectBudgetList()
@@ -28,61 +27,52 @@ class BudgetListViewModel(
     private fun collectBudgetList() {
         viewModelScope.launch(dispatcher) {
             budgetRepository.budgetList.collect { budgetList ->
-                _uiState.update { state ->
-                    state.copy(budgetList = budgetList)
+                _uiState.update {
+                    val updatedList = if (it.filter == null) budgetList
+                    else budgetRepository.getBudgetsBy(it.filter)
+                    it.copy(budgetList = updatedList)
                 }
             }
         }
     }
 
+    fun createBudget(budget: Budget) {
+        viewModelScope.launch(dispatcher) {
+            val budgetSaved = budgetRepository.createBudget(budget)
+            navigateToBudget(budgetSaved)
+        }
+    }
+
+    fun navigateToBudget(budget: Budget) =
+        _uiState.update { it.copy(navigateToBudget = budget) }
+
+    fun filterList(filter: Budget) {
+        viewModelScope.launch(dispatcher) {
+            val filteredList = budgetRepository.getBudgetsBy(filter)
+            _uiState.update { it.copy(budgetList = filteredList, filter = filter) }
+        }
+    }
+
+    fun clearFilter() {
+        viewModelScope.launch(dispatcher) {
+            val budgetList = budgetRepository.getAllBudgets()
+            _uiState.update { it.copy(budgetList = budgetList, filter = null) }
+        }
+    }
+
+    fun onDispose() = _uiState.update { it.copy(navigateToBudget = null) }
+
     fun showAddModal() = setAddModalVisibility(true)
 
     fun hideAddModal() = setAddModalVisibility(false)
-
-    private fun setAddModalVisibility(visible: Boolean) {
-        _uiState.update {
-            it.copy(addModalVisibility = visible)
-        }
-    }
 
     fun showFilterModal() = setFilterModalVisibility(true)
 
     fun hideFilterModal() = setFilterModalVisibility(false)
 
-    private fun setFilterModalVisibility(visible: Boolean) {
-        _uiState.update {
-            it.copy(filterModalVisibility = visible)
-        }
-    }
+    private fun setAddModalVisibility(visible: Boolean) =
+        _uiState.update { it.copy(addModalVisibility = visible) }
 
-    fun createBudget(budget: Budget) {
-        val budgetSaved = budgetRepository.createBudget(budget)
-        navigateToBudget(budgetSaved)
-    }
-
-    fun navigateToBudget(budget: Budget) {
-        _uiState.update {
-            it.copy(navigateToBudget = budget)
-        }
-    }
-
-    fun filterList(filter: Budget) {
-        budgetRepository.getBudgetsBy(filter)
-        _uiState.update {
-            it.copy(filter = filter)
-        }
-    }
-
-    fun clearFilter() {
-        budgetRepository.getAllBudgets()
-        _uiState.update {
-            it.copy(filter = null)
-        }
-    }
-
-    fun onDispose() {
-        _uiState.update {
-            it.copy(navigateToBudget = null)
-        }
-    }
+    private fun setFilterModalVisibility(visible: Boolean) =
+        _uiState.update { it.copy(filterModalVisibility = visible) }
 }

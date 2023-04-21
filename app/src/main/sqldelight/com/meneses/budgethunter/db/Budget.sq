@@ -10,11 +10,6 @@ CREATE TABLE budget (
 selectAll:
 SELECT * FROM budget;
 
-selectAllBy:
-SELECT * FROM budget
-WHERE budget.name = :name
-AND budget.frequency = :frequency;
-
 insert:
 INSERT INTO budget
 VALUES (:id, :amount, :name, :frequency);

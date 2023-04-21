@@ -5,8 +5,8 @@ import kotlinx.coroutines.flow.Flow
 
 interface BudgetRepository {
     val budgetList: Flow<List<Budget>>
-    fun getAllBudgets()
-    fun getBudgetsBy(budget: Budget)
+    fun getAllBudgets(): List<Budget>
+    fun getBudgetsBy(budget: Budget): List<Budget>
     fun createBudget(budget: Budget): Budget
     fun updateBudget(budget: Budget)
     fun deleteBudget(budget: Budget)

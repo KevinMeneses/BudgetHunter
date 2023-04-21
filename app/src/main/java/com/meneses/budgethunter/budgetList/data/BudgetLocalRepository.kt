@@ -1,39 +1,41 @@
 package com.meneses.budgethunter.budgetList.data
 
 import com.meneses.budgethunter.budgetList.domain.Budget
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.onEach
 
 class BudgetLocalRepository(
     private val budgetLocalDataSource: BudgetLocalDataSource = BudgetLocalDataSource()
 ) : BudgetRepository {
-
-    override val budgetList: Flow<List<Budget>> get() = _budgetList
-    private var _budgetList = budgetLocalDataSource.budgetList.toDomain()
-
-    override fun getAllBudgets() {
-        _budgetList = budgetLocalDataSource.budgetList.toDomain()
-    }
-
-    override fun getBudgetsBy(budget: Budget) {
-        val dbBudget = budget.toDb()
-        _budgetList = budgetLocalDataSource
-            .selectAllBy(dbBudget)
+    override val budgetList
+        get() = budgetLocalDataSource
+            .budgetList
             .toDomain()
-    }
+            .onEach { cachedList = it }
+
+    override fun getAllBudgets() = cachedList
+
+    override fun getBudgetsBy(budget: Budget) =
+        cachedList.filter {
+            if (budget.name.isBlank()) true
+            else it.name.lowercase().contains(budget.name.lowercase())
+        }.filter {
+            if (budget.frequency == null) true
+            else it.frequency == budget.frequency
+        }
 
     override fun createBudget(budget: Budget): Budget {
-        val dbBudget = budget.toDb()
-        budgetLocalDataSource.insert(dbBudget)
+        budgetLocalDataSource.insert(budget.toDb())
         val savedId = budgetLocalDataSource.selectLastId()
         return budget.copy(id = savedId)
     }
 
-    override fun updateBudget(budget: Budget) {
-        val dbBudget = budget.toDb()
-        budgetLocalDataSource.update(dbBudget)
-    }
+    override fun updateBudget(budget: Budget) =
+        budgetLocalDataSource.update(budget.toDb())
 
-    override fun deleteBudget(budget: Budget) {
+    override fun deleteBudget(budget: Budget) =
         budgetLocalDataSource.delete(budget.id.toLong())
+
+    companion object {
+        private var cachedList = emptyList<Budget>()
     }
 }
