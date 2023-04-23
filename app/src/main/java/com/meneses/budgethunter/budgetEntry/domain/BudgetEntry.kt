@@ -8,7 +8,7 @@ import java.time.LocalDate
 @Parcelize
 data class BudgetEntry(
     val id: Int = -1,
-    val budgetId: Int,
+    val budgetId: Int = -1,
     val amount: Double = 0.0,
     val description: String = EMPTY,
     val type: Type = Type.OUTCOME,

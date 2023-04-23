@@ -88,15 +88,13 @@ fun FilterModal(
                 modifier = Modifier.padding(bottom = 20.dp)
             )
 
-            var entryFilter by remember {
-                mutableStateOf(filter)
+            var type by remember {
+                mutableStateOf(filter?.type)
             }
 
             ListTypeDropdown(
-                type = entryFilter?.type,
-                onSelectItem = {
-                    entryFilter = entryFilter?.copy(type = it)
-                }
+                type = type,
+                onSelectItem = { type = it }
             )
 
             Spacer(modifier = Modifier.height(30.dp))
@@ -120,7 +118,9 @@ fun FilterModal(
 
                 Button(
                     onClick = {
-                        onApply(entryFilter ?: return@Button)
+                        val entryFilter = filter ?: BudgetEntry()
+                        val updatedFilter = entryFilter.copy(type = type ?: return@Button)
+                        onApply(updatedFilter)
                         onDismiss()
                     },
                     content = { Text(text = "Aplicar") }
@@ -151,10 +151,11 @@ private fun ListTypeDropdown(
     type: BudgetEntry.Type?,
     onSelectItem: (BudgetEntry.Type) -> Unit
 ) {
+    val types = remember { BudgetEntry.getItemTypes() }
     OutlinedDropdown(
         value = type?.value ?: EMPTY,
         label = "Tipo",
-        dropdownOptions = BudgetEntry.getItemTypes().map { it.value },
-        onSelectOption = { onSelectItem(BudgetEntry.getItemTypes()[it]) }
+        dropdownOptions = types.map { it.value },
+        onSelectOption = { onSelectItem(types[it]) }
     )
 }
