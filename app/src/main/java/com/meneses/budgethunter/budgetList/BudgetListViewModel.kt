@@ -3,8 +3,8 @@ package com.meneses.budgethunter.budgetList
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.meneses.budgethunter.budgetList.application.BudgetListState
-import com.meneses.budgethunter.budgetList.data.BudgetLocalRepository
-import com.meneses.budgethunter.budgetList.data.BudgetRepository
+import com.meneses.budgethunter.budgetList.data.repository.BudgetLocalRepository
+import com.meneses.budgethunter.budgetList.data.repository.BudgetRepository
 import com.meneses.budgethunter.budgetList.domain.Budget
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -26,10 +26,10 @@ class BudgetListViewModel(
 
     private fun collectBudgetList() {
         viewModelScope.launch(dispatcher) {
-            budgetRepository.budgetList.collect { budgetList ->
+            budgetRepository.budgets.collect { budgetList ->
                 _uiState.update {
                     val updatedList = if (it.filter == null) budgetList
-                    else budgetRepository.getBudgetsBy(it.filter)
+                    else budgetRepository.getAllFilteredBy(it.filter)
                     it.copy(budgetList = updatedList)
                 }
             }
@@ -38,7 +38,7 @@ class BudgetListViewModel(
 
     fun createBudget(budget: Budget) {
         viewModelScope.launch(dispatcher) {
-            val budgetSaved = budgetRepository.createBudget(budget)
+            val budgetSaved = budgetRepository.create(budget)
             navigateToBudget(budgetSaved)
         }
     }
@@ -48,14 +48,14 @@ class BudgetListViewModel(
 
     fun filterList(filter: Budget) {
         viewModelScope.launch(dispatcher) {
-            val filteredList = budgetRepository.getBudgetsBy(filter)
+            val filteredList = budgetRepository.getAllFilteredBy(filter)
             _uiState.update { it.copy(budgetList = filteredList, filter = filter) }
         }
     }
 
     fun clearFilter() {
         viewModelScope.launch(dispatcher) {
-            val budgetList = budgetRepository.getAllBudgets()
+            val budgetList = budgetRepository.getAll()
             _uiState.update { it.copy(budgetList = budgetList, filter = null) }
         }
     }

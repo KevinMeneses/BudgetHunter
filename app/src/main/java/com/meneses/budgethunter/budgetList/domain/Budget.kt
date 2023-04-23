@@ -21,16 +21,6 @@ data class Budget(
         companion object {
             fun getFrequencies(): List<Frequency> =
                 listOf(DAILY, WEEKLY, MONTHLY, ANNUAL, UNIQUE)
-
-            fun getByValue(value: String) =
-                when(value) {
-                    UNIQUE.value -> UNIQUE
-                    DAILY.value -> DAILY
-                    WEEKLY.value -> WEEKLY
-                    MONTHLY.value -> MONTHLY
-                    ANNUAL.value -> ANNUAL
-                    else -> UNIQUE
-                }
         }
     }
 }

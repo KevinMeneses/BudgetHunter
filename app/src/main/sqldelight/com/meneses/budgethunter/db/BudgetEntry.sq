@@ -1,0 +1,24 @@
+import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry.Type;
+
+CREATE TABLE budget_entry (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  budget_id INTEGER NOT NULL,
+  amount REAL NOT NULL,
+  description TEXT NOT NULL,
+  type TEXT AS Type NOT NULL,
+  date TEXT NOT NULL,
+  FOREIGN KEY (budget_id) REFERENCES budget(id) ON DELETE CASCADE
+);
+
+selectAllByBudgetId:
+SELECT * FROM budget_entry
+WHERE budget_id = :budgetId;
+
+insert:
+INSERT INTO budget_entry
+VALUES (:id, :budgetId, :amount, :description, :type, :date);
+
+update:
+UPDATE budget_entry
+SET budget_id = :budgetId, amount = :amount, description = :description, type = :type, date = :date
+WHERE id = :id;

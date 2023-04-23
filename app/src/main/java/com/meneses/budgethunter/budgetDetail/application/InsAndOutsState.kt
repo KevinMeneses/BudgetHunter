@@ -9,5 +9,5 @@ data class InsAndOutsState(
     val isBudgetModalVisible: Boolean = false,
     val isFilterModalVisible: Boolean = false,
     val isDeleteModalVisible: Boolean = false,
-    val filter: BudgetEntry.Type? = null
+    val filter: BudgetEntry? = null
 )

@@ -26,10 +26,9 @@ import com.maxkeppeker.sheets.core.models.base.rememberSheetState
 import com.maxkeppeler.sheets.calendar.CalendarDialog
 import com.maxkeppeler.sheets.calendar.models.CalendarConfig
 import com.maxkeppeler.sheets.calendar.models.CalendarSelection
+import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.commons.EMPTY
 import com.meneses.budgethunter.commons.ui.OutlinedDropdown
-import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
-import java.time.LocalDate
 
 @Composable
 fun BudgetEntryForm(
@@ -86,7 +85,7 @@ fun BudgetEntryForm(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun DateField(
-    date: String?,
+    date: String,
     onDateSelected: (String) -> Unit
 ) {
     val calendarState = rememberSheetState()
@@ -110,7 +109,7 @@ private fun DateField(
     ) {
         OutlinedTextField(
             modifier = Modifier.menuAnchor(),
-            value = date ?: LocalDate.now().toString(),
+            value = date,
             readOnly = true,
             label = { Text(text = "Fecha") },
             onValueChange = {},
@@ -127,14 +126,14 @@ private fun DateField(
 
 @Composable
 private fun TypeSelector(
-    type: BudgetEntry.Type?,
+    type: BudgetEntry.Type,
     onTypeSelected: (BudgetEntry.Type) -> Unit
 ) {
     val itemTypes = remember {
         BudgetEntry.getItemTypes()
     }
     OutlinedDropdown(
-        value = type?.value ?: EMPTY,
+        value = type.value,
         label = "Tipo",
         dropdownOptions = itemTypes.map { it.value },
         onSelectOption = { onTypeSelected(itemTypes[it]) }
@@ -144,11 +143,11 @@ private fun TypeSelector(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AmountField(
-    amount: Double?,
+    amount: Double,
     onAmountChanged: (Double) -> Unit
 ) {
     OutlinedTextField(
-        value = amount?.toString() ?: EMPTY,
+        value = amount.toString(),
         onValueChange = {
             onAmountChanged(it.toDoubleOrNull() ?: 0.0)
         },
@@ -162,11 +161,11 @@ private fun AmountField(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun DescriptionField(
-    description: String?,
+    description: String,
     onDescriptionChanged: (String) -> Unit
 ) {
     OutlinedTextField(
-        value = description ?: EMPTY,
+        value = description,
         onValueChange = onDescriptionChanged,
         label = { Text(text = "Descripcion") },
         keyboardOptions = KeyboardOptions(

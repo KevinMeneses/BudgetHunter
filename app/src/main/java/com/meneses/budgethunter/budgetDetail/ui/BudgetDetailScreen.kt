@@ -17,7 +17,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.meneses.budgethunter.budgetDetail.BudgetDetailViewModel
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
-import com.meneses.budgethunter.budgetEntryList
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.commons.ui.AppBar
 import com.meneses.budgethunter.destinations.BudgetEntryScreenDestination
@@ -50,10 +49,6 @@ fun BudgetDetailScreen(
         }
 
         myViewModel.getBudgetEntries()
-
-        uiState.filter?.let {
-            myViewModel.filterEntries(it)
-        }
     }
 
     ModalNavigationDrawer(
@@ -87,8 +82,7 @@ fun BudgetDetailScreen(
                         }
                     },
                     onRightButtonClick = fun() {
-                        val budgetEntry =
-                            BudgetEntry(id = budgetEntryList.size, budgetId = budget.id)
+                        val budgetEntry = BudgetEntry(budgetId = budget.id)
                         val destination = BudgetEntryScreenDestination(budgetEntry)
                         navigator.navigate(destination)
                     }

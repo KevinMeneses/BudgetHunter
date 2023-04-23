@@ -47,7 +47,7 @@ fun BudgetEntryScreen(
     Scaffold(
         topBar = {
             val title = remember {
-                if (budgetEntry.amount == null) "Nuevo presupuesto"
+                if (budgetEntry.id < 0) "Nuevo presupuesto"
                 else "Modificar presupuesto"
             }
 
@@ -56,12 +56,7 @@ fun BudgetEntryScreen(
                 leftButtonIcon = Icons.Default.ArrowBack,
                 rightButtonIcon = Icons.Default.Done,
                 onLeftButtonClick = onBack,
-                onRightButtonClick = fun() {
-                    if (uiState.budgetEntry?.amount != null) {
-                        myViewModel.saveBudgetEntry()
-                        navigator.popBackStack()
-                    }
-                }
+                onRightButtonClick = myViewModel::saveBudgetEntry
             )
         }
     ) { paddingValues ->

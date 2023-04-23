@@ -21,10 +21,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.meneses.budgethunter.commons.EMPTY
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
+import com.meneses.budgethunter.commons.EMPTY
 import com.meneses.budgethunter.commons.ui.ConfirmationModal
 import com.meneses.budgethunter.commons.ui.Modal
 import com.meneses.budgethunter.commons.ui.OutlinedDropdown
@@ -76,10 +75,10 @@ fun BudgetModal(
 @Composable
 fun FilterModal(
     show: Boolean,
-    filter: BudgetEntry.Type?,
+    filter: BudgetEntry?,
     onDismiss: () -> Unit,
     onClean: () -> Unit,
-    onApply: (BudgetEntry.Type) -> Unit
+    onApply: (BudgetEntry) -> Unit
 ) {
     if (show) {
         Modal(onDismiss = onDismiss) {
@@ -89,13 +88,15 @@ fun FilterModal(
                 modifier = Modifier.padding(bottom = 20.dp)
             )
 
-            var budgetType by remember {
+            var entryFilter by remember {
                 mutableStateOf(filter)
             }
 
             ListTypeDropdown(
-                type = budgetType,
-                onSelectItem = { budgetType = it }
+                type = entryFilter?.type,
+                onSelectItem = {
+                    entryFilter = entryFilter?.copy(type = it)
+                }
             )
 
             Spacer(modifier = Modifier.height(30.dp))
@@ -119,7 +120,7 @@ fun FilterModal(
 
                 Button(
                     onClick = {
-                        onApply(budgetType ?: return@Button)
+                        onApply(entryFilter ?: return@Button)
                         onDismiss()
                     },
                     content = { Text(text = "Aplicar") }

@@ -1,20 +1,23 @@
-package com.meneses.budgethunter.budgetList.data
+package com.meneses.budgethunter.budgetList.data.repository
 
+import com.meneses.budgethunter.budgetList.data.BudgetLocalDataSource
+import com.meneses.budgethunter.budgetList.data.toDb
+import com.meneses.budgethunter.budgetList.data.toDomain
 import com.meneses.budgethunter.budgetList.domain.Budget
 import kotlinx.coroutines.flow.onEach
 
 class BudgetLocalRepository(
     private val budgetLocalDataSource: BudgetLocalDataSource = BudgetLocalDataSource()
 ) : BudgetRepository {
-    override val budgetList
+    override val budgets
         get() = budgetLocalDataSource
-            .budgetList
+            .budgets
             .toDomain()
             .onEach { cachedList = it }
 
-    override fun getAllBudgets() = cachedList
+    override fun getAll() = cachedList
 
-    override fun getBudgetsBy(budget: Budget) =
+    override fun getAllFilteredBy(budget: Budget) =
         cachedList.filter {
             if (budget.name.isBlank()) true
             else it.name.lowercase().contains(budget.name.lowercase())
@@ -23,16 +26,16 @@ class BudgetLocalRepository(
             else it.frequency == budget.frequency
         }
 
-    override fun createBudget(budget: Budget): Budget {
+    override fun create(budget: Budget): Budget {
         budgetLocalDataSource.insert(budget.toDb())
         val savedId = budgetLocalDataSource.selectLastId()
         return budget.copy(id = savedId)
     }
 
-    override fun updateBudget(budget: Budget) =
+    override fun update(budget: Budget) =
         budgetLocalDataSource.update(budget.toDb())
 
-    override fun deleteBudget(budget: Budget) =
+    override fun delete(budget: Budget) =
         budgetLocalDataSource.delete(budget.id.toLong())
 
     companion object {

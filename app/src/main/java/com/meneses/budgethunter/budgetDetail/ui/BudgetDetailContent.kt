@@ -132,7 +132,7 @@ private fun ColumnScope.ListSection(
                         .clickable { onItemClick(budgetItem) }
                         .padding(vertical = 10.dp)
                 ) {
-                    Text(text = budgetItem.description.takeIf { !it.isNullOrBlank() } ?: "Sin descripcion")
+                    Text(text = budgetItem.description.takeIf { it.isNotBlank() } ?: "Sin descripcion")
                     val operatorSign =
                         if (budgetItem.type == BudgetEntry.Type.OUTCOME) "-"
                         else EMPTY
@@ -152,13 +152,13 @@ fun BalanceSection(
     val outcomes = budgetEntries
         .filter { it.type == BudgetEntry.Type.OUTCOME }
         .map { it.amount }
-        .reduceOrNull { acc, actual -> (acc ?: 0.0) + (actual ?: 0.0) }
+        .reduceOrNull { acc, actual -> acc + actual }
         ?: 0.0
 
     val incomes = budgetEntries
         .filter { it.type == BudgetEntry.Type.INCOME }
         .map { it.amount }
-        .reduceOrNull { acc, actual -> (acc ?: 0.0) + (actual ?: 0.0) }
+        .reduceOrNull { acc, actual -> acc + actual }
         ?: 0.0
 
     val balance = budgetAmount + incomes - outcomes
