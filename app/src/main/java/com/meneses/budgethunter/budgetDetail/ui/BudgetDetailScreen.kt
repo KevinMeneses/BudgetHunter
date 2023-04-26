@@ -9,13 +9,14 @@ import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.meneses.budgethunter.budgetDetail.BudgetDetailViewModel
+import com.meneses.budgethunter.budgetDetail.application.BudgetDetailEvent
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.commons.ui.AppBar
@@ -43,12 +44,13 @@ fun BudgetDetailScreen(
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val coroutineScope = rememberCoroutineScope()
 
-    LaunchedEffect(Unit) {
-        if (uiState.budget.id != budget.id) {
-            myViewModel.setBudget(budget)
-        }
-
+    DisposableEffect(Unit) {
+        if (uiState.budget.id != budget.id) myViewModel.setBudget(budget)
         myViewModel.getBudgetEntries()
+
+        onDispose {
+            myViewModel.clearNavigation()
+        }
     }
 
     ModalNavigationDrawer(
@@ -57,13 +59,13 @@ fun BudgetDetailScreen(
                 onFilterClick = fun() {
                     coroutineScope.launch {
                         drawerState.close()
-                        myViewModel.showFilterModal()
+                        myViewModel.sendEvent(BudgetDetailEvent.ShowFilterModal)
                     }
                 },
                 onDeleteClick = fun() {
                     coroutineScope.launch {
                         drawerState.close()
-                        myViewModel.showDeleteModal()
+                        myViewModel.sendEvent(BudgetDetailEvent.ShowDeleteModal)
                     }
                 }
             )
@@ -90,39 +92,34 @@ fun BudgetDetailScreen(
             }
         ) { paddingValues ->
             BudgetDetailContent(
-                budgetAmount = uiState.budget.amount,
-                budgetEntries = uiState.entries,
                 paddingValues = paddingValues,
-                onBudgetClick = myViewModel::showBudgetModal,
-                onItemClick = fun(budgetEntry) {
-                    val destination = BudgetEntryScreenDestination(budgetEntry)
-                    navigator.navigate(destination)
-                }
+                uiState = uiState,
+                onEvent = myViewModel::sendEvent
             )
         }
 
         BudgetModal(
             show = uiState.isBudgetModalVisible,
             budgetAmount = uiState.budget.amount,
-            onDismiss = myViewModel::hideBudgetModal,
-            onSaveClick = myViewModel::setBudgetAmount
+            onEvent = myViewModel::sendEvent
         )
 
         FilterModal(
             show = uiState.isFilterModalVisible,
             filter = uiState.filter,
-            onDismiss = myViewModel::hideFilterModal,
-            onClean = myViewModel::clearFilter,
-            onApply = myViewModel::filterEntries
+            onEvent = myViewModel::sendEvent
         )
 
         DeleteConfirmationModal(
             show = uiState.isDeleteModalVisible,
-            onDismiss = myViewModel::hideDeleteModal,
-            onConfirm = fun() {
-                myViewModel.deleteBudget()
-                navigator.popBackStack()
-            }
+            onEvent = myViewModel::sendEvent
         )
+    }
+
+    if (uiState.goBack) navigator.popBackStack()
+
+    uiState.showEntry?.let {
+        val destination = BudgetEntryScreenDestination(it)
+        navigator.navigate(destination)
     }
 }

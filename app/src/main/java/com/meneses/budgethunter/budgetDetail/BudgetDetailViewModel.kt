@@ -2,8 +2,9 @@ package com.meneses.budgethunter.budgetDetail
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.meneses.budgethunter.budgetDetail.application.BudgetDetailEvent
 import com.meneses.budgethunter.budgetList.domain.Budget
-import com.meneses.budgethunter.budgetDetail.application.InsAndOutsState
+import com.meneses.budgethunter.budgetDetail.application.BudgetDetailState
 import com.meneses.budgethunter.budgetEntry.data.repository.BudgetEntryRepository
 import com.meneses.budgethunter.budgetEntry.data.repository.BudgetEntryLocalRepository
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
@@ -22,7 +23,7 @@ class BudgetDetailViewModel(
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(InsAndOutsState())
+    private val _uiState = MutableStateFlow(BudgetDetailState())
     val uiState = _uiState.asStateFlow()
 
     fun setBudget(budget: Budget) =
@@ -42,7 +43,46 @@ class BudgetDetailViewModel(
         }
     }
 
-    fun setBudgetAmount(amount: Double) {
+    fun clearNavigation() =
+        _uiState.update { it.copy(showEntry = null) }
+
+    fun sendEvent(event: BudgetDetailEvent) {
+        when(event) {
+            is BudgetDetailEvent.UpdateBudgetAmount -> updateBudgetAmount(event.amount)
+            is BudgetDetailEvent.FilterEntries -> filterEntries(event.filter)
+            is BudgetDetailEvent.ClearFilter -> clearFilter()
+            is BudgetDetailEvent.DeleteBudget -> deleteBudget()
+            is BudgetDetailEvent.HideBudgetModal -> setBudgetModalVisibility(false)
+            is BudgetDetailEvent.HideDeleteModal -> setDeleteModalVisibility(false)
+            is BudgetDetailEvent.HideFilterModal -> setFilterModalVisibility(false)
+            is BudgetDetailEvent.ShowBudgetModal -> setBudgetModalVisibility(true)
+            is BudgetDetailEvent.ShowDeleteModal -> setDeleteModalVisibility(true)
+            is BudgetDetailEvent.ShowFilterModal -> setFilterModalVisibility(true)
+            is BudgetDetailEvent.ActivateSelection -> toggleSelection(true)
+            is BudgetDetailEvent.DeactivateSelection -> toggleSelection(false)
+            is BudgetDetailEvent.SelectEntry -> toggleEntrySelection(event.index, true)
+            is BudgetDetailEvent.UnselectEntry -> toggleEntrySelection(event.index, false)
+            is BudgetDetailEvent.ShowEntry -> showEntry(event.budgetItem)
+            is BudgetDetailEvent.SelectAllEntries -> toggleAllEntriesSelection(true)
+            is BudgetDetailEvent.UnselectAllEntries -> toggleAllEntriesSelection(false)
+        }
+    }
+
+    private fun toggleEntrySelection(index: Int, isSelected: Boolean) {
+        _uiState.update { state ->
+            val updatedEntry = state.entries[index].copy(isSelected = isSelected)
+            val updatedList = state.entries
+                .toMutableList()
+                .apply { set(index = index, element = updatedEntry) }
+
+            state.copy(entries = updatedList)
+        }
+    }
+
+    private fun showEntry(budgetItem: BudgetEntry) =
+        _uiState.update { it.copy(showEntry = budgetItem) }
+
+    private fun updateBudgetAmount(amount: Double) {
         viewModelScope.launch(dispatcher) {
             _uiState.update {
                 val budget = it.budget.copy(amount = amount)
@@ -52,7 +92,7 @@ class BudgetDetailViewModel(
         }
     }
 
-    fun filterEntries(filter: BudgetEntry) {
+    private fun filterEntries(filter: BudgetEntry) {
         viewModelScope.launch(dispatcher) {
             val entryFilter = filter.copy(budgetId = _uiState.value.budget.id)
             val filteredEntries = budgetEntryRepository.getAllFilteredBy(entryFilter)
@@ -60,31 +100,19 @@ class BudgetDetailViewModel(
         }
     }
 
-    fun clearFilter() {
+    private fun clearFilter() {
         viewModelScope.launch(dispatcher) {
             val entries = budgetEntryRepository.getAll()
             _uiState.update { it.copy(entries = entries, filter = null) }
         }
     }
 
-    fun deleteBudget() {
+    private fun deleteBudget() {
         viewModelScope.launch(dispatcher) {
             val budget = _uiState.value.budget
             budgetRepository.delete(budget)
         }
     }
-
-    fun showBudgetModal() = setBudgetModalVisibility(true)
-
-    fun hideBudgetModal() = setBudgetModalVisibility(false)
-
-    fun showFilterModal() = setFilterModalVisibility(true)
-
-    fun hideFilterModal() = setFilterModalVisibility(false)
-
-    fun showDeleteModal() = setDeleteModalVisibility(true)
-
-    fun hideDeleteModal() = setDeleteModalVisibility(false)
 
     private fun setFilterModalVisibility(visible: Boolean) =
         _uiState.update { it.copy(isFilterModalVisible = visible) }
@@ -94,4 +122,14 @@ class BudgetDetailViewModel(
 
     private fun setBudgetModalVisibility(visible: Boolean) =
         _uiState.update { it.copy(isBudgetModalVisible = visible) }
+
+    private fun toggleSelection(isActivated: Boolean) =
+        _uiState.update { it.copy(isSelectionActive = isActivated) }
+            .also { if (!isActivated) toggleAllEntriesSelection(false) }
+
+    private fun toggleAllEntriesSelection(isSelected: Boolean) =
+        _uiState.update { state ->
+            val updatedEntries = state.entries.map { it.copy(isSelected = isSelected) }
+            state.copy(entries = updatedEntries)
+        }
 }

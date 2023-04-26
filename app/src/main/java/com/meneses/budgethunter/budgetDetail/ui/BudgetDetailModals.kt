@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.meneses.budgethunter.budgetDetail.application.BudgetDetailEvent
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.commons.EMPTY
 import com.meneses.budgethunter.commons.ui.ConfirmationModal
@@ -34,22 +35,33 @@ import com.meneses.budgethunter.theme.AppColors
 fun BudgetModal(
     show: Boolean,
     budgetAmount: Double,
-    onDismiss: () -> Unit,
-    onSaveClick: (Double) -> Unit
+    onEvent: (BudgetDetailEvent) -> Unit
 ) {
     if (show) {
+        var budget by remember {
+            val amount = if (budgetAmount == 0.0) EMPTY
+            else budgetAmount.toBigDecimal().toPlainString()
+            mutableStateOf(amount)
+        }
+
+        val onDismiss = remember {
+            fun() { onEvent(BudgetDetailEvent.HideBudgetModal) }
+        }
+
+        val onSaveClick = remember {
+            fun() {
+                val amount = budget.toDoubleOrNull() ?: 0.0
+                onEvent(BudgetDetailEvent.UpdateBudgetAmount(amount))
+                onDismiss()
+            }
+        }
+
         Modal(onDismiss = onDismiss) {
             Text(
                 text = "Presupuesto",
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.padding(bottom = 20.dp)
             )
-
-            var budget by remember {
-                val amount = if (budgetAmount == 0.0) EMPTY
-                else budgetAmount.toBigDecimal().toPlainString()
-                mutableStateOf(amount)
-            }
 
             OutlinedTextField(
                 value = budget,
@@ -62,10 +74,7 @@ fun BudgetModal(
             )
 
             Button(
-                onClick = {
-                    onSaveClick(budget.toDoubleOrNull() ?: 0.0)
-                    onDismiss()
-                },
+                onClick = onSaveClick,
                 content = { Text(text = "Guardar") }
             )
         }
@@ -76,21 +85,39 @@ fun BudgetModal(
 fun FilterModal(
     show: Boolean,
     filter: BudgetEntry?,
-    onDismiss: () -> Unit,
-    onClean: () -> Unit,
-    onApply: (BudgetEntry) -> Unit
+    onEvent: (BudgetDetailEvent) -> Unit
 ) {
     if (show) {
+        var type by remember {
+            mutableStateOf(filter?.type)
+        }
+
+        val onDismiss = remember {
+            fun() { onEvent(BudgetDetailEvent.HideFilterModal) }
+        }
+
+        val onClear = remember {
+            fun() {
+                onEvent(BudgetDetailEvent.ClearFilter)
+                onDismiss()
+            }
+        }
+
+        val onApply = remember {
+            fun() {
+                val entryFilter = filter ?: BudgetEntry()
+                val updatedFilter = entryFilter.copy(type = type ?: return)
+                onEvent(BudgetDetailEvent.FilterEntries(updatedFilter))
+                onDismiss()
+            }
+        }
+
         Modal(onDismiss = onDismiss) {
             Text(
                 text = "Filtrar",
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.padding(bottom = 20.dp)
             )
-
-            var type by remember {
-                mutableStateOf(filter?.type)
-            }
 
             ListTypeDropdown(
                 type = type,
@@ -109,20 +136,12 @@ fun FilterModal(
                         containerColor = AppColors.background,
                         contentColor = AppColors.onBackground
                     ),
-                    onClick = {
-                        onClean()
-                        onDismiss()
-                    },
+                    onClick = onClear,
                     content = { Text(text = "Limpiar") }
                 )
 
                 Button(
-                    onClick = {
-                        val entryFilter = filter ?: BudgetEntry()
-                        val updatedFilter = entryFilter.copy(type = type ?: return@Button)
-                        onApply(updatedFilter)
-                        onDismiss()
-                    },
+                    onClick = onApply,
                     content = { Text(text = "Aplicar") }
                 )
             }
@@ -133,9 +152,16 @@ fun FilterModal(
 @Composable
 fun DeleteConfirmationModal(
     show: Boolean,
-    onDismiss: () -> Unit,
-    onConfirm: () -> Unit
+    onEvent: (BudgetDetailEvent) -> Unit
 ) {
+    val onDismiss = remember {
+        fun() { onEvent(BudgetDetailEvent.HideDeleteModal) }
+    }
+
+    val onConfirm = remember {
+        fun() { onEvent(BudgetDetailEvent.DeleteBudget) }
+    }
+
     ConfirmationModal(
         show = show,
         message = "¿Está seguro que desea eliminar este presupuesto?",
