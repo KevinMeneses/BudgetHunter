@@ -59,13 +59,13 @@ fun BudgetDetailScreen(
                 onFilterClick = fun() {
                     coroutineScope.launch {
                         drawerState.close()
-                        myViewModel.sendEvent(BudgetDetailEvent.ShowFilterModal)
+                        myViewModel.sendEvent(BudgetDetailEvent.ToggleFilterModal(true))
                     }
                 },
                 onDeleteClick = fun() {
                     coroutineScope.launch {
                         drawerState.close()
-                        myViewModel.sendEvent(BudgetDetailEvent.ShowDeleteModal)
+                        myViewModel.sendEvent(BudgetDetailEvent.ToggleDeleteModal(true))
                     }
                 }
             )

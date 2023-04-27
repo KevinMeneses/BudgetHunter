@@ -45,7 +45,7 @@ fun BudgetModal(
         }
 
         val onDismiss = remember {
-            fun() { onEvent(BudgetDetailEvent.HideBudgetModal) }
+            fun() { onEvent(BudgetDetailEvent.ToggleBudgetModal(false)) }
         }
 
         val onSaveClick = remember {
@@ -93,7 +93,7 @@ fun FilterModal(
         }
 
         val onDismiss = remember {
-            fun() { onEvent(BudgetDetailEvent.HideFilterModal) }
+            fun() { onEvent(BudgetDetailEvent.ToggleFilterModal(false)) }
         }
 
         val onClear = remember {
@@ -155,7 +155,7 @@ fun DeleteConfirmationModal(
     onEvent: (BudgetDetailEvent) -> Unit
 ) {
     val onDismiss = remember {
-        fun() { onEvent(BudgetDetailEvent.HideDeleteModal) }
+        fun() { onEvent(BudgetDetailEvent.ToggleDeleteModal(false)) }
     }
 
     val onConfirm = remember {

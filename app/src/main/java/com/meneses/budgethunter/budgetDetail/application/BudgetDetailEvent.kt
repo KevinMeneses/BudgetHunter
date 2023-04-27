@@ -6,18 +6,12 @@ sealed interface BudgetDetailEvent {
     data class UpdateBudgetAmount(val amount: Double) : BudgetDetailEvent
     data class FilterEntries(val filter: BudgetEntry) : BudgetDetailEvent
     data class ShowEntry(val budgetItem: BudgetEntry) : BudgetDetailEvent
-    data class SelectEntry(val index: Int) : BudgetDetailEvent
-    data class UnselectEntry(val index: Int) : BudgetDetailEvent
     object ClearFilter : BudgetDetailEvent
     object DeleteBudget : BudgetDetailEvent
-    object ShowBudgetModal : BudgetDetailEvent
-    object HideBudgetModal : BudgetDetailEvent
-    object ShowFilterModal : BudgetDetailEvent
-    object HideFilterModal : BudgetDetailEvent
-    object ShowDeleteModal : BudgetDetailEvent
-    object HideDeleteModal : BudgetDetailEvent
-    object SelectAllEntries : BudgetDetailEvent
-    object UnselectAllEntries : BudgetDetailEvent
-    object ActivateSelection : BudgetDetailEvent
-    object DeactivateSelection : BudgetDetailEvent
+    data class ToggleSelectEntry(val index: Int, val isSelected: Boolean) : BudgetDetailEvent
+    data class ToggleBudgetModal(val isVisible: Boolean) : BudgetDetailEvent
+    data class ToggleFilterModal(val isVisible: Boolean) : BudgetDetailEvent
+    data class ToggleDeleteModal(val isVisible: Boolean) : BudgetDetailEvent
+    data class ToggleAllEntriesSelection(val isSelected: Boolean) : BudgetDetailEvent
+    data class ToggleSelectionState(val isActivated: Boolean) : BudgetDetailEvent
 }

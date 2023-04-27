@@ -52,28 +52,22 @@ class BudgetDetailViewModel(
             is BudgetDetailEvent.FilterEntries -> filterEntries(event.filter)
             is BudgetDetailEvent.ClearFilter -> clearFilter()
             is BudgetDetailEvent.DeleteBudget -> deleteBudget()
-            is BudgetDetailEvent.HideBudgetModal -> setBudgetModalVisibility(false)
-            is BudgetDetailEvent.HideDeleteModal -> setDeleteModalVisibility(false)
-            is BudgetDetailEvent.HideFilterModal -> setFilterModalVisibility(false)
-            is BudgetDetailEvent.ShowBudgetModal -> setBudgetModalVisibility(true)
-            is BudgetDetailEvent.ShowDeleteModal -> setDeleteModalVisibility(true)
-            is BudgetDetailEvent.ShowFilterModal -> setFilterModalVisibility(true)
-            is BudgetDetailEvent.ActivateSelection -> toggleSelection(true)
-            is BudgetDetailEvent.DeactivateSelection -> toggleSelection(false)
-            is BudgetDetailEvent.SelectEntry -> toggleEntrySelection(event.index, true)
-            is BudgetDetailEvent.UnselectEntry -> toggleEntrySelection(event.index, false)
             is BudgetDetailEvent.ShowEntry -> showEntry(event.budgetItem)
-            is BudgetDetailEvent.SelectAllEntries -> toggleAllEntriesSelection(true)
-            is BudgetDetailEvent.UnselectAllEntries -> toggleAllEntriesSelection(false)
+            is BudgetDetailEvent.ToggleBudgetModal -> setBudgetModalVisibility(event.isVisible)
+            is BudgetDetailEvent.ToggleDeleteModal -> setDeleteModalVisibility(event.isVisible)
+            is BudgetDetailEvent.ToggleFilterModal -> setFilterModalVisibility(event.isVisible)
+            is BudgetDetailEvent.ToggleSelectionState -> toggleSelection(event.isActivated)
+            is BudgetDetailEvent.ToggleAllEntriesSelection -> toggleAllEntriesSelection(event.isSelected)
+            is BudgetDetailEvent.ToggleSelectEntry -> toggleEntrySelection(event)
         }
     }
 
-    private fun toggleEntrySelection(index: Int, isSelected: Boolean) {
+    private fun toggleEntrySelection(event: BudgetDetailEvent.ToggleSelectEntry) {
         _uiState.update { state ->
-            val updatedEntry = state.entries[index].copy(isSelected = isSelected)
+            val updatedEntry = state.entries[event.index].copy(isSelected = event.isSelected)
             val updatedList = state.entries
                 .toMutableList()
-                .apply { set(index = index, element = updatedEntry) }
+                .apply { set(index = event.index, element = updatedEntry) }
 
             state.copy(entries = updatedList)
         }
