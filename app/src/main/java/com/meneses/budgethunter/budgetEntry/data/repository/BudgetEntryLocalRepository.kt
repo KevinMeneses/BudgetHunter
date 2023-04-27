@@ -27,6 +27,11 @@ class BudgetEntryLocalRepository(
     override fun update(budgetEntry: BudgetEntry) =
         budgetEntryLocalDataSource.update(budgetEntry.toDb())
 
+    override fun deleteByIds(ids: List<Int>) {
+        val dbIds = ids.map { it.toLong() }
+        budgetEntryLocalDataSource.deleteByIds(dbIds)
+    }
+
     companion object {
         private var cachedEntries = emptyList<BudgetEntry>()
     }

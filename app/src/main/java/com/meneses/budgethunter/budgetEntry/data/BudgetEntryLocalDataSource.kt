@@ -36,4 +36,8 @@ class BudgetEntryLocalDataSource(
             type = budgetEntry.type,
             date = budgetEntry.date
         )
+
+    fun deleteByIds(list: List<Long>) {
+        queries.deleteByIds(list)
+    }
 }

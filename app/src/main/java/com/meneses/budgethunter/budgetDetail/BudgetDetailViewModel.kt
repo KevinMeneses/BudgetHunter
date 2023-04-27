@@ -47,18 +47,30 @@ class BudgetDetailViewModel(
         _uiState.update { it.copy(showEntry = null) }
 
     fun sendEvent(event: BudgetDetailEvent) {
-        when(event) {
+        when (event) {
             is BudgetDetailEvent.UpdateBudgetAmount -> updateBudgetAmount(event.amount)
             is BudgetDetailEvent.FilterEntries -> filterEntries(event.filter)
             is BudgetDetailEvent.ClearFilter -> clearFilter()
             is BudgetDetailEvent.DeleteBudget -> deleteBudget()
+            is BudgetDetailEvent.DeleteSelectedEntries -> deleteSelectedEntries()
             is BudgetDetailEvent.ShowEntry -> showEntry(event.budgetItem)
             is BudgetDetailEvent.ToggleBudgetModal -> setBudgetModalVisibility(event.isVisible)
             is BudgetDetailEvent.ToggleDeleteModal -> setDeleteModalVisibility(event.isVisible)
             is BudgetDetailEvent.ToggleFilterModal -> setFilterModalVisibility(event.isVisible)
-            is BudgetDetailEvent.ToggleSelectionState -> toggleSelection(event.isActivated)
+            is BudgetDetailEvent.ToggleSelectionState -> toggleSelectionState(event.isActivated)
             is BudgetDetailEvent.ToggleAllEntriesSelection -> toggleAllEntriesSelection(event.isSelected)
             is BudgetDetailEvent.ToggleSelectEntry -> toggleEntrySelection(event)
+        }
+    }
+
+    private fun deleteSelectedEntries() {
+        viewModelScope.launch(dispatcher) {
+            val entriesToDeleteIds = _uiState.value.entries
+                .filter { it.isSelected }
+                .map { it.id }
+
+            budgetEntryRepository.deleteByIds(entriesToDeleteIds)
+            toggleSelectionState(false)
         }
     }
 
@@ -117,7 +129,7 @@ class BudgetDetailViewModel(
     private fun setBudgetModalVisibility(visible: Boolean) =
         _uiState.update { it.copy(isBudgetModalVisible = visible) }
 
-    private fun toggleSelection(isActivated: Boolean) =
+    private fun toggleSelectionState(isActivated: Boolean) =
         _uiState.update { it.copy(isSelectionActive = isActivated) }
             .also { if (!isActivated) toggleAllEntriesSelection(false) }
 

@@ -22,3 +22,7 @@ update:
 UPDATE budget_entry
 SET budget_id = :budgetId, amount = :amount, description = :description, type = :type, date = :date
 WHERE id = :id;
+
+deleteByIds:
+DELETE FROM budget_entry
+WHERE id IN ?;

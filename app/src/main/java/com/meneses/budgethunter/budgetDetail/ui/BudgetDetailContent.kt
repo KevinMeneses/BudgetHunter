@@ -81,9 +81,7 @@ fun BudgetDetailContent(
                     budgetEntries = uiState.entries,
                     budgetAmount = uiState.budget.amount
                 )
-            } else {
-                DeleteButton()
-            }
+            } else DeleteButton(onEvent)
         }
     }
 }
@@ -279,7 +277,12 @@ fun BalanceSection(
 }
 
 @Composable
-private fun DeleteButton() {
+private fun DeleteButton(
+    onEvent: (BudgetDetailEvent) -> Unit
+) {
+    val onClick = remember {
+        fun() { onEvent(BudgetDetailEvent.DeleteSelectedEntries) }
+    }
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -287,7 +290,7 @@ private fun DeleteButton() {
             .padding(vertical = 5.dp),
     ) {
         Button(
-            onClick = { },
+            onClick = onClick,
             modifier = Modifier.align(Alignment.Center),
             colors = ButtonDefaults.buttonColors(
                 containerColor = AppColors.error,

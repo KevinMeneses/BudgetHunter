@@ -9,4 +9,5 @@ interface BudgetEntryRepository {
     fun getAllFilteredBy(budgetEntry: BudgetEntry): List<BudgetEntry>
     fun create(budgetEntry: BudgetEntry)
     fun update(budgetEntry: BudgetEntry)
+    fun deleteByIds(ids: List<Int>)
 }
