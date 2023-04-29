@@ -9,7 +9,7 @@ import java.time.LocalDate
 data class BudgetEntry(
     val id: Int = -1,
     val budgetId: Int = -1,
-    val amount: Double = 0.0,
+    val amount: String = EMPTY,
     val description: String = EMPTY,
     val type: Type = Type.OUTCOME,
     val date: String = LocalDate.now().toString(),
@@ -17,10 +17,13 @@ data class BudgetEntry(
 ) : Parcelable {
     enum class Type(val value: String) {
         OUTCOME("Gasto"),
-        INCOME("Ingreso")
+        INCOME("Ingreso"),
+        BOTH("Ambos")
     }
 
     companion object {
-        fun getItemTypes() = listOf(Type.OUTCOME, Type.INCOME)
+        fun getItemTypes(type: Type? = null) =
+            if (type == Type.BOTH) listOf(Type.BOTH, Type.OUTCOME, Type.INCOME)
+            else listOf(Type.OUTCOME, Type.INCOME)
     }
 }

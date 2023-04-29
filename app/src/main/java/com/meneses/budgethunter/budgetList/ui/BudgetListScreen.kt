@@ -75,8 +75,6 @@ fun BudgetListScreen(
     }
 
     DisposableEffect(key1 = Unit) {
-        onDispose {
-            myViewModel.onDispose()
-        }
+        onDispose { myViewModel.onDispose() }
     }
 }

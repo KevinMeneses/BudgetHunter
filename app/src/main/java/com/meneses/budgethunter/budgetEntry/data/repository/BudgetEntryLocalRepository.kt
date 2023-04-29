@@ -19,7 +19,13 @@ class BudgetEntryLocalRepository(
         .onEach { cachedEntries = it }
 
     override fun getAllFilteredBy(budgetEntry: BudgetEntry) =
-        cachedEntries.filter { it.type == budgetEntry.type }
+        cachedEntries.filter {
+            if (budgetEntry.description.isBlank()) true
+            else it.description.contains(budgetEntry.description)
+        }.filter {
+            if (budgetEntry.type == BudgetEntry.Type.BOTH) true
+            else it.type == budgetEntry.type
+        }
 
     override fun create(budgetEntry: BudgetEntry) =
         budgetEntryLocalDataSource.insert(budgetEntry.toDb())

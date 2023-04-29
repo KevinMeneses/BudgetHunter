@@ -223,7 +223,7 @@ private fun ColumnScope.ListSection(
                         if (budgetItem.type == BudgetEntry.Type.OUTCOME) "-"
                         else EMPTY
                     Text(
-                        text = operatorSign + budgetItem.amount.toString(),
+                        text = operatorSign + budgetItem.amount,
                         modifier = Modifier.weight(0.3f),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -243,17 +243,21 @@ fun BalanceSection(
 ) {
     val outcomes = budgetEntries
         .filter { it.type == BudgetEntry.Type.OUTCOME }
-        .map { it.amount }
+        .map { it.amount.toDouble() }
         .reduceOrNull { acc, actual -> acc + actual }
         ?: 0.0
 
     val incomes = budgetEntries
         .filter { it.type == BudgetEntry.Type.INCOME }
-        .map { it.amount }
+        .map { it.amount.toDouble() }
         .reduceOrNull { acc, actual -> acc + actual }
         ?: 0.0
 
+    val outcomesText = String.format(format = "%.2f", outcomes)
+
     val balance = budgetAmount + incomes - outcomes
+
+    val balanceText = String.format(format = "%.2f", balance)
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -270,9 +274,9 @@ fun BalanceSection(
         )
     ) {
         val operatorSign = if (outcomes == 0.0) EMPTY else "-"
-        AmountText("Total gastos:", "$operatorSign${outcomes.toBigDecimal().toPlainString()}")
+        AmountText("Total gastos:", "$operatorSign$outcomesText")
         DefDivider(color = AppColors.onSecondaryContainer)
-        AmountText("Balance:", balance.toBigDecimal().toPlainString())
+        AmountText("Balance:", balanceText)
     }
 }
 

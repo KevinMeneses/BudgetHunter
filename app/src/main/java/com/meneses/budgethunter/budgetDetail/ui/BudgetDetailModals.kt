@@ -7,11 +7,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -20,14 +18,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailEvent
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
+import com.meneses.budgethunter.budgetEntry.ui.AmountField
+import com.meneses.budgethunter.budgetEntry.ui.DescriptionField
+import com.meneses.budgethunter.budgetEntry.ui.TypeSelector
 import com.meneses.budgethunter.commons.EMPTY
 import com.meneses.budgethunter.commons.ui.ConfirmationModal
 import com.meneses.budgethunter.commons.ui.Modal
-import com.meneses.budgethunter.commons.ui.OutlinedDropdown
 import com.meneses.budgethunter.theme.AppColors
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -63,15 +62,12 @@ fun BudgetModal(
                 modifier = Modifier.padding(bottom = 20.dp)
             )
 
-            OutlinedTextField(
-                value = budget,
-                onValueChange = { budget = it },
-                label = { Text(text = "Monto") },
-                modifier = Modifier.padding(bottom = 25.dp),
-                keyboardOptions = KeyboardOptions.Default.copy(
-                    keyboardType = KeyboardType.Number
-                )
+            AmountField(
+                amount = budget,
+                onAmountChanged = { budget = it }
             )
+
+            Spacer(modifier = Modifier.height(25.dp))
 
             Button(
                 onClick = onSaveClick,
@@ -88,8 +84,12 @@ fun FilterModal(
     onEvent: (BudgetDetailEvent) -> Unit
 ) {
     if (show) {
+        var description by remember {
+            mutableStateOf(filter?.description ?: EMPTY)
+        }
+
         var type by remember {
-            mutableStateOf(filter?.type)
+            mutableStateOf(filter?.type ?: BudgetEntry.Type.BOTH)
         }
 
         val onDismiss = remember {
@@ -106,7 +106,10 @@ fun FilterModal(
         val onApply = remember {
             fun() {
                 val entryFilter = filter ?: BudgetEntry()
-                val updatedFilter = entryFilter.copy(type = type ?: return)
+                val updatedFilter = entryFilter.copy(
+                    description = description,
+                    type = type
+                )
                 onEvent(BudgetDetailEvent.FilterEntries(updatedFilter))
                 onDismiss()
             }
@@ -119,9 +122,16 @@ fun FilterModal(
                 modifier = Modifier.padding(bottom = 20.dp)
             )
 
-            ListTypeDropdown(
+            DescriptionField(
+                description = description,
+                onDescriptionChanged = { description = it }
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            TypeSelector(
                 type = type,
-                onSelectItem = { type = it }
+                onTypeSelected = { type = it }
             )
 
             Spacer(modifier = Modifier.height(30.dp))
@@ -169,19 +179,5 @@ fun DeleteConfirmationModal(
         cancelButtonText = "Cancelar",
         onDismiss = onDismiss,
         onConfirm = onConfirm
-    )
-}
-
-@Composable
-private fun ListTypeDropdown(
-    type: BudgetEntry.Type?,
-    onSelectItem: (BudgetEntry.Type) -> Unit
-) {
-    val types = remember { BudgetEntry.getItemTypes() }
-    OutlinedDropdown(
-        value = type?.value ?: EMPTY,
-        label = "Tipo",
-        dropdownOptions = types.map { it.value },
-        onSelectOption = { onSelectItem(types[it]) }
     )
 }

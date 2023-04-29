@@ -84,8 +84,8 @@ fun BudgetEntryForm(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun DateField(
-    date: String,
+fun DateField(
+    date: String?,
     onDateSelected: (String) -> Unit
 ) {
     val calendarState = rememberSheetState()
@@ -109,7 +109,7 @@ private fun DateField(
     ) {
         OutlinedTextField(
             modifier = Modifier.menuAnchor(),
-            value = date,
+            value = date ?: EMPTY,
             readOnly = true,
             label = { Text(text = "Fecha") },
             onValueChange = {},
@@ -125,13 +125,11 @@ private fun DateField(
 }
 
 @Composable
-private fun TypeSelector(
+fun TypeSelector(
     type: BudgetEntry.Type,
     onTypeSelected: (BudgetEntry.Type) -> Unit
 ) {
-    val itemTypes = remember {
-        BudgetEntry.getItemTypes()
-    }
+    val itemTypes = remember { BudgetEntry.getItemTypes(type) }
     OutlinedDropdown(
         value = type.value,
         label = "Tipo",
@@ -142,14 +140,23 @@ private fun TypeSelector(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun AmountField(
-    amount: Double,
-    onAmountChanged: (Double) -> Unit
+fun AmountField(
+    amount: String,
+    onAmountChanged: (String) -> Unit
 ) {
     OutlinedTextField(
-        value = amount.toString(),
+        value = amount,
         onValueChange = {
-            onAmountChanged(it.toDoubleOrNull() ?: 0.0)
+            if (it.isBlank()) {
+                onAmountChanged(EMPTY)
+                return@OutlinedTextField
+            }
+            val decimals = it.split(".").getOrNull(1) ?: EMPTY
+            if (decimals == "00") return@OutlinedTextField
+            val decimalsLength = decimals.length
+            if (decimalsLength > 2) return@OutlinedTextField
+            val amountNumber = it.toDoubleOrNull() ?: return@OutlinedTextField
+            if (amountNumber > 0) onAmountChanged(it)
         },
         label = { Text(text = "Monto") },
         keyboardOptions = KeyboardOptions(
@@ -160,7 +167,7 @@ private fun AmountField(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun DescriptionField(
+fun DescriptionField(
     description: String,
     onDescriptionChanged: (String) -> Unit
 ) {
@@ -169,7 +176,7 @@ private fun DescriptionField(
         onValueChange = onDescriptionChanged,
         label = { Text(text = "Descripcion") },
         keyboardOptions = KeyboardOptions(
-            capitalization = KeyboardCapitalization.Words
+            capitalization = KeyboardCapitalization.Sentences
         )
     )
 }

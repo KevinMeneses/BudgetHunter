@@ -7,7 +7,7 @@ fun BudgetEntry.toDb() =
     Budget_entry(
         id = id.toLong(),
         budget_id = budgetId.toLong(),
-        amount = amount,
+        amount = amount.toDouble(),
         description = description,
         type = type,
         date = date
@@ -17,7 +17,7 @@ fun Budget_entry.toDomain() =
     BudgetEntry(
         id = id.toInt(),
         budgetId = budget_id.toInt(),
-        amount = amount,
+        amount = amount.toBigDecimal().toPlainString(),
         description = description,
         type = type,
         date = date

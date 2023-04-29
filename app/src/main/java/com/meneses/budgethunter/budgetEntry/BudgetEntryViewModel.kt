@@ -27,7 +27,7 @@ class BudgetEntryViewModel(
     fun saveBudgetEntry() {
         viewModelScope.launch(dispatcher) {
             _uiState.value.budgetEntry?.let { entry ->
-                if (entry.amount == 0.0) return@let
+                if (entry.amount.isBlank()) return@let
                 if (entry.id < 0) budgetEntryRepository.create(entry)
                 else budgetEntryRepository.update(entry)
                 _uiState.update { it.copy(goBack = true) }
