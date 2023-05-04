@@ -34,11 +34,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.meneses.budgethunter.R
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailEvent
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailState
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.commons.EMPTY
 import com.meneses.budgethunter.commons.ui.DefDivider
+import com.meneses.budgethunter.commons.ui.LottiePlaceholder
 import com.meneses.budgethunter.theme.AppColors
 
 @Composable
@@ -70,7 +72,11 @@ fun BudgetDetailContent(
                 onClick = onBudgetClick
             )
             Spacer(modifier = Modifier.height(20.dp))
-            ListSection(
+            if (uiState.entries.isEmpty()) LottiePlaceholder(
+                resId = R.raw.empty_list,
+                modifier = Modifier.weight(0.8f, true)
+            )
+            else ListSection(
                 budgetEntries = uiState.entries,
                 isSelectionActive = uiState.isSelectionActive,
                 onEvent = onEvent
@@ -178,6 +184,7 @@ private fun ColumnScope.ListSection(
                 }
                 DefDivider()
             }
+
             items(budgetEntries.size) { index ->
                 val budgetItem = budgetEntries[index]
 

@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -22,11 +21,28 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.meneses.budgethunter.commons.EMPTY
-import com.meneses.budgethunter.commons.ui.dashedBorder
+import com.meneses.budgethunter.R
 import com.meneses.budgethunter.budgetList.domain.Budget
+import com.meneses.budgethunter.commons.EMPTY
+import com.meneses.budgethunter.commons.ui.LottiePlaceholder
+import com.meneses.budgethunter.commons.ui.dashedBorder
 import com.meneses.budgethunter.theme.AppColors
+import com.meneses.budgethunter.theme.BudgetHunterTheme
+
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+private fun Preview() {
+    BudgetHunterTheme {
+        BudgetListContent(
+            list = emptyList(),
+            paddingValues = PaddingValues(),
+            onBudgetClick = {},
+            onAddBudgetClick = {}
+        )
+    }
+}
 
 @Composable
 fun BudgetListContent(
@@ -41,67 +57,79 @@ fun BudgetListContent(
             .fillMaxSize()
             .padding(20.dp)
     ) {
-        budgetList(list, onBudgetClick)
-        addBudgetCard(onAddBudgetClick)
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-private fun LazyListScope.budgetList(
-    list: List<Budget>,
-    onBudgetClick: (Int) -> Unit
-) {
-    items(list.size) {
-        Card(
-            colors = CardDefaults.cardColors(
-                containerColor = AppColors.tertiaryContainer,
-                contentColor = AppColors.onTertiaryContainer
-            ),
-            elevation = CardDefaults.cardElevation(
-                defaultElevation = 5.dp
-            ),
-            onClick = { onBudgetClick(it) }
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(20.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.SpaceEvenly
-            ) {
-                Text(text = list[it].name)
+        if (list.isEmpty()) {
+            item {
+                LottiePlaceholder(resId = R.raw.empty_state)
+                AddBudgetCard(onAddBudgetClick)
             }
-        }
-        Spacer(modifier = Modifier.height(20.dp))
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-private fun LazyListScope.addBudgetCard(onAddBudgetClick: () -> Unit) {
-    item {
-        Card(
-            colors = CardDefaults.outlinedCardColors(),
-            modifier = Modifier.dashedBorder(
-                width = 1.dp,
-                color = AppColors.onSecondaryContainer,
-                shape = AbsoluteRoundedCornerShape(15.dp),
-                on = 10.dp,
-                off = 8.dp
-            ),
-            onClick = onAddBudgetClick
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(20.dp),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = EMPTY
+        } else {
+            items(list.size) {
+                BudgetItem(
+                    budget = list[it],
+                    onBudgetClick = { onBudgetClick(it) }
                 )
             }
+            item {
+                AddBudgetCard(onAddBudgetClick)
+            }
+        }
+    }
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+private fun BudgetItem(
+    budget: Budget,
+    onBudgetClick: () -> Unit
+) {
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = AppColors.tertiaryContainer,
+            contentColor = AppColors.onTertiaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 5.dp
+        ),
+        onClick = { onBudgetClick() }
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceEvenly
+        ) {
+            Text(text = budget.name)
+        }
+    }
+    Spacer(modifier = Modifier.height(20.dp))
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AddBudgetCard(onAddBudgetClick: () -> Unit) {
+    Card(
+        colors = CardDefaults.outlinedCardColors(),
+        modifier = Modifier.dashedBorder(
+            width = 1.dp,
+            color = AppColors.onSecondaryContainer,
+            shape = AbsoluteRoundedCornerShape(15.dp),
+            on = 10.dp,
+            off = 8.dp
+        ),
+        onClick = onAddBudgetClick
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.Add,
+                contentDescription = EMPTY
+            )
         }
     }
 }
