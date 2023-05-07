@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Search
@@ -22,14 +21,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.meneses.budgethunter.commons.ui.DefDivider
 import com.meneses.budgethunter.commons.EMPTY
+import com.meneses.budgethunter.commons.ui.DefDivider
+import com.meneses.budgethunter.commons.ui.blinkEffect
+import com.meneses.budgethunter.commons.ui.pulsateEffect
 import com.meneses.budgethunter.theme.AppColors
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 private fun Preview() {
     BudgetDetailMenu(
+        animateFilterButton = false,
         onFilterClick = {},
         onDeleteClick = {}
     )
@@ -37,6 +39,7 @@ private fun Preview() {
 
 @Composable
 fun BudgetDetailMenu(
+    animateFilterButton: Boolean,
     onFilterClick: () -> Unit,
     onDeleteClick: () -> Unit
 ) {
@@ -48,23 +51,31 @@ fun BudgetDetailMenu(
             LazyColumn(
                 modifier = Modifier.background(AppColors.primary),
             ) {
-                filterButton(onFilterClick)
-                settingsButton(onDeleteClick)
+                item { FilterButton(animateFilterButton, onFilterClick) }
+                item { SettingsButton(onDeleteClick) }
             }
         }
     }
 }
 
-private fun LazyListScope.filterButton(onClick: () -> Unit) {
-    menuButton(
+@Composable
+private fun FilterButton(
+    animate: Boolean,
+    onClick: () -> Unit
+) {
+    MenuButton(
+        modifier = Modifier
+            .blinkEffect(animate)
+            .pulsateEffect(animate, targetValue = 1.1f),
         text = "Filtrar",
         icon = Icons.Default.Search,
         onClick = onClick
     )
 }
 
-private fun LazyListScope.settingsButton(onClick: () -> Unit) {
-    menuButton(
+@Composable
+private fun SettingsButton(onClick: () -> Unit) {
+    MenuButton(
         text = "Eliminar presupuesto",
         icon = Icons.Default.Delete,
         onClick = onClick,
@@ -72,36 +83,36 @@ private fun LazyListScope.settingsButton(onClick: () -> Unit) {
     )
 }
 
-private fun LazyListScope.menuButton(
+@Composable
+private fun MenuButton(
+    modifier: Modifier = Modifier,
     text: String,
     icon: ImageVector,
     onClick: () -> Unit,
     withDivider: Boolean = true
 ) {
-    item {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(onClick = onClick)
-                .padding(18.dp),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = EMPTY,
-                modifier = Modifier.padding(end = 10.dp),
-                tint = AppColors.onPrimary
-            )
-            Text(
-                text = text,
-                color = AppColors.onPrimary
-            )
-        }
-
-        if (withDivider) DefDivider(
-            modifier = Modifier.padding(horizontal = 20.dp),
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(18.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = EMPTY,
+            modifier = Modifier.padding(end = 10.dp),
+            tint = AppColors.onPrimary
+        )
+        Text(
+            text = text,
             color = AppColors.onPrimary
         )
     }
+
+    if (withDivider) DefDivider(
+        modifier = Modifier.padding(horizontal = 20.dp),
+        color = AppColors.onPrimary
+    )
 }

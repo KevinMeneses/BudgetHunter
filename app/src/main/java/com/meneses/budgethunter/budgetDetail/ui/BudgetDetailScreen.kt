@@ -56,6 +56,7 @@ fun BudgetDetailScreen(
     ModalNavigationDrawer(
         drawerContent = {
             BudgetDetailMenu(
+                animateFilterButton = uiState.filter != null,
                 onFilterClick = fun() {
                     coroutineScope.launch {
                         drawerState.close()

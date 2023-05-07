@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -40,14 +39,19 @@ fun AppBar(
     leftButtonIcon: ImageVector? = null,
     rightButtonIcon: ImageVector? = null,
     onLeftButtonClick: (() -> Unit)? = null,
-    onRightButtonClick: (() -> Unit)? = null
+    onRightButtonClick: (() -> Unit)? = null,
+    animateRightButton: Boolean = false
 ) {
     Box(
         modifier = Modifier.fillMaxWidth()
     ) {
         LeftButton(leftButtonIcon, onLeftButtonClick)
         Title(title)
-        RightButton(rightButtonIcon, onRightButtonClick, AppColors)
+        RightButton(
+            rightIcon = rightButtonIcon,
+            onRightIconClick = onRightButtonClick,
+            animate = animateRightButton
+        )
     }
 }
 
@@ -55,7 +59,7 @@ fun AppBar(
 private fun BoxScope.RightButton(
     rightIcon: ImageVector?,
     onRightIconClick: (() -> Unit)?,
-    AppColors: ColorScheme
+    animate: Boolean
 ) {
     if (rightIcon != null) {
         Icon(
@@ -64,6 +68,8 @@ private fun BoxScope.RightButton(
             modifier = Modifier
                 .padding(end = 10.dp)
                 .align(Alignment.CenterEnd)
+                .pulsateEffect(animate)
+                .blinkEffect(animate)
                 .clickable { onRightIconClick?.invoke() },
             tint = AppColors.onSecondaryContainer
         )

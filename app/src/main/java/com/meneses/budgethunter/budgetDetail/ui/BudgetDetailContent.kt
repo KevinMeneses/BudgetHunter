@@ -210,7 +210,10 @@ private fun ColumnScope.ListSection(
                         .fillMaxWidth()
                         .combinedClickable(
                             onClick = onItemClick,
-                            onLongClick = onLongClick
+                            onLongClick = {
+                                onLongClick()
+                                onItemChecked(true)
+                            }
                         )
                         .padding(vertical = if (isSelectionActive) 0.dp else 10.dp)
                 ) {

@@ -2,6 +2,7 @@ package com.meneses.budgethunter.budgetList.ui
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -39,8 +40,10 @@ fun BudgetListScreen(
         topBar = {
             AppBar(
                 title = "Presupuestos",
+                leftButtonIcon = Icons.Outlined.Info,
                 rightButtonIcon = Icons.Default.Search,
-                onRightButtonClick = myViewModel::showFilterModal
+                onRightButtonClick = myViewModel::showFilterModal,
+                animateRightButton = uiState.filter != null
             )
         }
     ) {
