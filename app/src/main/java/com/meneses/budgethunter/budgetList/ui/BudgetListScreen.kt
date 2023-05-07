@@ -8,9 +8,11 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.meneses.budgethunter.R
 import com.meneses.budgethunter.budgetList.BudgetListViewModel
 import com.meneses.budgethunter.commons.ui.AppBar
 import com.meneses.budgethunter.destinations.BudgetDetailScreenDestination
@@ -39,7 +41,7 @@ fun BudgetListScreen(
     Scaffold(
         topBar = {
             AppBar(
-                title = "Presupuestos",
+                title = stringResource(id = R.string.budgets),
                 leftButtonIcon = Icons.Outlined.Info,
                 rightButtonIcon = Icons.Default.Search,
                 onRightButtonClick = myViewModel::showFilterModal,

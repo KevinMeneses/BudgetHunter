@@ -8,9 +8,11 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.meneses.budgethunter.R
 import com.meneses.budgethunter.commons.ui.AppBar
 import com.meneses.budgethunter.budgetEntry.BudgetEntryViewModel
 import com.meneses.budgethunter.fakeNavigation
@@ -46,10 +48,8 @@ fun BudgetEntryScreen(
 
     Scaffold(
         topBar = {
-            val title = remember {
-                if (budgetEntry.id < 0) "Nuevo presupuesto"
-                else "Modificar presupuesto"
-            }
+            val title = if (budgetEntry.id < 0) stringResource(id = R.string.new_registry)
+                else stringResource(id = R.string.update_registry)
 
             AppBar(
                 title = title,
@@ -69,9 +69,9 @@ fun BudgetEntryScreen(
 
     ConfirmationModal(
         show = uiState.isDiscardChangesModalVisible,
-        message = "Hay cambios sin guardar ¿desea descartar estos cambios?",
-        confirmButtonText = "Descartar",
-        cancelButtonText = "Volver",
+        message = stringResource(id = R.string.unsaved_changes_confirmation_message),
+        confirmButtonText = stringResource(id = R.string.discard),
+        cancelButtonText = stringResource(id = R.string.come_back),
         onDismiss = myViewModel::hideDiscardChangesModal,
         onConfirm = navigator::popBackStack
     )

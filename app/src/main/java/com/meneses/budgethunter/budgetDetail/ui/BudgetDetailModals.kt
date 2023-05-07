@@ -16,8 +16,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.meneses.budgethunter.R
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailEvent
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.budgetEntry.ui.AmountField
@@ -55,7 +57,7 @@ fun BudgetModal(
 
         Modal(onDismiss = onDismiss) {
             Text(
-                text = "Presupuesto",
+                text = stringResource(id = R.string.budget),
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.padding(bottom = 20.dp)
             )
@@ -69,7 +71,7 @@ fun BudgetModal(
 
             Button(
                 onClick = onSaveClick,
-                content = { Text(text = "Guardar") }
+                content = { Text(text = stringResource(id = R.string.save)) }
             )
         }
     }
@@ -145,12 +147,12 @@ fun FilterModal(
                         contentColor = AppColors.onBackground
                     ),
                     onClick = onClear,
-                    content = { Text(text = "Limpiar") }
+                    content = { Text(text = stringResource(id = R.string.clean)) }
                 )
 
                 Button(
                     onClick = onApply,
-                    content = { Text(text = "Aplicar") }
+                    content = { Text(text = stringResource(id = R.string.apply)) }
                 )
             }
         }
@@ -172,9 +174,9 @@ fun DeleteConfirmationModal(
 
     ConfirmationModal(
         show = show,
-        message = "¿Está seguro que desea eliminar este presupuesto?",
-        confirmButtonText = "Eliminar",
-        cancelButtonText = "Cancelar",
+        message = stringResource(id = R.string.delete_confirmation_message),
+        confirmButtonText = stringResource(id = R.string.delete),
+        cancelButtonText = stringResource(id = R.string.cancel),
         onDismiss = onDismiss,
         onConfirm = onConfirm
     )

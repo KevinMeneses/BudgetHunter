@@ -30,6 +30,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -98,9 +99,9 @@ fun BudgetSection(
     onClick: () -> Unit
 ) {
     val budget = if (amount == 0.0) {
-        "Agregar un presupuesto"
+        stringResource(id = R.string.add_budget)
     } else {
-        "Presupuesto\n" + amount.toBigDecimal().toPlainString()
+        stringResource(id = R.string.budget_amount, amount.toBigDecimal().toPlainString())
     }
 
     Card(
@@ -224,7 +225,7 @@ private fun ColumnScope.ListSection(
                     Text(
                         text = budgetItem.description
                             .takeIf { it.isNotBlank() }
-                            ?: "Sin descripcion",
+                            ?: stringResource(id = R.string.no_description),
                         modifier = Modifier.weight(0.65f),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
@@ -284,9 +285,15 @@ fun BalanceSection(
         )
     ) {
         val operatorSign = if (outcomes == 0.0) EMPTY else "-"
-        AmountText("Total gastos:", "$operatorSign$outcomesText")
+        AmountText(
+            description = stringResource(id = R.string.total_outcomes),
+            amount = "$operatorSign$outcomesText"
+        )
         DefDivider(color = AppColors.onSecondaryContainer)
-        AmountText("Balance:", balanceText)
+        AmountText(
+            description = stringResource(id = R.string.balance),
+            amount = balanceText
+        )
     }
 }
 
@@ -311,7 +318,7 @@ private fun DeleteButton(
                 contentColor = AppColors.onError
             )
         ) {
-            Text(text = "Eliminar")
+            Text(text = stringResource(id = R.string.delete))
         }
     }
 }

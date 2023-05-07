@@ -19,8 +19,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.meneses.budgethunter.R
 import com.meneses.budgethunter.commons.EMPTY
 import com.meneses.budgethunter.commons.ui.DefDivider
 import com.meneses.budgethunter.commons.ui.blinkEffect
@@ -52,7 +54,7 @@ fun BudgetDetailMenu(
                 modifier = Modifier.background(AppColors.primary),
             ) {
                 item { FilterButton(animateFilterButton, onFilterClick) }
-                item { SettingsButton(onDeleteClick) }
+                item { DeleteButton(onDeleteClick) }
             }
         }
     }
@@ -67,16 +69,16 @@ private fun FilterButton(
         modifier = Modifier
             .blinkEffect(animate)
             .pulsateEffect(animate, targetValue = 1.1f),
-        text = "Filtrar",
+        text = stringResource(id = R.string.filter),
         icon = Icons.Default.Search,
         onClick = onClick
     )
 }
 
 @Composable
-private fun SettingsButton(onClick: () -> Unit) {
+private fun DeleteButton(onClick: () -> Unit) {
     MenuButton(
-        text = "Eliminar presupuesto",
+        text = stringResource(id = R.string.delete_budget),
         icon = Icons.Default.Delete,
         onClick = onClick,
         withDivider = false

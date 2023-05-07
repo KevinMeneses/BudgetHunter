@@ -19,9 +19,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
+import com.meneses.budgethunter.R
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.commons.EMPTY
 import com.meneses.budgethunter.commons.ui.Modal
@@ -74,7 +76,7 @@ fun FilterListModal(
                         onDismiss()
                     }
                 ) {
-                    Text(text = "Limpiar")
+                    Text(text = stringResource(id = R.string.clean))
                 }
 
                 Button(
@@ -84,7 +86,7 @@ fun FilterListModal(
                         onDismiss()
                     }
                 ) {
-                    Text(text = "Aplicar")
+                    Text(text = stringResource(id = R.string.apply))
                 }
             }
         }
@@ -112,7 +114,7 @@ fun NewBudgetModal(
             }
 
             ModalContent(
-                title = "Nuevo presupuesto",
+                title = stringResource(id = R.string.new_budget),
                 name = name,
                 frequency = frequency,
                 frequencyOptions = frequencyList.map { it.value },
@@ -128,7 +130,7 @@ fun NewBudgetModal(
                     onDismiss()
                 }
             ) {
-                Text(text = "Crear")
+                Text(text = stringResource(id = R.string.create))
             }
         }
     }
@@ -154,7 +156,7 @@ private fun ModalContent(
         value = name,
         modifier = Modifier.padding(bottom = 30.dp),
         onValueChange = onNameChanged,
-        label = { Text(text = "Nombre") },
+        label = { Text(text = stringResource(id = R.string.name)) },
         keyboardOptions = KeyboardOptions(
             capitalization = KeyboardCapitalization.Words
         )
@@ -162,7 +164,7 @@ private fun ModalContent(
 
     OutlinedDropdown(
         value = frequency?.value ?: EMPTY,
-        label = "Frecuencia",
+        label = stringResource(id = R.string.frequency),
         dropdownOptions = frequencyOptions,
         onSelectOption = onFrequencyChanged
     )

@@ -8,9 +8,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import com.meneses.budgethunter.R
 import com.meneses.budgethunter.destinations.BudgetListScreenDestination
 import com.meneses.budgethunter.destinations.SplashScreenDestination
 import com.meneses.budgethunter.fakeNavigation
@@ -40,7 +42,7 @@ fun SplashScreen(
         modifier = Modifier.fillMaxSize()
     ) {
         Text(
-            text = "Cazador de presupuesto",
+            text = stringResource(id = R.string.budget_hunter),
             fontStyle = FontStyle.Italic,
             fontWeight = FontWeight.SemiBold,
             color = AppColors.onBackground,
