@@ -160,12 +160,12 @@ fun FilterModal(
 }
 
 @Composable
-fun DeleteConfirmationModal(
+fun DeleteBudgetConfirmationModal(
     show: Boolean,
     onEvent: (BudgetDetailEvent) -> Unit
 ) {
     val onDismiss = remember {
-        fun() { onEvent(BudgetDetailEvent.ToggleDeleteModal(false)) }
+        fun() { onEvent(BudgetDetailEvent.ToggleDeleteBudgetModal(false)) }
     }
 
     val onConfirm = remember {
@@ -174,7 +174,30 @@ fun DeleteConfirmationModal(
 
     ConfirmationModal(
         show = show,
-        message = stringResource(id = R.string.delete_confirmation_message),
+        message = stringResource(id = R.string.delete_budget_confirmation_message),
+        confirmButtonText = stringResource(id = R.string.delete),
+        cancelButtonText = stringResource(id = R.string.cancel),
+        onDismiss = onDismiss,
+        onConfirm = onConfirm
+    )
+}
+
+@Composable
+fun DeleteEntriesConfirmationModal(
+    show: Boolean,
+    onEvent: (BudgetDetailEvent) -> Unit
+) {
+    val onDismiss = remember {
+        fun() { onEvent(BudgetDetailEvent.ToggleDeleteEntriesModal(false)) }
+    }
+
+    val onConfirm = remember {
+        fun() { onEvent(BudgetDetailEvent.DeleteSelectedEntries) }
+    }
+
+    ConfirmationModal(
+        show = show,
+        message = stringResource(id = R.string.delete_entries_confirmation_message),
         confirmButtonText = stringResource(id = R.string.delete),
         cancelButtonText = stringResource(id = R.string.cancel),
         onDismiss = onDismiss,

@@ -12,7 +12,7 @@
     <string name="save">Guardar</string>
     <string name="clean">Limpiar</string>
     <string name="apply">Aplicar</string>
-    <string name="delete_confirmation_message">¿Está seguro que desea eliminar este presupuesto?</string>
+    <string name="delete_budget_confirmation_message">¿Está seguro que desea eliminar este presupuesto?</string>
     <string name="cancel">Cancelar</string>
     <string name="date">Fecha</string>
     <string name="type">Tipo</string>
@@ -29,4 +29,6 @@
     <string name="frequency">Frecuencia</string>
     <string name="budgets">Presupuestos</string>
     <string name="budget_hunter">Cazador de presupuesto</string>
+    <string name="selected_entries">%1$s Seleccionados</string>
+    <string name="delete_entries_confirmation_message">¿Está seguro que desea eliminar estos registros?</string>
 </resources>

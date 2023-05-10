@@ -27,7 +27,9 @@ import com.meneses.budgethunter.R
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.commons.EMPTY
 import com.meneses.budgethunter.commons.ui.LottiePlaceholder
+import com.meneses.budgethunter.commons.ui.blinkEffect
 import com.meneses.budgethunter.commons.ui.dashedBorder
+import com.meneses.budgethunter.commons.ui.pulsateEffect
 import com.meneses.budgethunter.theme.AppColors
 import com.meneses.budgethunter.theme.BudgetHunterTheme
 
@@ -38,6 +40,7 @@ private fun Preview() {
         BudgetListContent(
             list = emptyList(),
             paddingValues = PaddingValues(),
+            animate = false,
             onBudgetClick = {},
             onAddBudgetClick = {}
         )
@@ -48,6 +51,7 @@ private fun Preview() {
 fun BudgetListContent(
     list: List<Budget>,
     paddingValues: PaddingValues,
+    animate: Boolean,
     onBudgetClick: (Int) -> Unit,
     onAddBudgetClick: () -> Unit
 ) {
@@ -60,7 +64,7 @@ fun BudgetListContent(
         if (list.isEmpty()) {
             item {
                 LottiePlaceholder(resId = R.raw.empty_state)
-                AddBudgetCard(onAddBudgetClick)
+                AddBudgetCard(onAddBudgetClick, animate)
             }
         } else {
             items(list.size) {
@@ -70,7 +74,7 @@ fun BudgetListContent(
                 )
             }
             item {
-                AddBudgetCard(onAddBudgetClick)
+                AddBudgetCard(onAddBudgetClick, animate)
             }
         }
     }
@@ -107,16 +111,22 @@ private fun BudgetItem(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun AddBudgetCard(onAddBudgetClick: () -> Unit) {
+private fun AddBudgetCard(
+    onAddBudgetClick: () -> Unit,
+    animate: Boolean
+) {
     Card(
         colors = CardDefaults.outlinedCardColors(),
-        modifier = Modifier.dashedBorder(
-            width = 1.dp,
-            color = AppColors.onSecondaryContainer,
-            shape = AbsoluteRoundedCornerShape(15.dp),
-            on = 10.dp,
-            off = 8.dp
-        ),
+        modifier = Modifier
+            .dashedBorder(
+                width = 1.dp,
+                color = AppColors.onSecondaryContainer,
+                shape = AbsoluteRoundedCornerShape(15.dp),
+                on = 10.dp,
+                off = 8.dp
+            )
+            .pulsateEffect(animate)
+            .blinkEffect(animate),
         onClick = onAddBudgetClick
     ) {
         Row(

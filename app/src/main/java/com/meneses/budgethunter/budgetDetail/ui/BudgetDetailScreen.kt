@@ -66,7 +66,7 @@ fun BudgetDetailScreen(
                 onDeleteClick = fun() {
                     coroutineScope.launch {
                         drawerState.close()
-                        myViewModel.sendEvent(BudgetDetailEvent.ToggleDeleteModal(true))
+                        myViewModel.sendEvent(BudgetDetailEvent.ToggleDeleteBudgetModal(true))
                     }
                 }
             )
@@ -88,7 +88,8 @@ fun BudgetDetailScreen(
                         val budgetEntry = BudgetEntry(budgetId = budget.id)
                         val destination = BudgetEntryScreenDestination(budgetEntry)
                         navigator.navigate(destination)
-                    }
+                    },
+                    animateLeftButton = uiState.filter != null
                 )
             }
         ) { paddingValues ->
@@ -111,8 +112,13 @@ fun BudgetDetailScreen(
             onEvent = myViewModel::sendEvent
         )
 
-        DeleteConfirmationModal(
-            show = uiState.isDeleteModalVisible,
+        DeleteBudgetConfirmationModal(
+            show = uiState.isDeleteBudgetModalVisible,
+            onEvent = myViewModel::sendEvent
+        )
+
+        DeleteEntriesConfirmationModal(
+            show = uiState.isDeleteEntriesModalVisible,
             onEvent = myViewModel::sendEvent
         )
     }

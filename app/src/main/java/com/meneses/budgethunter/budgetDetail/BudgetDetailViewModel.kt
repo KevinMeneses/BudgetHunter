@@ -55,7 +55,8 @@ class BudgetDetailViewModel(
             is BudgetDetailEvent.DeleteSelectedEntries -> deleteSelectedEntries()
             is BudgetDetailEvent.ShowEntry -> showEntry(event.budgetItem)
             is BudgetDetailEvent.ToggleBudgetModal -> setBudgetModalVisibility(event.isVisible)
-            is BudgetDetailEvent.ToggleDeleteModal -> setDeleteModalVisibility(event.isVisible)
+            is BudgetDetailEvent.ToggleDeleteBudgetModal -> setDeleteBudgetModalVisibility(event.isVisible)
+            is BudgetDetailEvent.ToggleDeleteEntriesModal -> setDeleteEntriesModalVisibility(event.isVisible)
             is BudgetDetailEvent.ToggleFilterModal -> setFilterModalVisibility(event.isVisible)
             is BudgetDetailEvent.ToggleSelectionState -> toggleSelectionState(event.isActivated)
             is BudgetDetailEvent.ToggleAllEntriesSelection -> toggleAllEntriesSelection(event.isSelected)
@@ -125,8 +126,11 @@ class BudgetDetailViewModel(
     private fun setFilterModalVisibility(visible: Boolean) =
         _uiState.update { it.copy(isFilterModalVisible = visible) }
 
-    private fun setDeleteModalVisibility(visible: Boolean) =
-        _uiState.update { it.copy(isDeleteModalVisible = visible) }
+    private fun setDeleteBudgetModalVisibility(visible: Boolean) =
+        _uiState.update { it.copy(isDeleteBudgetModalVisible = visible) }
+
+    private fun setDeleteEntriesModalVisibility(visible: Boolean) =
+        _uiState.update { it.copy(isDeleteEntriesModalVisible = visible) }
 
     private fun setBudgetModalVisibility(visible: Boolean) =
         _uiState.update { it.copy(isBudgetModalVisible = visible) }

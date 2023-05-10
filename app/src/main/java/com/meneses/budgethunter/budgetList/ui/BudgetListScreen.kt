@@ -56,7 +56,8 @@ fun BudgetListScreen(
             onBudgetClick = fun (index) {
                 val budget = uiState.budgetList[index]
                 myViewModel.navigateToBudget(budget)
-            }
+            },
+            animate = uiState.budgetList.isEmpty() && uiState.filter == null
         )
     }
 

@@ -173,8 +173,9 @@ private fun ColumnScope.ListSection(
                         checked = budgetEntries.all { it.isSelected },
                         onCheckedChange = onSelectAllItems
                     )
+                    val selectedEntries = budgetEntries.count { it.isSelected }.toString()
                     Text(
-                        text = "${budgetEntries.count { it.isSelected }} Seleccionados",
+                        text = stringResource(id = R.string.selected_entries, selectedEntries),
                         fontWeight = FontWeight.SemiBold
                     )
                     Icon(
@@ -302,7 +303,7 @@ private fun DeleteButton(
     onEvent: (BudgetDetailEvent) -> Unit
 ) {
     val onClick = remember {
-        fun() { onEvent(BudgetDetailEvent.DeleteSelectedEntries) }
+        fun() { onEvent(BudgetDetailEvent.ToggleDeleteEntriesModal(true)) }
     }
     Box(
         modifier = Modifier

@@ -40,12 +40,17 @@ fun AppBar(
     rightButtonIcon: ImageVector? = null,
     onLeftButtonClick: (() -> Unit)? = null,
     onRightButtonClick: (() -> Unit)? = null,
+    animateLeftButton: Boolean = false,
     animateRightButton: Boolean = false
 ) {
     Box(
         modifier = Modifier.fillMaxWidth()
     ) {
-        LeftButton(leftButtonIcon, onLeftButtonClick)
+        LeftButton(
+            leftIcon = leftButtonIcon,
+            onLeftIconClick = onLeftButtonClick,
+            animate = animateLeftButton
+        )
         Title(title)
         RightButton(
             rightIcon = rightButtonIcon,
@@ -90,7 +95,8 @@ private fun BoxScope.Title(title: String) {
 @Composable
 private fun BoxScope.LeftButton(
     leftIcon: ImageVector?,
-    onLeftIconClick: (() -> Unit)?
+    onLeftIconClick: (() -> Unit)?,
+    animate: Boolean
 ) {
     if (leftIcon != null) {
         Icon(
@@ -99,6 +105,8 @@ private fun BoxScope.LeftButton(
             modifier = Modifier
                 .padding(start = 10.dp)
                 .align(Alignment.CenterStart)
+                .pulsateEffect(animate)
+                .blinkEffect(animate)
                 .clickable { onLeftIconClick?.invoke() },
             tint = AppColors.onSecondaryContainer
         )
