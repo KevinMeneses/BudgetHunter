@@ -31,4 +31,11 @@
     <string name="budget_hunter">Cazador de presupuesto</string>
     <string name="selected_entries">%1$s Seleccionados</string>
     <string name="delete_entries_confirmation_message">¿Está seguro que desea eliminar estos registros?</string>
+    <string name="income">Ingreso</string>
+    <string name="outcome">Gasto</string>
+    <string name="unique">Unica</string>
+    <string name="daily">Diario</string>
+    <string name="weekly">Semanal</string>
+    <string name="monthly">Mensual</string>
+    <string name="annual">Anual</string>
 </resources>

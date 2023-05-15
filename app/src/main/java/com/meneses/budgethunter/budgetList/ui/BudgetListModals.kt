@@ -25,6 +25,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import com.meneses.budgethunter.R
 import com.meneses.budgethunter.budgetList.domain.Budget
+import com.meneses.budgethunter.budgetList.domain.BudgetFilter
 import com.meneses.budgethunter.commons.EMPTY
 import com.meneses.budgethunter.commons.ui.Modal
 import com.meneses.budgethunter.commons.ui.OutlinedDropdown
@@ -33,10 +34,10 @@ import com.meneses.budgethunter.theme.AppColors
 @Composable
 fun FilterListModal(
     show: Boolean,
-    filter: Budget?,
+    filter: BudgetFilter?,
     onDismiss: () -> Unit,
     onClear: () -> Unit,
-    onApplyClick: (Budget) -> Unit,
+    onApplyClick: (BudgetFilter) -> Unit,
 ) {
     if (show) {
         Modal(onDismiss = onDismiss) {
@@ -53,10 +54,10 @@ fun FilterListModal(
             }
 
             ModalContent(
-                title = "Filtrar",
+                title = stringResource(id = R.string.filter),
                 name = name,
                 frequency = frequency,
-                frequencyOptions = frequencyList.map { it.value },
+                frequencyOptions = frequencyList.map { it.toStringResource() },
                 onNameChanged = { name = it },
                 onFrequencyChanged = { frequency = frequencyList[it] }
             )
@@ -81,8 +82,8 @@ fun FilterListModal(
 
                 Button(
                     onClick = {
-                        val budget = Budget(name = name, frequency = frequency)
-                        onApplyClick(budget)
+                        val budgetFilter = BudgetFilter(name, frequency)
+                        onApplyClick(budgetFilter)
                         onDismiss()
                     }
                 ) {
@@ -117,7 +118,7 @@ fun NewBudgetModal(
                 title = stringResource(id = R.string.new_budget),
                 name = name,
                 frequency = frequency,
-                frequencyOptions = frequencyList.map { it.value },
+                frequencyOptions = frequencyList.map { it.toStringResource() },
                 onNameChanged = { name = it },
                 onFrequencyChanged = { frequency = frequencyList[it] }
             )
@@ -163,7 +164,7 @@ private fun ModalContent(
     )
 
     OutlinedDropdown(
-        value = frequency?.value ?: EMPTY,
+        value = frequency?.toStringResource() ?: EMPTY,
         label = stringResource(id = R.string.frequency),
         dropdownOptions = frequencyOptions,
         onSelectOption = onFrequencyChanged

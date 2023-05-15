@@ -4,6 +4,7 @@ import com.meneses.budgethunter.budgetEntry.data.BudgetEntryLocalDataSource
 import com.meneses.budgethunter.budgetEntry.data.toDb
 import com.meneses.budgethunter.budgetEntry.data.toDomain
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
+import com.meneses.budgethunter.budgetEntry.domain.BudgetEntryFilter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 
@@ -18,13 +19,14 @@ class BudgetEntryLocalRepository(
         .map { it.toDomain() }
         .onEach { cachedEntries = it }
 
-    override fun getAllFilteredBy(budgetEntry: BudgetEntry) =
+    override fun getAllFilteredBy(filter: BudgetEntryFilter) =
         cachedEntries.filter {
-            if (budgetEntry.description.isBlank()) true
-            else it.description.contains(budgetEntry.description)
+            if (filter.description.isNullOrBlank()) true
+            else it.description.lowercase()
+                .contains(filter.description.lowercase())
         }.filter {
-            if (budgetEntry.type == BudgetEntry.Type.BOTH) true
-            else it.type == budgetEntry.type
+            if (filter.type == null) true
+            else it.type == filter.type
         }
 
     override fun create(budgetEntry: BudgetEntry) =

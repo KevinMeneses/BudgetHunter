@@ -2,6 +2,7 @@ package com.meneses.budgethunter.budgetDetail.application
 
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
+import com.meneses.budgethunter.budgetEntry.domain.BudgetEntryFilter
 
 data class BudgetDetailState(
     val budget: Budget = Budget(),
@@ -10,7 +11,7 @@ data class BudgetDetailState(
     val isFilterModalVisible: Boolean = false,
     val isDeleteBudgetModalVisible: Boolean = false,
     val isDeleteEntriesModalVisible: Boolean = false,
-    val filter: BudgetEntry? = null,
+    val filter: BudgetEntryFilter? = null,
     val isSelectionActive: Boolean = false,
     val goBack: Boolean = false,
     val showEntry: BudgetEntry? = null

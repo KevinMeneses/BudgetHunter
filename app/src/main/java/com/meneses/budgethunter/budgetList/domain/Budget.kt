@@ -9,18 +9,17 @@ data class Budget(
     val id: Int = -1,
     val amount: Double = 0.0,
     val name: String = EMPTY,
-    val frequency: Frequency? = null
+    val frequency: Frequency = Frequency.UNIQUE
 ) : Parcelable {
-    enum class Frequency(val value: String) {
-        UNIQUE("Unica"),
-        DAILY("Diario"),
-        WEEKLY("Semanal"),
-        MONTHLY("Mensual"),
-        ANNUAL("Anual");
+    enum class Frequency {
+        UNIQUE,
+        DAILY,
+        WEEKLY,
+        MONTHLY,
+        ANNUAL;
 
         companion object {
-            fun getFrequencies(): List<Frequency> =
-                listOf(DAILY, WEEKLY, MONTHLY, ANNUAL, UNIQUE)
+            fun getFrequencies() = listOf(DAILY, WEEKLY, MONTHLY, ANNUAL, UNIQUE)
         }
     }
 }

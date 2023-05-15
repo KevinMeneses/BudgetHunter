@@ -78,9 +78,7 @@ fun BudgetEntryForm(
                 )
             }
         )
-        Spacer(
-            modifier = Modifier.height(10.dp)
-        )
+        Spacer(modifier = Modifier.height(10.dp))
     }
 }
 
@@ -128,14 +126,14 @@ fun DateField(
 
 @Composable
 fun TypeSelector(
-    type: BudgetEntry.Type,
+    type: BudgetEntry.Type?,
     onTypeSelected: (BudgetEntry.Type) -> Unit
 ) {
-    val itemTypes = remember { BudgetEntry.getItemTypes(type) }
+    val itemTypes = remember { BudgetEntry.getItemTypes() }
     OutlinedDropdown(
-        value = type.value,
+        value = type?.toStringResource() ?: EMPTY,
         label = stringResource(id = R.string.type),
-        dropdownOptions = itemTypes.map { it.value },
+        dropdownOptions = itemTypes.map { it.toStringResource() },
         onSelectOption = { onTypeSelected(itemTypes[it]) }
     )
 }

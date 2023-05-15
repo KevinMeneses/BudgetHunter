@@ -8,6 +8,7 @@ import com.meneses.budgethunter.budgetDetail.application.BudgetDetailState
 import com.meneses.budgethunter.budgetEntry.data.repository.BudgetEntryRepository
 import com.meneses.budgethunter.budgetEntry.data.repository.BudgetEntryLocalRepository
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
+import com.meneses.budgethunter.budgetEntry.domain.BudgetEntryFilter
 import com.meneses.budgethunter.budgetList.data.repository.BudgetRepository
 import com.meneses.budgethunter.budgetList.data.repository.BudgetLocalRepository
 import kotlinx.coroutines.CoroutineDispatcher
@@ -99,11 +100,10 @@ class BudgetDetailViewModel(
         }
     }
 
-    private fun filterEntries(filter: BudgetEntry) {
+    private fun filterEntries(filter: BudgetEntryFilter) {
         viewModelScope.launch(dispatcher) {
-            val entryFilter = filter.copy(budgetId = _uiState.value.budget.id)
-            val filteredEntries = budgetEntryRepository.getAllFilteredBy(entryFilter)
-            _uiState.update { it.copy(entries = filteredEntries, filter = entryFilter) }
+            val filteredEntries = budgetEntryRepository.getAllFilteredBy(filter)
+            _uiState.update { it.copy(entries = filteredEntries, filter = filter) }
         }
     }
 

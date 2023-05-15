@@ -6,6 +6,7 @@ import com.meneses.budgethunter.budgetList.application.BudgetListState
 import com.meneses.budgethunter.budgetList.data.repository.BudgetLocalRepository
 import com.meneses.budgethunter.budgetList.data.repository.BudgetRepository
 import com.meneses.budgethunter.budgetList.domain.Budget
+import com.meneses.budgethunter.budgetList.domain.BudgetFilter
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -46,7 +47,7 @@ class BudgetListViewModel(
     fun navigateToBudget(budget: Budget) =
         _uiState.update { it.copy(navigateToBudget = budget) }
 
-    fun filterList(filter: Budget) {
+    fun filterList(filter: BudgetFilter) {
         viewModelScope.launch(dispatcher) {
             val filteredList = budgetRepository.getAllFilteredBy(filter)
             _uiState.update { it.copy(budgetList = filteredList, filter = filter) }

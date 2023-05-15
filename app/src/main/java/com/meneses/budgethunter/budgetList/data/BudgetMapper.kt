@@ -16,7 +16,7 @@ fun Budget.toDb() = DbBudget(
     id = id.toLong(),
     amount = amount,
     name = name,
-    frequency = frequency ?: Budget.Frequency.UNIQUE
+    frequency = frequency
 )
 
 fun Flow<List<DbBudget>>.toDomain() =

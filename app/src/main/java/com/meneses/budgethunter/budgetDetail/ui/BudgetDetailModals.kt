@@ -21,7 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.meneses.budgethunter.R
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailEvent
-import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
+import com.meneses.budgethunter.budgetEntry.domain.BudgetEntryFilter
 import com.meneses.budgethunter.budgetEntry.ui.AmountField
 import com.meneses.budgethunter.budgetEntry.ui.DescriptionField
 import com.meneses.budgethunter.budgetEntry.ui.TypeSelector
@@ -80,16 +80,18 @@ fun BudgetModal(
 @Composable
 fun FilterModal(
     show: Boolean,
-    filter: BudgetEntry?,
+    filter: BudgetEntryFilter?,
     onEvent: (BudgetDetailEvent) -> Unit
 ) {
     if (show) {
+        val entryFilter = filter ?: BudgetEntryFilter()
+
         var description by remember {
-            mutableStateOf(filter?.description ?: EMPTY)
+            mutableStateOf(entryFilter.description)
         }
 
         var type by remember {
-            mutableStateOf(filter?.type ?: BudgetEntry.Type.BOTH)
+            mutableStateOf(entryFilter.type)
         }
 
         val onDismiss = remember {
@@ -105,11 +107,7 @@ fun FilterModal(
 
         val onApply = remember {
             fun() {
-                val entryFilter = filter ?: BudgetEntry()
-                val updatedFilter = entryFilter.copy(
-                    description = description,
-                    type = type
-                )
+                val updatedFilter = entryFilter.copy(description = description, type = type)
                 onEvent(BudgetDetailEvent.FilterEntries(updatedFilter))
                 onDismiss()
             }
@@ -117,13 +115,13 @@ fun FilterModal(
 
         Modal(onDismiss = onDismiss) {
             Text(
-                text = "Filtrar",
+                text = stringResource(id = R.string.filter),
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.padding(bottom = 20.dp)
             )
 
             DescriptionField(
-                description = description,
+                description = description ?: EMPTY,
                 onDescriptionChanged = { description = it }
             )
 

@@ -15,15 +15,12 @@ data class BudgetEntry(
     val date: String = LocalDate.now().toString(),
     val isSelected: Boolean = false
 ) : Parcelable {
-    enum class Type(val value: String) {
-        OUTCOME("Gasto"),
-        INCOME("Ingreso"),
-        BOTH("Ambos")
+    enum class Type {
+        OUTCOME,
+        INCOME
     }
 
     companion object {
-        fun getItemTypes(type: Type? = null) =
-            if (type == Type.BOTH) listOf(Type.BOTH, Type.OUTCOME, Type.INCOME)
-            else listOf(Type.OUTCOME, Type.INCOME)
+        fun getItemTypes() = listOf(Type.OUTCOME, Type.INCOME)
     }
 }
