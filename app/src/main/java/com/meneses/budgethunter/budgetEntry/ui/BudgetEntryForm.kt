@@ -86,6 +86,7 @@ fun BudgetEntryForm(
 @Composable
 fun DateField(
     date: String?,
+    label: String = stringResource(id = R.string.date),
     onDateSelected: (String) -> Unit
 ) {
     val calendarState = rememberSheetState()
@@ -111,7 +112,7 @@ fun DateField(
             modifier = Modifier.menuAnchor(),
             value = date ?: EMPTY,
             readOnly = true,
-            label = { Text(text = stringResource(id = R.string.date)) },
+            label = { Text(text = label) },
             onValueChange = {},
             trailingIcon = {
                 Icon(

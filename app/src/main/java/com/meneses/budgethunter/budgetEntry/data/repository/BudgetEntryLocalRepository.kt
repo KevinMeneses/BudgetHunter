@@ -20,14 +20,21 @@ class BudgetEntryLocalRepository(
         .onEach { cachedEntries = it }
 
     override fun getAllFilteredBy(filter: BudgetEntryFilter) =
-        cachedEntries.filter {
-            if (filter.description.isNullOrBlank()) true
-            else it.description.lowercase()
-                .contains(filter.description.lowercase())
-        }.filter {
-            if (filter.type == null) true
-            else it.type == filter.type
-        }
+        cachedEntries
+            .filter {
+                if (filter.description.isNullOrBlank()) true
+                else it.description.lowercase()
+                    .contains(filter.description.lowercase())
+            }.filter {
+                if (filter.type == null) true
+                else it.type == filter.type
+            }.filter {
+                if (filter.startDate == null) true
+                else it.date >= filter.startDate
+            }.filter {
+                if (filter.endDate == null) true
+                else it.date <= filter.endDate
+            }
 
     override fun create(budgetEntry: BudgetEntry) =
         budgetEntryLocalDataSource.insert(budgetEntry.toDb())

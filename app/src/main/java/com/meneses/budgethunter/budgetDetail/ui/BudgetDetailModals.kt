@@ -23,6 +23,7 @@ import com.meneses.budgethunter.R
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailEvent
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntryFilter
 import com.meneses.budgethunter.budgetEntry.ui.AmountField
+import com.meneses.budgethunter.budgetEntry.ui.DateField
 import com.meneses.budgethunter.budgetEntry.ui.DescriptionField
 import com.meneses.budgethunter.budgetEntry.ui.TypeSelector
 import com.meneses.budgethunter.commons.EMPTY
@@ -94,6 +95,14 @@ fun FilterModal(
             mutableStateOf(entryFilter.type)
         }
 
+        var startDate by remember {
+            mutableStateOf(entryFilter.startDate)
+        }
+
+        var endDate by remember {
+            mutableStateOf(entryFilter.endDate)
+        }
+
         val onDismiss = remember {
             fun() { onEvent(BudgetDetailEvent.ToggleFilterModal(false)) }
         }
@@ -107,7 +116,19 @@ fun FilterModal(
 
         val onApply = remember {
             fun() {
-                val updatedFilter = entryFilter.copy(description = description, type = type)
+                if (
+                    description.isNullOrBlank() &&
+                    type == null &&
+                    startDate.isNullOrBlank() &&
+                    endDate.isNullOrBlank()
+                ) return
+
+                val updatedFilter = entryFilter.copy(
+                    description = description,
+                    type = type,
+                    startDate = startDate,
+                    endDate = endDate
+                )
                 onEvent(BudgetDetailEvent.FilterEntries(updatedFilter))
                 onDismiss()
             }
@@ -130,6 +151,22 @@ fun FilterModal(
             TypeSelector(
                 type = type,
                 onTypeSelected = { type = it }
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            DateField(
+                date = startDate,
+                label = stringResource(id = R.string.start_date),
+                onDateSelected = { startDate = it }
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            DateField(
+                date = endDate,
+                label = stringResource(id = R.string.end_date),
+                onDateSelected = { endDate = it }
             )
 
             Spacer(modifier = Modifier.height(30.dp))

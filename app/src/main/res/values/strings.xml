@@ -38,4 +38,6 @@
     <string name="weekly">Semanal</string>
     <string name="monthly">Mensual</string>
     <string name="annual">Anual</string>
+    <string name="start_date">Fecha de inicio</string>
+    <string name="end_date">Fecha limite</string>
 </resources>
