@@ -1,7 +1,6 @@
 package com.meneses.budgethunter.userGuide
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -10,13 +9,11 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.res.stringResource
 import com.meneses.budgethunter.R
 import com.meneses.budgethunter.commons.EMPTY
 import com.meneses.budgethunter.commons.ui.AppBar
@@ -33,21 +30,14 @@ fun UserGuideScreen(
     Scaffold(
         topBar = {
             AppBar(
-                title = "Guia de usuario",
+                title = stringResource(R.string.user_guide),
                 leftButtonIcon = Icons.Default.ArrowBack,
                 onLeftButtonClick = { navigator.popBackStack() }
             )
         }
     ) { paddingValues ->
-        val contentSize = remember { mutableStateOf(IntSize(1, 1)) }
         LazyColumn(
-            modifier = Modifier
-                .padding(paddingValues)
-                .pointerInput(Unit) {
-                    detectTransformGestures { _, _, zoom, _ ->
-                        contentSize.value *= zoom.toInt()
-                    }
-                }
+            modifier = Modifier.padding(paddingValues)
         ) {
             items(userGuidePages.size) {
                 Image(

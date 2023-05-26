@@ -40,4 +40,5 @@
     <string name="annual">Anual</string>
     <string name="start_date">Fecha de inicio</string>
     <string name="end_date">Fecha limite</string>
+    <string name="user_guide">Guia de usuario</string>
 </resources>
