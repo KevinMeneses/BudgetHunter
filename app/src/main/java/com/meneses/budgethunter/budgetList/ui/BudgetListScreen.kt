@@ -16,6 +16,7 @@ import com.meneses.budgethunter.R
 import com.meneses.budgethunter.budgetList.BudgetListViewModel
 import com.meneses.budgethunter.commons.ui.AppBar
 import com.meneses.budgethunter.destinations.BudgetDetailScreenDestination
+import com.meneses.budgethunter.destinations.UserGuideScreenDestination
 import com.meneses.budgethunter.fakeNavigation
 import com.meneses.budgethunter.theme.BudgetHunterTheme
 import com.ramcosta.composedestinations.annotation.Destination
@@ -44,6 +45,7 @@ fun BudgetListScreen(
                 title = stringResource(id = R.string.budgets),
                 leftButtonIcon = Icons.Outlined.Info,
                 rightButtonIcon = Icons.Default.Search,
+                onLeftButtonClick = { navigator.navigate(UserGuideScreenDestination) },
                 onRightButtonClick = myViewModel::showFilterModal,
                 animateRightButton = uiState.filter != null
             )
