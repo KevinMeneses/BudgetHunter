@@ -21,11 +21,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.meneses.budgethunter.R
 import com.meneses.budgethunter.budgetList.domain.Budget
-import com.meneses.budgethunter.commons.EMPTY
 import com.meneses.budgethunter.commons.ui.LottiePlaceholder
 import com.meneses.budgethunter.commons.ui.blinkEffect
 import com.meneses.budgethunter.commons.ui.dashedBorder
@@ -138,7 +138,7 @@ private fun AddBudgetCard(
         ) {
             Icon(
                 imageVector = Icons.Default.Add,
-                contentDescription = EMPTY
+                contentDescription = stringResource(R.string.create_new_budget)
             )
         }
     }

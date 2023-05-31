@@ -17,7 +17,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.meneses.budgethunter.commons.EMPTY
 import com.meneses.budgethunter.theme.AppColors
 import com.meneses.budgethunter.theme.BudgetHunterTheme
 
@@ -38,6 +37,8 @@ fun AppBar(
     title: String,
     leftButtonIcon: ImageVector? = null,
     rightButtonIcon: ImageVector? = null,
+    leftButtonDescription: String? = null,
+    rightButtonDescription: String? = null,
     onLeftButtonClick: (() -> Unit)? = null,
     onRightButtonClick: (() -> Unit)? = null,
     animateLeftButton: Boolean = false,
@@ -48,12 +49,14 @@ fun AppBar(
     ) {
         LeftButton(
             leftIcon = leftButtonIcon,
+            contentDescription = leftButtonDescription,
             onLeftIconClick = onLeftButtonClick,
             animate = animateLeftButton
         )
         Title(title)
         RightButton(
             rightIcon = rightButtonIcon,
+            contentDescription = rightButtonDescription,
             onRightIconClick = onRightButtonClick,
             animate = animateRightButton
         )
@@ -63,13 +66,14 @@ fun AppBar(
 @Composable
 private fun BoxScope.RightButton(
     rightIcon: ImageVector?,
+    contentDescription: String?,
     onRightIconClick: (() -> Unit)?,
     animate: Boolean
 ) {
     if (rightIcon != null) {
         Icon(
             imageVector = rightIcon,
-            contentDescription = EMPTY,
+            contentDescription = contentDescription,
             modifier = Modifier
                 .padding(end = 10.dp)
                 .align(Alignment.CenterEnd)
@@ -95,13 +99,14 @@ private fun BoxScope.Title(title: String) {
 @Composable
 private fun BoxScope.LeftButton(
     leftIcon: ImageVector?,
+    contentDescription: String?,
     onLeftIconClick: (() -> Unit)?,
     animate: Boolean
 ) {
     if (leftIcon != null) {
         Icon(
             imageVector = leftIcon,
-            contentDescription = EMPTY,
+            contentDescription = contentDescription,
             modifier = Modifier
                 .padding(start = 10.dp)
                 .align(Alignment.CenterStart)

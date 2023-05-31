@@ -15,7 +15,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import com.meneses.budgethunter.R
-import com.meneses.budgethunter.commons.EMPTY
 import com.meneses.budgethunter.commons.ui.AppBar
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
@@ -32,6 +31,7 @@ fun UserGuideScreen(
             AppBar(
                 title = stringResource(R.string.user_guide),
                 leftButtonIcon = Icons.Default.ArrowBack,
+                leftButtonDescription = stringResource(id = R.string.come_back),
                 onLeftButtonClick = { navigator.popBackStack() }
             )
         }
@@ -42,7 +42,7 @@ fun UserGuideScreen(
             items(userGuidePages.size) {
                 Image(
                     painter = painterResource(id = userGuidePages[it]),
-                    contentDescription = EMPTY,
+                    contentDescription = stringResource(R.string.page_, it),
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
                 )

@@ -117,7 +117,7 @@ fun DateField(
             trailingIcon = {
                 Icon(
                     imageVector = Icons.Default.DateRange,
-                    contentDescription = EMPTY
+                    contentDescription = stringResource(R.string.entry_date)
                 )
             },
             singleLine = true

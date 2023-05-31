@@ -180,7 +180,7 @@ private fun ColumnScope.ListSection(
                     )
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = EMPTY,
+                        contentDescription = stringResource(R.string.close_entries_selection_mode),
                         modifier = Modifier.clickable(onClick = onCloseSelection)
                     )
                 }

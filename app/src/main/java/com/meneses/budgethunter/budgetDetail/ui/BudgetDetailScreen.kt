@@ -12,9 +12,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.meneses.budgethunter.R
 import com.meneses.budgethunter.budgetDetail.BudgetDetailViewModel
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailEvent
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
@@ -78,7 +80,9 @@ fun BudgetDetailScreen(
                 AppBar(
                     title = budget.name,
                     leftButtonIcon = Icons.Default.Menu,
+                    leftButtonDescription = stringResource(id = R.string.open_menu_button),
                     rightButtonIcon = Icons.Default.Add,
+                    rightButtonDescription = stringResource(R.string.create_budget_entry),
                     onLeftButtonClick = fun() {
                         coroutineScope.launch {
                             drawerState.open()

@@ -23,7 +23,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.meneses.budgethunter.R
-import com.meneses.budgethunter.commons.EMPTY
 import com.meneses.budgethunter.commons.ui.DefDivider
 import com.meneses.budgethunter.commons.ui.blinkEffect
 import com.meneses.budgethunter.commons.ui.pulsateEffect
@@ -103,7 +102,7 @@ private fun MenuButton(
     ) {
         Icon(
             imageVector = icon,
-            contentDescription = EMPTY,
+            contentDescription = text,
             modifier = Modifier.padding(end = 10.dp),
             tint = AppColors.onPrimary
         )

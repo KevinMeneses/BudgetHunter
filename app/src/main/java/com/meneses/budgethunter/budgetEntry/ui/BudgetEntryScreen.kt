@@ -54,7 +54,9 @@ fun BudgetEntryScreen(
             AppBar(
                 title = title,
                 leftButtonIcon = Icons.Default.ArrowBack,
+                leftButtonDescription = stringResource(R.string.come_back),
                 rightButtonIcon = Icons.Default.Done,
+                rightButtonDescription = stringResource(R.string.save_entry),
                 onLeftButtonClick = onBack,
                 onRightButtonClick = myViewModel::saveBudgetEntry
             )

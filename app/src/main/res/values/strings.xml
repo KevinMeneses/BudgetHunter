@@ -41,4 +41,11 @@
     <string name="start_date">Fecha de inicio</string>
     <string name="end_date">Fecha limite</string>
     <string name="user_guide">Guia de usuario</string>
+    <string name="close_entries_selection_mode">Cerrar modo selección de entradas</string>
+    <string name="open_menu_button">Botón para abrir el menú</string>
+    <string name="entry_date">Fecha de la entrada</string>
+    <string name="create_new_budget">Crear nuevo presupuesto</string>
+    <string name="create_budget_entry">Crear entrada de presupuesto</string>
+    <string name="page_">Pagina %1$d</string>
+    <string name="save_entry">Guardar entrada</string>
 </resources>

@@ -45,6 +45,8 @@ fun BudgetListScreen(
                 title = stringResource(id = R.string.budgets),
                 leftButtonIcon = Icons.Outlined.Info,
                 rightButtonIcon = Icons.Default.Search,
+                leftButtonDescription = stringResource(id = R.string.user_guide),
+                rightButtonDescription = stringResource(id = R.string.filter),
                 onLeftButtonClick = { navigator.navigate(UserGuideScreenDestination) },
                 onRightButtonClick = myViewModel::showFilterModal,
                 animateRightButton = uiState.filter != null
