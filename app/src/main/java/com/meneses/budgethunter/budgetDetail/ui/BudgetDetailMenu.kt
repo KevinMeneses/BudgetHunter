@@ -50,7 +50,7 @@ fun BudgetDetailMenu(
             verticalArrangement = Arrangement.Bottom
         ) {
             LazyColumn(
-                modifier = Modifier.background(AppColors.primary),
+                modifier = Modifier.background(AppColors.primary)
             ) {
                 item { FilterButton(animateFilterButton, onFilterClick) }
                 item { DeleteButton(onDeleteClick) }

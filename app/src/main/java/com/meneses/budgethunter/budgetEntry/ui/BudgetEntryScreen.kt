@@ -1,13 +1,15 @@
 package com.meneses.budgethunter.budgetEntry.ui
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -49,7 +51,7 @@ fun BudgetEntryScreen(
     Scaffold(
         topBar = {
             val title = if (budgetEntry.id < 0) stringResource(id = R.string.new_registry)
-                else stringResource(id = R.string.update_registry)
+            else stringResource(id = R.string.update_registry)
 
             AppBar(
                 title = title,

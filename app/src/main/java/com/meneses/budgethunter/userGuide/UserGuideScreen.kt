@@ -66,5 +66,5 @@ private fun getUserGuidePages() = listOf(
     R.drawable.user_guide_page_12,
     R.drawable.user_guide_page_13,
     R.drawable.user_guide_page_14,
-    R.drawable.user_guide_page_15,
+    R.drawable.user_guide_page_15
 )

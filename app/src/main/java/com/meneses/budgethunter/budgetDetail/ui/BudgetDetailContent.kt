@@ -131,7 +131,6 @@ fun BudgetSection(
             )
         }
     }
-
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -309,7 +308,7 @@ private fun DeleteButton(
         modifier = Modifier
             .fillMaxWidth()
             .background(AppColors.background)
-            .padding(vertical = 5.dp),
+            .padding(vertical = 5.dp)
     ) {
         Button(
             onClick = onClick,
@@ -339,5 +338,3 @@ private fun AmountText(
         Text(text = amount, color = AppColors.onSecondaryContainer)
     }
 }
-
-

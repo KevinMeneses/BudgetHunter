@@ -10,7 +10,7 @@ import com.meneses.budgethunter.db.Budget as DbBudget
 
 class BudgetLocalDataSource(
     private val queries: BudgetQueries = AndroidDatabaseFactory().create().budgetQueries,
-    dispatcher: CoroutineDispatcher = Dispatchers.IO,
+    dispatcher: CoroutineDispatcher = Dispatchers.IO
 ) {
     val budgets = queries
         .selectAll()
@@ -35,7 +35,7 @@ class BudgetLocalDataSource(
             id = budget.id,
             amount = budget.amount,
             name = budget.name,
-            frequency = budget.frequency,
+            frequency = budget.frequency
         )
 
     fun delete(id: Long) = queries.delete(id)

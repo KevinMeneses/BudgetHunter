@@ -37,7 +37,7 @@ fun FilterListModal(
     filter: BudgetFilter?,
     onDismiss: () -> Unit,
     onClear: () -> Unit,
-    onApplyClick: (BudgetFilter) -> Unit,
+    onApplyClick: (BudgetFilter) -> Unit
 ) {
     if (show) {
         Modal(onDismiss = onDismiss) {
