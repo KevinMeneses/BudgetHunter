@@ -12,6 +12,6 @@ class AndroidDatabaseFactory(
     private val driver: SqlDriver = MyApplication.driver,
     private val budgetAdapter: Budget.Adapter = Budget.Adapter(frequencyAdapter),
     private val budgetEntryAdapter: Budget_entry.Adapter = Budget_entry.Adapter(typeAdapter)
-): DatabaseFactory {
+) : DatabaseFactory {
     override fun create() = Database(driver, budgetAdapter, budgetEntryAdapter)
 }

@@ -2,8 +2,8 @@ package com.meneses.budgethunter.budgetEntry.domain
 
 import android.os.Parcelable
 import com.meneses.budgethunter.commons.EMPTY
-import kotlinx.parcelize.Parcelize
 import java.time.LocalDate
+import kotlinx.parcelize.Parcelize
 
 @Parcelize
 data class BudgetEntry(

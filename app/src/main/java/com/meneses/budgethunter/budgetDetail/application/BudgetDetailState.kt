@@ -1,8 +1,8 @@
 package com.meneses.budgethunter.budgetDetail.application
 
-import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntryFilter
+import com.meneses.budgethunter.budgetList.domain.Budget
 
 data class BudgetDetailState(
     val budget: Budget = Budget(),

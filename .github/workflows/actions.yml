@@ -16,5 +16,7 @@ jobs:
           java-version: '17'
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
+      - name: Execute Ktlint Check
+        run: ./gradlew ktlint
       - name: Execute Gradle build
         run: ./gradlew build

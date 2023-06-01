@@ -25,7 +25,7 @@ fun OutlinedDropdown(
     ExposedDropdownMenuBox(
         expanded = expanded,
         onExpandedChange = { expanded = !expanded }
-    ){
+    ) {
         OutlinedTextField(
             modifier = Modifier.menuAnchor(),
             value = value,

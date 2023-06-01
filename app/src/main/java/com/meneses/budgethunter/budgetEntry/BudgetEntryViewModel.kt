@@ -3,8 +3,8 @@ package com.meneses.budgethunter.budgetEntry
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.meneses.budgethunter.budgetEntry.application.BudgetEntryState
-import com.meneses.budgethunter.budgetEntry.data.repository.BudgetEntryRepository
 import com.meneses.budgethunter.budgetEntry.data.repository.BudgetEntryLocalRepository
+import com.meneses.budgethunter.budgetEntry.data.repository.BudgetEntryRepository
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers

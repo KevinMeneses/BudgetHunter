@@ -13,11 +13,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.meneses.budgethunter.R
-import com.meneses.budgethunter.commons.ui.AppBar
 import com.meneses.budgethunter.budgetEntry.BudgetEntryViewModel
-import com.meneses.budgethunter.fakeNavigation
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
+import com.meneses.budgethunter.commons.ui.AppBar
 import com.meneses.budgethunter.commons.ui.ConfirmationModal
+import com.meneses.budgethunter.fakeNavigation
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 
