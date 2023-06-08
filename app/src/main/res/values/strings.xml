@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">BudgetHunter</string>
+    <string name="app_name">Cazador de Presupuestos</string>
     <string name="add_budget">Agregar un presupuesto</string>
     <string name="budget_amount">Presupuesto\n%1$s</string>
     <string name="no_description">Sin descripcion</string>

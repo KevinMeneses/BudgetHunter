@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">BudgetHunter</string>
+    <string name="app_name">Budget Hunter</string>
     <string name="add_budget">Add a budget</string>
     <string name="budget_amount">Budget\n%1$s</string>
     <string name="no_description">No description</string>
