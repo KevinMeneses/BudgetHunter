@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">BudgetHunter</string>
-    <string name="add_budget">Add budget</string>
+    <string name="add_budget">Add a budget</string>
     <string name="budget_amount">Budget\n%1$s</string>
     <string name="no_description">No description</string>
     <string name="total_outcomes">Total outcome:</string>
