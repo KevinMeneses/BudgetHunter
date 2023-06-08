@@ -16,8 +16,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.meneses.budgethunter.theme.AppColors
 import com.meneses.budgethunter.theme.shadow
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -39,7 +39,7 @@ fun Modal(
                 .align(Alignment.Center)
                 .padding(horizontal = 20.dp),
             colors = CardDefaults.cardColors(
-                containerColor = Color.White
+                containerColor = AppColors.background
             )
         ) {
             Column(
