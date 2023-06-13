@@ -47,11 +47,20 @@ fun BudgetDetailScreen(
     val coroutineScope = rememberCoroutineScope()
 
     DisposableEffect(Unit) {
-        if (uiState.budget.id != budget.id) myViewModel.setBudget(budget)
-        myViewModel.getBudgetEntries()
+        if (uiState.budget.id != budget.id) {
+            BudgetDetailEvent
+                .SetBudget(budget)
+                .run(myViewModel::sendEvent)
+        }
+
+        BudgetDetailEvent
+            .GetBudgetEntries
+            .run(myViewModel::sendEvent)
 
         onDispose {
-            myViewModel.clearNavigation()
+            BudgetDetailEvent
+                .ClearNavigation
+                .run(myViewModel::sendEvent)
         }
     }
 
@@ -62,13 +71,17 @@ fun BudgetDetailScreen(
                 onFilterClick = fun() {
                     coroutineScope.launch {
                         drawerState.close()
-                        myViewModel.sendEvent(BudgetDetailEvent.ToggleFilterModal(true))
+                        BudgetDetailEvent
+                            .ToggleFilterModal(true)
+                            .run(myViewModel::sendEvent)
                     }
                 },
                 onDeleteClick = fun() {
                     coroutineScope.launch {
                         drawerState.close()
-                        myViewModel.sendEvent(BudgetDetailEvent.ToggleDeleteBudgetModal(true))
+                        BudgetDetailEvent
+                            .ToggleDeleteBudgetModal(true)
+                            .run(myViewModel::sendEvent)
                     }
                 }
             )
@@ -90,8 +103,9 @@ fun BudgetDetailScreen(
                     },
                     onRightButtonClick = fun() {
                         val budgetEntry = BudgetEntry(budgetId = budget.id)
-                        val destination = BudgetEntryScreenDestination(budgetEntry)
-                        navigator.navigate(destination)
+                        BudgetDetailEvent
+                            .ShowEntry(budgetEntry)
+                            .run(myViewModel::sendEvent)
                     },
                     animateLeftButton = uiState.filter != null
                 )

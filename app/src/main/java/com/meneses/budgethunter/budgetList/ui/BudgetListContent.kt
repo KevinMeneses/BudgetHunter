@@ -19,12 +19,14 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.meneses.budgethunter.R
+import com.meneses.budgethunter.budgetList.application.BudgetListEvent
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.commons.ui.LottiePlaceholder
 import com.meneses.budgethunter.commons.ui.blinkEffect
@@ -41,8 +43,7 @@ private fun Preview() {
             list = emptyList(),
             paddingValues = PaddingValues(),
             animate = false,
-            onBudgetClick = {},
-            onAddBudgetClick = {}
+            onEvent = {}
         )
     }
 }
@@ -52,9 +53,16 @@ fun BudgetListContent(
     list: List<Budget>,
     paddingValues: PaddingValues,
     animate: Boolean,
-    onBudgetClick: (Int) -> Unit,
-    onAddBudgetClick: () -> Unit
+    onEvent: (BudgetListEvent) -> Unit
 ) {
+    val onAddBudgetClick = remember {
+        fun() {
+            BudgetListEvent
+                .ToggleAddModal(true)
+                .run(onEvent)
+        }
+    }
+
     LazyColumn(
         modifier = Modifier
             .padding(paddingValues)
@@ -70,7 +78,11 @@ fun BudgetListContent(
             items(list.size) {
                 BudgetItem(
                     budget = list[it],
-                    onBudgetClick = { onBudgetClick(it) }
+                    onBudgetClick = { budget ->
+                        BudgetListEvent
+                            .OpenBudget(budget)
+                            .run(onEvent)
+                    }
                 )
             }
             item {
@@ -84,7 +96,7 @@ fun BudgetListContent(
 @OptIn(ExperimentalMaterial3Api::class)
 private fun BudgetItem(
     budget: Budget,
-    onBudgetClick: () -> Unit
+    onBudgetClick: (Budget) -> Unit
 ) {
     Card(
         colors = CardDefaults.cardColors(
@@ -94,7 +106,7 @@ private fun BudgetItem(
         elevation = CardDefaults.cardElevation(
             defaultElevation = 5.dp
         ),
-        onClick = { onBudgetClick() }
+        onClick = { onBudgetClick(budget) }
     ) {
         Column(
             modifier = Modifier

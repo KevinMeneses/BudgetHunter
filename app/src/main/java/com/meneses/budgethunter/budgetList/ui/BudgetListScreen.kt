@@ -14,6 +14,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.meneses.budgethunter.R
 import com.meneses.budgethunter.budgetList.BudgetListViewModel
+import com.meneses.budgethunter.budgetList.application.BudgetListEvent
 import com.meneses.budgethunter.commons.ui.AppBar
 import com.meneses.budgethunter.destinations.BudgetDetailScreenDestination
 import com.meneses.budgethunter.destinations.UserGuideScreenDestination
@@ -48,7 +49,11 @@ fun BudgetListScreen(
                 leftButtonDescription = stringResource(id = R.string.user_guide),
                 rightButtonDescription = stringResource(id = R.string.filter),
                 onLeftButtonClick = { navigator.navigate(UserGuideScreenDestination) },
-                onRightButtonClick = myViewModel::showFilterModal,
+                onRightButtonClick = fun() {
+                    BudgetListEvent
+                        .ToggleFilterModal(true)
+                        .run(myViewModel::sendEvent)
+                },
                 animateRightButton = uiState.filter != null
             )
         }
@@ -56,27 +61,20 @@ fun BudgetListScreen(
         BudgetListContent(
             list = uiState.budgetList,
             paddingValues = it,
-            onAddBudgetClick = myViewModel::showAddModal,
-            onBudgetClick = fun (index) {
-                val budget = uiState.budgetList[index]
-                myViewModel.navigateToBudget(budget)
-            },
+            onEvent = myViewModel::sendEvent,
             animate = uiState.budgetList.isEmpty() && uiState.filter == null
         )
     }
 
     NewBudgetModal(
         show = uiState.addModalVisibility,
-        onDismiss = myViewModel::hideAddModal,
-        onCreateClick = myViewModel::createBudget
+        onEvent = myViewModel::sendEvent
     )
 
     FilterListModal(
         show = uiState.filterModalVisibility,
         filter = uiState.filter,
-        onDismiss = myViewModel::hideFilterModal,
-        onClear = myViewModel::clearFilter,
-        onApplyClick = myViewModel::filterList
+        onEvent = myViewModel::sendEvent
     )
 
     uiState.navigateToBudget?.let {
@@ -85,6 +83,10 @@ fun BudgetListScreen(
     }
 
     DisposableEffect(key1 = Unit) {
-        onDispose { myViewModel.onDispose() }
+        onDispose {
+            BudgetListEvent
+                .ClearNavigation
+                .run(myViewModel::sendEvent)
+        }
     }
 }

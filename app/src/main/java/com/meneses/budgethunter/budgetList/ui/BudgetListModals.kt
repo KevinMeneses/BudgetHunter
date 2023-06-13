@@ -24,6 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import com.meneses.budgethunter.R
+import com.meneses.budgethunter.budgetList.application.BudgetListEvent
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.budgetList.domain.BudgetFilter
 import com.meneses.budgethunter.commons.EMPTY
@@ -35,11 +36,17 @@ import com.meneses.budgethunter.theme.AppColors
 fun FilterListModal(
     show: Boolean,
     filter: BudgetFilter?,
-    onDismiss: () -> Unit,
-    onClear: () -> Unit,
-    onApplyClick: (BudgetFilter) -> Unit
+    onEvent: (BudgetListEvent) -> Unit
 ) {
     if (show) {
+        val onDismiss = remember {
+            fun() {
+                BudgetListEvent
+                    .ToggleFilterModal(false)
+                    .run(onEvent)
+            }
+        }
+
         Modal(onDismiss = onDismiss) {
             var name by remember {
                 mutableStateOf(filter?.name ?: EMPTY)
@@ -73,7 +80,7 @@ fun FilterListModal(
                         contentColor = AppColors.onBackground
                     ),
                     onClick = {
-                        onClear()
+                        BudgetListEvent.ClearFilter.run(onEvent)
                         onDismiss()
                     }
                 ) {
@@ -83,7 +90,7 @@ fun FilterListModal(
                 Button(
                     onClick = {
                         val budgetFilter = BudgetFilter(name, frequency)
-                        onApplyClick(budgetFilter)
+                        BudgetListEvent.FilterList(budgetFilter).run(onEvent)
                         onDismiss()
                     }
                 ) {
@@ -97,10 +104,17 @@ fun FilterListModal(
 @Composable
 fun NewBudgetModal(
     show: Boolean,
-    onDismiss: () -> Unit,
-    onCreateClick: (Budget) -> Unit
+    onEvent: (BudgetListEvent) -> Unit
 ) {
     if (show) {
+        val onDismiss = remember {
+            fun() {
+                BudgetListEvent
+                    .ToggleAddModal(false)
+                    .run(onEvent)
+            }
+        }
+
         Modal(onDismiss = onDismiss) {
             var name by remember {
                 mutableStateOf(EMPTY)
@@ -127,7 +141,7 @@ fun NewBudgetModal(
                 onClick = {
                     if (name.isBlank()) return@Button
                     val budget = Budget(name = name, frequency = frequency)
-                    onCreateClick(budget)
+                    BudgetListEvent.CreateBudget(budget).run(onEvent)
                     onDismiss()
                 }
             ) {

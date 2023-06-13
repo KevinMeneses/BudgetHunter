@@ -27,28 +27,10 @@ class BudgetDetailViewModel(
     private val _uiState = MutableStateFlow(BudgetDetailState())
     val uiState = _uiState.asStateFlow()
 
-    fun setBudget(budget: Budget) =
-        _uiState.update { it.copy(budget = budget) }
-
-    fun getBudgetEntries() {
-        viewModelScope.launch(dispatcher) {
-            budgetEntryRepository
-                .getAllByBudgetId(_uiState.value.budget.id)
-                .collect { entries ->
-                    _uiState.update {
-                        val updatedEntries = if (it.filter == null) entries
-                        else budgetEntryRepository.getAllFilteredBy(it.filter)
-                        it.copy(entries = updatedEntries)
-                    }
-                }
-        }
-    }
-
-    fun clearNavigation() =
-        _uiState.update { it.copy(showEntry = null) }
-
     fun sendEvent(event: BudgetDetailEvent) {
         when (event) {
+            is BudgetDetailEvent.SetBudget -> setBudget(event.budget)
+            is BudgetDetailEvent.GetBudgetEntries -> getBudgetEntries()
             is BudgetDetailEvent.UpdateBudgetAmount -> updateBudgetAmount(event.amount)
             is BudgetDetailEvent.FilterEntries -> filterEntries(event.filter)
             is BudgetDetailEvent.ClearFilter -> clearFilter()
@@ -62,8 +44,29 @@ class BudgetDetailViewModel(
             is BudgetDetailEvent.ToggleSelectionState -> toggleSelectionState(event.isActivated)
             is BudgetDetailEvent.ToggleAllEntriesSelection -> toggleAllEntriesSelection(event.isSelected)
             is BudgetDetailEvent.ToggleSelectEntry -> toggleEntrySelection(event)
+            is BudgetDetailEvent.ClearNavigation -> clearNavigation()
         }
     }
+
+    private fun setBudget(budget: Budget) =
+        _uiState.update { it.copy(budget = budget) }
+
+    private fun getBudgetEntries() {
+        viewModelScope.launch(dispatcher) {
+            budgetEntryRepository
+                .getAllByBudgetId(_uiState.value.budget.id)
+                .collect { entries ->
+                    _uiState.update {
+                        val updatedEntries = if (it.filter == null) entries
+                        else budgetEntryRepository.getAllFilteredBy(it.filter)
+                        it.copy(entries = updatedEntries)
+                    }
+                }
+        }
+    }
+
+    private fun clearNavigation() =
+        _uiState.update { it.copy(showEntry = null) }
 
     private fun deleteSelectedEntries() {
         viewModelScope.launch(dispatcher) {
