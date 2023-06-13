@@ -20,3 +20,5 @@ jobs:
         run: ./gradlew ktlint
       - name: Execute Gradle build
         run: ./gradlew build
+      - name: Execute Unit Tests
+        run: ./gradlew testDebugUnitTest
