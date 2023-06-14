@@ -39,7 +39,7 @@ class BudgetListViewModel(
     }
 
     fun sendEvent(event: BudgetListEvent) {
-        when(event) {
+        when (event) {
             is BudgetListEvent.CreateBudget -> createBudget(event.budget)
             is BudgetListEvent.FilterList -> filterList(event.filter)
             is BudgetListEvent.OpenBudget -> openBudget(event.budget)
