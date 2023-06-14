@@ -2,6 +2,7 @@ package com.meneses.budgethunter.budgetEntry
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.meneses.budgethunter.budgetEntry.application.BudgetEntryEvent
 import com.meneses.budgethunter.budgetEntry.application.BudgetEntryState
 import com.meneses.budgethunter.budgetEntry.data.repository.BudgetEntryLocalRepository
 import com.meneses.budgethunter.budgetEntry.data.repository.BudgetEntryRepository
@@ -21,26 +22,39 @@ class BudgetEntryViewModel(
     private val _uiState = MutableStateFlow(BudgetEntryState())
     val uiState = _uiState.asStateFlow()
 
-    fun setBudgetEntry(budgetEntry: BudgetEntry?) =
+    fun sendEvent(event: BudgetEntryEvent) {
+        when (event) {
+            is BudgetEntryEvent.GoBack -> goBack()
+            is BudgetEntryEvent.HideDiscardChangesModal -> hideDiscardChangesModal()
+            is BudgetEntryEvent.SaveBudgetEntry -> saveBudgetEntry()
+            is BudgetEntryEvent.SetBudgetEntry -> setBudgetEntry(event.budgetEntry)
+            is BudgetEntryEvent.ValidateChanges -> validateChanges(event.budgetEntry)
+        }
+    }
+
+    private fun setBudgetEntry(budgetEntry: BudgetEntry?) =
         _uiState.update { it.copy(budgetEntry = budgetEntry) }
 
-    fun saveBudgetEntry() {
+    private fun saveBudgetEntry() {
         viewModelScope.launch(dispatcher) {
             _uiState.value.budgetEntry?.let { entry ->
                 if (entry.amount.isBlank()) return@let
                 if (entry.id < 0) budgetEntryRepository.create(entry)
                 else budgetEntryRepository.update(entry)
-                _uiState.update { it.copy(goBack = true) }
+                goBack()
             }
         }
     }
 
-    fun validateChanges(budgetEntry: BudgetEntry) =
+    private fun goBack() =
+        _uiState.update { it.copy(goBack = true) }
+
+    private fun validateChanges(budgetEntry: BudgetEntry) =
         _uiState.update {
             if (budgetEntry == it.budgetEntry) it.copy(goBack = true)
             else it.copy(isDiscardChangesModalVisible = true)
         }
 
-    fun hideDiscardChangesModal() =
+    private fun hideDiscardChangesModal() =
         _uiState.update { it.copy(isDiscardChangesModalVisible = false) }
 }

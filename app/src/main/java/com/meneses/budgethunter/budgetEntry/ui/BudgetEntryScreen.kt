@@ -16,6 +16,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.meneses.budgethunter.R
 import com.meneses.budgethunter.budgetEntry.BudgetEntryViewModel
+import com.meneses.budgethunter.budgetEntry.application.BudgetEntryEvent
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.commons.ui.AppBar
 import com.meneses.budgethunter.commons.ui.ConfirmationModal
@@ -39,12 +40,24 @@ fun BudgetEntryScreen(
 ) {
     val uiState by myViewModel.uiState.collectAsStateWithLifecycle()
     val onBack = remember {
-        fun() { myViewModel.validateChanges(budgetEntry) }
+        fun() {
+            BudgetEntryEvent
+                .ValidateChanges(budgetEntry)
+                .run(myViewModel::sendEvent)
+        }
+    }
+
+    val setBudgetEntry = remember {
+        fun(budgetEntry: BudgetEntry) {
+            BudgetEntryEvent
+                .SetBudgetEntry(budgetEntry)
+                .run(myViewModel::sendEvent)
+        }
     }
 
     LaunchedEffect(Unit) {
         if (uiState.budgetEntry?.id != budgetEntry.id) {
-            myViewModel.setBudgetEntry(budgetEntry)
+            setBudgetEntry(budgetEntry)
         }
     }
 
@@ -60,14 +73,18 @@ fun BudgetEntryScreen(
                 rightButtonIcon = Icons.Default.Done,
                 rightButtonDescription = stringResource(R.string.save_entry),
                 onLeftButtonClick = onBack,
-                onRightButtonClick = myViewModel::saveBudgetEntry
+                onRightButtonClick = {
+                    BudgetEntryEvent
+                        .SaveBudgetEntry
+                        .run(myViewModel::sendEvent)
+                }
             )
         }
     ) { paddingValues ->
         BudgetEntryForm(
             budgetEntry = uiState.budgetEntry ?: budgetEntry,
             paddingValues = paddingValues,
-            onBudgetItemChanged = myViewModel::setBudgetEntry
+            onBudgetItemChanged = setBudgetEntry
         )
     }
 
@@ -76,8 +93,15 @@ fun BudgetEntryScreen(
         message = stringResource(id = R.string.unsaved_changes_confirmation_message),
         confirmButtonText = stringResource(id = R.string.discard),
         cancelButtonText = stringResource(id = R.string.come_back),
-        onDismiss = myViewModel::hideDiscardChangesModal,
-        onConfirm = navigator::popBackStack
+        onDismiss = {
+            BudgetEntryEvent
+                .HideDiscardChangesModal
+                .run(myViewModel::sendEvent)
+        },
+        onConfirm = {
+            BudgetEntryEvent.GoBack
+                .run(myViewModel::sendEvent)
+        }
     )
 
     BackHandler(enabled = true, onBack = onBack)
