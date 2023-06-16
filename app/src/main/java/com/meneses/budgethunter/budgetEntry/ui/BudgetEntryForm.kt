@@ -1,5 +1,6 @@
 package com.meneses.budgethunter.budgetEntry.ui
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -35,6 +36,7 @@ import com.meneses.budgethunter.commons.ui.OutlinedDropdown
 @Composable
 fun BudgetEntryForm(
     budgetEntry: BudgetEntry,
+    @StringRes amountError: Int?,
     paddingValues: PaddingValues,
     onBudgetItemChanged: (BudgetEntry) -> Unit
 ) {
@@ -49,33 +51,34 @@ fun BudgetEntryForm(
         AmountField(
             amount = budgetEntry.amount,
             onAmountChanged = {
-                onBudgetItemChanged(
-                    budgetEntry.copy(amount = it)
-                )
-            }
+                budgetEntry
+                    .copy(amount = it)
+                    .run(onBudgetItemChanged)
+            },
+            amountError = amountError
         )
         DescriptionField(
             description = budgetEntry.description,
             onDescriptionChanged = {
-                onBudgetItemChanged(
-                    budgetEntry.copy(description = it)
-                )
+                budgetEntry
+                    .copy(description = it)
+                    .run(onBudgetItemChanged)
             }
         )
         TypeSelector(
             type = budgetEntry.type,
             onTypeSelected = {
-                onBudgetItemChanged(
-                    budgetEntry.copy(type = it)
-                )
+                budgetEntry
+                    .copy(type = it)
+                    .run(onBudgetItemChanged)
             }
         )
         DateField(
             date = budgetEntry.date,
             onDateSelected = {
-                onBudgetItemChanged(
-                    budgetEntry.copy(date = it)
-                )
+                budgetEntry
+                    .copy(date = it)
+                    .run(onBudgetItemChanged)
             }
         )
         Spacer(modifier = Modifier.height(10.dp))
@@ -143,7 +146,8 @@ fun TypeSelector(
 @Composable
 fun AmountField(
     amount: String,
-    onAmountChanged: (String) -> Unit
+    onAmountChanged: (String) -> Unit,
+    @StringRes amountError: Int? = null
 ) {
     OutlinedTextField(
         value = amount,
@@ -161,8 +165,16 @@ fun AmountField(
         },
         label = { Text(text = stringResource(id = R.string.amount)) },
         keyboardOptions = KeyboardOptions(
-            keyboardType = KeyboardType.Number
-        )
+            keyboardType = KeyboardType.Number,
+            autoCorrect = false
+        ),
+        singleLine = true,
+        isError = amountError != null,
+        supportingText = {
+            if (amountError != null) {
+                Text(text = stringResource(id = amountError))
+            }
+        }
     )
 }
 

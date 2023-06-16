@@ -2,6 +2,7 @@ package com.meneses.budgethunter.budgetEntry
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.meneses.budgethunter.R
 import com.meneses.budgethunter.budgetEntry.application.BudgetEntryEvent
 import com.meneses.budgethunter.budgetEntry.application.BudgetEntryState
 import com.meneses.budgethunter.budgetEntry.data.repository.BudgetEntryLocalRepository
@@ -33,16 +34,30 @@ class BudgetEntryViewModel(
     }
 
     private fun setBudgetEntry(budgetEntry: BudgetEntry?) =
-        _uiState.update { it.copy(budgetEntry = budgetEntry) }
+        _uiState.update {
+            it.copy(
+                budgetEntry = budgetEntry,
+                emptyAmountError = null
+            )
+        }
 
     private fun saveBudgetEntry() {
         viewModelScope.launch(dispatcher) {
             _uiState.value.budgetEntry?.let { entry ->
-                if (entry.amount.isBlank()) return@let
+                if (entry.amount.isBlank()) {
+                    showAmountError()
+                    return@launch
+                }
                 if (entry.id < 0) budgetEntryRepository.create(entry)
                 else budgetEntryRepository.update(entry)
                 goBack()
             }
+        }
+    }
+
+    private fun showAmountError() {
+        _uiState.update {
+            it.copy(emptyAmountError = R.string.amount_mandatory)
         }
     }
 

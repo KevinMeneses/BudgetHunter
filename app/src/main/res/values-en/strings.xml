@@ -48,4 +48,5 @@
     <string name="create_budget_entry">Create budget entry</string>
     <string name="page_">Page %1$d</string>
     <string name="save_entry">Save entry</string>
+    <string name="amount_mandatory">You must enter an amount for this entry</string>
 </resources>

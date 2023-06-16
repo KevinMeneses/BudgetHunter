@@ -83,6 +83,7 @@ fun BudgetEntryScreen(
     ) { paddingValues ->
         BudgetEntryForm(
             budgetEntry = uiState.budgetEntry ?: budgetEntry,
+            amountError = uiState.emptyAmountError,
             paddingValues = paddingValues,
             onBudgetItemChanged = setBudgetEntry
         )
