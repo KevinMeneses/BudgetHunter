@@ -33,7 +33,7 @@ class BudgetDetailViewModelTest {
     )
 
     @Test
-    fun setBudgetEvent() = runTest(dispatcher) {
+    fun setBudgetEvent() = runTest {
         val budget: Budget = mockk()
         val event = BudgetDetailEvent.SetBudget(budget)
         viewModel.sendEvent(event)
@@ -48,7 +48,7 @@ class BudgetDetailViewModelTest {
         val budgetEntries: List<BudgetEntry> = listOf(BudgetEntry())
 
         every { budgetEntryRepository.getAllByBudgetId(any()) } returns flowOf(budgetEntries)
-        val job = launch(dispatcher) { viewModel.uiState.toList(events) }
+        val job = launch { viewModel.uiState.toList(events) }
         viewModel.sendEvent(event)
         runCurrent()
 
@@ -64,7 +64,7 @@ class BudgetDetailViewModelTest {
         val events = mutableListOf<BudgetDetailState>()
 
         every { budgetRepository.update(any()) } returns Unit
-        val job = launch(dispatcher) { viewModel.uiState.toList(events) }
+        val job = launch { viewModel.uiState.toList(events) }
         viewModel.sendEvent(event)
         runCurrent()
 
@@ -80,7 +80,7 @@ class BudgetDetailViewModelTest {
         val budgetEntries: List<BudgetEntry> = listOf(mockk())
 
         every { budgetEntryRepository.getAllFilteredBy(any()) } returns budgetEntries
-        val job = launch(dispatcher) { viewModel.uiState.toList(events) }
+        val job = launch { viewModel.uiState.toList(events) }
         viewModel.sendEvent(event)
         runCurrent()
 
@@ -96,7 +96,7 @@ class BudgetDetailViewModelTest {
         val budgetEntries: List<BudgetEntry> = listOf(mockk())
 
         every { budgetEntryRepository.getAll() } returns budgetEntries
-        val job = launch(dispatcher) { viewModel.uiState.toList(events) }
+        val job = launch { viewModel.uiState.toList(events) }
         viewModel.sendEvent(event)
         runCurrent()
 
@@ -111,7 +111,7 @@ class BudgetDetailViewModelTest {
         val events = mutableListOf<BudgetDetailState>()
 
         every { budgetRepository.delete(any()) } returns Unit
-        val job = launch(dispatcher) { viewModel.uiState.toList(events) }
+        val job = launch { viewModel.uiState.toList(events) }
         viewModel.sendEvent(event)
         runCurrent()
 
@@ -126,7 +126,7 @@ class BudgetDetailViewModelTest {
         val events = mutableListOf<BudgetDetailState>()
 
         every { budgetEntryRepository.deleteByIds(any()) } returns Unit
-        val job = launch(dispatcher) { viewModel.uiState.toList(events) }
+        val job = launch { viewModel.uiState.toList(events) }
         viewModel.sendEvent(event)
         runCurrent()
 
