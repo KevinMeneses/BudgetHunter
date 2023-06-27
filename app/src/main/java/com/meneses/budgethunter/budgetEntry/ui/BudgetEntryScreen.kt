@@ -20,7 +20,7 @@ import com.meneses.budgethunter.budgetEntry.application.BudgetEntryEvent
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.commons.ui.AppBar
 import com.meneses.budgethunter.commons.ui.ConfirmationModal
-import com.meneses.budgethunter.fakeNavigation
+import com.meneses.budgethunter.commons.utils.fakeNavigation
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 

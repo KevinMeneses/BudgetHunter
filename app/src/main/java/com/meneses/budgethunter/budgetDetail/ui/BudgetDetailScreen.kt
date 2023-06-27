@@ -23,7 +23,7 @@ import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.commons.ui.AppBar
 import com.meneses.budgethunter.destinations.BudgetEntryScreenDestination
-import com.meneses.budgethunter.fakeNavigation
+import com.meneses.budgethunter.commons.utils.fakeNavigation
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.coroutines.launch

@@ -1,4 +1,4 @@
-package com.meneses.budgethunter
+package com.meneses.budgethunter.commons.utils
 
 import androidx.navigation.NavOptionsBuilder
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator

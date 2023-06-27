@@ -18,7 +18,7 @@ import com.meneses.budgethunter.budgetList.application.BudgetListEvent
 import com.meneses.budgethunter.commons.ui.AppBar
 import com.meneses.budgethunter.destinations.BudgetDetailScreenDestination
 import com.meneses.budgethunter.destinations.UserGuideScreenDestination
-import com.meneses.budgethunter.fakeNavigation
+import com.meneses.budgethunter.commons.utils.fakeNavigation
 import com.meneses.budgethunter.theme.BudgetHunterTheme
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator

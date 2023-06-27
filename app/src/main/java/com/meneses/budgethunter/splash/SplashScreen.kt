@@ -15,7 +15,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.meneses.budgethunter.R
 import com.meneses.budgethunter.destinations.BudgetListScreenDestination
 import com.meneses.budgethunter.destinations.SplashScreenDestination
-import com.meneses.budgethunter.fakeNavigation
+import com.meneses.budgethunter.commons.utils.fakeNavigation
 import com.meneses.budgethunter.theme.AppColors
 import com.meneses.budgethunter.theme.BudgetHunterTheme
 import com.meneses.budgethunter.theme.Typography
