@@ -83,7 +83,7 @@ class BudgetEntryViewModelTest {
 
     @Test
     fun sendSaveBudgetEntryEventUpdate() = runTest(dispatcher) {
-        val budgetEntry = BudgetEntry(id= 1, amount = "20")
+        val budgetEntry = BudgetEntry(id = 1, amount = "20")
         val state = mutableListOf<BudgetEntryState>()
         val job = launch { viewModel.uiState.toList(state) }
 
