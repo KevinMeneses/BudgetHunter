@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -15,6 +14,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.meneses.budgethunter.R
@@ -28,7 +28,6 @@ import com.meneses.budgethunter.theme.Typography
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
@@ -45,14 +44,7 @@ fun SplashScreen(
     myViewModel: SplashScreenViewModel = viewModel()
 ) {
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
     val uiState = myViewModel.uiState.collectAsStateWithLifecycle()
-
-    LaunchedEffect(Unit) {
-        SplashEvent
-            .VerifyUpdate(context)
-            .run(myViewModel::sendEvent)
-    }
 
     Box(
         modifier = Modifier.fillMaxSize()
@@ -66,28 +58,33 @@ fun SplashScreen(
             style = Typography.titleLarge
         )
 
-        if (uiState.value.updatingApp) {
+        if (!uiState.value.updatingApp) {
             Text(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .padding(bottom = 20.dp),
-                text = "Espere mientras se actualiza la aplicación..."
+                    .padding(bottom = 30.dp),
+                text = stringResource(R.string.wait_for_update),
+                fontSize = 16.sp
             )
         }
     }
 
-    if (uiState.value.navigate) {
-        navigator.navigate(
-            direction = BudgetListScreenDestination,
-            builder = {
-                coroutineScope.launch {
-                    delay(1000)
+    LaunchedEffect(uiState.value.navigate) {
+        if (!uiState.value.navigate) {
+            SplashEvent
+                .VerifyUpdate(context)
+                .run(myViewModel::sendEvent)
+        } else {
+            delay(1000)
+            navigator.navigate(
+                direction = BudgetListScreenDestination,
+                builder = {
                     popUpTo(
                         route = SplashScreenDestination.route,
                         popUpToBuilder = { inclusive = true }
                     )
                 }
-            }
-        )
+            )
+        }
     }
 }

@@ -49,4 +49,5 @@
     <string name="page_">Pagina %1$d</string>
     <string name="save_entry">Guardar entrada</string>
     <string name="amount_mandatory">Debes ingresar un monto para este registro</string>
+    <string name="wait_for_update">Espere mientras se actualiza la aplicación…</string>
 </resources>
