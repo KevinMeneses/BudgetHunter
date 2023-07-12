@@ -28,6 +28,7 @@ class SplashScreenViewModel : ViewModel() {
     private val installStatusListener = InstallStateUpdatedListener {
         when (it.installStatus()) {
             InstallStatus.DOWNLOADED -> appUpdateManager.completeUpdate()
+            InstallStatus.INSTALLED, InstallStatus.FAILED, InstallStatus.CANCELED -> finishUpdate()
             else -> Unit
         }
     }
@@ -47,20 +48,18 @@ class SplashScreenViewModel : ViewModel() {
     private fun Task<AppUpdateInfo>.handleUpdateInfo(context: Context) {
         addOnSuccessListener { updateInfo ->
             when (updateInfo.updateAvailability()) {
-                UpdateAvailability.UPDATE_AVAILABLE ->
-                    startUpdate(updateInfo, context)
-
-                UpdateAvailability.DEVELOPER_TRIGGERED_UPDATE_IN_PROGRESS ->
-                    setUpdateInProgressState()
-
-                else -> {
-                    appUpdateManager.unregisterListener(installStatusListener)
-                    setNavigateState()
-                }
+                UpdateAvailability.UPDATE_AVAILABLE -> startUpdate(updateInfo, context)
+                UpdateAvailability.DEVELOPER_TRIGGERED_UPDATE_IN_PROGRESS -> setUpdateInProgressState()
+                else -> finishUpdate()
             }
         }
 
         addOnFailureListener { setNavigateState() }
+    }
+
+    private fun finishUpdate() {
+        appUpdateManager.unregisterListener(installStatusListener)
+        setNavigateState()
     }
 
     private fun startUpdate(
