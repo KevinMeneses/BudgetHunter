@@ -58,7 +58,7 @@ fun SplashScreen(
             style = Typography.titleLarge
         )
 
-        if (!uiState.value.updatingApp) {
+        if (uiState.value.updatingApp) {
             Text(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
