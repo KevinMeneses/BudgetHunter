@@ -24,7 +24,7 @@ android {
         minSdk 26
         targetSdk 33
         versionCode 1
-        versionName "1.0"
+        versionName "1.0.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -37,6 +37,7 @@ android {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            //signingConfig signingConfigs.debug
         }
     }
     compileOptions {
@@ -87,6 +88,7 @@ dependencies {
     implementation 'com.google.android.play:app-update-ktx:2.1.0'
 
     implementation 'io.github.raamcosta.compose-destinations:core:1.8.33-beta'
+    implementation 'androidx.core:core-ktx:1.12.0'
     ksp 'io.github.raamcosta.compose-destinations:ksp:1.8.33-beta'
 
     testImplementation 'junit:junit:4.13.2'
