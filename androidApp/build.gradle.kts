@@ -30,6 +30,7 @@ android {
     buildTypes {
         getByName("release") {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("debug") // only for testing purposes shouldn't be on prod
         }
     }
     compileOptions {
