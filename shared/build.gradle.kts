@@ -56,6 +56,8 @@ kotlin {
             implementation("com.google.android.play:app-update:2.1.0")
             implementation("com.google.android.play:app-update-ktx:2.1.0")
             implementation("com.airbnb.android:lottie-compose:6.0.0")
+            implementation("com.maxkeppeler.sheets-compose-dialogs:core:1.0.3")
+            implementation("com.maxkeppeler.sheets-compose-dialogs:calendar:1.0.3")
         }
 
         /*iosMain.dependencies {

@@ -49,8 +49,6 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     debugImplementation(libs.compose.ui.tooling)
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.3.1")
-    implementation("com.maxkeppeler.sheets-compose-dialogs:core:1.0.3")
-    implementation("com.maxkeppeler.sheets-compose-dialogs:calendar:1.0.3")
     implementation("androidx.navigation:navigation-compose:2.5.3")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.6.1")
     implementation("com.airbnb.android:lottie-compose:6.0.0")

@@ -23,11 +23,11 @@ import com.meneses.budgethunter.R
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailEvent
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntryFilter
 import com.meneses.budgethunter.budgetEntry.ui.AmountField
-import com.meneses.budgethunter.budgetEntry.ui.DateField
 import com.meneses.budgethunter.budgetEntry.ui.DescriptionField
 import com.meneses.budgethunter.budgetEntry.ui.TypeSelector
 import com.meneses.budgethunter.commons.EMPTY
 import com.meneses.budgethunter.commons.ui.ConfirmationModal
+import com.meneses.budgethunter.commons.ui.DateField
 import com.meneses.budgethunter.commons.ui.Modal
 import com.meneses.budgethunter.theme.AppColors
 
