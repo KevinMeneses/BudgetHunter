@@ -7,6 +7,7 @@ CREATE TABLE budget_entry (
   description TEXT NOT NULL,
   type TEXT AS Type NOT NULL,
   date TEXT NOT NULL,
+  invoice TEXT,
   FOREIGN KEY (budget_id) REFERENCES budget(id) ON DELETE CASCADE
 );
 
@@ -16,11 +17,11 @@ WHERE budget_id = :budgetId;
 
 insert:
 INSERT INTO budget_entry
-VALUES (:id, :budgetId, :amount, :description, :type, :date);
+VALUES (:id, :budgetId, :amount, :description, :type, :date, :invoice);
 
 update:
 UPDATE budget_entry
-SET budget_id = :budgetId, amount = :amount, description = :description, type = :type, date = :date
+SET budget_id = :budgetId, amount = :amount, description = :description, type = :type, date = :date, invoice = :invoice
 WHERE id = :id;
 
 deleteByIds:

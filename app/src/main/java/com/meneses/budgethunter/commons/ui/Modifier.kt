@@ -18,14 +18,14 @@ fun Modifier.pulsateEffect(
     duration: Int = 500
 ): Modifier = composed {
     if (!isActive) return@composed this
-    val infiniteTransition = rememberInfiniteTransition()
+    val infiniteTransition = rememberInfiniteTransition(label = "pulsateEffect")
     val scale by infiniteTransition.animateFloat(
         initialValue = initialValue,
         targetValue = targetValue,
         animationSpec = infiniteRepeatable(
             animation = tween(duration),
             repeatMode = RepeatMode.Reverse
-        )
+        ), label = "pulsateEffect"
     )
 
     this.scale(scale)
@@ -38,14 +38,14 @@ fun Modifier.blinkEffect(
     duration: Int = 500
 ): Modifier = composed {
     if (!isActive) return@composed this
-    val infiniteTransition = rememberInfiniteTransition()
+    val infiniteTransition = rememberInfiniteTransition(label = "blinkEffect")
     val alpha by infiniteTransition.animateFloat(
         initialValue = initialValue,
         targetValue = targetValue,
         animationSpec = infiniteRepeatable(
             animation = tween(duration),
             repeatMode = RepeatMode.Reverse
-        )
+        ), label = "blinkEffect"
     )
 
     this.alpha(alpha)

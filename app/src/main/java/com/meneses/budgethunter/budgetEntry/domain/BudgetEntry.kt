@@ -13,6 +13,7 @@ data class BudgetEntry(
     val description: String = EMPTY,
     val type: Type = Type.OUTCOME,
     val date: String = LocalDate.now().toString(),
+    val invoice: String? = null,
     val isSelected: Boolean = false
 ) : Parcelable {
     enum class Type {

@@ -17,13 +17,13 @@ sqldelight {
 }
 
 android {
-    compileSdk 33
+    compileSdk 34
 
     defaultConfig {
         applicationId "com.meneses.budgethunter"
         minSdk 26
-        targetSdk 33
-        versionCode 1
+        targetSdk 34
+        versionCode 2
         versionName "1.0.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -60,9 +60,9 @@ android {
     }
     namespace 'com.meneses.budgethunter'
 
-    applicationVariants.all { variant ->
+    applicationVariants.configureEach { variant ->
         kotlin.sourceSets {
-            getByName(variant.name) {
+            named(variant.name) {
                 kotlin.srcDir("build/generated/ksp/${variant.name}/kotlin")
             }
         }
@@ -70,7 +70,7 @@ android {
 }
 
 dependencies {
-    implementation 'androidx.core:core-ktx:1.7.0'
+    implementation 'androidx.core:core-ktx:1.12.0'
     implementation "androidx.compose.ui:ui:$compose_ui_version"
     implementation "androidx.compose.material3:material3:$compose_material3_version"
     implementation "androidx.compose.ui:ui-tooling-preview:$compose_ui_version"

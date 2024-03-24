@@ -1,6 +1,10 @@
 package com.meneses.budgethunter.budgetEntry.ui
 
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Done
@@ -10,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -39,6 +44,8 @@ fun BudgetEntryScreen(
     myViewModel: BudgetEntryViewModel = viewModel()
 ) {
     val uiState by myViewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+
     val onBack = remember {
         fun() {
             BudgetEntryEvent
@@ -85,7 +92,14 @@ fun BudgetEntryScreen(
             budgetEntry = uiState.budgetEntry ?: budgetEntry,
             amountError = uiState.emptyAmountError,
             paddingValues = paddingValues,
-            onBudgetItemChanged = setBudgetEntry
+            onBudgetItemChanged = setBudgetEntry,
+            onInvoiceFieldClick = {
+                if (uiState.budgetEntry?.invoice == null) {
+                    BudgetEntryEvent.ToggleAttachInvoiceModal(true)
+                } else {
+                    BudgetEntryEvent.ToggleShowInvoiceModal(true)
+                }.run(myViewModel::sendEvent)
+            }
         )
     }
 
@@ -104,6 +118,61 @@ fun BudgetEntryScreen(
                 .run(myViewModel::sendEvent)
         }
     )
+
+    val selectFileLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia(),
+        onResult = {
+            BudgetEntryEvent
+                .SaveInvoice(
+                    fileToSave = it ?: return@rememberLauncherForActivityResult,
+                    contentResolver = context.contentResolver,
+                    internalFilesDir = context.dataDir
+                ).run(myViewModel::sendEvent)
+        }
+    )
+
+    ShowInvoiceModal(
+        show = uiState.isShowInvoiceModalVisible,
+        invoice = uiState.budgetEntry?.invoice,
+        onDismiss = {
+            BudgetEntryEvent
+                .ToggleShowInvoiceModal(false)
+                .run(myViewModel::sendEvent)
+        },
+        onEdit = {
+            BudgetEntryEvent
+                .ToggleAttachInvoiceModal(true)
+                .run(myViewModel::sendEvent)
+            BudgetEntryEvent
+                .ToggleShowInvoiceModal(false)
+                .run(myViewModel::sendEvent)
+        },
+        onDelete = {
+            BudgetEntryEvent
+                .DeleteAttachedInvoice
+                .run(myViewModel::sendEvent)
+        }
+    )
+
+    AttachInvoiceModal(
+        show = uiState.isAttachInvoiceModalVisible,
+        onDismiss = {
+            BudgetEntryEvent
+                .ToggleAttachInvoiceModal(false)
+                .run(myViewModel::sendEvent)
+        },
+        onTakePhoto = {
+
+        },
+        onSelectFile = {
+            selectFileLauncher
+                .launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+        }
+    )
+
+    if (uiState.attachInvoiceError != null) {
+        Toast.makeText(context, uiState.attachInvoiceError, Toast.LENGTH_SHORT).show()
+    }
 
     BackHandler(enabled = true, onBack = onBack)
     if (uiState.goBack) navigator.popBackStack()

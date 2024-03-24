@@ -24,7 +24,8 @@ class BudgetEntryLocalDataSource(
             amount = budgetEntry.amount,
             description = budgetEntry.description,
             type = budgetEntry.type,
-            date = budgetEntry.date
+            date = budgetEntry.date,
+            invoice = budgetEntry.invoice
         )
 
     fun update(budgetEntry: Budget_entry) = queries
@@ -34,7 +35,8 @@ class BudgetEntryLocalDataSource(
             amount = budgetEntry.amount,
             description = budgetEntry.description,
             type = budgetEntry.type,
-            date = budgetEntry.date
+            date = budgetEntry.date,
+            invoice = budgetEntry.invoice
         )
 
     fun deleteByIds(list: List<Long>) =

@@ -10,7 +10,8 @@ fun BudgetEntry.toDb() =
         amount = amount.toDouble(),
         description = description,
         type = type,
-        date = date
+        date = date,
+        invoice = invoice
     )
 
 fun Budget_entry.toDomain() =
@@ -20,7 +21,8 @@ fun Budget_entry.toDomain() =
         amount = amount.toBigDecimal().toPlainString(),
         description = description,
         type = type,
-        date = date
+        date = date,
+        invoice = invoice
     )
 
 fun List<Budget_entry>.toDomain() = map { it.toDomain() }
