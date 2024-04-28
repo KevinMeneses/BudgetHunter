@@ -9,11 +9,12 @@ sealed interface BudgetEntryEvent {
     data class SetBudgetEntry(val budgetEntry: BudgetEntry) : BudgetEntryEvent
     object SaveBudgetEntry : BudgetEntryEvent
     data class ValidateChanges(val budgetEntry: BudgetEntry) : BudgetEntryEvent
+    object DiscardChanges : BudgetEntryEvent
     object HideDiscardChangesModal : BudgetEntryEvent
     data class ToggleAttachInvoiceModal(val show: Boolean) : BudgetEntryEvent
     data class ToggleShowInvoiceModal(val show: Boolean) : BudgetEntryEvent
 
-    data class SaveInvoice(
+    data class AttachInvoice(
         val fileToSave: Uri,
         val contentResolver: ContentResolver,
         val internalFilesDir: File?

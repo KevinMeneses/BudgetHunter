@@ -8,8 +8,6 @@ import com.meneses.budgethunter.budgetEntry.application.BudgetEntryState
 import com.meneses.budgethunter.budgetEntry.data.repository.BudgetEntryLocalRepository
 import com.meneses.budgethunter.budgetEntry.data.repository.BudgetEntryRepository
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,13 +17,13 @@ import java.io.File
 import java.io.IOException
 
 class BudgetEntryViewModel(
-    private val budgetEntryRepository: BudgetEntryRepository = BudgetEntryLocalRepository(),
-    private val dispatcher: CoroutineDispatcher = Dispatchers.IO
+    private val budgetEntryRepository: BudgetEntryRepository = BudgetEntryLocalRepository()
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(BudgetEntryState())
     val uiState = _uiState.asStateFlow()
 
+    private var wasNewInvoiceAttached: Boolean = false
     private var invoiceToDelete: String? = null
 
     fun sendEvent(event: BudgetEntryEvent) {
@@ -35,15 +33,23 @@ class BudgetEntryViewModel(
             is BudgetEntryEvent.SaveBudgetEntry -> saveBudgetEntry()
             is BudgetEntryEvent.SetBudgetEntry -> setBudgetEntry(event.budgetEntry)
             is BudgetEntryEvent.ValidateChanges -> validateChanges(event.budgetEntry)
-            is BudgetEntryEvent.SaveInvoice -> saveInvoice(event)
+            is BudgetEntryEvent.AttachInvoice -> attachInvoice(event)
             is BudgetEntryEvent.ToggleAttachInvoiceModal -> toggleAttachInvoiceModal(event.show)
             is BudgetEntryEvent.ToggleShowInvoiceModal -> toggleShowInvoiceModal(event.show)
             is BudgetEntryEvent.DeleteAttachedInvoice -> removeAttachedInvoice()
+            is BudgetEntryEvent.DiscardChanges -> discardChanges()
         }
     }
 
+    private fun discardChanges() {
+        if (wasNewInvoiceAttached) deleteAttachedInvoice()
+        goBack()
+    }
+
     private fun removeAttachedInvoice() {
+        if (invoiceToDelete != null) deleteDetachedInvoice()
         invoiceToDelete = _uiState.value.budgetEntry?.invoice
+        wasNewInvoiceAttached = false
         _uiState.update {
             val updatedBudgetEntry = it.budgetEntry?.copy(invoice = null)
             it.copy(
@@ -53,15 +59,12 @@ class BudgetEntryViewModel(
         }
     }
 
-    private fun saveInvoice(event: BudgetEntryEvent.SaveInvoice) {
-        viewModelScope.launch(dispatcher) {
+    private fun attachInvoice(event: BudgetEntryEvent.AttachInvoice) {
+        viewModelScope.launch {
             try {
-                val invoiceToSave = event.contentResolver
-                    .openInputStream(event.fileToSave)
-                    .use { it!!.readBytes() }
-
-                val invoiceDir = File(event.internalFilesDir, System.currentTimeMillis().toString())
-                invoiceDir.outputStream().use { it.write(invoiceToSave) }
+                if (wasNewInvoiceAttached) deleteAttachedInvoice()
+                val invoiceDir = saveInvoiceInAppInternalStorage(event)
+                wasNewInvoiceAttached = true
 
                 _uiState.update {
                     val updatedEntry = it.budgetEntry?.copy(invoice = invoiceDir.absolutePath)
@@ -75,6 +78,17 @@ class BudgetEntryViewModel(
                 updateInvoiceError(null)
             }
         }
+    }
+
+    private fun saveInvoiceInAppInternalStorage(event: BudgetEntryEvent.AttachInvoice): File {
+        val invoiceToSave = event.contentResolver
+            .openInputStream(event.fileToSave)
+            .use { it!!.readBytes() }
+
+        val invoiceDir = File(event.internalFilesDir, System.currentTimeMillis().toString())
+        invoiceDir.outputStream().use { it.write(invoiceToSave) }
+
+        return invoiceDir
     }
 
     private fun updateInvoiceError(message: String?) =
@@ -95,14 +109,14 @@ class BudgetEntryViewModel(
         }
 
     private fun saveBudgetEntry() {
-        viewModelScope.launch(dispatcher) {
+        viewModelScope.launch {
             _uiState.value.budgetEntry?.let { entry ->
                 if (entry.amount.isBlank()) {
                     showAmountError()
                     return@launch
                 }
 
-                deleteInvoiceIfNecessary()
+                if (invoiceToDelete != null) deleteDetachedInvoice()
                 if (entry.id < 0) budgetEntryRepository.create(entry)
                 else budgetEntryRepository.update(entry)
                 goBack()
@@ -110,12 +124,21 @@ class BudgetEntryViewModel(
         }
     }
 
-    private fun deleteInvoiceIfNecessary() {
+    private fun deleteAttachedInvoice() {
+        val invoice = _uiState.value.budgetEntry?.invoice ?: return
+        deleteFile(invoice)
+    }
+
+    private fun deleteDetachedInvoice() {
         val invoice = invoiceToDelete ?: return
+        deleteFile(invoice)
+    }
+
+    private fun deleteFile(invoice: String) {
         try {
             File(invoice).delete()
         } catch (e: IOException) {
-            return
+            /* no-op */
         }
     }
 
@@ -125,8 +148,9 @@ class BudgetEntryViewModel(
         }
     }
 
-    private fun goBack() =
+    private fun goBack() {
         _uiState.update { it.copy(goBack = true) }
+    }
 
     private fun validateChanges(budgetEntry: BudgetEntry) =
         _uiState.update {

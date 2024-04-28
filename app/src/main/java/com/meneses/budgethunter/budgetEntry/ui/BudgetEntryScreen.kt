@@ -114,7 +114,7 @@ fun BudgetEntryScreen(
                 .run(myViewModel::sendEvent)
         },
         onConfirm = {
-            BudgetEntryEvent.GoBack
+            BudgetEntryEvent.DiscardChanges
                 .run(myViewModel::sendEvent)
         }
     )
@@ -123,7 +123,7 @@ fun BudgetEntryScreen(
         contract = ActivityResultContracts.PickVisualMedia(),
         onResult = {
             BudgetEntryEvent
-                .SaveInvoice(
+                .AttachInvoice(
                     fileToSave = it ?: return@rememberLauncherForActivityResult,
                     contentResolver = context.contentResolver,
                     internalFilesDir = context.dataDir
