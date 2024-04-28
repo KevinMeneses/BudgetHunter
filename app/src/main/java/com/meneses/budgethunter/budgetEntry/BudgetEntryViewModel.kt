@@ -47,7 +47,6 @@ class BudgetEntryViewModel(
     }
 
     private fun removeAttachedInvoice() {
-        if (invoiceToDelete != null) deleteDetachedInvoice()
         invoiceToDelete = _uiState.value.budgetEntry?.invoice
         wasNewInvoiceAttached = false
         _uiState.update {
