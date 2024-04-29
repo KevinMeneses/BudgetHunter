@@ -1,5 +1,6 @@
 package com.meneses.budgethunter.budgetEntry.ui
 
+import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -13,10 +14,13 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.meneses.budgethunter.R
@@ -28,6 +32,7 @@ import com.meneses.budgethunter.commons.ui.ConfirmationModal
 import com.meneses.budgethunter.commons.utils.fakeNavigation
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
+import java.io.File
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
@@ -154,6 +159,19 @@ fun BudgetEntryScreen(
         }
     )
 
+    var photoUri by remember { mutableStateOf<Uri?>(null) }
+
+    val takePhotoLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture(),
+        onResult = {
+            if (it) BudgetEntryEvent.AttachInvoice(
+                fileToSave = photoUri ?: return@rememberLauncherForActivityResult,
+                contentResolver = context.contentResolver,
+                internalFilesDir = context.dataDir
+            ).run(myViewModel::sendEvent)
+        }
+    )
+
     AttachInvoiceModal(
         show = uiState.isAttachInvoiceModalVisible,
         onDismiss = {
@@ -162,7 +180,12 @@ fun BudgetEntryScreen(
                 .run(myViewModel::sendEvent)
         },
         onTakePhoto = {
-
+            photoUri = FileProvider.getUriForFile(
+                /* context = */ context,
+                /* authority = */ context.packageName + ".provider",
+                /* file = */ File(context.filesDir, "temp_invoice_picture")
+            )
+            takePhotoLauncher.launch(photoUri)
         },
         onSelectFile = {
             selectFileLauncher
