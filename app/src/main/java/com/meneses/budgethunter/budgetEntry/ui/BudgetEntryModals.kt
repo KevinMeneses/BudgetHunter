@@ -11,10 +11,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Email
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -25,7 +23,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.meneses.budgethunter.R
 import com.meneses.budgethunter.commons.ui.Modal
 import com.meneses.budgethunter.commons.ui.dashedBorder
 import com.meneses.budgethunter.theme.AppColors
@@ -58,12 +58,12 @@ fun AttachInvoiceModal(
                     .padding(15.dp)
             ) {
                 Text(
-                    text = "Take a photo",
+                    text = "Take a picture",
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
                 Spacer(modifier = Modifier.height(10.dp))
                 Icon(
-                    imageVector = Icons.Default.AddCircle,
+                    painter = painterResource(id = R.drawable.camera),
                     contentDescription = "",
                     modifier = Modifier
                         .align(Alignment.CenterHorizontally)
@@ -94,7 +94,7 @@ fun AttachInvoiceModal(
                 )
                 Spacer(modifier = Modifier.height(10.dp))
                 Icon(
-                    imageVector = Icons.Default.Email,
+                    painter = painterResource(id = R.drawable.search_file),
                     contentDescription = "",
                     modifier = Modifier
                         .align(Alignment.CenterHorizontally)
