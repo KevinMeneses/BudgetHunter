@@ -1,5 +1,6 @@
 package com.meneses.budgethunter.budgetEntry.ui
 
+import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
@@ -20,6 +21,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.core.content.ContextCompat.startActivity
 import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -33,6 +35,7 @@ import com.meneses.budgethunter.commons.utils.fakeNavigation
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import java.io.File
+
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
@@ -124,18 +127,6 @@ fun BudgetEntryScreen(
         }
     )
 
-    val selectFileLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickVisualMedia(),
-        onResult = {
-            BudgetEntryEvent
-                .AttachInvoice(
-                    fileToSave = it ?: return@rememberLauncherForActivityResult,
-                    contentResolver = context.contentResolver,
-                    internalFilesDir = context.dataDir
-                ).run(myViewModel::sendEvent)
-        }
-    )
-
     ShowInvoiceModal(
         show = uiState.isShowInvoiceModalVisible,
         invoice = uiState.budgetEntry?.invoice,
@@ -152,6 +143,24 @@ fun BudgetEntryScreen(
                 .ToggleShowInvoiceModal(false)
                 .run(myViewModel::sendEvent)
         },
+        onShare = {
+            val invoiceUri = FileProvider.getUriForFile(
+                /* context = */ context,
+                /* authority = */ context.packageName + ".provider",
+                /* file = */ File(uiState.budgetEntry?.invoice.orEmpty())
+            )
+
+            val shareIntent = Intent()
+                .setAction(Intent.ACTION_SEND)
+                .putExtra(Intent.EXTRA_STREAM, invoiceUri)
+                .setType("image/*")
+
+            startActivity(
+                /* context = */ context,
+                /* intent = */ Intent.createChooser(shareIntent, "Share Image"),
+                /* options = */ null
+            )
+        },
         onDelete = {
             BudgetEntryEvent
                 .DeleteAttachedInvoice
@@ -167,8 +176,20 @@ fun BudgetEntryScreen(
             if (it) BudgetEntryEvent.AttachInvoice(
                 fileToSave = photoUri ?: return@rememberLauncherForActivityResult,
                 contentResolver = context.contentResolver,
-                internalFilesDir = context.dataDir
+                internalFilesDir = context.filesDir
             ).run(myViewModel::sendEvent)
+        }
+    )
+
+    val selectFileLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia(),
+        onResult = {
+            BudgetEntryEvent
+                .AttachInvoice(
+                    fileToSave = it ?: return@rememberLauncherForActivityResult,
+                    contentResolver = context.contentResolver,
+                    internalFilesDir = context.filesDir
+                ).run(myViewModel::sendEvent)
         }
     )
 

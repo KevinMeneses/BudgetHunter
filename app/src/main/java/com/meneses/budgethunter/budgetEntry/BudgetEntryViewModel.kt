@@ -84,7 +84,7 @@ class BudgetEntryViewModel(
             .openInputStream(event.fileToSave)
             .use { it!!.readBytes() }
 
-        val invoiceDir = File(event.internalFilesDir, System.currentTimeMillis().toString())
+        val invoiceDir = File(event.internalFilesDir, System.currentTimeMillis().toString() + ".jpg")
         invoiceDir.outputStream().use { it.write(invoiceToSave) }
 
         return invoiceDir
