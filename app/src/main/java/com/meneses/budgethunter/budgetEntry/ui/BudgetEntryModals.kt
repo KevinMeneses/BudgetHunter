@@ -1,6 +1,12 @@
 package com.meneses.budgethunter.budgetEntry.ui
 
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Matrix
+import android.graphics.Rect
+import android.graphics.pdf.PdfRenderer
+import android.graphics.pdf.PdfRenderer.Page
+import android.os.ParcelFileDescriptor
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
@@ -31,6 +37,7 @@ import com.meneses.budgethunter.R
 import com.meneses.budgethunter.commons.ui.Modal
 import com.meneses.budgethunter.commons.ui.dashedBorder
 import com.meneses.budgethunter.theme.AppColors
+import java.io.File
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
@@ -124,9 +131,25 @@ fun ShowInvoiceModal(
             Spacer(modifier = Modifier.height(20.dp))
 
             remember(invoice) {
-                BitmapFactory
-                    .decodeFile(invoice)
-                    ?.asImageBitmap()
+                if (invoice?.contains(".pdf") == true) {
+                    val descriptor = ParcelFileDescriptor.open(
+                        /* file = */ File(invoice),
+                        /* mode = */ ParcelFileDescriptor.MODE_READ_ONLY
+                    )
+                    val page = PdfRenderer(descriptor).openPage(0)
+                    val bitmap = Bitmap.createBitmap(
+                        /* width = */ page.width,
+                        /* height = */ page.height,
+                        /* config = */ Bitmap.Config.ARGB_8888
+                    )
+                    val rect = Rect(0, page.height, page.width, 0)
+                    page.render(bitmap, rect, Matrix(), Page.RENDER_MODE_FOR_DISPLAY)
+                    bitmap.asImageBitmap()
+                } else {
+                    BitmapFactory
+                        .decodeFile(invoice)
+                        ?.asImageBitmap()
+                }
             }?.let {
                 Image(bitmap = it, contentDescription = "")
             }

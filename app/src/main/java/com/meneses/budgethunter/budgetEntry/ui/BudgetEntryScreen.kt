@@ -5,7 +5,6 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -153,11 +152,12 @@ fun BudgetEntryScreen(
             val shareIntent = Intent()
                 .setAction(Intent.ACTION_SEND)
                 .putExtra(Intent.EXTRA_STREAM, invoiceUri)
-                .setType("image/*")
+                .setType("*/*")
+                .putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("application/pdf", "image/jpeg"))
 
             startActivity(
                 /* context = */ context,
-                /* intent = */ Intent.createChooser(shareIntent, "Share Image"),
+                /* intent = */ Intent.createChooser(shareIntent, "Share Invoice"),
                 /* options = */ null
             )
         },
@@ -182,7 +182,7 @@ fun BudgetEntryScreen(
     )
 
     val selectFileLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickVisualMedia(),
+        contract = ActivityResultContracts.OpenDocument(),
         onResult = {
             BudgetEntryEvent
                 .AttachInvoice(
@@ -209,8 +209,7 @@ fun BudgetEntryScreen(
             takePhotoLauncher.launch(photoUri)
         },
         onSelectFile = {
-            selectFileLauncher
-                .launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            selectFileLauncher.launch(arrayOf("image/jpeg", "application/pdf"))
         }
     )
 
