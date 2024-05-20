@@ -1,11 +1,10 @@
 package com.meneses.budgethunter.budgetEntry.domain
 
-import android.os.Parcelable
 import com.meneses.budgethunter.commons.EMPTY
+import kotlinx.serialization.Serializable
 import java.time.LocalDate
-import kotlinx.parcelize.Parcelize
 
-@Parcelize
+@Serializable
 data class BudgetEntry(
     val id: Int = -1,
     val budgetId: Int = -1,
@@ -15,7 +14,8 @@ data class BudgetEntry(
     val date: String = LocalDate.now().toString(),
     val invoice: String? = null,
     val isSelected: Boolean = false
-) : Parcelable {
+) {
+    @Serializable
     enum class Type {
         OUTCOME,
         INCOME

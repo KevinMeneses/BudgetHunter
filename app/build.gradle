@@ -2,8 +2,9 @@ plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
     id 'kotlin-parcelize'
-    id 'com.google.devtools.ksp' version '1.8.0-1.0.9'
+    //id 'com.google.devtools.ksp' version '1.8.0-1.0.9'
     id "app.cash.sqldelight" version "2.0.0-alpha05"
+    id 'org.jetbrains.kotlin.plugin.serialization'
 }
 
 apply from: "../ktlint.gradle"
@@ -70,16 +71,15 @@ android {
 }
 
 dependencies {
-    implementation 'androidx.core:core-ktx:1.12.0'
+    implementation 'androidx.core:core-ktx:1.13.1'
     implementation "androidx.compose.ui:ui:$compose_ui_version"
     implementation "androidx.compose.material3:material3:$compose_material3_version"
     implementation "androidx.compose.ui:ui-tooling-preview:$compose_ui_version"
-    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.3.1'
-    implementation 'androidx.activity:activity-compose:1.3.1'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.8.0'
+    implementation 'androidx.activity:activity-compose:1.9.0'
     implementation 'com.maxkeppeler.sheets-compose-dialogs:core:1.0.3'
     implementation 'com.maxkeppeler.sheets-compose-dialogs:calendar:1.0.3'
-    implementation "androidx.navigation:navigation-compose:2.5.3"
-    implementation "androidx.lifecycle:lifecycle-runtime-compose:2.6.1"
+    implementation "androidx.lifecycle:lifecycle-runtime-compose:2.8.0"
     implementation "app.cash.sqldelight:android-driver:2.0.0-alpha05"
     implementation "app.cash.sqldelight:coroutines-extensions:2.0.0-alpha05"
     implementation "com.airbnb.android:lottie-compose:6.0.0"
@@ -87,9 +87,8 @@ dependencies {
     implementation 'com.google.android.play:app-update:2.1.0'
     implementation 'com.google.android.play:app-update-ktx:2.1.0'
 
-    implementation 'io.github.raamcosta.compose-destinations:core:1.8.33-beta'
-    implementation 'androidx.core:core-ktx:1.12.0'
-    ksp 'io.github.raamcosta.compose-destinations:ksp:1.8.33-beta'
+    implementation 'androidx.navigation:navigation-compose:2.8.0-beta01'
+    implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3'
 
     testImplementation 'junit:junit:4.13.2'
     testImplementation "io.mockk:mockk:1.13.5"

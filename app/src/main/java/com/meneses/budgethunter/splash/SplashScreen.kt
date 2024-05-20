@@ -18,73 +18,64 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.meneses.budgethunter.R
-import com.meneses.budgethunter.commons.utils.fakeNavigation
-import com.meneses.budgethunter.destinations.BudgetListScreenDestination
-import com.meneses.budgethunter.destinations.SplashScreenDestination
 import com.meneses.budgethunter.splash.application.SplashEvent
 import com.meneses.budgethunter.theme.AppColors
 import com.meneses.budgethunter.theme.BudgetHunterTheme
 import com.meneses.budgethunter.theme.Typography
-import com.ramcosta.composedestinations.annotation.Destination
-import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.coroutines.delay
+import kotlinx.serialization.Serializable
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 private fun Preview() {
     BudgetHunterTheme {
-        SplashScreen(fakeNavigation)
+        SplashScreen.Show {}
     }
 }
 
-@Destination(start = true)
-@Composable
-fun SplashScreen(
-    navigator: DestinationsNavigator,
-    myViewModel: SplashScreenViewModel = viewModel()
-) {
-    val context = LocalContext.current
-    val uiState = myViewModel.uiState.collectAsStateWithLifecycle()
-
-    Box(
-        modifier = Modifier.fillMaxSize()
+@Serializable
+object SplashScreen {
+    @Composable
+    fun Show(
+        myViewModel: SplashScreenViewModel = viewModel(),
+        onNavigate: () -> Unit
     ) {
-        Text(
-            modifier = Modifier.align(Alignment.Center),
-            text = stringResource(id = R.string.budget_hunter),
-            fontStyle = FontStyle.Italic,
-            fontWeight = FontWeight.SemiBold,
-            color = AppColors.onBackground,
-            style = Typography.titleLarge
-        )
+        val context = LocalContext.current
+        val uiState = myViewModel.uiState.collectAsStateWithLifecycle()
 
-        if (uiState.value.updatingApp) {
+        Box(
+            modifier = Modifier.fillMaxSize()
+        ) {
             Text(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 30.dp),
-                text = stringResource(R.string.wait_for_update),
-                fontSize = 16.sp
+                modifier = Modifier.align(Alignment.Center),
+                text = stringResource(id = R.string.budget_hunter),
+                fontStyle = FontStyle.Italic,
+                fontWeight = FontWeight.SemiBold,
+                color = AppColors.onBackground,
+                style = Typography.titleLarge
             )
-        }
-    }
 
-    LaunchedEffect(uiState.value.navigate) {
-        if (!uiState.value.navigate) {
-            SplashEvent
-                .VerifyUpdate(context)
-                .run(myViewModel::sendEvent)
-        } else {
-            delay(1000)
-            navigator.navigate(
-                direction = BudgetListScreenDestination,
-                builder = {
-                    popUpTo(
-                        route = SplashScreenDestination.route,
-                        popUpToBuilder = { inclusive = true }
-                    )
-                }
-            )
+            if (uiState.value.updatingApp) {
+                Text(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 30.dp),
+                    text = stringResource(R.string.wait_for_update),
+                    fontSize = 16.sp
+                )
+            }
+        }
+
+        LaunchedEffect(uiState.value.navigate) {
+            if (!uiState.value.navigate) {
+                SplashEvent
+                    .VerifyUpdate(context)
+                    .run(myViewModel::sendEvent)
+            } else {
+                delay(1000)
+                onNavigate()
+            }
         }
     }
 }
+

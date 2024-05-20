@@ -84,7 +84,7 @@ class BudgetEntryViewModel(
             .openInputStream(event.fileToSave)
             .use { it!!.readBytes() }
 
-        val fileFormat = if (event.fileToSave.path?.contains("document") == true) ".pdf" else ".jpg"
+        val fileFormat = if (event.fileToSave.path?.contains("image") == true) ".jpg" else ".pdf"
         val invoiceDir = File(event.internalFilesDir, System.currentTimeMillis().toString() + fileFormat)
         invoiceDir.outputStream().use { it.write(invoiceToSave) }
 

@@ -1,16 +1,16 @@
 package com.meneses.budgethunter.budgetList.domain
 
-import android.os.Parcelable
 import com.meneses.budgethunter.commons.EMPTY
-import kotlinx.parcelize.Parcelize
+import kotlinx.serialization.Serializable
 
-@Parcelize
+@Serializable
 data class Budget(
     val id: Int = -1,
     val amount: Double = 0.0,
     val name: String = EMPTY,
     val frequency: Frequency = Frequency.UNIQUE
-) : Parcelable {
+) {
+    @Serializable
     enum class Frequency {
         UNIQUE,
         DAILY,
