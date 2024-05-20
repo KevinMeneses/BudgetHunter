@@ -21,9 +21,16 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import com.meneses.budgethunter.R
 import com.meneses.budgethunter.commons.ui.AppBar
 import kotlinx.serialization.Serializable
+
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+private fun Preview() {
+    UserGuideScreen.Show(goBack = {})
+}
 
 @Serializable
 object UserGuideScreen {

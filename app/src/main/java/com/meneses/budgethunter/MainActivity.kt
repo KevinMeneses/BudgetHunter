@@ -6,18 +6,24 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navOptions
 import androidx.navigation.toRoute
+import com.meneses.budgethunter.budgetDetail.BudgetDetailViewModel
 import com.meneses.budgethunter.budgetDetail.ui.BudgetDetailScreen
+import com.meneses.budgethunter.budgetEntry.BudgetEntryViewModel
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.budgetEntry.ui.BudgetEntryScreen
+import com.meneses.budgethunter.budgetList.BudgetListViewModel
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.budgetList.ui.BudgetListScreen
 import com.meneses.budgethunter.commons.util.serializableType
 import com.meneses.budgethunter.splash.SplashScreen
+import com.meneses.budgethunter.splash.SplashScreenViewModel
 import com.meneses.budgethunter.theme.AppColors
 import com.meneses.budgethunter.theme.BudgetHunterTheme
 import com.meneses.budgethunter.userGuide.UserGuideScreen
@@ -39,14 +45,15 @@ class MainActivity : ComponentActivity() {
                         startDestination = SplashScreen
                     ) {
                         composable<SplashScreen> {
+                            val splashScreenViewModel: SplashScreenViewModel = viewModel()
                             SplashScreen.Show(
-                                onNavigate = {
+                                uiState = splashScreenViewModel.uiState.collectAsStateWithLifecycle().value,
+                                onEvent = splashScreenViewModel::sendEvent,
+                                showBudgetList = {
                                     navController.navigate(
                                         route = BudgetListScreen,
                                         navOptions = navOptions {
-                                            popUpTo<SplashScreen> {
-                                                inclusive = true
-                                            }
+                                            popUpTo<SplashScreen> { inclusive = true }
                                         }
                                     )
                                 }
@@ -54,10 +61,11 @@ class MainActivity : ComponentActivity() {
                         }
 
                         composable<BudgetListScreen> {
+                            val budgetListViewModel: BudgetListViewModel = viewModel()
                             BudgetListScreen.Show(
-                                showUserGuide = {
-                                    navController.navigate(UserGuideScreen)
-                                },
+                                uiState = budgetListViewModel.uiState.collectAsStateWithLifecycle().value,
+                                onEvent = budgetListViewModel::sendEvent,
+                                showUserGuide = { navController.navigate(UserGuideScreen) },
                                 showBudgetDetail = { budget ->
                                     navController.navigate(BudgetDetailScreen(budget))
                                 }
@@ -65,22 +73,19 @@ class MainActivity : ComponentActivity() {
                         }
 
                         composable<UserGuideScreen> {
-                            UserGuideScreen.Show(
-                                goBack = {
-                                    navController.popBackStack()
-                                }
-                            )
+                            UserGuideScreen.Show(goBack = navController::popBackStack)
                         }
 
                         composable<BudgetDetailScreen>(
                             typeMap = mapOf(typeOf<Budget>() to serializableType<Budget>())
                         ) {
+                            val budgetDetailViewModel: BudgetDetailViewModel = viewModel()
                             it.toRoute<BudgetDetailScreen>().Show(
+                                uiState = budgetDetailViewModel.uiState.collectAsStateWithLifecycle().value,
+                                onEvent = budgetDetailViewModel::sendEvent,
+                                goBack = navController::popBackStack,
                                 showBudgetEntry = { budgetEntry ->
                                     navController.navigate(BudgetEntryScreen(budgetEntry))
-                                },
-                                goBack = {
-                                    navController.popBackStack()
                                 }
                             )
                         }
@@ -88,10 +93,11 @@ class MainActivity : ComponentActivity() {
                         composable<BudgetEntryScreen>(
                             typeMap = mapOf(typeOf<BudgetEntry>() to serializableType<BudgetEntry>()),
                         ) {
+                            val budgetEntryViewModel: BudgetEntryViewModel = viewModel()
                             it.toRoute<BudgetEntryScreen>().Show(
-                                goBack = {
-                                    navController.popBackStack()
-                                }
+                                uiState = budgetEntryViewModel.uiState.collectAsStateWithLifecycle().value,
+                                onEvent = budgetEntryViewModel::sendEvent,
+                                goBack = navController::popBackStack
                             )
                         }
                     }

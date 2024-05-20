@@ -8,14 +8,11 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.meneses.budgethunter.R
-import com.meneses.budgethunter.budgetList.BudgetListViewModel
 import com.meneses.budgethunter.budgetList.application.BudgetListEvent
+import com.meneses.budgethunter.budgetList.application.BudgetListState
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.commons.ui.AppBar
 import com.meneses.budgethunter.theme.BudgetHunterTheme
@@ -26,6 +23,8 @@ import kotlinx.serialization.Serializable
 private fun Preview() {
     BudgetHunterTheme {
         BudgetListScreen.Show(
+            uiState = BudgetListState(),
+            onEvent = {},
             showUserGuide = {},
             showBudgetDetail = {}
         )
@@ -37,12 +36,11 @@ object BudgetListScreen {
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun Show(
-        myViewModel: BudgetListViewModel = viewModel(),
+        uiState: BudgetListState,
+        onEvent: (BudgetListEvent) -> Unit,
         showUserGuide: () -> Unit,
         showBudgetDetail: (Budget) -> Unit
     ) {
-        val uiState by myViewModel.uiState.collectAsStateWithLifecycle()
-
         Scaffold(
             topBar = {
                 AppBar(
@@ -55,7 +53,7 @@ object BudgetListScreen {
                     onRightButtonClick = fun() {
                         BudgetListEvent
                             .ToggleFilterModal(true)
-                            .run(myViewModel::sendEvent)
+                            .run(onEvent)
                     },
                     animateRightButton = uiState.filter != null
                 )
@@ -64,20 +62,20 @@ object BudgetListScreen {
             BudgetListContent(
                 list = uiState.budgetList,
                 paddingValues = it,
-                onEvent = myViewModel::sendEvent,
+                onEvent = onEvent,
                 animate = uiState.budgetList.isEmpty() && uiState.filter == null
             )
         }
 
         NewBudgetModal(
             show = uiState.addModalVisibility,
-            onEvent = myViewModel::sendEvent
+            onEvent = onEvent
         )
 
         FilterListModal(
             show = uiState.filterModalVisibility,
             filter = uiState.filter,
-            onEvent = myViewModel::sendEvent
+            onEvent = onEvent
         )
 
         LaunchedEffect(key1 = uiState.navigateToBudget) {
@@ -88,7 +86,7 @@ object BudgetListScreen {
             onDispose {
                 BudgetListEvent
                     .ClearNavigation
-                    .run(myViewModel::sendEvent)
+                    .run(onEvent)
             }
         }
     }

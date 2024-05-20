@@ -22,11 +22,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat.startActivity
 import androidx.core.content.FileProvider
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.meneses.budgethunter.R
-import com.meneses.budgethunter.budgetEntry.BudgetEntryViewModel
 import com.meneses.budgethunter.budgetEntry.application.BudgetEntryEvent
+import com.meneses.budgethunter.budgetEntry.application.BudgetEntryState
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.commons.ui.AppBar
 import com.meneses.budgethunter.commons.ui.ConfirmationModal
@@ -38,6 +36,11 @@ import java.io.File
 @Composable
 private fun Preview() {
     BudgetEntryScreen(BudgetEntry(id = -1, budgetId = -1))
+        .Show(
+            uiState = BudgetEntryState(),
+            onEvent = {},
+            goBack = {}
+        )
 }
 
 @Serializable
@@ -45,17 +48,17 @@ data class BudgetEntryScreen(val budgetEntry: BudgetEntry) {
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun Show(
-        myViewModel: BudgetEntryViewModel = viewModel(),
+        uiState: BudgetEntryState,
+        onEvent: (BudgetEntryEvent) -> Unit,
         goBack: () -> Unit
     ) {
-        val uiState by myViewModel.uiState.collectAsStateWithLifecycle()
         val context = LocalContext.current
 
         val onBack = remember {
             fun() {
                 BudgetEntryEvent
                     .ValidateChanges(budgetEntry)
-                    .run(myViewModel::sendEvent)
+                    .run(onEvent)
             }
         }
 
@@ -63,7 +66,7 @@ data class BudgetEntryScreen(val budgetEntry: BudgetEntry) {
             fun(budgetEntry: BudgetEntry) {
                 BudgetEntryEvent
                     .SetBudgetEntry(budgetEntry)
-                    .run(myViewModel::sendEvent)
+                    .run(onEvent)
             }
         }
 
@@ -88,7 +91,7 @@ data class BudgetEntryScreen(val budgetEntry: BudgetEntry) {
                     onRightButtonClick = {
                         BudgetEntryEvent
                             .SaveBudgetEntry
-                            .run(myViewModel::sendEvent)
+                            .run(onEvent)
                     }
                 )
             }
@@ -103,7 +106,7 @@ data class BudgetEntryScreen(val budgetEntry: BudgetEntry) {
                         BudgetEntryEvent.ToggleAttachInvoiceModal(true)
                     } else {
                         BudgetEntryEvent.ToggleShowInvoiceModal(true)
-                    }.run(myViewModel::sendEvent)
+                    }.run(onEvent)
                 }
             )
         }
@@ -116,11 +119,11 @@ data class BudgetEntryScreen(val budgetEntry: BudgetEntry) {
             onDismiss = {
                 BudgetEntryEvent
                     .HideDiscardChangesModal
-                    .run(myViewModel::sendEvent)
+                    .run(onEvent)
             },
             onConfirm = {
                 BudgetEntryEvent.DiscardChanges
-                    .run(myViewModel::sendEvent)
+                    .run(onEvent)
             }
         )
 
@@ -130,15 +133,15 @@ data class BudgetEntryScreen(val budgetEntry: BudgetEntry) {
             onDismiss = {
                 BudgetEntryEvent
                     .ToggleShowInvoiceModal(false)
-                    .run(myViewModel::sendEvent)
+                    .run(onEvent)
             },
             onEdit = {
                 BudgetEntryEvent
                     .ToggleAttachInvoiceModal(true)
-                    .run(myViewModel::sendEvent)
+                    .run(onEvent)
                 BudgetEntryEvent
                     .ToggleShowInvoiceModal(false)
-                    .run(myViewModel::sendEvent)
+                    .run(onEvent)
             },
             onShare = {
                 val invoiceUri = FileProvider.getUriForFile(
@@ -162,7 +165,7 @@ data class BudgetEntryScreen(val budgetEntry: BudgetEntry) {
             onDelete = {
                 BudgetEntryEvent
                     .DeleteAttachedInvoice
-                    .run(myViewModel::sendEvent)
+                    .run(onEvent)
             }
         )
 
@@ -175,7 +178,7 @@ data class BudgetEntryScreen(val budgetEntry: BudgetEntry) {
                     fileToSave = photoUri ?: return@rememberLauncherForActivityResult,
                     contentResolver = context.contentResolver,
                     internalFilesDir = context.filesDir
-                ).run(myViewModel::sendEvent)
+                ).run(onEvent)
             }
         )
 
@@ -187,7 +190,7 @@ data class BudgetEntryScreen(val budgetEntry: BudgetEntry) {
                         fileToSave = it ?: return@rememberLauncherForActivityResult,
                         contentResolver = context.contentResolver,
                         internalFilesDir = context.filesDir
-                    ).run(myViewModel::sendEvent)
+                    ).run(onEvent)
             }
         )
 
@@ -196,7 +199,7 @@ data class BudgetEntryScreen(val budgetEntry: BudgetEntry) {
             onDismiss = {
                 BudgetEntryEvent
                     .ToggleAttachInvoiceModal(false)
-                    .run(myViewModel::sendEvent)
+                    .run(onEvent)
             },
             onTakePhoto = {
                 photoUri = FileProvider.getUriForFile(

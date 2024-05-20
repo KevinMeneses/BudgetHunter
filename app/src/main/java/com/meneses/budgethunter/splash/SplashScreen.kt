@@ -15,10 +15,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.meneses.budgethunter.R
 import com.meneses.budgethunter.splash.application.SplashEvent
+import com.meneses.budgethunter.splash.application.SplashState
 import com.meneses.budgethunter.theme.AppColors
 import com.meneses.budgethunter.theme.BudgetHunterTheme
 import com.meneses.budgethunter.theme.Typography
@@ -29,7 +28,11 @@ import kotlinx.serialization.Serializable
 @Composable
 private fun Preview() {
     BudgetHunterTheme {
-        SplashScreen.Show {}
+        SplashScreen.Show(
+            uiState = SplashState(),
+            onEvent = {},
+            showBudgetList = {}
+        )
     }
 }
 
@@ -37,11 +40,11 @@ private fun Preview() {
 object SplashScreen {
     @Composable
     fun Show(
-        myViewModel: SplashScreenViewModel = viewModel(),
-        onNavigate: () -> Unit
+        uiState: SplashState,
+        onEvent: (SplashEvent) -> Unit,
+        showBudgetList: () -> Unit
     ) {
         val context = LocalContext.current
-        val uiState = myViewModel.uiState.collectAsStateWithLifecycle()
 
         Box(
             modifier = Modifier.fillMaxSize()
@@ -55,7 +58,7 @@ object SplashScreen {
                 style = Typography.titleLarge
             )
 
-            if (uiState.value.updatingApp) {
+            if (uiState.updatingApp) {
                 Text(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
@@ -66,14 +69,14 @@ object SplashScreen {
             }
         }
 
-        LaunchedEffect(uiState.value.navigate) {
-            if (!uiState.value.navigate) {
+        LaunchedEffect(uiState.navigate) {
+            if (!uiState.navigate) {
                 SplashEvent
                     .VerifyUpdate(context)
-                    .run(myViewModel::sendEvent)
+                    .run(onEvent)
             } else {
                 delay(1000)
-                onNavigate()
+                showBudgetList()
             }
         }
     }

@@ -11,15 +11,12 @@ import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.meneses.budgethunter.R
-import com.meneses.budgethunter.budgetDetail.BudgetDetailViewModel
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailEvent
+import com.meneses.budgethunter.budgetDetail.application.BudgetDetailState
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.commons.ui.AppBar
@@ -29,7 +26,12 @@ import kotlinx.serialization.Serializable
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 private fun Preview() {
-    BudgetDetailScreen(Budget())
+    BudgetDetailScreen(Budget()).Show(
+        uiState = BudgetDetailState(),
+        onEvent = {},
+        goBack = {},
+        showBudgetEntry = {}
+    )
 }
 
 @Serializable
@@ -37,11 +39,11 @@ data class BudgetDetailScreen(val budget: Budget) {
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun Show(
-        myViewModel: BudgetDetailViewModel = viewModel(),
-        showBudgetEntry: (BudgetEntry) -> Unit,
-        goBack: () -> Unit
+        uiState: BudgetDetailState,
+        onEvent: (BudgetDetailEvent) -> Unit,
+        goBack: () -> Unit,
+        showBudgetEntry: (BudgetEntry) -> Unit
     ) {
-        val uiState by myViewModel.uiState.collectAsStateWithLifecycle()
         val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
         val coroutineScope = rememberCoroutineScope()
 
@@ -49,17 +51,17 @@ data class BudgetDetailScreen(val budget: Budget) {
             if (uiState.budget.id != budget.id) {
                 BudgetDetailEvent
                     .SetBudget(budget)
-                    .run(myViewModel::sendEvent)
+                    .run(onEvent)
             }
 
             BudgetDetailEvent
                 .GetBudgetEntries
-                .run(myViewModel::sendEvent)
+                .run(onEvent)
 
             onDispose {
                 BudgetDetailEvent
                     .ClearNavigation
-                    .run(myViewModel::sendEvent)
+                    .run(onEvent)
             }
         }
 
@@ -72,7 +74,7 @@ data class BudgetDetailScreen(val budget: Budget) {
                             drawerState.close()
                             BudgetDetailEvent
                                 .ToggleFilterModal(true)
-                                .run(myViewModel::sendEvent)
+                                .run(onEvent)
                         }
                     },
                     onDeleteClick = fun() {
@@ -80,7 +82,7 @@ data class BudgetDetailScreen(val budget: Budget) {
                             drawerState.close()
                             BudgetDetailEvent
                                 .ToggleDeleteBudgetModal(true)
-                                .run(myViewModel::sendEvent)
+                                .run(onEvent)
                         }
                     }
                 )
@@ -104,7 +106,7 @@ data class BudgetDetailScreen(val budget: Budget) {
                             val budgetEntry = BudgetEntry(budgetId = budget.id)
                             BudgetDetailEvent
                                 .ShowEntry(budgetEntry)
-                                .run(myViewModel::sendEvent)
+                                .run(onEvent)
                         },
                         animateLeftButton = uiState.filter != null
                     )
@@ -113,30 +115,30 @@ data class BudgetDetailScreen(val budget: Budget) {
                 BudgetDetailContent(
                     paddingValues = paddingValues,
                     uiState = uiState,
-                    onEvent = myViewModel::sendEvent
+                    onEvent = onEvent
                 )
             }
 
             BudgetModal(
                 show = uiState.isBudgetModalVisible,
                 budgetAmount = uiState.budget.amount,
-                onEvent = myViewModel::sendEvent
+                onEvent = onEvent
             )
 
             FilterModal(
                 show = uiState.isFilterModalVisible,
                 filter = uiState.filter,
-                onEvent = myViewModel::sendEvent
+                onEvent = onEvent
             )
 
             DeleteBudgetConfirmationModal(
                 show = uiState.isDeleteBudgetModalVisible,
-                onEvent = myViewModel::sendEvent
+                onEvent = onEvent
             )
 
             DeleteEntriesConfirmationModal(
                 show = uiState.isDeleteEntriesModalVisible,
-                onEvent = myViewModel::sendEvent
+                onEvent = onEvent
             )
         }
 
