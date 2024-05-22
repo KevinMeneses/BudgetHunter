@@ -3,6 +3,7 @@ package com.meneses.budgethunter.budgetEntry.data
 import app.cash.sqldelight.Query
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
+import com.meneses.budgethunter.budgetEntry.data.datasource.BudgetEntryLocalDataSource
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.db.Budget
 import com.meneses.budgethunter.db.BudgetEntryQueries

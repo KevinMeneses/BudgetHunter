@@ -9,6 +9,6 @@ interface BudgetRepository {
     fun getAll(): List<Budget>
     fun getAllFilteredBy(filter: BudgetFilter): List<Budget>
     fun create(budget: Budget): Budget
-    fun update(budget: Budget)
-    fun delete(budget: Budget)
+    suspend fun update(budget: Budget)
+    suspend fun delete(budget: Budget)
 }

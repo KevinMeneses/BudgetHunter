@@ -1,4 +1,4 @@
-package com.meneses.budgethunter.budgetList.data
+package com.meneses.budgethunter.budgetList.data.datasource
 
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList

@@ -1,6 +1,6 @@
 package com.meneses.budgethunter.budgetEntry.data.repository
 
-import com.meneses.budgethunter.budgetEntry.data.BudgetEntryLocalDataSource
+import com.meneses.budgethunter.budgetEntry.data.datasource.BudgetEntryLocalDataSource
 import com.meneses.budgethunter.budgetEntry.data.toDomain
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntryFilter
@@ -13,10 +13,10 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert
 import org.junit.Test
 
-class BudgetEntryLocalRepositoryTest {
+class BudgetEntryRepositoryImplTest {
 
     private val dataSource: BudgetEntryLocalDataSource = mockk()
-    private val repository = BudgetEntryLocalRepository(dataSource)
+    private val repository = BudgetEntryRepositoryImpl(dataSource)
 
     @Test
     fun getAll() {

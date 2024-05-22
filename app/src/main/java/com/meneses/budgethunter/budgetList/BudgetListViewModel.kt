@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.meneses.budgethunter.budgetList.application.BudgetListEvent
 import com.meneses.budgethunter.budgetList.application.BudgetListState
-import com.meneses.budgethunter.budgetList.data.repository.BudgetLocalRepository
+import com.meneses.budgethunter.budgetList.data.repository.BudgetRepositoryImpl
 import com.meneses.budgethunter.budgetList.data.repository.BudgetRepository
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.budgetList.domain.BudgetFilter
@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class BudgetListViewModel(
-    private val budgetRepository: BudgetRepository = BudgetLocalRepository(),
+    private val budgetRepository: BudgetRepository = BudgetRepositoryImpl(),
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
     val uiState get() = _uiState.asStateFlow()

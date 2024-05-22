@@ -4,11 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailEvent
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailState
-import com.meneses.budgethunter.budgetEntry.data.repository.BudgetEntryLocalRepository
+import com.meneses.budgethunter.budgetEntry.data.repository.BudgetEntryRepositoryImpl
 import com.meneses.budgethunter.budgetEntry.data.repository.BudgetEntryRepository
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntryFilter
-import com.meneses.budgethunter.budgetList.data.repository.BudgetLocalRepository
+import com.meneses.budgethunter.budgetList.data.repository.BudgetRepositoryImpl
 import com.meneses.budgethunter.budgetList.data.repository.BudgetRepository
 import com.meneses.budgethunter.budgetList.domain.Budget
 import kotlinx.coroutines.CoroutineDispatcher
@@ -19,8 +19,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class BudgetDetailViewModel(
-    private val budgetEntryRepository: BudgetEntryRepository = BudgetEntryLocalRepository(),
-    private val budgetRepository: BudgetRepository = BudgetLocalRepository(),
+    private val budgetEntryRepository: BudgetEntryRepository = BudgetEntryRepositoryImpl(),
+    private val budgetRepository: BudgetRepository = BudgetRepositoryImpl(),
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
 

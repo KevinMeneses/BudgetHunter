@@ -8,7 +8,7 @@ interface BudgetEntryRepository {
     fun getAll(): List<BudgetEntry>
     fun getAllByBudgetId(budgetId: Int): Flow<List<BudgetEntry>>
     fun getAllFilteredBy(filter: BudgetEntryFilter): List<BudgetEntry>
-    fun create(budgetEntry: BudgetEntry)
-    fun update(budgetEntry: BudgetEntry)
-    fun deleteByIds(ids: List<Int>)
+    suspend fun create(budgetEntry: BudgetEntry)
+    suspend fun update(budgetEntry: BudgetEntry)
+    suspend fun deleteByIds(ids: List<Int>)
 }

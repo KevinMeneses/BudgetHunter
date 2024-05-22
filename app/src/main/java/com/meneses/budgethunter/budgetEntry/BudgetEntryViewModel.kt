@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.meneses.budgethunter.R
 import com.meneses.budgethunter.budgetEntry.application.BudgetEntryEvent
 import com.meneses.budgethunter.budgetEntry.application.BudgetEntryState
-import com.meneses.budgethunter.budgetEntry.data.repository.BudgetEntryLocalRepository
+import com.meneses.budgethunter.budgetEntry.data.repository.BudgetEntryRepositoryImpl
 import com.meneses.budgethunter.budgetEntry.data.repository.BudgetEntryRepository
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import kotlinx.coroutines.delay
@@ -17,7 +17,7 @@ import java.io.File
 import java.io.IOException
 
 class BudgetEntryViewModel(
-    private val budgetEntryRepository: BudgetEntryRepository = BudgetEntryLocalRepository()
+    private val budgetEntryRepository: BudgetEntryRepository = BudgetEntryRepositoryImpl()
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(BudgetEntryState())
