@@ -7,37 +7,30 @@ import com.meneses.budgethunter.budgetEntry.data.toDomain
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntryFilter
 import com.meneses.budgethunter.commons.data.PreferencesManager
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.takeWhile
+import kotlinx.coroutines.withContext
 
 class BudgetEntryRepositoryImpl(
     private val localDataSource: BudgetEntryLocalDataSource = BudgetEntryLocalDataSource(),
     private val remoteDataSource: BudgetEntryRemoteDataSource = BudgetEntryRemoteDataSource(),
-    private val preferencesManager: PreferencesManager
+    private val preferencesManager: PreferencesManager = PreferencesManager(),
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : BudgetEntryRepository {
 
     override fun getAll() = cachedEntries
 
-    override fun getAllByBudgetId(budgetId: Int): Flow<List<BudgetEntry>> =
-        if (preferencesManager.isCollaborationEnabled) {
-            remoteDataSource.getBudgetStream()
-                .onEach { entries ->
-                    entries.forEachIndexed { index, remoteEntry ->
-                        val localEntry = cachedEntries.getOrNull(index)
-                        if (localEntry == null) create(remoteEntry)
-                        if (localEntry != remoteEntry) update(remoteEntry)
-                    }
-                }.onCompletion {
-                    remoteDataSource.closeStream()
-                }
-        } else {
-            localDataSource
-                .selectAllByBudgetId(budgetId.toLong())
-                .map { it.toDomain() }
-        }.onEach {
+    override fun getAllByBudgetId(budgetId: Int) = localDataSource
+        .selectAllByBudgetId(budgetId.toLong())
+        .map { it.toDomain() }
+        .onEach {
             cachedEntries = it
+            if (preferencesManager.isCollaborationEnabled) {
+                remoteDataSource.sendUpdate(it)
+            }
         }
 
     override fun getAllFilteredBy(filter: BudgetEntryFilter) =
@@ -57,39 +50,29 @@ class BudgetEntryRepositoryImpl(
                 else it.date <= filter.endDate
             }
 
-    override suspend fun create(budgetEntry: BudgetEntry) {
-        if (preferencesManager.isCollaborationEnabled){
-            val updatedEntries = cachedEntries.toMutableList()
-            updatedEntries.add(budgetEntry)
-            remoteDataSource.sendUpdate(updatedEntries)
-        } else {
-            localDataSource.insert(budgetEntry.toDb())
-        }
+    override suspend fun create(budgetEntry: BudgetEntry) = withContext(ioDispatcher) {
+        localDataSource.insert(budgetEntry.toDb())
     }
 
-    override suspend fun update(budgetEntry: BudgetEntry) {
-        if (preferencesManager.isCollaborationEnabled) {
-            val index = cachedEntries.indexOf(budgetEntry)
-            if (index != -1) {
-                val updatedEntries = cachedEntries.toMutableList()
-                updatedEntries[index] = budgetEntry
-                remoteDataSource.sendUpdate(updatedEntries)
+    override suspend fun update(budgetEntry: BudgetEntry) = withContext(ioDispatcher) {
+        localDataSource.update(budgetEntry.toDb())
+    }
+
+    override suspend fun deleteByIds(ids: List<Int>) = withContext(ioDispatcher) {
+        val dbIds = ids.map { it.toLong() }
+        localDataSource.deleteByIds(dbIds)
+    }
+
+    override suspend fun collaborate() = withContext(ioDispatcher) {
+        remoteDataSource.getEntriesStream()
+            .takeWhile { preferencesManager.isCollaborationEnabled }
+            .collect { remoteEntries ->
+                for (remoteEntry in remoteEntries) {
+                    val index = cachedEntries.indexOfFirst { it.id == remoteEntry.id }
+                    if (index == -1) create(remoteEntry)
+                    else update(remoteEntry)
+                }
             }
-        } else {
-            localDataSource.update(budgetEntry.toDb())
-        }
-    }
-
-    override suspend fun deleteByIds(ids: List<Int>) {
-        if (preferencesManager.isCollaborationEnabled) {
-            val updatedEntries = cachedEntries.toMutableList()
-            val entriesToDelete = updatedEntries.filter { ids.contains(it.id) }
-            updatedEntries.removeAll(entriesToDelete)
-            remoteDataSource.sendUpdate(updatedEntries)
-        } else {
-            val dbIds = ids.map { it.toLong() }
-            localDataSource.deleteByIds(dbIds)
-        }
     }
 
     companion object {

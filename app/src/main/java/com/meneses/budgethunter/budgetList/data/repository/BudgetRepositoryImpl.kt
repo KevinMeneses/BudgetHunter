@@ -7,12 +7,17 @@ import com.meneses.budgethunter.budgetList.data.toDomain
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.budgetList.domain.BudgetFilter
 import com.meneses.budgethunter.commons.data.PreferencesManager
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.takeWhile
+import kotlinx.coroutines.withContext
 
 class BudgetRepositoryImpl(
     private val localDataSource: BudgetLocalDataSource = BudgetLocalDataSource(),
     private val remoteDataSource: BudgetRemoteDataSource = BudgetRemoteDataSource(),
-    private val preferencesManager: PreferencesManager
+    private val preferencesManager: PreferencesManager = PreferencesManager(),
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : BudgetRepository {
     override val budgets
         get() = localDataSource
@@ -39,10 +44,9 @@ class BudgetRepositoryImpl(
     }
 
     override suspend fun update(budget: Budget) {
+        localDataSource.update(budget.toDb())
         if (preferencesManager.isCollaborationEnabled) {
             remoteDataSource.sendUpdate(budget)
-        } else {
-            localDataSource.update(budget.toDb())
         }
     }
 
@@ -51,6 +55,18 @@ class BudgetRepositoryImpl(
         if (preferencesManager.isCollaborationEnabled) {
             remoteDataSource.closeStream()
         }
+    }
+
+    override suspend fun startCollaboration() = withContext(ioDispatcher) {
+        preferencesManager.isCollaborationEnabled = true
+        remoteDataSource.getBudgetStream()
+            .takeWhile { preferencesManager.isCollaborationEnabled }
+            .collect { budget ->
+                val index = cachedList.indexOfFirst { it.id == budget.id }
+                if (index != -1 && cachedList[index] != budget) {
+                    localDataSource.update(budget.toDb())
+                }
+            }
     }
 
     companion object {

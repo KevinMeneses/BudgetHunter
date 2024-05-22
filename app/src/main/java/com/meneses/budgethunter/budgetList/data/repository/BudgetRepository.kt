@@ -11,4 +11,5 @@ interface BudgetRepository {
     fun create(budget: Budget): Budget
     suspend fun update(budget: Budget)
     suspend fun delete(budget: Budget)
+    suspend fun startCollaboration()
 }

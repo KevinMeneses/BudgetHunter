@@ -11,4 +11,5 @@ interface BudgetEntryRepository {
     suspend fun create(budgetEntry: BudgetEntry)
     suspend fun update(budgetEntry: BudgetEntry)
     suspend fun deleteByIds(ids: List<Int>)
+    suspend fun collaborate()
 }

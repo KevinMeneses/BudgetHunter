@@ -69,7 +69,7 @@ class BudgetDetailViewModel(
         _uiState.update { it.copy(showEntry = null) }
 
     private fun deleteSelectedEntries() {
-        viewModelScope.launch(dispatcher) {
+        viewModelScope.launch {
             val entriesToDeleteIds = _uiState.value.entries
                 .filter { it.isSelected }
                 .map { it.id }
@@ -104,14 +104,14 @@ class BudgetDetailViewModel(
     }
 
     private fun filterEntries(filter: BudgetEntryFilter) {
-        viewModelScope.launch(dispatcher) {
+        viewModelScope.launch {
             val filteredEntries = budgetEntryRepository.getAllFilteredBy(filter)
             _uiState.update { it.copy(entries = filteredEntries, filter = filter) }
         }
     }
 
     private fun clearFilter() {
-        viewModelScope.launch(dispatcher) {
+        viewModelScope.launch {
             val entries = budgetEntryRepository.getAll()
             _uiState.update { it.copy(entries = entries, filter = null) }
         }
