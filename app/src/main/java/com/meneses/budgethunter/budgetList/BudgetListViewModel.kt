@@ -2,22 +2,21 @@ package com.meneses.budgethunter.budgetList
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.meneses.budgethunter.budgetEntry.data.BudgetEntryRepository
 import com.meneses.budgethunter.budgetList.application.BudgetListEvent
 import com.meneses.budgethunter.budgetList.application.BudgetListState
-import com.meneses.budgethunter.budgetList.data.repository.BudgetRepositoryImpl
-import com.meneses.budgethunter.budgetList.data.repository.BudgetRepository
+import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.budgetList.domain.BudgetFilter
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class BudgetListViewModel(
-    private val budgetRepository: BudgetRepository = BudgetRepositoryImpl(),
-    private val dispatcher: CoroutineDispatcher = Dispatchers.IO
+    private val budgetRepository: BudgetRepository = BudgetRepository(),
+    private val budgetEntryRepository: BudgetEntryRepository = BudgetEntryRepository()
 ) : ViewModel() {
     val uiState get() = _uiState.asStateFlow()
     private val _uiState = MutableStateFlow(BudgetListState())
@@ -27,7 +26,7 @@ class BudgetListViewModel(
     }
 
     private fun collectBudgetList() {
-        viewModelScope.launch(dispatcher) {
+        viewModelScope.launch {
             budgetRepository.budgets.collect { budgetList ->
                 _uiState.update {
                     val updatedList = if (it.filter == null) budgetList
@@ -47,28 +46,54 @@ class BudgetListViewModel(
             is BudgetListEvent.ToggleFilterModal -> setFilterModalVisibility(event.isVisible)
             is BudgetListEvent.ClearFilter -> clearFilter()
             is BudgetListEvent.ClearNavigation -> clearNavigation()
+            is BudgetListEvent.JoinCollaboration -> joinCollaboration(event.collaborationCode)
+            is BudgetListEvent.ToggleJoinCollaborationModal ->
+                setJoinCollaborationModalVisibility(event.isVisible)
         }
     }
 
-    private fun createBudget(budget: Budget) {
-        viewModelScope.launch(dispatcher) {
-            val budgetSaved = budgetRepository.create(budget)
-            openBudget(budgetSaved)
+    private fun setJoinCollaborationModalVisibility(visible: Boolean) =
+        _uiState.update { it.copy(joinCollaborationModalVisibility = visible) }
+
+    private fun joinCollaboration(collaborationCode: String) {
+        viewModelScope.launch {
+            try {
+                if (budgetRepository.joinCollaboration(collaborationCode.toInt())) {
+                    budgetRepository.consumeCollaborationStream()
+                    budgetEntryRepository.consumeCollaborationStream()
+                } else {
+                    collaborationError()
+                }
+            } catch (e: Exception) {
+                collaborationError()
+            }
         }
+    }
+
+    private suspend fun collaborationError() {
+        val errorMessage = "An error occurred trying to collaborate, please try again later"
+        _uiState.update { it.copy(collaborationError = errorMessage) }
+        delay(3000)
+        _uiState.update { it.copy(collaborationError = null) }
+    }
+
+    private fun createBudget(budget: Budget) = viewModelScope.launch {
+        val budgetSaved = budgetRepository.create(budget)
+        openBudget(budgetSaved)
     }
 
     private fun openBudget(budget: Budget) =
         _uiState.update { it.copy(navigateToBudget = budget) }
 
     private fun filterList(filter: BudgetFilter) {
-        viewModelScope.launch(dispatcher) {
+        viewModelScope.launch {
             val filteredList = budgetRepository.getAllFilteredBy(filter)
             _uiState.update { it.copy(budgetList = filteredList, filter = filter) }
         }
     }
 
     private fun clearFilter() {
-        viewModelScope.launch(dispatcher) {
+        viewModelScope.launch {
             val budgetList = budgetRepository.getAll()
             _uiState.update { it.copy(budgetList = budgetList, filter = null) }
         }

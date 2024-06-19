@@ -1,5 +1,6 @@
 package com.meneses.budgethunter.budgetEntry.data.repository
 
+import com.meneses.budgethunter.budgetEntry.data.BudgetEntryRepository
 import com.meneses.budgethunter.budgetEntry.data.datasource.BudgetEntryLocalDataSource
 import com.meneses.budgethunter.budgetEntry.data.toDomain
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
@@ -13,10 +14,10 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert
 import org.junit.Test
 
-class BudgetEntryRepositoryImplTest {
+class BudgetEntryRepositoryTest {
 
     private val dataSource: BudgetEntryLocalDataSource = mockk()
-    private val repository = BudgetEntryRepositoryImpl(dataSource)
+    private val repository = BudgetEntryRepository(dataSource)
 
     @Test
     fun getAll() {
@@ -60,9 +61,9 @@ class BudgetEntryRepositoryImplTest {
     @Test
     fun create() {
         val budgetEntry = BudgetEntry(amount = "20.0")
-        every { dataSource.insert(any()) } returns Unit
+        every { dataSource.create(any()) } returns Unit
         repository.create(budgetEntry)
-        verify { dataSource.insert(any()) }
+        verify { dataSource.create(any()) }
     }
 
     @Test

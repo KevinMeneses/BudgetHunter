@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalDrawerSheet
@@ -33,7 +34,9 @@ import com.meneses.budgethunter.theme.AppColors
 private fun Preview() {
     BudgetDetailMenu(
         animateFilterButton = false,
+        animateCollaborateButton = false,
         onFilterClick = {},
+        onCollaborateClick = {},
         onDeleteClick = {}
     )
 }
@@ -41,7 +44,9 @@ private fun Preview() {
 @Composable
 fun BudgetDetailMenu(
     animateFilterButton: Boolean,
+    animateCollaborateButton: Boolean,
     onFilterClick: () -> Unit,
+    onCollaborateClick: () -> Unit,
     onDeleteClick: () -> Unit
 ) {
     ModalDrawerSheet {
@@ -53,6 +58,7 @@ fun BudgetDetailMenu(
                 modifier = Modifier.background(AppColors.primary)
             ) {
                 item { FilterButton(animateFilterButton, onFilterClick) }
+                item { CollaborateButton(animateCollaborateButton, onCollaborateClick) }
                 item { DeleteButton(onDeleteClick) }
             }
         }
@@ -75,6 +81,21 @@ private fun FilterButton(
 }
 
 @Composable
+private fun CollaborateButton(
+    animate: Boolean,
+    onClick: () -> Unit
+) {
+    MenuButton(
+        modifier = Modifier
+            .blinkEffect(animate)
+            .pulsateEffect(animate, targetValue = 1.1f),
+        text = stringResource(id = R.string.collaborate),
+        icon = Icons.Default.Person,
+        onClick = onClick
+    )
+}
+
+@Composable
 private fun DeleteButton(onClick: () -> Unit) {
     MenuButton(
         text = stringResource(id = R.string.delete_budget),
@@ -85,7 +106,7 @@ private fun DeleteButton(onClick: () -> Unit) {
 }
 
 @Composable
-private fun MenuButton(
+fun MenuButton(
     modifier: Modifier = Modifier,
     text: String,
     icon: ImageVector,

@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">Cazador de Presupuestos</string>
     <string name="add_budget">Agregar un presupuesto</string>
     <string name="budget_amount">Presupuesto\n%1$s</string>
@@ -7,6 +7,7 @@
     <string name="balance">Balance:</string>
     <string name="delete">Eliminar</string>
     <string name="filter">Filtrar</string>
+    <string name="collaborate">Colaborar</string>
     <string name="delete_budget">Eliminar presupuesto</string>
     <string name="budget">Presupuesto</string>
     <string name="save">Guardar</string>
@@ -31,13 +32,14 @@
     <string name="budget_hunter">Cazador de presupuesto</string>
     <string name="selected_entries">%1$s Seleccionados</string>
     <string name="delete_entries_confirmation_message">¿Está seguro que desea eliminar estos registros?</string>
+    <string name="collaborate_confirmation_message">¿Desea empezar a colaborar?</string>
     <string name="income">Ingreso</string>
     <string name="outcome">Gasto</string>
     <string name="unique">Unica</string>
     <string name="daily">Diario</string>
     <string name="weekly">Semanal</string>
     <string name="monthly">Mensual</string>
-    <string name="annual">Anual</string>
+    <string name="annual" tools:ignore="Typos">Anual</string>
     <string name="start_date">Fecha de inicio</string>
     <string name="end_date">Fecha limite</string>
     <string name="user_guide">Guia de usuario</string>

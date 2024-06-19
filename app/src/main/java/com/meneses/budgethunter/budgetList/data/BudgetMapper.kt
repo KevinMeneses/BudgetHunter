@@ -12,12 +12,5 @@ fun DbBudget.toDomain() = Budget(
     frequency = frequency
 )
 
-fun Budget.toDb() = DbBudget(
-    id = id.toLong(),
-    amount = amount,
-    name = name,
-    frequency = frequency
-)
-
 fun Flow<List<DbBudget>>.toDomain() =
     map { list -> list.map { budget -> budget.toDomain() } }

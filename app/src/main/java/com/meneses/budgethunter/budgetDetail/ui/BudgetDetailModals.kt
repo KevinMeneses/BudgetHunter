@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.meneses.budgethunter.R
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailEvent
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntryFilter
@@ -238,4 +239,56 @@ fun DeleteEntriesConfirmationModal(
         onDismiss = onDismiss,
         onConfirm = onConfirm
     )
+}
+
+@Composable
+fun CollaborateModal(
+    show: Boolean,
+    onEvent: (BudgetDetailEvent) -> Unit
+) {
+    ConfirmationModal(
+        show = show,
+        message = stringResource(id = R.string.collaborate_confirmation_message),
+        confirmButtonText = stringResource(id = R.string.collaborate),
+        cancelButtonText = stringResource(id = R.string.cancel),
+        onDismiss = {
+            BudgetDetailEvent
+                .ToggleCollaborateModal(false)
+                .run(onEvent)
+        },
+        onConfirm = {
+            BudgetDetailEvent
+                .StartCollaboration
+                .run(onEvent)
+        }
+    )
+}
+
+@Composable
+fun CodeModal(
+    code: Int?,
+    onEvent: (BudgetDetailEvent) -> Unit
+) {
+    if (code != null) {
+        val hideCodeModal = {
+            BudgetDetailEvent
+                .HideCodeModal
+                .run(onEvent)
+        }
+
+        Modal(onDismiss = hideCodeModal) {
+            Text(text = "Share this code with your collaborators")
+            Spacer(modifier = Modifier.height(40.dp))
+            Text(
+                text = "$code",
+                fontWeight = FontWeight.Bold,
+                fontSize = 40.sp
+            )
+            Spacer(modifier = Modifier.height(35.dp))
+            Button(
+                onClick = hideCodeModal,
+                content = { Text(text = "Ok") }
+            )
+        }
+    }
 }

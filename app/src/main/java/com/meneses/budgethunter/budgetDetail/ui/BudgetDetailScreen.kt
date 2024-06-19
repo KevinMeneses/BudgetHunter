@@ -7,10 +7,13 @@ import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -45,6 +48,7 @@ data class BudgetDetailScreen(val budget: Budget) {
         showBudgetEntry: (BudgetEntry) -> Unit
     ) {
         val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+        val snackBarHostState = remember { SnackbarHostState() }
         val coroutineScope = rememberCoroutineScope()
 
         DisposableEffect(Unit) {
@@ -69,12 +73,27 @@ data class BudgetDetailScreen(val budget: Budget) {
             drawerContent = {
                 BudgetDetailMenu(
                     animateFilterButton = uiState.filter != null,
-                    onFilterClick = fun() {
+                    animateCollaborateButton = uiState.isCollaborationActive,
+                    onFilterClick = {
                         coroutineScope.launch {
                             drawerState.close()
                             BudgetDetailEvent
                                 .ToggleFilterModal(true)
                                 .run(onEvent)
+                        }
+                    },
+                    onCollaborateClick = {
+                        coroutineScope.launch {
+                            drawerState.close()
+                            if (uiState.isCollaborationActive) {
+                                BudgetDetailEvent
+                                    .StopCollaboration
+                                    .run(onEvent)
+                            } else {
+                                BudgetDetailEvent
+                                    .ToggleCollaborateModal(true)
+                                    .run(onEvent)
+                            }
                         }
                     },
                     onDeleteClick = fun() {
@@ -94,15 +113,15 @@ data class BudgetDetailScreen(val budget: Budget) {
                     AppBar(
                         title = budget.name,
                         leftButtonIcon = Icons.Default.Menu,
-                        leftButtonDescription = stringResource(id = R.string.open_menu_button),
                         rightButtonIcon = Icons.Default.Add,
+                        leftButtonDescription = stringResource(id = R.string.open_menu_button),
                         rightButtonDescription = stringResource(R.string.create_budget_entry),
-                        onLeftButtonClick = fun() {
+                        onLeftButtonClick = {
                             coroutineScope.launch {
                                 drawerState.open()
                             }
                         },
-                        onRightButtonClick = fun() {
+                        onRightButtonClick = {
                             val budgetEntry = BudgetEntry(budgetId = budget.id)
                             BudgetDetailEvent
                                 .ShowEntry(budgetEntry)
@@ -110,6 +129,9 @@ data class BudgetDetailScreen(val budget: Budget) {
                         },
                         animateLeftButton = uiState.filter != null
                     )
+                },
+                snackbarHost = {
+                    SnackbarHost(hostState = snackBarHostState)
                 }
             ) { paddingValues ->
                 BudgetDetailContent(
@@ -131,6 +153,16 @@ data class BudgetDetailScreen(val budget: Budget) {
                 onEvent = onEvent
             )
 
+            CollaborateModal(
+                show = uiState.isCollaborateModalVisible,
+                onEvent = onEvent
+            )
+
+            CodeModal(
+                code = uiState.collaborationCode,
+                onEvent = onEvent
+            )
+
             DeleteBudgetConfirmationModal(
                 show = uiState.isDeleteBudgetModalVisible,
                 onEvent = onEvent
@@ -144,6 +176,10 @@ data class BudgetDetailScreen(val budget: Budget) {
 
         LaunchedEffect(key1 = uiState.goBack) {
             if (uiState.goBack) goBack()
+        }
+
+        LaunchedEffect(key1 = uiState.collaborationError) {
+            uiState.collaborationError?.let { snackBarHostState.showSnackbar(it) }
         }
 
         LaunchedEffect(key1 = uiState.showEntry) {

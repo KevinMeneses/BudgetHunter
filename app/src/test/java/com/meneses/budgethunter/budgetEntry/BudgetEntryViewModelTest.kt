@@ -2,7 +2,7 @@ package com.meneses.budgethunter.budgetEntry
 
 import com.meneses.budgethunter.budgetEntry.application.BudgetEntryEvent
 import com.meneses.budgethunter.budgetEntry.application.BudgetEntryState
-import com.meneses.budgethunter.budgetEntry.data.repository.BudgetEntryRepository
+import com.meneses.budgethunter.budgetEntry.data.BudgetEntryRepository
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import io.mockk.every
 import io.mockk.mockk

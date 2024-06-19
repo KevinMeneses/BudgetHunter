@@ -13,12 +13,14 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -185,4 +187,43 @@ private fun ModalContent(
     )
 
     Spacer(modifier = Modifier.height(30.dp))
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun JoinCollaborationModal(
+    show: Boolean,
+    onEvent: (BudgetListEvent) -> Unit
+) {
+    if (show) {
+        val keyboardController = LocalSoftwareKeyboardController.current
+        var collaborationCode by remember { mutableStateOf("") }
+        val onDismiss = {
+            BudgetListEvent
+                .ToggleJoinCollaborationModal(false)
+                .run(onEvent)
+        }
+        Modal(
+            onDismiss = onDismiss
+        ) {
+            Text(text = "Enter the collaboration code")
+            Spacer(modifier = Modifier.height(40.dp))
+            TextField(
+                value = collaborationCode,
+                onValueChange = { collaborationCode = it }
+            )
+            Spacer(modifier = Modifier.height(35.dp))
+            Button(
+                onClick = {
+                    onDismiss()
+                    keyboardController?.hide()
+                    BudgetListEvent
+                        .JoinCollaboration(collaborationCode)
+                        .run(onEvent)
+                },
+                content = { Text(text = "Send") }
+            )
+        }
+    }
+
 }

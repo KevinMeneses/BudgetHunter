@@ -65,7 +65,7 @@ class BudgetEntryLocalDataSourceTest {
             queries.insert(any(), any(), any(), any(), any(), any())
         } returns Unit
 
-        dataSource.insert(entry)
+        dataSource.create(entry)
 
         verify {
             queries.insert(

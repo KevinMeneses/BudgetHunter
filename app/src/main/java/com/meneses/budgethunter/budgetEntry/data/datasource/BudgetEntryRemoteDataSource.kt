@@ -13,10 +13,13 @@ class BudgetEntryRemoteDataSource(
         KtorRealtimeMessagingClient.getInstance()
     }
 ) {
-    fun getEntriesStream(): Flow<List<BudgetEntry>> =
-        messagingClient().collaborationStream
+    suspend fun getEntriesStream(): Flow<List<BudgetEntry>> =
+        messagingClient().getCollaborationStream()
             .filter { it.contains("budget_entries#") }
-            .map { Json.decodeFromString(it) }
+            .map {
+                val entriesJson = it.split("#").last()
+                Json.decodeFromString(entriesJson)
+            }
 
     suspend fun sendUpdate(budgetEntries: List<BudgetEntry>) {
         val jsonEntries = Json.encodeToString(budgetEntries)

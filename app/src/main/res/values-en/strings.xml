@@ -7,6 +7,7 @@
     <string name="balance">Balance:</string>
     <string name="delete">Delete</string>
     <string name="filter">Filter</string>
+    <string name="collaborate">Collaborate</string>
     <string name="delete_budget">Delete budget</string>
     <string name="budget">Budget</string>
     <string name="save">Save</string>
@@ -31,6 +32,7 @@
     <string name="budget_hunter">Budget Hunter</string>
     <string name="selected_entries">%1$s Selected</string>
     <string name="delete_entries_confirmation_message">Are you sure you want to delete this registries?</string>
+    <string name="collaborate_confirmation_message">Do you want to start collaborating?</string>
     <string name="income">Income</string>
     <string name="outcome">Outcome</string>
     <string name="unique">Unique</string>

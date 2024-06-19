@@ -5,8 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.meneses.budgethunter.R
 import com.meneses.budgethunter.budgetEntry.application.BudgetEntryEvent
 import com.meneses.budgethunter.budgetEntry.application.BudgetEntryState
-import com.meneses.budgethunter.budgetEntry.data.repository.BudgetEntryRepositoryImpl
-import com.meneses.budgethunter.budgetEntry.data.repository.BudgetEntryRepository
+import com.meneses.budgethunter.budgetEntry.data.BudgetEntryRepository
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,7 +16,7 @@ import java.io.File
 import java.io.IOException
 
 class BudgetEntryViewModel(
-    private val budgetEntryRepository: BudgetEntryRepository = BudgetEntryRepositoryImpl()
+    private val budgetEntryRepository: BudgetEntryRepository = BudgetEntryRepository()
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(BudgetEntryState())
@@ -58,24 +57,22 @@ class BudgetEntryViewModel(
         }
     }
 
-    private fun attachInvoice(event: BudgetEntryEvent.AttachInvoice) {
-        viewModelScope.launch {
-            try {
-                if (wasNewInvoiceAttached) deleteAttachedInvoice()
-                val invoiceDir = saveInvoiceInAppInternalStorage(event)
-                wasNewInvoiceAttached = true
+    private fun attachInvoice(event: BudgetEntryEvent.AttachInvoice) = viewModelScope.launch {
+        try {
+            if (wasNewInvoiceAttached) deleteAttachedInvoice()
+            val invoiceDir = saveInvoiceInAppInternalStorage(event)
+            wasNewInvoiceAttached = true
 
-                _uiState.update {
-                    val updatedEntry = it.budgetEntry?.copy(invoice = invoiceDir.absolutePath)
-                    it.copy(budgetEntry = updatedEntry)
-                }
-
-                toggleAttachInvoiceModal(false)
-            } catch (e: Exception) {
-                updateInvoiceError("Something went wrong loading file, please try again")
-                delay(2000)
-                updateInvoiceError(null)
+            _uiState.update {
+                val updatedEntry = it.budgetEntry?.copy(invoice = invoiceDir.absolutePath)
+                it.copy(budgetEntry = updatedEntry)
             }
+
+            toggleAttachInvoiceModal(false)
+        } catch (e: Exception) {
+            updateInvoiceError("Something went wrong loading file, please try again")
+            delay(2000)
+            updateInvoiceError(null)
         }
     }
 
@@ -85,7 +82,8 @@ class BudgetEntryViewModel(
             .use { it!!.readBytes() }
 
         val fileFormat = if (event.fileToSave.path?.contains("image") == true) ".jpg" else ".pdf"
-        val invoiceDir = File(event.internalFilesDir, System.currentTimeMillis().toString() + fileFormat)
+        val invoiceDir =
+            File(event.internalFilesDir, System.currentTimeMillis().toString() + fileFormat)
         invoiceDir.outputStream().use { it.write(invoiceToSave) }
 
         return invoiceDir
@@ -108,19 +106,17 @@ class BudgetEntryViewModel(
             )
         }
 
-    private fun saveBudgetEntry() {
-        viewModelScope.launch {
-            _uiState.value.budgetEntry?.let { entry ->
-                if (entry.amount.isBlank()) {
-                    showAmountError()
-                    return@launch
-                }
-
-                if (invoiceToDelete != null) deleteDetachedInvoice()
-                if (entry.id < 0) budgetEntryRepository.create(entry)
-                else budgetEntryRepository.update(entry)
-                goBack()
+    private fun saveBudgetEntry() = viewModelScope.launch {
+        _uiState.value.budgetEntry?.let { entry ->
+            if (entry.amount.isBlank()) {
+                showAmountError()
+                return@launch
             }
+
+            if (invoiceToDelete != null) deleteDetachedInvoice()
+            if (entry.id < 0) budgetEntryRepository.create(entry)
+            else budgetEntryRepository.update(entry)
+            goBack()
         }
     }
 
