@@ -1,5 +1,6 @@
 package com.meneses.budgethunter.budgetEntry.data.datasource
 
+import androidx.lifecycle.AtomicReference
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
 import com.meneses.budgethunter.budgetEntry.data.toDomain
@@ -10,23 +11,26 @@ import com.meneses.budgethunter.db.BudgetEntryQueries
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 
 class BudgetEntryLocalDataSource(
     private val queries: BudgetEntryQueries = AndroidDatabaseFactory().create().budgetEntryQueries,
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO
 ) {
-    fun getAll() = cachedEntries
+
+    fun getAll(): List<BudgetEntry> = cachedEntries.get()
+
+    fun updateCache(newEntries: List<BudgetEntry>) {
+        cachedEntries.set(newEntries)
+    }
 
     fun selectAllByBudgetId(budgetId: Long) = queries
         .selectAllByBudgetId(budgetId)
         .asFlow()
         .mapToList(dispatcher)
         .map { it.toDomain() }
-        .onEach { cachedEntries = it }
 
     fun getAllFilteredBy(filter: BudgetEntryFilter) =
-        cachedEntries.filter {
+        cachedEntries.get().filter {
             if (filter.description.isNullOrBlank()) true
             else it.description.lowercase()
                 .contains(filter.description.lowercase())
@@ -65,6 +69,6 @@ class BudgetEntryLocalDataSource(
         queries.deleteByIds(list)
 
     companion object {
-        private var cachedEntries = emptyList<BudgetEntry>()
+        private var cachedEntries = AtomicReference<List<BudgetEntry>>(emptyList())
     }
 }

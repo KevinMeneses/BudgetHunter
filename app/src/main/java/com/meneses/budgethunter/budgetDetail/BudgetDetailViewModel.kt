@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailEvent
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailState
+import com.meneses.budgethunter.budgetDetail.data.CollaborationException
+import com.meneses.budgethunter.budgetDetail.data.CollaborationManager
 import com.meneses.budgethunter.budgetEntry.data.BudgetEntryRepository
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntryFilter
@@ -17,7 +19,8 @@ import kotlinx.coroutines.launch
 
 class BudgetDetailViewModel(
     private val budgetEntryRepository: BudgetEntryRepository = BudgetEntryRepository(),
-    private val budgetRepository: BudgetRepository = BudgetRepository()
+    private val budgetRepository: BudgetRepository = BudgetRepository(),
+    private val collaborationManager: CollaborationManager = CollaborationManager()
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(BudgetDetailState())
@@ -49,33 +52,29 @@ class BudgetDetailViewModel(
     }
 
     private fun stopCollaboration() = viewModelScope.launch {
-        budgetRepository.stopCollaboration()
+        collaborationManager.stopCollaboration()
         _uiState.update { it.copy(isCollaborationActive = false) }
     }
 
     private fun startCollaboration() = viewModelScope.launch {
         try {
-            val collaborationCode = budgetRepository.startCollaboration()
-            if (collaborationCode != -1) {
-                budgetRepository.joinCollaboration(collaborationCode)
-                budgetRepository.consumeCollaborationStream()
-                budgetEntryRepository.consumeCollaborationStream()
-                _uiState.update {
-                    it.copy(
-                        isCollaborationActive = true,
-                        collaborationCode = collaborationCode
-                    )
-                }
-            } else {
-                collaborationError()
+            val collaborationCode = collaborationManager.startCollaboration()
+            collaborationManager.consumeCollaborationStream()
+            _uiState.update {
+                it.copy(
+                    isCollaborationActive = true,
+                    collaborationCode = collaborationCode
+                )
             }
+        } catch (e: CollaborationException){
+            collaborationError(e.message.orEmpty())
         } catch (e: Exception) {
-            collaborationError()
+            val errorMessage = "An error occurred trying to collaborate, please try again later"
+            collaborationError(errorMessage)
         }
     }
 
-    private suspend fun collaborationError() {
-        val errorMessage = "An error occurred trying to collaborate, please try again later"
+    private suspend fun collaborationError(errorMessage: String) {
         _uiState.update { it.copy(collaborationError = errorMessage) }
         delay(3000)
         _uiState.update { it.copy(collaborationError = null) }
