@@ -113,9 +113,16 @@ class BudgetEntryViewModel(
                 return@launch
             }
 
-            if (invoiceToDelete != null) deleteDetachedInvoice()
-            if (entry.id < 0) budgetEntryRepository.create(entry)
-            else budgetEntryRepository.update(entry)
+            if (invoiceToDelete != null) {
+                deleteDetachedInvoice()
+            }
+
+            if (entry.id < 0) {
+                budgetEntryRepository.create(entry)
+            } else {
+                budgetEntryRepository.update(entry)
+            }
+
             goBack()
         }
     }

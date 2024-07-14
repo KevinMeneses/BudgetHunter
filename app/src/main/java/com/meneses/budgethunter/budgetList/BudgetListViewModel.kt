@@ -2,7 +2,6 @@ package com.meneses.budgethunter.budgetList
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.meneses.budgethunter.budgetDetail.data.CollaborationManager
 import com.meneses.budgethunter.budgetList.application.BudgetListEvent
 import com.meneses.budgethunter.budgetList.application.BudgetListState
 import com.meneses.budgethunter.budgetList.data.BudgetRepository
@@ -15,8 +14,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class BudgetListViewModel(
-    private val budgetRepository: BudgetRepository = BudgetRepository(),
-    private val collaborationManager: CollaborationManager = CollaborationManager()
+    private val budgetRepository: BudgetRepository = BudgetRepository()
 ) : ViewModel() {
     val uiState get() = _uiState.asStateFlow()
     private val _uiState = MutableStateFlow(BudgetListState())
@@ -58,8 +56,8 @@ class BudgetListViewModel(
     private fun joinCollaboration(collaborationCode: String) {
         viewModelScope.launch {
             try {
-                collaborationManager.joinCollaboration(collaborationCode.toInt())
-                collaborationManager.consumeCollaborationStream()
+                budgetRepository.joinCollaboration(collaborationCode.toInt())
+                // TODO: navigate to detail and consume collaboration stream there
             } catch (e: Exception) {
                 collaborationError()
             }
@@ -90,7 +88,7 @@ class BudgetListViewModel(
 
     private fun clearFilter() {
         viewModelScope.launch {
-            val budgetList = budgetRepository.getAll()
+            val budgetList = budgetRepository.getAllCached()
             _uiState.update { it.copy(budgetList = budgetList, filter = null) }
         }
     }

@@ -110,14 +110,14 @@ class BudgetListViewModelTest {
         val state = mutableListOf<BudgetListState>()
         val job = launch { viewModel.uiState.toList(state) }
 
-        every { repository.getAll() } returns budgetsMock
+        every { repository.getAllCached() } returns budgetsMock
         viewModel.sendEvent(BudgetListEvent.ClearFilter)
         runCurrent()
 
         Assert.assertEquals(budgetsMock, state.last().budgetList)
         Assert.assertNull(state.first().filter)
 
-        verify { repository.getAll() }
+        verify { repository.getAllCached() }
         job.cancel()
     }
 

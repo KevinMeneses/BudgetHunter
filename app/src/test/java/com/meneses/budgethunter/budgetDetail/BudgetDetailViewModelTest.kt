@@ -43,7 +43,7 @@ class BudgetDetailViewModelTest {
 
     @Test
     fun getBudgetEntriesEvent() = runTest(dispatcher) {
-        val event = BudgetDetailEvent.GetBudgetEntries
+        val event = BudgetDetailEvent.GetBudgetDetail
         val events = mutableListOf<BudgetDetailState>()
         val budgetEntries: List<BudgetEntry> = listOf(BudgetEntry())
 
@@ -95,13 +95,13 @@ class BudgetDetailViewModelTest {
         val events = mutableListOf<BudgetDetailState>()
         val budgetEntries: List<BudgetEntry> = listOf(mockk())
 
-        every { budgetEntryRepository.getAll() } returns budgetEntries
+        every { budgetEntryRepository.getAllCached() } returns budgetEntries
         val job = launch { viewModel.uiState.toList(events) }
         viewModel.sendEvent(event)
         runCurrent()
 
         Assert.assertEquals(budgetEntries, events.last().entries)
-        verify { budgetEntryRepository.getAll() }
+        verify { budgetEntryRepository.getAllCached() }
         job.cancel()
     }
 

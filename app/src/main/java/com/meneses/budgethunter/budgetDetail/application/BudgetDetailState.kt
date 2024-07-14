@@ -1,12 +1,11 @@
 package com.meneses.budgethunter.budgetDetail.application
 
+import com.meneses.budgethunter.budgetDetail.domain.BudgetDetail
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntryFilter
-import com.meneses.budgethunter.budgetList.domain.Budget
 
 data class BudgetDetailState(
-    val budget: Budget = Budget(),
-    val entries: List<BudgetEntry> = listOf(),
+    val budgetDetail: BudgetDetail = BudgetDetail(),
     val isBudgetModalVisible: Boolean = false,
     val isFilterModalVisible: Boolean = false,
     val isCollaborateModalVisible: Boolean = false,

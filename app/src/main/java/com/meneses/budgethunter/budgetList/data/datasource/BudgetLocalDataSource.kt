@@ -1,5 +1,6 @@
 package com.meneses.budgethunter.budgetList.data.datasource
 
+import androidx.lifecycle.AtomicReference
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
 import com.meneses.budgethunter.budgetList.data.toDomain
@@ -20,12 +21,12 @@ class BudgetLocalDataSource(
         .asFlow()
         .mapToList(dispatcher)
         .toDomain()
-        .onEach { cachedList = it }
+        .onEach { cachedList.set(it) }
 
-    fun getAll(): List<Budget> = cachedList
+    fun getAllCached(): List<Budget> = cachedList.get()
 
     fun getAllFilteredBy(filter: BudgetFilter) =
-        cachedList.filter {
+        cachedList.get().filter {
             if (filter.name.isNullOrBlank()) true
             else it.name.lowercase()
                 .contains(filter.name.lowercase())
@@ -60,6 +61,6 @@ class BudgetLocalDataSource(
     fun delete(id: Long) = queries.delete(id)
 
     companion object {
-        private var cachedList = emptyList<Budget>()
+        private val cachedList = AtomicReference(emptyList<Budget>())
     }
 }

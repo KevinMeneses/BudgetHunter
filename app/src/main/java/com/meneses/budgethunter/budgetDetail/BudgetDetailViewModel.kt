@@ -4,12 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailEvent
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailState
+import com.meneses.budgethunter.budgetDetail.data.BudgetDetailRepository
 import com.meneses.budgethunter.budgetDetail.data.CollaborationException
-import com.meneses.budgethunter.budgetDetail.data.CollaborationManager
-import com.meneses.budgethunter.budgetEntry.data.BudgetEntryRepository
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntryFilter
-import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.budgetList.domain.Budget
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,9 +16,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class BudgetDetailViewModel(
-    private val budgetEntryRepository: BudgetEntryRepository = BudgetEntryRepository(),
-    private val budgetRepository: BudgetRepository = BudgetRepository(),
-    private val collaborationManager: CollaborationManager = CollaborationManager()
+    private val budgetDetailRepository: BudgetDetailRepository = BudgetDetailRepository()
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(BudgetDetailState())
@@ -29,7 +25,7 @@ class BudgetDetailViewModel(
     fun sendEvent(event: BudgetDetailEvent) {
         when (event) {
             is BudgetDetailEvent.SetBudget -> setBudget(event.budget)
-            is BudgetDetailEvent.GetBudgetEntries -> getBudgetEntries()
+            is BudgetDetailEvent.GetBudgetDetail -> getBudgetDetail()
             is BudgetDetailEvent.UpdateBudgetAmount -> updateBudgetAmount(event.amount)
             is BudgetDetailEvent.FilterEntries -> filterEntries(event.filter)
             is BudgetDetailEvent.ClearFilter -> clearFilter()
@@ -52,21 +48,21 @@ class BudgetDetailViewModel(
     }
 
     private fun stopCollaboration() = viewModelScope.launch {
-        collaborationManager.stopCollaboration()
+        budgetDetailRepository.stopCollaboration()
         _uiState.update { it.copy(isCollaborationActive = false) }
     }
 
     private fun startCollaboration() = viewModelScope.launch {
         try {
-            val collaborationCode = collaborationManager.startCollaboration()
-            collaborationManager.consumeCollaborationStream()
+            val collaborationCode = budgetDetailRepository.startCollaboration()
+            budgetDetailRepository.consumeCollaborationStream()
             _uiState.update {
                 it.copy(
                     isCollaborationActive = true,
                     collaborationCode = collaborationCode
                 )
             }
-        } catch (e: CollaborationException){
+        } catch (e: CollaborationException) {
             collaborationError(e.message.orEmpty())
         } catch (e: Exception) {
             val errorMessage = "An error occurred trying to collaborate, please try again later"
@@ -84,16 +80,22 @@ class BudgetDetailViewModel(
         _uiState.update { it.copy(isCollaborateModalVisible = visible) }
 
     private fun setBudget(budget: Budget) =
-        _uiState.update { it.copy(budget = budget) }
+        _uiState.update {
+            it.copy(
+                budgetDetail = it.budgetDetail
+                    .copy(budget = budget)
+            )
+        }
 
-    private fun getBudgetEntries() = viewModelScope.launch {
-        budgetEntryRepository
-            .getAllByBudgetId(_uiState.value.budget.id)
-            .collect { entries ->
+    private fun getBudgetDetail() = viewModelScope.launch {
+        val budgetId = _uiState.value.budgetDetail.budget.id
+        budgetDetailRepository
+            .getBudgetDetailById(budgetId)
+            .collect { detail ->
                 _uiState.update {
-                    val updatedEntries = if (it.filter == null) entries
-                    else budgetEntryRepository.getAllFilteredBy(it.filter)
-                    it.copy(entries = updatedEntries)
+                    val updatedDetail = if (it.filter == null) detail
+                    else budgetDetailRepository.getAllFilteredBy(it.filter)
+                    it.copy(budgetDetail = updatedDetail)
                 }
             }
     }
@@ -102,22 +104,29 @@ class BudgetDetailViewModel(
         _uiState.update { it.copy(showEntry = null) }
 
     private fun deleteSelectedEntries() = viewModelScope.launch {
-        val entriesToDeleteIds = _uiState.value.entries
+        val entriesToDeleteIds = _uiState.value.budgetDetail.entries
             .filter { it.isSelected }
             .map { it.id }
 
-        budgetEntryRepository.deleteByIds(entriesToDeleteIds)
+        budgetDetailRepository.deleteEntriesByIds(entriesToDeleteIds)
         toggleSelectionState(false)
     }
 
     private fun toggleEntrySelection(event: BudgetDetailEvent.ToggleSelectEntry) {
         _uiState.update { state ->
-            val updatedEntry = state.entries[event.index].copy(isSelected = event.isSelected)
-            val updatedList = state.entries
+            val updatedEntry = state.budgetDetail
+                .entries[event.index]
+                .copy(isSelected = event.isSelected)
+
+            val updatedList = state.budgetDetail
+                .entries
                 .toMutableList()
                 .apply { set(index = event.index, element = updatedEntry) }
 
-            state.copy(entries = updatedList)
+            state.copy(
+                budgetDetail = state.budgetDetail
+                    .copy(entries = updatedList)
+            )
         }
     }
 
@@ -125,26 +134,23 @@ class BudgetDetailViewModel(
         _uiState.update { it.copy(showEntry = budgetItem) }
 
     private fun updateBudgetAmount(amount: Double) = viewModelScope.launch {
-        _uiState.update {
-            val budget = it.budget.copy(amount = amount)
-            budgetRepository.update(budget)
-            it.copy(budget = budget)
-        }
+        budgetDetailRepository.updateBudgetAmount(amount)
     }
 
     private fun filterEntries(filter: BudgetEntryFilter) = viewModelScope.launch {
-        val filteredEntries = budgetEntryRepository.getAllFilteredBy(filter)
-        _uiState.update { it.copy(entries = filteredEntries, filter = filter) }
+        val filteredDetail = budgetDetailRepository.getAllFilteredBy(filter)
+        _uiState.update { it.copy(budgetDetail = filteredDetail, filter = filter) }
     }
 
     private fun clearFilter() = viewModelScope.launch {
-        val entries = budgetEntryRepository.getAll()
-        _uiState.update { it.copy(entries = entries, filter = null) }
+        val detail = budgetDetailRepository.getCachedDetail()
+        _uiState.update { it.copy(budgetDetail = detail, filter = null) }
     }
 
     private fun deleteBudget() = viewModelScope.launch {
         _uiState.update {
-            budgetRepository.delete(it.budget)
+            budgetDetailRepository.deleteBudget()
+            budgetDetailRepository.stopCollaboration()
             it.copy(goBack = true)
         }
     }
@@ -167,7 +173,11 @@ class BudgetDetailViewModel(
 
     private fun toggleAllEntriesSelection(isSelected: Boolean) =
         _uiState.update { state ->
-            val updatedEntries = state.entries.map { it.copy(isSelected = isSelected) }
-            state.copy(entries = updatedEntries)
+            val updatedEntries = state.budgetDetail.entries
+                .map { it.copy(isSelected = isSelected) }
+            state.copy(
+                budgetDetail = state.budgetDetail
+                    .copy(entries = updatedEntries)
+            )
         }
 }

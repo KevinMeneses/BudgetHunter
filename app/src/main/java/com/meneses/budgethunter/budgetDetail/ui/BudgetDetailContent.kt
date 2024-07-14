@@ -69,24 +69,24 @@ fun BudgetDetailContent(
             modifier = Modifier.weight(0.9f, true)
         ) {
             BudgetSection(
-                amount = uiState.budget.amount,
+                amount = uiState.budgetDetail.budget.amount,
                 onClick = onBudgetClick
             )
             Spacer(modifier = Modifier.height(20.dp))
-            if (uiState.entries.isEmpty()) LottiePlaceholder(
+            if (uiState.budgetDetail.entries.isEmpty()) LottiePlaceholder(
                 resId = R.raw.empty_list,
                 modifier = Modifier.weight(0.8f, true)
             )
             else ListSection(
-                budgetEntries = uiState.entries,
+                budgetEntries = uiState.budgetDetail.entries,
                 isSelectionActive = uiState.isSelectionActive,
                 onEvent = onEvent
             )
             Spacer(modifier = Modifier.height(20.dp))
             if (!uiState.isSelectionActive) {
                 BalanceSection(
-                    budgetEntries = uiState.entries,
-                    budgetAmount = uiState.budget.amount
+                    budgetEntries = uiState.budgetDetail.entries,
+                    budgetAmount = uiState.budgetDetail.budget.amount
                 )
             } else DeleteButton(onEvent)
         }

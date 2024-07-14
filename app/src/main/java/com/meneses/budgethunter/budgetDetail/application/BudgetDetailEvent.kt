@@ -6,7 +6,7 @@ import com.meneses.budgethunter.budgetList.domain.Budget
 
 sealed interface BudgetDetailEvent {
     data class SetBudget(val budget: Budget) : BudgetDetailEvent
-    object GetBudgetEntries : BudgetDetailEvent
+    object GetBudgetDetail : BudgetDetailEvent
     data class UpdateBudgetAmount(val amount: Double) : BudgetDetailEvent
     data class FilterEntries(val filter: BudgetEntryFilter) : BudgetDetailEvent
     data class ShowEntry(val budgetItem: BudgetEntry) : BudgetDetailEvent

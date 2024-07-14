@@ -35,7 +35,7 @@ class BudgetRepositoryTest {
 
     @Test
     fun getAll() {
-        Assert.assertTrue(repository.getAll().isEmpty())
+        Assert.assertTrue(repository.getAllCached().isEmpty())
     }
 
     @Test

@@ -52,14 +52,14 @@ data class BudgetDetailScreen(val budget: Budget) {
         val coroutineScope = rememberCoroutineScope()
 
         DisposableEffect(Unit) {
-            if (uiState.budget.id != budget.id) {
+            if (uiState.budgetDetail.budget.id != budget.id) {
                 BudgetDetailEvent
                     .SetBudget(budget)
                     .run(onEvent)
             }
 
             BudgetDetailEvent
-                .GetBudgetEntries
+                .GetBudgetDetail
                 .run(onEvent)
 
             onDispose {
@@ -111,7 +111,7 @@ data class BudgetDetailScreen(val budget: Budget) {
             Scaffold(
                 topBar = {
                     AppBar(
-                        title = budget.name,
+                        title = uiState.budgetDetail.budget.name,
                         leftButtonIcon = Icons.Default.Menu,
                         rightButtonIcon = Icons.Default.Add,
                         leftButtonDescription = stringResource(id = R.string.open_menu_button),
@@ -143,7 +143,7 @@ data class BudgetDetailScreen(val budget: Budget) {
 
             BudgetModal(
                 show = uiState.isBudgetModalVisible,
-                budgetAmount = uiState.budget.amount,
+                budgetAmount = uiState.budgetDetail.budget.amount,
                 onEvent = onEvent
             )
 
