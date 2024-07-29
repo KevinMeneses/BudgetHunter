@@ -13,7 +13,8 @@ CREATE TABLE budget_entry (
 
 selectAllByBudgetId:
 SELECT * FROM budget_entry
-WHERE budget_id = :budgetId;
+WHERE budget_id = :budgetId
+ORDER BY id DESC;
 
 insert:
 INSERT INTO budget_entry

@@ -2,6 +2,7 @@ package com.meneses.budgethunter.budgetDetail.ui
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -19,6 +20,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.List
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -30,6 +32,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -163,8 +166,7 @@ private fun ColumnScope.ListSection(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(AppColors.background)
-                        .clickable { },
+                        .background(AppColors.background),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -181,6 +183,26 @@ private fun ColumnScope.ListSection(
                         imageVector = Icons.Default.Close,
                         contentDescription = stringResource(R.string.close_entries_selection_mode),
                         modifier = Modifier.clickable(onClick = onCloseSelection)
+                    )
+                }
+                DefDivider()
+            } else stickyHeader {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(AppColors.background),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = stringResource(id = R.string.description),
+                        modifier = Modifier.padding(vertical = 13.6.dp),
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Image(
+                        imageVector = Icons.Default.List,
+                        modifier = Modifier.clickable { /*TODO*/ }.padding(vertical = 10.dp),
+                        contentDescription = ""
                     )
                 }
                 DefDivider()
@@ -216,7 +238,7 @@ private fun ColumnScope.ListSection(
                                 onItemChecked(true)
                             }
                         )
-                        .padding(vertical = if (isSelectionActive) 0.dp else 10.dp)
+                        .padding(vertical = if (isSelectionActive) 0.dp else 13.6.dp)
                 ) {
                     if (isSelectionActive) Checkbox(
                         checked = budgetItem.isSelected,
@@ -230,11 +252,21 @@ private fun ColumnScope.ListSection(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
-                    val operatorSign =
-                        if (budgetItem.type == BudgetEntry.Type.OUTCOME) "-"
-                        else EMPTY
+
+                    val operatorSign: String
+                    val color: Color
+
+                    if (budgetItem.type == BudgetEntry.Type.OUTCOME) {
+                        operatorSign = "-"
+                        color = AppColors.error
+                    } else {
+                        operatorSign = "+"
+                        color = Color(0xFF00BB50)
+                    }
+
                     Text(
                         text = operatorSign + budgetItem.amount,
+                        color = color,
                         modifier = Modifier.weight(0.3f),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
