@@ -27,8 +27,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.maxkeppeker.sheets.core.models.base.rememberSheetState
 import com.maxkeppeler.sheets.calendar.CalendarDialog
@@ -39,6 +41,8 @@ import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.commons.EMPTY
 import com.meneses.budgethunter.commons.ui.OutlinedDropdown
 import com.meneses.budgethunter.commons.ui.dashedBorder
+import com.meneses.budgethunter.commons.util.fromCurrency
+import com.meneses.budgethunter.commons.util.toCurrency
 import com.meneses.budgethunter.theme.AppColors
 
 @Composable
@@ -190,9 +194,14 @@ fun AmountField(
     @StringRes amountError: Int? = null
 ) {
     OutlinedTextField(
-        value = amount,
+        value = TextFieldValue(
+            text = amount.toCurrency(),
+            selection = TextRange(amount.toCurrency().length)
+        ),
         onValueChange = {
-            if (it.isBlank()) {
+            onAmountChanged(it.text.fromCurrency())
+            // TODO: fix decimal use case
+            /*if (it.isBlank()) {
                 onAmountChanged(EMPTY)
                 return@OutlinedTextField
             }
@@ -201,7 +210,7 @@ fun AmountField(
             val decimalsLength = decimals.length
             if (decimalsLength > 2) return@OutlinedTextField
             val amountNumber = it.toDoubleOrNull() ?: return@OutlinedTextField
-            if (amountNumber > 0) onAmountChanged(it)
+            if (amountNumber > 0) onAmountChanged(it)*/
         },
         label = { Text(text = stringResource(id = R.string.amount)) },
         keyboardOptions = KeyboardOptions(

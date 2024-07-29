@@ -44,7 +44,43 @@ class BudgetDetailViewModel(
             is BudgetDetailEvent.ToggleCollaborateModal -> toggleCollaborationModal(event.isVisible)
             BudgetDetailEvent.StopCollaboration -> stopCollaboration()
             BudgetDetailEvent.HideCodeModal -> _uiState.update { it.copy(collaborationCode = null) }
+            BudgetDetailEvent.SortList -> orderList()
         }
+    }
+
+    private fun orderList() = _uiState.update { currentState ->
+        val newOrder: BudgetDetailState.ListOrder
+        val orderedEntries: List<BudgetEntry>
+
+        when (currentState.listOrder) {
+            BudgetDetailState.ListOrder.DEFAULT -> {
+                newOrder = BudgetDetailState.ListOrder.AMOUNT_ASCENDANT
+                orderedEntries = currentState.budgetDetail.entries.sortedBy {
+                    val isPositive = it.type == BudgetEntry.Type.INCOME
+                    if (isPositive) it.amount
+                    else "-" + it.amount
+                }
+            }
+
+            BudgetDetailState.ListOrder.AMOUNT_ASCENDANT -> {
+                newOrder = BudgetDetailState.ListOrder.AMOUNT_DESCENDANT
+                orderedEntries = currentState.budgetDetail.entries.sortedByDescending {
+                    val isPositive = it.type == BudgetEntry.Type.INCOME
+                    if (isPositive) it.amount
+                    else "-" + it.amount
+                }
+            }
+
+            BudgetDetailState.ListOrder.AMOUNT_DESCENDANT -> {
+                newOrder = BudgetDetailState.ListOrder.DEFAULT
+                orderedEntries = currentState.budgetDetail.entries.sortedByDescending { it.id }
+            }
+        }
+
+        currentState.copy(
+            budgetDetail = currentState.budgetDetail.copy(entries = orderedEntries),
+            listOrder = newOrder
+        )
     }
 
     private fun stopCollaboration() = viewModelScope.launch {

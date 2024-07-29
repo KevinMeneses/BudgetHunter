@@ -25,4 +25,5 @@ sealed interface BudgetDetailEvent {
     object StartCollaboration : BudgetDetailEvent
     object StopCollaboration : BudgetDetailEvent
     object ClearNavigation : BudgetDetailEvent
+    object SortList : BudgetDetailEvent
 }

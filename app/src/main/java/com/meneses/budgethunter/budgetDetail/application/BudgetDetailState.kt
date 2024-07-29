@@ -17,5 +17,12 @@ data class BudgetDetailState(
     val collaborationCode: Int? = null,
     val collaborationError: String? = null,
     val goBack: Boolean = false,
-    val showEntry: BudgetEntry? = null
-)
+    val showEntry: BudgetEntry? = null,
+    val listOrder: ListOrder = ListOrder.DEFAULT
+) {
+    enum class ListOrder {
+        DEFAULT,
+        AMOUNT_ASCENDANT,
+        AMOUNT_DESCENDANT
+    }
+}

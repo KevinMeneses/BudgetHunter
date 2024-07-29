@@ -20,6 +20,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -29,7 +31,10 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -45,6 +50,7 @@ import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.commons.EMPTY
 import com.meneses.budgethunter.commons.ui.DefDivider
 import com.meneses.budgethunter.commons.ui.LottiePlaceholder
+import com.meneses.budgethunter.commons.util.toCurrency
 import com.meneses.budgethunter.theme.AppColors
 
 @Composable
@@ -83,6 +89,7 @@ fun BudgetDetailContent(
             else ListSection(
                 budgetEntries = uiState.budgetDetail.entries,
                 isSelectionActive = uiState.isSelectionActive,
+                listOrder = uiState.listOrder,
                 onEvent = onEvent
             )
             Spacer(modifier = Modifier.height(20.dp))
@@ -104,7 +111,7 @@ fun BudgetSection(
     val budget = if (amount == 0.0) {
         stringResource(id = R.string.add_budget)
     } else {
-        stringResource(id = R.string.budget_amount, amount.toBigDecimal().toPlainString())
+        stringResource(id = R.string.budget_amount, amount.toCurrency())
     }
 
     Card(
@@ -141,8 +148,13 @@ fun BudgetSection(
 private fun ColumnScope.ListSection(
     budgetEntries: List<BudgetEntry>,
     isSelectionActive: Boolean,
+    listOrder: BudgetDetailState.ListOrder,
     onEvent: (BudgetDetailEvent) -> Unit
 ) {
+    var showDate by remember {
+        mutableStateOf(false)
+    }
+
     val onSelectAllItems = remember {
         fun(isActive: Boolean) {
             onEvent(BudgetDetailEvent.ToggleAllEntriesSelection(isActive))
@@ -194,14 +206,29 @@ private fun ColumnScope.ListSection(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    val headerText =
+                        if (showDate) R.string.date
+                        else R.string.description
+
                     Text(
-                        text = stringResource(id = R.string.description),
-                        modifier = Modifier.padding(vertical = 13.6.dp),
+                        text = stringResource(id = headerText),
+                        modifier = Modifier
+                            .clickable { showDate = !showDate }
+                            .padding(vertical = 13.6.dp),
                         fontWeight = FontWeight.SemiBold
                     )
+
+                    val orderIcon = when (listOrder) {
+                        BudgetDetailState.ListOrder.DEFAULT -> Icons.Default.List
+                        BudgetDetailState.ListOrder.AMOUNT_ASCENDANT -> Icons.Default.KeyboardArrowDown
+                        BudgetDetailState.ListOrder.AMOUNT_DESCENDANT -> Icons.Default.KeyboardArrowUp
+                    }
+
                     Image(
-                        imageVector = Icons.Default.List,
-                        modifier = Modifier.clickable { /*TODO*/ }.padding(vertical = 10.dp),
+                        imageVector = orderIcon,
+                        modifier = Modifier
+                            .clickable { onEvent(BudgetDetailEvent.SortList) }
+                            .padding(vertical = 10.dp),
                         contentDescription = ""
                     )
                 }
@@ -244,8 +271,13 @@ private fun ColumnScope.ListSection(
                         checked = budgetItem.isSelected,
                         onCheckedChange = onItemChecked
                     )
+
+                    val budgetItemText =
+                        if (showDate) budgetItem.date
+                        else budgetItem.description
+
                     Text(
-                        text = budgetItem.description
+                        text = budgetItemText
                             .takeIf { it.isNotBlank() }
                             ?: stringResource(id = R.string.no_description),
                         modifier = Modifier.weight(0.65f),
@@ -265,7 +297,7 @@ private fun ColumnScope.ListSection(
                     }
 
                     Text(
-                        text = operatorSign + budgetItem.amount,
+                        text = operatorSign + budgetItem.amount.toCurrency(),
                         color = color,
                         modifier = Modifier.weight(0.3f),
                         maxLines = 1,
@@ -296,11 +328,10 @@ fun BalanceSection(
         .reduceOrNull { acc, actual -> acc + actual }
         ?: 0.0
 
-    val outcomesText = String.format(format = "%.2f", outcomes)
+    val outcomesText = outcomes.toCurrency()
 
     val balance = budgetAmount + incomes - outcomes
-
-    val balanceText = String.format(format = "%.2f", balance)
+    val balanceText = balance.toCurrency()
 
     Card(
         modifier = Modifier.fillMaxWidth(),
