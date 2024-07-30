@@ -52,4 +52,8 @@
     <string name="save_entry">Guardar entrada</string>
     <string name="amount_mandatory">Debes ingresar un monto para este registro</string>
     <string name="wait_for_update">Espere mientras se actualiza la aplicación…</string>
+    <string name="attach_invoice">Adjuntar comprobante</string>
+    <string name="invoice">Comprobante: %s</string>
+    <string name="select_from_files">Seleccionar un archivo</string>
+    <string name="take_a_picture">Tomar una foto</string>
 </resources>

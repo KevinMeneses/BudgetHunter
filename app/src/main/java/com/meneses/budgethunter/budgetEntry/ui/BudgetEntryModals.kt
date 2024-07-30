@@ -38,6 +38,7 @@ import com.meneses.budgethunter.commons.ui.Modal
 import com.meneses.budgethunter.commons.ui.dashedBorder
 import com.meneses.budgethunter.theme.AppColors
 import java.io.File
+import androidx.compose.ui.res.stringResource
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
@@ -67,7 +68,7 @@ fun AttachInvoiceModal(
                     .padding(15.dp)
             ) {
                 Text(
-                    text = "Take a picture",
+                    text = stringResource(R.string.take_a_picture),
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
                 Spacer(modifier = Modifier.height(10.dp))
@@ -98,7 +99,7 @@ fun AttachInvoiceModal(
                     .padding(15.dp)
             ) {
                 Text(
-                    text = "Select from files",
+                    text = stringResource(R.string.select_from_files),
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
                 Spacer(modifier = Modifier.height(10.dp))

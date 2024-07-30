@@ -122,8 +122,9 @@ private fun InvoiceField(
             .padding(15.dp)
     ) {
         val invoiceText = invoice
-            ?.let { "Invoice: " + it.split("/").last() }
-            ?: "Attach invoice"
+            ?.let { stringResource(R.string.invoice, it.split("/").last()) }
+            ?: stringResource(R.string.attach_invoice)
+
         Text(text = invoiceText)
     }
     Spacer(modifier = Modifier.height(10.dp))
