@@ -31,7 +31,6 @@ import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.budgetList.domain.BudgetFilter
 import com.meneses.budgethunter.commons.EMPTY
 import com.meneses.budgethunter.commons.ui.Modal
-import com.meneses.budgethunter.commons.ui.OutlinedDropdown
 import com.meneses.budgethunter.theme.AppColors
 
 @Composable
@@ -54,21 +53,10 @@ fun FilterListModal(
                 mutableStateOf(filter?.name ?: EMPTY)
             }
 
-            val frequencyList = remember {
-                Budget.Frequency.getFrequencies()
-            }
-
-            var frequency by remember {
-                mutableStateOf(filter?.frequency)
-            }
-
             ModalContent(
                 title = stringResource(id = R.string.filter),
                 name = name,
-                frequency = frequency,
-                frequencyOptions = frequencyList.map { it.toStringResource() },
-                onNameChanged = { name = it },
-                onFrequencyChanged = { frequency = frequencyList[it] }
+                onNameChanged = { name = it }
             )
 
             Row(
@@ -91,7 +79,7 @@ fun FilterListModal(
 
                 Button(
                     onClick = {
-                        val budgetFilter = BudgetFilter(name, frequency)
+                        val budgetFilter = BudgetFilter(name)
                         BudgetListEvent.FilterList(budgetFilter).run(onEvent)
                         onDismiss()
                     }
@@ -122,27 +110,16 @@ fun NewBudgetModal(
                 mutableStateOf(EMPTY)
             }
 
-            val frequencyList = remember {
-                Budget.Frequency.getFrequencies()
-            }
-
-            var frequency by remember {
-                mutableStateOf(Budget.Frequency.UNIQUE)
-            }
-
             ModalContent(
                 title = stringResource(id = R.string.new_budget),
                 name = name,
-                frequency = frequency,
-                frequencyOptions = frequencyList.map { it.toStringResource() },
-                onNameChanged = { name = it },
-                onFrequencyChanged = { frequency = frequencyList[it] }
+                onNameChanged = { name = it }
             )
 
             Button(
                 onClick = {
                     if (name.isBlank()) return@Button
-                    val budget = Budget(name = name, frequency = frequency)
+                    val budget = Budget(name = name)
                     BudgetListEvent.CreateBudget(budget).run(onEvent)
                     onDismiss()
                 }
@@ -153,15 +130,51 @@ fun NewBudgetModal(
     }
 }
 
+@Composable
+fun UpdateBudgetModal(
+    budget: Budget?,
+    onEvent: (BudgetListEvent) -> Unit
+) {
+    if (budget != null) {
+        val onDismiss = remember {
+            fun() {
+                BudgetListEvent
+                    .ToggleUpdateModal(null)
+                    .run(onEvent)
+            }
+        }
+
+        Modal(onDismiss = onDismiss) {
+            var name by remember {
+                mutableStateOf(budget.name)
+            }
+
+            ModalContent(
+                title = "Actualizar presupuesto",
+                name = name,
+                onNameChanged = { name = it },
+            )
+
+            Button(
+                onClick = {
+                    if (name.isBlank()) return@Button
+                    val updatedBudget = budget.copy(name = name)
+                    BudgetListEvent.UpdateBudget(updatedBudget).run(onEvent)
+                    onDismiss()
+                }
+            ) {
+                Text(text = "Actualizar")
+            }
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ModalContent(
     title: String,
     name: String,
-    frequency: Budget.Frequency?,
-    frequencyOptions: List<String>,
-    onNameChanged: (String) -> Unit,
-    onFrequencyChanged: (Int) -> Unit
+    onNameChanged: (String) -> Unit
 ) {
     Text(
         text = title,
@@ -178,15 +191,6 @@ private fun ModalContent(
             capitalization = KeyboardCapitalization.Words
         )
     )
-
-    OutlinedDropdown(
-        value = frequency?.toStringResource() ?: EMPTY,
-        label = stringResource(id = R.string.frequency),
-        dropdownOptions = frequencyOptions,
-        onSelectOption = onFrequencyChanged
-    )
-
-    Spacer(modifier = Modifier.height(30.dp))
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

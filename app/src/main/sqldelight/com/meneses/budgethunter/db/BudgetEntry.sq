@@ -28,3 +28,7 @@ WHERE id = :id;
 deleteByIds:
 DELETE FROM budget_entry
 WHERE id IN ?;
+
+deleteAllByBudgetId:
+DELETE FROM budget_entry
+WHERE budget_id = ?;

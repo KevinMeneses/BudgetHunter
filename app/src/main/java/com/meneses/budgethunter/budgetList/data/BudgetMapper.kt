@@ -8,8 +8,7 @@ import com.meneses.budgethunter.db.Budget as DbBudget
 fun DbBudget.toDomain() = Budget(
     id = id.toInt(),
     amount = amount,
-    name = name,
-    frequency = frequency
+    name = name
 )
 
 fun Flow<List<DbBudget>>.toDomain() =

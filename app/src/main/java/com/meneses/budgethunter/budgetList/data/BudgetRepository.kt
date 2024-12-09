@@ -31,6 +31,10 @@ class BudgetRepository(
         localDataSource.create(budget)
     }
 
+    suspend fun update(budget: Budget) = withContext(ioDispatcher) {
+        localDataSource.update(budget)
+    }
+
     suspend fun joinCollaboration(collaborationCode: Int) = withContext(ioDispatcher) {
         messagingClient().joinCollaboration(collaborationCode)
         preferencesManager.isCollaborationEnabled = true

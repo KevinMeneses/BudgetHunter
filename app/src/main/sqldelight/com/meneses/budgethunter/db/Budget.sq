@@ -1,25 +1,23 @@
-import com.meneses.budgethunter.budgetList.domain.Budget.Frequency;
-
 CREATE TABLE budget (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   amount REAL NOT NULL,
-  name TEXT NOT NULL,
-  frequency TEXT AS Frequency NOT NULL
+  name TEXT NOT NULL
 );
 
 selectAll:
-SELECT * FROM budget;
+SELECT * FROM budget
+ORDER BY id DESC;
 
 insert:
 INSERT INTO budget
-VALUES (:id, :amount, :name, :frequency);
+VALUES (:id, :amount, :name);
 
 selectLastId:
 SELECT last_insert_rowid();
 
 update:
 UPDATE budget
-SET amount = :amount, name = :name, frequency = :frequency
+SET amount = :amount, name = :name
 WHERE id = :id;
 
 delete:

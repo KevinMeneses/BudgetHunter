@@ -35,11 +35,6 @@
     <string name="collaborate_confirmation_message">¿Desea empezar a colaborar?</string>
     <string name="income">Ingreso</string>
     <string name="outcome">Gasto</string>
-    <string name="unique">Unica</string>
-    <string name="daily">Diario</string>
-    <string name="weekly">Semanal</string>
-    <string name="monthly">Mensual</string>
-    <string name="annual" tools:ignore="Typos">Anual</string>
     <string name="start_date">Fecha de inicio</string>
     <string name="end_date">Fecha limite</string>
     <string name="user_guide">Guia de usuario</string>

@@ -30,17 +30,13 @@ class BudgetLocalDataSource(
             if (filter.name.isNullOrBlank()) true
             else it.name.lowercase()
                 .contains(filter.name.lowercase())
-        }.filter {
-            if (filter.frequency == null) true
-            else it.frequency == filter.frequency
         }
 
     fun create(budget: Budget): Budget {
         queries.insert(
             id = null,
             name = budget.name,
-            amount = budget.amount,
-            frequency = budget.frequency
+            amount = budget.amount
         )
 
         val savedId = queries
@@ -54,8 +50,7 @@ class BudgetLocalDataSource(
     fun update(budget: Budget) = queries.update(
         id = budget.id.toLong(),
         amount = budget.amount,
-        name = budget.name,
-        frequency = budget.frequency
+        name = budget.name
     )
 
     fun delete(id: Long) = queries.delete(id)

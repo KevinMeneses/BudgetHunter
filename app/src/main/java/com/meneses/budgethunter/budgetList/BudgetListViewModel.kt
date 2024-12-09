@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.meneses.budgethunter.budgetList.application.BudgetListEvent
 import com.meneses.budgethunter.budgetList.application.BudgetListState
+import com.meneses.budgethunter.budgetList.application.DeleteBudgetUseCase
+import com.meneses.budgethunter.budgetList.application.DuplicateBudgetUseCase
 import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.budgetList.domain.BudgetFilter
@@ -14,7 +16,9 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class BudgetListViewModel(
-    private val budgetRepository: BudgetRepository = BudgetRepository()
+    private val budgetRepository: BudgetRepository = BudgetRepository(),
+    private val duplicateBudgetUseCase: DuplicateBudgetUseCase = DuplicateBudgetUseCase(budgetRepository),
+    private val deleteBudgetUseCase: DeleteBudgetUseCase = DeleteBudgetUseCase()
 ) : ViewModel() {
     val uiState get() = _uiState.asStateFlow()
     private val _uiState = MutableStateFlow(BudgetListState())
@@ -38,9 +42,13 @@ class BudgetListViewModel(
     fun sendEvent(event: BudgetListEvent) {
         when (event) {
             is BudgetListEvent.CreateBudget -> createBudget(event.budget)
+            is BudgetListEvent.UpdateBudget -> updateBudget(event.budget)
+            is BudgetListEvent.DuplicateBudget -> duplicateBudget(event.budget)
+            is BudgetListEvent.DeleteBudget -> deleteBudget(event.budgetId)
             is BudgetListEvent.FilterList -> filterList(event.filter)
             is BudgetListEvent.OpenBudget -> openBudget(event.budget)
             is BudgetListEvent.ToggleAddModal -> setAddModalVisibility(event.isVisible)
+            is BudgetListEvent.ToggleUpdateModal -> setUpdateModalVisibility(event.budget)
             is BudgetListEvent.ToggleFilterModal -> setFilterModalVisibility(event.isVisible)
             is BudgetListEvent.ClearFilter -> clearFilter()
             is BudgetListEvent.ClearNavigation -> clearNavigation()
@@ -48,6 +56,14 @@ class BudgetListViewModel(
             is BudgetListEvent.ToggleJoinCollaborationModal ->
                 setJoinCollaborationModalVisibility(event.isVisible)
         }
+    }
+
+    private fun duplicateBudget(budget: Budget) = viewModelScope.launch {
+        duplicateBudgetUseCase.execute(budget)
+    }
+
+    private fun deleteBudget(budgetId: Long) = viewModelScope.launch {
+        deleteBudgetUseCase.execute(budgetId)
     }
 
     private fun setJoinCollaborationModalVisibility(visible: Boolean) =
@@ -76,6 +92,10 @@ class BudgetListViewModel(
         openBudget(budgetSaved)
     }
 
+    private fun updateBudget(budget: Budget) = viewModelScope.launch {
+        budgetRepository.update(budget)
+    }
+
     private fun openBudget(budget: Budget) =
         _uiState.update { it.copy(navigateToBudget = budget) }
 
@@ -98,6 +118,9 @@ class BudgetListViewModel(
 
     private fun setAddModalVisibility(visible: Boolean) =
         _uiState.update { it.copy(addModalVisibility = visible) }
+
+    private fun setUpdateModalVisibility(budget: Budget?) =
+        _uiState.update { it.copy(budgetToUpdate = budget) }
 
     private fun setFilterModalVisibility(visible: Boolean) =
         _uiState.update { it.copy(filterModalVisibility = visible) }

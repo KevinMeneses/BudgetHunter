@@ -6,6 +6,7 @@ import com.meneses.budgethunter.budgetList.domain.BudgetFilter
 data class BudgetListState(
     val budgetList: List<Budget> = emptyList(),
     val addModalVisibility: Boolean = false,
+    val budgetToUpdate: Budget? = null,
     val filterModalVisibility: Boolean = false,
     val joinCollaborationModalVisibility: Boolean = false,
     val isCollaborationActive: Boolean = false,

@@ -1,7 +1,6 @@
 package com.meneses.budgethunter.budgetList.ui
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -13,13 +12,20 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -40,7 +46,11 @@ import com.meneses.budgethunter.theme.BudgetHunterTheme
 private fun Preview() {
     BudgetHunterTheme {
         BudgetListContent(
-            list = emptyList(),
+            list = listOf(
+                Budget(name = "Noviembre"),
+                Budget(name = "Diciembre"),
+                Budget(name = "Enero"),
+            ),
             paddingValues = PaddingValues(),
             animate = false,
             onEvent = {}
@@ -78,11 +88,7 @@ fun BudgetListContent(
             items(list.size) {
                 BudgetItem(
                     budget = list[it],
-                    onBudgetClick = { budget ->
-                        BudgetListEvent
-                            .OpenBudget(budget)
-                            .run(onEvent)
-                    }
+                    onEvent = onEvent
                 )
             }
             item {
@@ -96,7 +102,7 @@ fun BudgetListContent(
 @OptIn(ExperimentalMaterial3Api::class)
 private fun BudgetItem(
     budget: Budget,
-    onBudgetClick: (Budget) -> Unit
+    onEvent: (BudgetListEvent) -> Unit
 ) {
     Card(
         colors = CardDefaults.cardColors(
@@ -106,16 +112,74 @@ private fun BudgetItem(
         elevation = CardDefaults.cardElevation(
             defaultElevation = 5.dp
         ),
-        onClick = { onBudgetClick(budget) }
+        onClick = {
+            BudgetListEvent
+                .OpenBudget(budget)
+                .run(onEvent)
+        }
     ) {
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceEvenly
+                .padding(start = 20.dp)
+                .padding(vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
+            var dropdownExpanded by remember {
+                mutableStateOf(false)
+            }
+
             Text(text = budget.name)
+            IconButton(
+                onClick = { dropdownExpanded = true },
+                content = {
+                    Icon(
+                        imageVector = Icons.Default.MoreVert,
+                        contentDescription = ""
+                    )
+                    DropdownMenu(
+                        expanded = dropdownExpanded,
+                        onDismissRequest = {
+                            dropdownExpanded = false
+                        }
+                    ) {
+                        TextButton(
+                            onClick = {
+                                dropdownExpanded = false
+                                BudgetListEvent
+                                    .ToggleUpdateModal(budget)
+                                    .run(onEvent)
+                            },
+                            content = {
+                                Text(text = "Cambiar nombre")
+                            }
+                        )
+                        TextButton(
+                            onClick = {
+                                dropdownExpanded = false
+                                BudgetListEvent
+                                    .DuplicateBudget(budget)
+                                    .run(onEvent)
+                            },
+                            content = {
+                                Text(text = "Duplicar")
+                            }
+                        )
+                        TextButton(
+                            onClick = {
+                                dropdownExpanded = false
+                                BudgetListEvent
+                                    .DeleteBudget(budget.id.toLong())
+                                    .run(onEvent)
+                            },
+                            content = {
+                                Text(text = "Eliminar")
+                            }
+                        )
+                    }
+                }
+            )
         }
     }
     Spacer(modifier = Modifier.height(20.dp))

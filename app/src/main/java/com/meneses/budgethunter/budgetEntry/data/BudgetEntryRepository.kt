@@ -10,6 +10,9 @@ class BudgetEntryRepository(
     private val localDataSource: BudgetEntryLocalDataSource = BudgetEntryLocalDataSource(),
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) {
+    fun getAllByBudgetId(budgetId: Long) =
+        localDataSource.selectAllByBudgetId(budgetId)
+
     suspend fun create(budgetEntry: BudgetEntry) = withContext(ioDispatcher) {
         localDataSource.create(budgetEntry)
     }

@@ -35,11 +35,6 @@
     <string name="collaborate_confirmation_message">Do you want to start collaborating?</string>
     <string name="income">Income</string>
     <string name="outcome">Outcome</string>
-    <string name="unique">Unique</string>
-    <string name="daily">Daily</string>
-    <string name="weekly">Weekly</string>
-    <string name="monthly">Monthly</string>
-    <string name="annual">Annual</string>
     <string name="start_date">Start date</string>
     <string name="end_date">End date</string>
     <string name="user_guide">User guide</string>

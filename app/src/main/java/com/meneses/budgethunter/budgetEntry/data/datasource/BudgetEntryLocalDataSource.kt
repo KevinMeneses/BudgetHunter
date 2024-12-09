@@ -65,6 +65,9 @@ class BudgetEntryLocalDataSource(
     fun deleteByIds(list: List<Long>) =
         queries.deleteByIds(list)
 
+    fun deleteAllByBudgetId(budgetId: Long) =
+        queries.deleteAllByBudgetId(budgetId)
+
     companion object {
         private var cachedEntries = AtomicReference(emptyList<BudgetEntry>())
     }

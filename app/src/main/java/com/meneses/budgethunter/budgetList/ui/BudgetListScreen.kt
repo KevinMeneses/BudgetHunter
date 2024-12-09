@@ -31,7 +31,11 @@ import kotlinx.serialization.Serializable
 private fun Preview() {
     BudgetHunterTheme {
         BudgetListScreen.Show(
-            uiState = BudgetListState(),
+            uiState = BudgetListState(
+                budgetList = listOf(
+                    Budget(name = "Test")
+                )
+            ),
             onEvent = {},
             showUserGuide = {},
             showBudgetDetail = {}
@@ -110,6 +114,11 @@ object BudgetListScreen {
 
             NewBudgetModal(
                 show = uiState.addModalVisibility,
+                onEvent = onEvent
+            )
+
+            UpdateBudgetModal(
+                budget = uiState.budgetToUpdate,
                 onEvent = onEvent
             )
 

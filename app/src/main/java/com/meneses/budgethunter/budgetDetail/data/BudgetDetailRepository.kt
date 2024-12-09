@@ -4,6 +4,7 @@ import androidx.lifecycle.AtomicReference
 import com.meneses.budgethunter.budgetDetail.domain.BudgetDetail
 import com.meneses.budgethunter.budgetEntry.data.datasource.BudgetEntryLocalDataSource
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntryFilter
+import com.meneses.budgethunter.budgetList.application.DeleteBudgetUseCase
 import com.meneses.budgethunter.budgetList.data.datasource.BudgetLocalDataSource
 import com.meneses.budgethunter.commons.data.KtorRealtimeMessagingClient
 import com.meneses.budgethunter.commons.data.PreferencesManager
@@ -25,6 +26,7 @@ class BudgetDetailRepository(
     private val entriesLocalDataSource: BudgetEntryLocalDataSource = BudgetEntryLocalDataSource(),
     private val preferencesManager: PreferencesManager = PreferencesManager,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    private val deleteBudgetUseCase: DeleteBudgetUseCase = DeleteBudgetUseCase(budgetLocalDataSource, entriesLocalDataSource, ioDispatcher),
     private val messagingClient: () -> KtorRealtimeMessagingClient = {
         KtorRealtimeMessagingClient.getInstance()
     },
@@ -69,7 +71,7 @@ class BudgetDetailRepository(
 
     suspend fun deleteBudget() = withContext(ioDispatcher) {
         val budgetId = getCachedDetail().budget.id.toLong()
-        budgetLocalDataSource.delete(budgetId)
+        deleteBudgetUseCase.execute(budgetId)
     }
 
     suspend fun deleteEntriesByIds(ids: List<Int>) = withContext(ioDispatcher) {
