@@ -2,7 +2,6 @@ package com.meneses.budgethunter.budgetDetail.ui
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -16,6 +15,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
@@ -29,7 +29,9 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -191,11 +193,15 @@ private fun ColumnScope.ListSection(
                         text = stringResource(id = R.string.selected_entries, selectedEntries),
                         fontWeight = FontWeight.SemiBold
                     )
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = stringResource(R.string.close_entries_selection_mode),
-                        modifier = Modifier.clickable(onClick = onCloseSelection)
-                    )
+                    IconButton(
+                        modifier = Modifier.offset(10.dp),
+                        onClick = onCloseSelection
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = stringResource(R.string.close_entries_selection_mode)
+                        )
+                    }
                 }
                 DefDivider()
             } else stickyHeader {
@@ -210,13 +216,18 @@ private fun ColumnScope.ListSection(
                         if (showDate) R.string.date
                         else R.string.description
 
-                    Text(
-                        text = stringResource(id = headerText),
-                        modifier = Modifier
-                            .clickable { showDate = !showDate }
-                            .padding(vertical = 13.6.dp),
-                        fontWeight = FontWeight.SemiBold
-                    )
+                    TextButton(
+                        modifier = Modifier.offset((-10).dp),
+                        onClick = {
+                            showDate = !showDate
+                        }
+                    ) {
+                        Text(
+                            text = stringResource(id = headerText),
+                            color = AppColors.onPrimaryContainer,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
 
                     val orderIcon = when (listOrder) {
                         BudgetDetailState.ListOrder.DEFAULT -> Icons.Default.List
@@ -224,13 +235,18 @@ private fun ColumnScope.ListSection(
                         BudgetDetailState.ListOrder.AMOUNT_DESCENDANT -> Icons.Default.KeyboardArrowUp
                     }
 
-                    Image(
-                        imageVector = orderIcon,
-                        modifier = Modifier
-                            .clickable { onEvent(BudgetDetailEvent.SortList) }
-                            .padding(vertical = 10.dp),
-                        contentDescription = ""
-                    )
+                    IconButton(
+                        modifier = Modifier.offset(x = 10.dp),
+                        onClick = {
+                            onEvent(BudgetDetailEvent.SortList)
+                        }
+                    ) {
+                        Icon(
+                            imageVector = orderIcon,
+                            contentDescription = ""
+                        )
+                    }
+
                 }
                 DefDivider()
             }

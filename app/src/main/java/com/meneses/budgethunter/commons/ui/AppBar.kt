@@ -1,6 +1,5 @@
 package com.meneses.budgethunter.commons.ui
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -9,6 +8,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -72,17 +72,21 @@ private fun BoxScope.RightButton(
     animate: Boolean
 ) {
     if (rightIcon != null) {
-        Icon(
-            imageVector = rightIcon,
-            contentDescription = contentDescription,
+        IconButton(
             modifier = Modifier
-                .padding(end = 10.dp)
                 .align(Alignment.CenterEnd)
                 .pulsateEffect(animate)
-                .blinkEffect(animate)
-                .clickable { onRightIconClick?.invoke() },
-            tint = AppColors.onSecondaryContainer
-        )
+                .blinkEffect(animate),
+            onClick = {
+                onRightIconClick?.invoke()
+            }
+        ) {
+            Icon(
+                imageVector = rightIcon,
+                contentDescription = contentDescription,
+                tint = AppColors.onSecondaryContainer
+            )
+        }
     }
 }
 
@@ -106,19 +110,21 @@ private fun BoxScope.LeftButton(
 ) {
     if (leftIcon != null) {
         val keyboard = LocalSoftwareKeyboardController.current
-        Icon(
-            imageVector = leftIcon,
-            contentDescription = contentDescription,
+        IconButton(
             modifier = Modifier
-                .padding(start = 10.dp)
                 .align(Alignment.CenterStart)
                 .pulsateEffect(animate)
-                .blinkEffect(animate)
-                .clickable {
-                    keyboard?.hide()
-                    onLeftIconClick?.invoke()
-                },
-            tint = AppColors.onSecondaryContainer
-        )
+                .blinkEffect(animate),
+            onClick = {
+                keyboard?.hide()
+                onLeftIconClick?.invoke()
+            }
+        ) {
+            Icon(
+                imageVector = leftIcon,
+                contentDescription = contentDescription,
+                tint = AppColors.onSecondaryContainer
+            )
+        }
     }
 }
