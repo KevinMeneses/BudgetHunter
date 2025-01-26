@@ -63,3 +63,4 @@ val md_theme_dark_outlineVariant = Color(0xFF534341)
 val md_theme_dark_scrim = Color(0xFF000000)
 
 val shadow = Color(0x6A000000)
+val green_success = Color(0xFF00BB50)

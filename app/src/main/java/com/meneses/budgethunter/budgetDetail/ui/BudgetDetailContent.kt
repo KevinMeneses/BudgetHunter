@@ -44,6 +44,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.meneses.budgethunter.R
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailEvent
@@ -54,6 +55,18 @@ import com.meneses.budgethunter.commons.ui.DefDivider
 import com.meneses.budgethunter.commons.ui.LottiePlaceholder
 import com.meneses.budgethunter.commons.util.toCurrency
 import com.meneses.budgethunter.theme.AppColors
+import com.meneses.budgethunter.theme.green_success
+
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+private fun Preview() {
+    BudgetDetailContent(
+        paddingValues = PaddingValues(0.dp),
+        uiState = BudgetDetailState()
+    ) {
+
+    }
+}
 
 @Composable
 fun BudgetDetailContent(
@@ -309,7 +322,7 @@ private fun ColumnScope.ListSection(
                         color = AppColors.error
                     } else {
                         operatorSign = "+"
-                        color = Color(0xFF00BB50)
+                        color = green_success
                     }
 
                     Text(

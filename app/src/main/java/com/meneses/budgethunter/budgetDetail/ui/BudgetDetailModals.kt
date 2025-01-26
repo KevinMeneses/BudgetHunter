@@ -24,9 +24,10 @@ import com.meneses.budgethunter.R
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailEvent
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntryFilter
 import com.meneses.budgethunter.budgetEntry.ui.AmountField
+import com.meneses.budgethunter.budgetEntry.ui.CategorySelector
 import com.meneses.budgethunter.budgetEntry.ui.DateField
 import com.meneses.budgethunter.budgetEntry.ui.DescriptionField
-import com.meneses.budgethunter.budgetEntry.ui.TypeSelector
+import com.meneses.budgethunter.budgetEntry.ui.TypeSwitch
 import com.meneses.budgethunter.commons.EMPTY
 import com.meneses.budgethunter.commons.ui.ConfirmationModal
 import com.meneses.budgethunter.commons.ui.Modal
@@ -96,6 +97,10 @@ fun FilterModal(
             mutableStateOf(entryFilter.type)
         }
 
+        var category by remember {
+            mutableStateOf(entryFilter.category)
+        }
+
         var startDate by remember {
             mutableStateOf(entryFilter.startDate)
         }
@@ -120,6 +125,7 @@ fun FilterModal(
                 if (
                     description.isNullOrBlank() &&
                     type == null &&
+                    category == null &&
                     startDate.isNullOrBlank() &&
                     endDate.isNullOrBlank()
                 ) return
@@ -127,6 +133,7 @@ fun FilterModal(
                 val updatedFilter = entryFilter.copy(
                     description = description,
                     type = type,
+                    category = category,
                     startDate = startDate,
                     endDate = endDate
                 )
@@ -149,11 +156,18 @@ fun FilterModal(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            TypeSelector(
+            TypeSwitch(
                 type = type,
                 onTypeSelected = { type = it }
             )
 
+            Spacer(modifier = Modifier.height(20.dp))
+
+            CategorySelector(
+                category = category,
+                onCategorySelected = { category = it }
+            )
+            
             Spacer(modifier = Modifier.height(20.dp))
 
             DateField(

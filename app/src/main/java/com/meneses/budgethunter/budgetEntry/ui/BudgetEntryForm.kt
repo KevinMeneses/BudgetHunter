@@ -5,8 +5,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -20,6 +22,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
@@ -31,7 +35,9 @@ import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.maxkeppeker.sheets.core.models.base.rememberSheetState
 import com.maxkeppeler.sheets.calendar.CalendarDialog
 import com.maxkeppeler.sheets.calendar.models.CalendarConfig
@@ -44,6 +50,19 @@ import com.meneses.budgethunter.commons.ui.dashedBorder
 import com.meneses.budgethunter.commons.util.fromCurrency
 import com.meneses.budgethunter.commons.util.toCurrency
 import com.meneses.budgethunter.theme.AppColors
+import com.meneses.budgethunter.theme.green_success
+
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+private fun Preview() {
+    BudgetEntryForm(
+        budgetEntry = BudgetEntry(type = BudgetEntry.Type.INCOME),
+        amountError = null,
+        paddingValues = PaddingValues(0.dp),
+        onBudgetItemChanged = {},
+        onInvoiceFieldClick = {}
+    )
+}
 
 @Composable
 fun BudgetEntryForm(
@@ -61,6 +80,14 @@ fun BudgetEntryForm(
             .padding(paddingValues)
             .padding(all = 20.dp)
     ) {
+        TypeSwitch(
+            type = budgetEntry.type,
+            onTypeSelected = {
+                budgetEntry
+                    .copy(type = it)
+                    .run(onBudgetItemChanged)
+            }
+        )
         AmountField(
             amount = budgetEntry.amount,
             onAmountChanged = {
@@ -78,11 +105,11 @@ fun BudgetEntryForm(
                     .run(onBudgetItemChanged)
             }
         )
-        TypeSelector(
-            type = budgetEntry.type,
-            onTypeSelected = {
+        CategorySelector(
+            category = budgetEntry.category,
+            onCategorySelected = {
                 budgetEntry
-                    .copy(type = it)
+                    .copy(category = it)
                     .run(onBudgetItemChanged)
             }
         )
@@ -174,16 +201,53 @@ fun DateField(
 }
 
 @Composable
-fun TypeSelector(
+fun TypeSwitch(
     type: BudgetEntry.Type?,
     onTypeSelected: (BudgetEntry.Type) -> Unit
 ) {
     val itemTypes = remember { BudgetEntry.getItemTypes() }
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceEvenly
+    ) {
+        Text(
+            text = itemTypes.first().toStringResource(),
+            fontSize = 16.sp
+        )
+        Switch(
+            checked = type == BudgetEntry.Type.INCOME,
+            onCheckedChange = {
+                val selection =
+                    if (it) BudgetEntry.Type.INCOME
+                    else BudgetEntry.Type.OUTCOME
+                onTypeSelected(selection)
+            },
+            colors = SwitchDefaults.colors(
+                uncheckedThumbColor = AppColors.onError,
+                uncheckedTrackColor = AppColors.error,
+                uncheckedBorderColor = AppColors.error,
+                checkedTrackColor = green_success
+            )
+        )
+        Text(
+            text = itemTypes.last().toStringResource(),
+            fontSize = 16.sp
+        )
+    }
+}
+
+@Composable
+fun CategorySelector(
+    category: BudgetEntry.Category?,
+    onCategorySelected: (BudgetEntry.Category) -> Unit
+) {
+    val categories = remember { BudgetEntry.getCategories() }
     OutlinedDropdown(
-        value = type?.toStringResource() ?: EMPTY,
-        label = stringResource(id = R.string.type),
-        dropdownOptions = itemTypes.map { it.toStringResource() },
-        onSelectOption = { onTypeSelected(itemTypes[it]) }
+        value = category?.toStringResource() ?: EMPTY,
+        label = stringResource(id = R.string.category),
+        dropdownOptions = categories.map { it.toStringResource() },
+        onSelectOption = { onCategorySelected(categories[it]) }
     )
 }
 

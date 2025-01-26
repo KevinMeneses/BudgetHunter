@@ -1,4 +1,5 @@
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry.Type;
+import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry.Category;
 
 CREATE TABLE budget_entry (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -8,6 +9,7 @@ CREATE TABLE budget_entry (
   type TEXT AS Type NOT NULL,
   date TEXT NOT NULL,
   invoice TEXT,
+  category TEXT AS Category NOT NULL,
   FOREIGN KEY (budget_id) REFERENCES budget(id) ON DELETE CASCADE
 );
 
@@ -18,11 +20,11 @@ ORDER BY id DESC;
 
 insert:
 INSERT INTO budget_entry
-VALUES (:id, :budgetId, :amount, :description, :type, :date, :invoice);
+VALUES (:id, :budgetId, :amount, :description, :type, :date, :invoice, :category);
 
 update:
 UPDATE budget_entry
-SET budget_id = :budgetId, amount = :amount, description = :description, type = :type, date = :date, invoice = :invoice
+SET budget_id = :budgetId, amount = :amount, description = :description, type = :type, date = :date, invoice = :invoice, category = :category
 WHERE id = :id;
 
 deleteByIds:

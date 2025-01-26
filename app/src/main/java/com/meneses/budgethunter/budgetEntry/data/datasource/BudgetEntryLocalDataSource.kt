@@ -35,6 +35,9 @@ class BudgetEntryLocalDataSource(
             if (filter.type == null) true
             else it.type == filter.type
         }.filter {
+            if (filter.category == null) true
+            else it.category == filter.category
+        }.filter {
             if (filter.startDate == null) true
             else it.date >= filter.startDate
         }.filter {
@@ -48,6 +51,7 @@ class BudgetEntryLocalDataSource(
         amount = budgetEntry.amount.toDoubleOrNull() ?: 0.0,
         description = budgetEntry.description,
         type = budgetEntry.type,
+        category = budgetEntry.category,
         date = budgetEntry.date,
         invoice = budgetEntry.invoice
     )
@@ -58,6 +62,7 @@ class BudgetEntryLocalDataSource(
         amount = budgetEntry.amount.toDoubleOrNull() ?: 0.0,
         description = budgetEntry.description,
         type = budgetEntry.type,
+        category = budgetEntry.category,
         date = budgetEntry.date,
         invoice = budgetEntry.invoice
     )

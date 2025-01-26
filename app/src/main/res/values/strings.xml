@@ -16,7 +16,7 @@
     <string name="delete_budget_confirmation_message">¿Está seguro que desea eliminar este presupuesto?</string>
     <string name="cancel">Cancelar</string>
     <string name="date">Fecha</string>
-    <string name="type">Tipo</string>
+    <string name="category">Categoría</string>
     <string name="amount">Monto</string>
     <string name="description">Descripcion</string>
     <string name="new_registry">Nuevo registro</string>
@@ -33,8 +33,8 @@
     <string name="selected_entries">%1$s Seleccionados</string>
     <string name="delete_entries_confirmation_message">¿Está seguro que desea eliminar estos registros?</string>
     <string name="collaborate_confirmation_message">¿Desea empezar a colaborar?</string>
-    <string name="income">Ingreso</string>
-    <string name="outcome">Gasto</string>
+    <string name="income">INGRESO</string>
+    <string name="outcome">GASTO</string>
     <string name="start_date">Fecha de inicio</string>
     <string name="end_date">Fecha limite</string>
     <string name="user_guide">Guia de usuario</string>
@@ -51,4 +51,16 @@
     <string name="invoice">Comprobante: %s</string>
     <string name="select_from_files">Seleccionar un archivo</string>
     <string name="take_a_picture">Tomar una foto</string>
+    <string name="food">Comida</string>
+    <string name="groceries">Mercado</string>
+    <string name="self_care">Cuidado personal</string>
+    <string name="transportation">Transporte</string>
+    <string name="household_items">Articulos para el hogar</string>
+    <string name="services">Servicios</string>
+    <string name="education">Educación</string>
+    <string name="health">Salud</string>
+    <string name="leisure">Ocio</string>
+    <string name="taxes">Impuestos</string>
+    <string name="other">Otros</string>
+
 </resources>

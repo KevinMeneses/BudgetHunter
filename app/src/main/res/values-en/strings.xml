@@ -16,7 +16,7 @@
     <string name="delete_budget_confirmation_message">Are you sure you want to delete this budget?</string>
     <string name="cancel">Cancel</string>
     <string name="date">Date</string>
-    <string name="type">Type</string>
+    <string name="category">Category</string>
     <string name="amount">Amount</string>
     <string name="description">Description</string>
     <string name="new_registry">New registry</string>
@@ -33,8 +33,8 @@
     <string name="selected_entries">%1$s Selected</string>
     <string name="delete_entries_confirmation_message">Are you sure you want to delete this registries?</string>
     <string name="collaborate_confirmation_message">Do you want to start collaborating?</string>
-    <string name="income">Income</string>
-    <string name="outcome">Outcome</string>
+    <string name="income">INCOME</string>
+    <string name="outcome">OUTCOME</string>
     <string name="start_date">Start date</string>
     <string name="end_date">End date</string>
     <string name="user_guide">User guide</string>
@@ -51,4 +51,15 @@
     <string name="invoice">Invoice: %s</string>
     <string name="select_from_files">Select from files</string>
     <string name="take_a_picture">Take a picture</string>
+    <string name="food">Food</string>
+    <string name="groceries">Groceries</string>
+    <string name="self_care">Self care</string>
+    <string name="transportation">Transportation</string>
+    <string name="household_items">Household items</string>
+    <string name="services">Services</string>
+    <string name="education">Education</string>
+    <string name="health">Health</string>
+    <string name="leisure">Leisure</string>
+    <string name="taxes">Taxes</string>
+    <string name="other">Other</string>
 </resources>
