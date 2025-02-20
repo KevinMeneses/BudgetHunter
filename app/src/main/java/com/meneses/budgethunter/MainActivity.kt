@@ -21,6 +21,8 @@ import com.meneses.budgethunter.budgetEntry.ui.BudgetEntryScreen
 import com.meneses.budgethunter.budgetList.BudgetListViewModel
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.budgetList.ui.BudgetListScreen
+import com.meneses.budgethunter.budgetMetrics.BudgetMetricsViewModel
+import com.meneses.budgethunter.budgetMetrics.ui.BudgetMetricsScreen
 import com.meneses.budgethunter.commons.util.serializableType
 import com.meneses.budgethunter.splash.SplashScreen
 import com.meneses.budgethunter.splash.SplashScreenViewModel
@@ -86,6 +88,9 @@ class MainActivity : ComponentActivity() {
                                 goBack = navController::popBackStack,
                                 showBudgetEntry = { budgetEntry ->
                                     navController.navigate(BudgetEntryScreen(budgetEntry))
+                                },
+                                showBudgetMetrics = { budget ->
+                                    navController.navigate(BudgetMetricsScreen(budget))
                                 }
                             )
                         }
@@ -97,6 +102,16 @@ class MainActivity : ComponentActivity() {
                             it.toRoute<BudgetEntryScreen>().Show(
                                 uiState = budgetEntryViewModel.uiState.collectAsStateWithLifecycle().value,
                                 onEvent = budgetEntryViewModel::sendEvent,
+                                goBack = navController::popBackStack
+                            )
+                        }
+
+                        composable<BudgetMetricsScreen>(
+                            typeMap = mapOf(typeOf<Budget>() to serializableType<Budget>())
+                        ) {
+                            val budgetMetricsViewModel: BudgetMetricsViewModel = viewModel()
+                            it.toRoute<BudgetMetricsScreen>().Show(
+                                uiState = budgetMetricsViewModel.uiState.collectAsStateWithLifecycle().value,
                                 goBack = navController::popBackStack
                             )
                         }

@@ -62,5 +62,6 @@
     <string name="leisure">Ocio</string>
     <string name="taxes">Impuestos</string>
     <string name="other">Otros</string>
+    <string name="metrics">Metricas</string>
 
 </resources>

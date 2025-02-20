@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.Text
@@ -36,6 +37,7 @@ private fun Preview() {
         animateFilterButton = false,
         animateCollaborateButton = false,
         onFilterClick = {},
+        onMetricsClick = {},
         onCollaborateClick = {},
         onDeleteClick = {}
     )
@@ -46,6 +48,7 @@ fun BudgetDetailMenu(
     animateFilterButton: Boolean,
     animateCollaborateButton: Boolean,
     onFilterClick: () -> Unit,
+    onMetricsClick: () -> Unit,
     onCollaborateClick: () -> Unit,
     onDeleteClick: () -> Unit
 ) {
@@ -58,6 +61,7 @@ fun BudgetDetailMenu(
                 modifier = Modifier.background(AppColors.primary)
             ) {
                 item { FilterButton(animateFilterButton, onFilterClick) }
+                item { MetricsButton(onMetricsClick) }
                 item { CollaborateButton(animateCollaborateButton, onCollaborateClick) }
                 item { DeleteButton(onDeleteClick) }
             }
@@ -76,6 +80,15 @@ private fun FilterButton(
             .pulsateEffect(animate, targetValue = 1.1f),
         text = stringResource(id = R.string.filter),
         icon = Icons.Default.Search,
+        onClick = onClick
+    )
+}
+
+@Composable
+private fun MetricsButton(onClick: () -> Unit) {
+    MenuButton(
+        text = stringResource(R.string.metrics),
+        icon = Icons.Default.Star,
         onClick = onClick
     )
 }

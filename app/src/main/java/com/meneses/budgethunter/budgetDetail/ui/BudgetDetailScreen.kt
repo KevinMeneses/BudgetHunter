@@ -33,7 +33,8 @@ private fun Preview() {
         uiState = BudgetDetailState(),
         onEvent = {},
         goBack = {},
-        showBudgetEntry = {}
+        showBudgetEntry = {},
+        showBudgetMetrics = {}
     )
 }
 
@@ -45,7 +46,8 @@ data class BudgetDetailScreen(val budget: Budget) {
         uiState: BudgetDetailState,
         onEvent: (BudgetDetailEvent) -> Unit,
         goBack: () -> Unit,
-        showBudgetEntry: (BudgetEntry) -> Unit
+        showBudgetEntry: (BudgetEntry) -> Unit,
+        showBudgetMetrics: (Budget) -> Unit
     ) {
         val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
         val snackBarHostState = remember { SnackbarHostState() }
@@ -81,6 +83,9 @@ data class BudgetDetailScreen(val budget: Budget) {
                                 .ToggleFilterModal(true)
                                 .run(onEvent)
                         }
+                    },
+                    onMetricsClick = {
+                        showBudgetMetrics(budget)
                     },
                     onCollaborateClick = {
                         coroutineScope.launch {

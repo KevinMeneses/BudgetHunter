@@ -27,7 +27,7 @@ class BudgetEntryLocalDataSource(
         .onEach { cachedEntries.set(it) }
 
     fun getAllFilteredBy(filter: BudgetEntryFilter) =
-        cachedEntries.get().filter {
+        cachedEntries.get().asSequence().filter {
             if (filter.description.isNullOrBlank()) true
             else it.description.lowercase()
                 .contains(filter.description.lowercase())
@@ -43,7 +43,7 @@ class BudgetEntryLocalDataSource(
         }.filter {
             if (filter.endDate == null) true
             else it.date <= filter.endDate
-        }
+        }.toList()
 
     fun create(budgetEntry: BudgetEntry) = queries.insert(
         id = null,

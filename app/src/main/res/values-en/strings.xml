@@ -62,4 +62,5 @@
     <string name="leisure">Leisure</string>
     <string name="taxes">Taxes</string>
     <string name="other">Other</string>
+    <string name="metrics">Metrics</string>
 </resources>
