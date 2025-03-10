@@ -26,6 +26,7 @@ class GetTotalsPerCategoryUseCase(
             }
 
         return@withContext categories.entries
+            .filter { it.value != 0.0 }
             .sortedByDescending { it.value }
             .associate { it.key to it.value }
     }

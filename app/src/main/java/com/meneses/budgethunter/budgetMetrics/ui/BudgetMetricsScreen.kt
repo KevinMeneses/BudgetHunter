@@ -55,6 +55,7 @@ data class BudgetMetricsScreen(val budget: Budget) {
         ) {
             PieChart(
                 data = uiState.metricsData.mapKeys { it.key.toStringResource() },
+                percentages = uiState.percentages,
                 colors = uiState.chartColors,
                 modifier = Modifier.padding(20.dp)
             )

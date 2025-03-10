@@ -1,6 +1,7 @@
 package com.meneses.budgethunter.commons.ui
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -19,11 +20,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import java.math.RoundingMode
+import java.text.NumberFormat
 
 @Composable
 fun PieChart(
     data: Map<String, Double>,
     colors: List<Color>,
+    percentages: List<Double>,
     modifier: Modifier = Modifier,
     textStyle: TextStyle = TextStyle(fontSize = 14.sp, color = Color.Black)
 ) {
@@ -32,7 +36,10 @@ fun PieChart(
     val angles = proportions.mapValues { it.value * 360f }
 
     Column(modifier = modifier) {
-        Canvas(modifier = Modifier.fillMaxWidth().fillMaxHeight(0.52f)) {
+        Canvas(modifier = Modifier
+            .fillMaxWidth()
+            .fillMaxHeight(0.52f)
+        ) {
             var startAngle = 180f
             angles.onEachIndexed { index, entry ->
                 val sweepAngle = entry.value.toFloat()
@@ -49,18 +56,43 @@ fun PieChart(
 
         // Adding labels (optional)
         Column(
-            modifier = Modifier.padding(end = 16.dp, top = 26.dp)
+            modifier = Modifier.padding(top = 26.dp)
         ) {
             data.keys.forEachIndexed { index, label ->
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Canvas(modifier = Modifier.size(12.dp)) {
-                        drawRect(
-                            color = colors[index % colors.size],
-                            size = Size(size.minDimension, size.minDimension)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Canvas(modifier = Modifier.size(12.dp)) {
+                            drawRect(
+                                color = colors[index % colors.size],
+                                size = Size(size.minDimension, size.minDimension)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "$label:",
+                            style = textStyle,
+                            fontSize = 18.sp
                         )
                     }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(label, style = textStyle, fontSize = 18.sp)
+
+                    val percentage = percentages[index]
+                    val formattedPercentage = NumberFormat
+                        .getNumberInstance()
+                        .apply {
+                            maximumFractionDigits = 1
+                            roundingMode = RoundingMode.HALF_EVEN
+                        }
+                        .format(percentage)
+
+                    Text(
+                        text = "%$formattedPercentage",
+                        style = textStyle,
+                        fontSize = 18.sp
+                    )
                 }
                 Spacer(modifier = Modifier.height(4.dp))
             }

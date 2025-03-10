@@ -22,24 +22,33 @@ class BudgetMetricsViewModel(
 
     private fun getMetrics() {
         viewModelScope.launch {
+            val totalsPerCategory = getTotalsPerCategoryUseCase.execute()
+            val total = totalsPerCategory.values.sum()
+            val percentages = totalsPerCategory.map { ((it.value * 100) / total) }
+
             _uiState.update {
                 it.copy(
-                    metricsData = getTotalsPerCategoryUseCase.execute(),
-                    chartColors = listOf(
-                        Color.Black,
-                        Color.LightGray,
-                        Color.Red,
-                        Color.Blue,
-                        Color.Cyan,
-                        Color.Gray,
-                        Color.Green,
-                        Color.Magenta,
-                        Color.White,
-                        Color.Yellow,
-                        Color.DarkGray
-                    )
+                    metricsData = totalsPerCategory,
+                    percentages = percentages,
+                    chartColors = getChartColors()
+                        .take(totalsPerCategory.size)
                 )
             }
         }
     }
+
+    private fun getChartColors() =
+        listOf(
+            Color.Black,
+            Color.LightGray,
+            Color.Red,
+            Color.Blue,
+            Color.Cyan,
+            Color.Gray,
+            Color.Green,
+            Color.Magenta,
+            Color.Yellow,
+            Color.DarkGray,
+            Color.White
+        )
 }
