@@ -4,7 +4,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.DrawerValue
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -45,7 +44,6 @@ private fun Preview() {
 
 @Serializable
 object BudgetListScreen {
-    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun Show(
         uiState: BudgetListState,
@@ -106,6 +104,7 @@ object BudgetListScreen {
             ) {
                 BudgetListContent(
                     list = uiState.budgetList,
+                    isLoading = uiState.isLoading,
                     paddingValues = it,
                     onEvent = onEvent,
                     animate = uiState.budgetList.isEmpty() && uiState.filter == null

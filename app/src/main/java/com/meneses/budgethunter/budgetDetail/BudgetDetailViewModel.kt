@@ -131,7 +131,7 @@ class BudgetDetailViewModel(
                 _uiState.update {
                     val updatedDetail = if (it.filter == null) detail
                     else budgetDetailRepository.getAllFilteredBy(it.filter)
-                    it.copy(budgetDetail = updatedDetail)
+                    it.copy(budgetDetail = updatedDetail, isLoading = false)
                 }
             }
     }

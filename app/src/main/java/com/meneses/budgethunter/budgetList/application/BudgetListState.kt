@@ -5,6 +5,7 @@ import com.meneses.budgethunter.budgetList.domain.BudgetFilter
 
 data class BudgetListState(
     val budgetList: List<Budget> = emptyList(),
+    val isLoading: Boolean = true,
     val addModalVisibility: Boolean = false,
     val budgetToUpdate: Budget? = null,
     val filterModalVisibility: Boolean = false,

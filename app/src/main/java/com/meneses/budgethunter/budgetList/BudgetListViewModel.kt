@@ -33,7 +33,7 @@ class BudgetListViewModel(
                 _uiState.update {
                     val updatedList = if (it.filter == null) budgetList
                     else budgetRepository.getAllFilteredBy(it.filter)
-                    it.copy(budgetList = updatedList)
+                    it.copy(budgetList = updatedList, isLoading = false)
                 }
             }
         }

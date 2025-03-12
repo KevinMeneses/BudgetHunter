@@ -19,10 +19,10 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.filled.List
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -52,6 +52,7 @@ import com.meneses.budgethunter.budgetDetail.application.BudgetDetailState
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.commons.EMPTY
 import com.meneses.budgethunter.commons.ui.DefDivider
+import com.meneses.budgethunter.commons.ui.LoadingScreen
 import com.meneses.budgethunter.commons.ui.LottiePlaceholder
 import com.meneses.budgethunter.commons.util.toCurrency
 import com.meneses.budgethunter.theme.AppColors
@@ -78,42 +79,55 @@ fun BudgetDetailContent(
         fun() { onEvent(BudgetDetailEvent.ToggleBudgetModal(true)) }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(paddingValues)
-            .padding(
-                vertical = 15.dp,
-                horizontal = 20.dp
-            ),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceBetween
-    ) {
+    if (uiState.isLoading) {
+        LoadingScreen()
+    } else {
         Column(
-            modifier = Modifier.weight(0.9f, true)
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(
+                    vertical = 15.dp,
+                    horizontal = 20.dp
+                ),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
-            BudgetSection(
-                amount = uiState.budgetDetail.budget.amount,
-                onClick = onBudgetClick
-            )
-            Spacer(modifier = Modifier.height(20.dp))
-            if (uiState.budgetDetail.entries.isEmpty()) LottiePlaceholder(
-                resId = R.raw.empty_list,
-                modifier = Modifier.weight(0.8f, true)
-            )
-            else ListSection(
-                budgetEntries = uiState.budgetDetail.entries,
-                isSelectionActive = uiState.isSelectionActive,
-                listOrder = uiState.listOrder,
-                onEvent = onEvent
-            )
-            Spacer(modifier = Modifier.height(20.dp))
-            if (!uiState.isSelectionActive) {
-                BalanceSection(
-                    budgetEntries = uiState.budgetDetail.entries,
-                    budgetAmount = uiState.budgetDetail.budget.amount
+            Column(
+                modifier = Modifier.weight(0.9f, true)
+            ) {
+                BudgetSection(
+                    amount = uiState.budgetDetail.budget.amount,
+                    onClick = onBudgetClick
                 )
-            } else DeleteButton(onEvent)
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                if (uiState.budgetDetail.entries.isEmpty()) {
+                    LottiePlaceholder(
+                        resId = R.raw.empty_list,
+                        modifier = Modifier.weight(0.8f, true)
+                    )
+                } else {
+                    ListSection(
+                        budgetEntries = uiState.budgetDetail.entries,
+                        isSelectionActive = uiState.isSelectionActive,
+                        listOrder = uiState.listOrder,
+                        onEvent = onEvent
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                if (!uiState.isSelectionActive) {
+                    BalanceSection(
+                        budgetEntries = uiState.budgetDetail.entries,
+                        budgetAmount = uiState.budgetDetail.budget.amount
+                    )
+                } else {
+                    DeleteButton(onEvent)
+                }
+            }
         }
     }
 }
@@ -243,7 +257,7 @@ private fun ColumnScope.ListSection(
                     }
 
                     val orderIcon = when (listOrder) {
-                        BudgetDetailState.ListOrder.DEFAULT -> Icons.Default.List
+                        BudgetDetailState.ListOrder.DEFAULT -> Icons.AutoMirrored.Filled.List
                         BudgetDetailState.ListOrder.AMOUNT_ASCENDANT -> Icons.Default.KeyboardArrowDown
                         BudgetDetailState.ListOrder.AMOUNT_DESCENDANT -> Icons.Default.KeyboardArrowUp
                     }

@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import com.meneses.budgethunter.R
 import com.meneses.budgethunter.budgetList.application.BudgetListEvent
 import com.meneses.budgethunter.budgetList.domain.Budget
+import com.meneses.budgethunter.commons.ui.LoadingScreen
 import com.meneses.budgethunter.commons.ui.LottiePlaceholder
 import com.meneses.budgethunter.commons.ui.blinkEffect
 import com.meneses.budgethunter.commons.ui.dashedBorder
@@ -51,6 +52,7 @@ private fun Preview() {
                 Budget(name = "Diciembre"),
                 Budget(name = "Enero"),
             ),
+            isLoading = false,
             paddingValues = PaddingValues(),
             animate = false,
             onEvent = {}
@@ -61,6 +63,7 @@ private fun Preview() {
 @Composable
 fun BudgetListContent(
     list: List<Budget>,
+    isLoading: Boolean,
     paddingValues: PaddingValues,
     animate: Boolean,
     onEvent: (BudgetListEvent) -> Unit
@@ -73,33 +76,36 @@ fun BudgetListContent(
         }
     }
 
-    LazyColumn(
-        modifier = Modifier
-            .padding(paddingValues)
-            .fillMaxSize()
-            .padding(20.dp)
-    ) {
-        if (list.isEmpty()) {
-            item {
-                LottiePlaceholder(resId = R.raw.empty_state)
-                AddBudgetCard(onAddBudgetClick, animate)
-            }
-        } else {
-            items(list.size) {
-                BudgetItem(
-                    budget = list[it],
-                    onEvent = onEvent
-                )
-            }
-            item {
-                AddBudgetCard(onAddBudgetClick, animate)
+    if (isLoading) {
+        LoadingScreen()
+    } else {
+        LazyColumn(
+            modifier = Modifier
+                .padding(paddingValues)
+                .fillMaxSize()
+                .padding(20.dp)
+        ) {
+            if (list.isEmpty()) {
+                item {
+                    LottiePlaceholder(resId = R.raw.empty_state)
+                    AddBudgetCard(onAddBudgetClick, animate)
+                }
+            } else {
+                items(list.size) {
+                    BudgetItem(
+                        budget = list[it],
+                        onEvent = onEvent
+                    )
+                }
+                item {
+                    AddBudgetCard(onAddBudgetClick, animate)
+                }
             }
         }
     }
 }
 
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
 private fun BudgetItem(
     budget: Budget,
     onEvent: (BudgetListEvent) -> Unit
