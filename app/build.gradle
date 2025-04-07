@@ -31,6 +31,15 @@ android {
         vectorDrawables {
             useSupportLibrary true
         }
+
+        def localProperties = new Properties()
+        def localPropertiesFile = rootProject.file("local.properties")
+        if (localPropertiesFile.exists()) {
+            localProperties.load(new FileInputStream(localPropertiesFile))
+        }
+
+        def geminiApiKey = localProperties.getProperty("GEMINI_API_KEY")
+        buildConfigField("String", "GEMINI_API_KEY", "\"${geminiApiKey}\"")
     }
 
     buildTypes {
@@ -87,13 +96,15 @@ dependencies {
     implementation 'com.google.android.play:app-update:2.1.0'
     implementation 'com.google.android.play:app-update-ktx:2.1.0'
 
-    implementation 'androidx.navigation:navigation-compose:2.8.8'
+    implementation 'androidx.navigation:navigation-compose:2.8.9'
     implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3'
 
     implementation 'io.ktor:ktor-client-core:2.3.11'
     implementation 'io.ktor:ktor-client-cio:2.3.11'
     implementation 'io.ktor:ktor-client-websockets:2.3.10'
     implementation 'io.ktor:ktor-client-logging:2.3.10'
+
+    implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
 
     testImplementation 'junit:junit:4.13.2'
     testImplementation "io.mockk:mockk:1.13.5"

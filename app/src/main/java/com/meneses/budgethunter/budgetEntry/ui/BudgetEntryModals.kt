@@ -1,12 +1,6 @@
 package com.meneses.budgethunter.budgetEntry.ui
 
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.Matrix
-import android.graphics.Rect
-import android.graphics.pdf.PdfRenderer
-import android.graphics.pdf.PdfRenderer.Page
-import android.os.ParcelFileDescriptor
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
@@ -22,7 +16,6 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
@@ -32,16 +25,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.meneses.budgethunter.R
 import com.meneses.budgethunter.commons.ui.Modal
 import com.meneses.budgethunter.commons.ui.dashedBorder
+import com.meneses.budgethunter.commons.util.getBitmapFromPDFFile
 import com.meneses.budgethunter.theme.AppColors
-import java.io.File
-import androidx.compose.ui.res.stringResource
 
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
 fun AttachInvoiceModal(
     show: Boolean,
     onDismiss: () -> Unit,
@@ -118,7 +110,6 @@ fun AttachInvoiceModal(
 }
 
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
 fun ShowInvoiceModal(
     show: Boolean,
     invoice: String?,
@@ -133,18 +124,7 @@ fun ShowInvoiceModal(
 
             remember(invoice) {
                 if (invoice?.contains(".pdf") == true) {
-                    val descriptor = ParcelFileDescriptor.open(
-                        /* file = */ File(invoice),
-                        /* mode = */ ParcelFileDescriptor.MODE_READ_ONLY
-                    )
-                    val page = PdfRenderer(descriptor).openPage(0)
-                    val bitmap = Bitmap.createBitmap(
-                        /* width = */ page.width,
-                        /* height = */ page.height,
-                        /* config = */ Bitmap.Config.ARGB_8888
-                    )
-                    val rect = Rect(0, page.height, page.width, 0)
-                    page.render(bitmap, rect, Matrix(), Page.RENDER_MODE_FOR_DISPLAY)
+                    val bitmap = getBitmapFromPDFFile(invoice)
                     bitmap.asImageBitmap()
                 } else {
                     BitmapFactory

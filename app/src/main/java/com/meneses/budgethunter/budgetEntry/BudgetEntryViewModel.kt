@@ -1,10 +1,12 @@
 package com.meneses.budgethunter.budgetEntry
 
+import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.meneses.budgethunter.R
 import com.meneses.budgethunter.budgetEntry.application.BudgetEntryEvent
 import com.meneses.budgethunter.budgetEntry.application.BudgetEntryState
+import com.meneses.budgethunter.budgetEntry.application.GetAIBudgetEntryFromImageUseCase
 import com.meneses.budgethunter.budgetEntry.data.BudgetEntryRepository
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import kotlinx.coroutines.delay
@@ -16,7 +18,8 @@ import java.io.File
 import java.io.IOException
 
 class BudgetEntryViewModel(
-    private val budgetEntryRepository: BudgetEntryRepository = BudgetEntryRepository()
+    private val budgetEntryRepository: BudgetEntryRepository = BudgetEntryRepository(),
+    private val getAIBudgetEntryFromImageUseCase: GetAIBudgetEntryFromImageUseCase = GetAIBudgetEntryFromImageUseCase()
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(BudgetEntryState())
@@ -63,13 +66,25 @@ class BudgetEntryViewModel(
             val invoiceDir = saveInvoiceInAppInternalStorage(event)
             wasNewInvoiceAttached = true
 
+            val aiBudgetEntry = _uiState.value.budgetEntry?.let { budgetEntry ->
+                getAIBudgetEntryFromImageUseCase.execute(
+                    imageUri = invoiceDir.toUri(),
+                    budgetEntry = budgetEntry,
+                    contentResolver = event.contentResolver
+                )
+            }
+
             _uiState.update {
-                val updatedEntry = it.budgetEntry?.copy(invoice = invoiceDir.absolutePath)
+                val updatedEntry = aiBudgetEntry
+                    ?.copy(invoice = invoiceDir.absolutePath)
+                    ?: it.budgetEntry
+
                 it.copy(budgetEntry = updatedEntry)
             }
 
             toggleAttachInvoiceModal(false)
         } catch (e: Exception) {
+            e
             updateInvoiceError("Something went wrong loading file, please try again")
             delay(2000)
             updateInvoiceError(null)
