@@ -1,6 +1,7 @@
 package com.meneses.budgethunter.budgetDetail.data
 
 import androidx.lifecycle.AtomicReference
+import com.meneses.budgethunter.MyApplication
 import com.meneses.budgethunter.budgetDetail.domain.BudgetDetail
 import com.meneses.budgethunter.budgetEntry.data.datasource.BudgetEntryLocalDataSource
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntryFilter
@@ -24,7 +25,7 @@ import kotlinx.serialization.json.Json
 class BudgetDetailRepository(
     private val budgetLocalDataSource: BudgetLocalDataSource = BudgetLocalDataSource(),
     private val entriesLocalDataSource: BudgetEntryLocalDataSource = BudgetEntryLocalDataSource(),
-    private val preferencesManager: PreferencesManager = PreferencesManager,
+    private val preferencesManager: PreferencesManager = MyApplication.preferencesManager,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
     private val deleteBudgetUseCase: DeleteBudgetUseCase = DeleteBudgetUseCase(budgetLocalDataSource, entriesLocalDataSource, ioDispatcher),
     private val messagingClient: () -> KtorRealtimeMessagingClient = {

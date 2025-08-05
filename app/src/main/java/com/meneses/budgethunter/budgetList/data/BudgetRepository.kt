@@ -1,5 +1,6 @@
 package com.meneses.budgethunter.budgetList.data
 
+import com.meneses.budgethunter.MyApplication
 import com.meneses.budgethunter.budgetList.data.datasource.BudgetLocalDataSource
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.budgetList.domain.BudgetFilter
@@ -12,7 +13,7 @@ import kotlinx.coroutines.withContext
 
 class BudgetRepository(
     private val localDataSource: BudgetLocalDataSource = BudgetLocalDataSource(),
-    private val preferencesManager: PreferencesManager = PreferencesManager,
+    private val preferencesManager: PreferencesManager = MyApplication.preferencesManager,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
     private val messagingClient: () -> KtorRealtimeMessagingClient = {
         KtorRealtimeMessagingClient.getInstance()
@@ -20,6 +21,9 @@ class BudgetRepository(
 ) {
     val budgets: Flow<List<Budget>>
         get() = localDataSource.budgets
+
+    fun getById(id: Int): Budget =
+        localDataSource.getById(id)
 
     fun getAllCached(): List<Budget> =
         localDataSource.getAllCached()

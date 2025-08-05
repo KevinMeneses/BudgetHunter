@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.runtime.Composable
@@ -22,7 +23,8 @@ import com.meneses.budgethunter.theme.AppColors
 fun BudgetListMenu(
     isCollaborationActive: Boolean,
     onCollaborateClick: () -> Unit,
-    onUserGuideClick: () -> Unit
+    onUserGuideClick: () -> Unit,
+    onSettingsClick: () -> Unit
 ) {
     ModalDrawerSheet {
         Column(
@@ -34,6 +36,7 @@ fun BudgetListMenu(
             ) {
                 item { CollaborateButton(isCollaborationActive, onCollaborateClick) }
                 item { UserGuideButton(onUserGuideClick) }
+                item { SettingsButton(onSettingsClick) }
             }
         }
     }
@@ -61,6 +64,17 @@ fun UserGuideButton(
     MenuButton(
         text = stringResource(id = R.string.user_guide),
         icon = Icons.Outlined.Info,
+        onClick = onClick
+    )
+}
+
+@Composable
+fun SettingsButton(
+    onClick: () -> Unit,
+) {
+    MenuButton(
+        text = stringResource(id = R.string.settings),
+        icon = Icons.Filled.Settings,
         onClick = onClick,
         withDivider = false
     )

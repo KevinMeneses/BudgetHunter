@@ -5,7 +5,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
@@ -24,6 +26,8 @@ import com.meneses.budgethunter.budgetList.ui.BudgetListScreen
 import com.meneses.budgethunter.budgetMetrics.BudgetMetricsViewModel
 import com.meneses.budgethunter.budgetMetrics.ui.BudgetMetricsScreen
 import com.meneses.budgethunter.commons.util.serializableType
+import com.meneses.budgethunter.settings.ui.SettingsScreen
+import com.meneses.budgethunter.settings.SettingsViewModel
 import com.meneses.budgethunter.splash.SplashScreen
 import com.meneses.budgethunter.splash.SplashScreenViewModel
 import com.meneses.budgethunter.theme.AppColors
@@ -70,12 +74,24 @@ class MainActivity : ComponentActivity() {
                                 showUserGuide = { navController.navigate(UserGuideScreen) },
                                 showBudgetDetail = { budget ->
                                     navController.navigate(BudgetDetailScreen(budget))
-                                }
+                                },
+                                showSettings = { navController.navigate(SettingsScreen) }
                             )
                         }
 
                         composable<UserGuideScreen> {
                             UserGuideScreen.Show(goBack = navController::popBackStack)
+                        }
+
+                        composable<SettingsScreen> {
+                            val settingsViewModel: SettingsViewModel = viewModel()
+                            val context = LocalContext.current
+                            LaunchedEffect(Unit) { settingsViewModel.loadSettings(context) }
+                            SettingsScreen.Show(
+                                uiState = settingsViewModel.uiState.collectAsStateWithLifecycle().value,
+                                onEvent = settingsViewModel::sendEvent,
+                                goBack = navController::popBackStack
+                            )
                         }
 
                         composable<BudgetDetailScreen>(

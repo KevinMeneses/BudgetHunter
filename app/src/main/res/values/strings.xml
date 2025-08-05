@@ -1,4 +1,4 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
+<resources>
     <string name="app_name">Cazador de Presupuestos</string>
     <string name="add_budget">Agregar un presupuesto</string>
     <string name="budget_amount">Presupuesto\n%1$s</string>
@@ -63,5 +63,28 @@
     <string name="taxes">Impuestos</string>
     <string name="other">Otros</string>
     <string name="metrics">Metricas</string>
+    <string name="settings">Configuración</string>
+
+    <!-- SMS Reading -->
+    <string name="sms_reading">Lectura de SMS</string>
+    <string name="sms_reading_description">Leer mensajes de Bancolombia para crear entradas automáticamente</string>
+    <string name="enable_sms_reading">Habilitar lectura de SMS</string>
+    <string name="sms_permission_required">Se requiere permiso para leer SMS</string>
+    <string name="sms_permission_explanation">Esta función lee mensajes de Bancolombia para crear entradas de presupuesto automáticamente</string>
+    <string name="transaction_detected">Transacción detectada</string>
+    <string name="transaction_detected_message">Se detectó una transacción de Bancolombia por %1$s</string>
+    <string name="add_transaction">Agregar transacción</string>
+    <string name="ignore_transaction">Ignorar</string>
+    <string name="default_budget">Presupuesto por defecto</string>
+    <string name="select_default_budget">Seleccionar presupuesto</string>
+    <string name="no_default_budget">No hay presupuesto por defecto configurado</string>
+    <string name="transaction_added">Transacción agregada exitosamente</string>
+    <string name="transaction_failed">Error al agregar transacción</string>
+    <string name="save_default_budget">Guardar</string>
+
+    <!-- ... otros ... -->
+    <string name="bank_for_sms_notifications">Banco para notificaciones SMS</string>
+    <string name="select_a_bank">Selecciona un banco</string>
+    <string name="no_banks_configured">No hay bancos configurados</string>
 
 </resources>

@@ -37,7 +37,8 @@ private fun Preview() {
             ),
             onEvent = {},
             showUserGuide = {},
-            showBudgetDetail = {}
+            showBudgetDetail = {},
+            showSettings = {}
         )
     }
 }
@@ -49,7 +50,8 @@ object BudgetListScreen {
         uiState: BudgetListState,
         onEvent: (BudgetListEvent) -> Unit,
         showUserGuide: () -> Unit,
-        showBudgetDetail: (Budget) -> Unit
+        showBudgetDetail: (Budget) -> Unit,
+        showSettings: () -> Unit
     ) {
         val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
         val snackBarHostState = remember { SnackbarHostState() }
@@ -71,6 +73,12 @@ object BudgetListScreen {
                         coroutineScope.launch {
                             drawerState.close()
                             showUserGuide()
+                        }
+                    },
+                    onSettingsClick = {
+                        coroutineScope.launch {
+                            drawerState.close()
+                            showSettings()
                         }
                     }
                 )
