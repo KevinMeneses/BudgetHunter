@@ -29,29 +29,48 @@ class SmsService(
     fun processSms(messageBody: String, bankConfig: BankSmsConfig) {
         scope.launch {
             try {
-                val amountString = bankConfig.transactionAmountRegex?.find(messageBody)?.groups?.get(1)?.value
-                val description = bankConfig.transactionDescriptionRegex?.find(messageBody)?.groups?.get(1)?.value?.trim()
+                val match = bankConfig.transactionAmountRegex?.find(messageBody)
+                val description = bankConfig.transactionDescriptionRegex?.find(messageBody)?.groups?.first()?.value?.trim()
 
-                if (amountString != null) {
-                    val cleanedAmountString = amountString.replace(",", "") // Quita comas para el parseo
-                    val amount = cleanedAmountString.toDoubleOrNull()
+                if (match != null) {
+                    val numero = match.groupValues[2]
 
-                    if (amount != null) {
-                        val budgetEntry = BudgetEntry(
-                            amount = amount.toString(),
-                            description = description ?: "Transacción de ${bankConfig.displayName}",
-                            type = BudgetEntry.Type.OUTCOME,
-                            budgetId = preferencesManager.defaultBudgetId
-                        )
-                        budgetEntryRepository.create(budgetEntry)
-                        showTransactionNotification(budgetEntry)
-                    } else {
-                        Log.e("SmsService", "No se pudo parsear el monto: $amountString para ${bankConfig.displayName}")
+                    val normalizedAmount = when {
+                        // Formato tipo colombiano: punto miles, coma decimal → "$560.575,67"
+                        numero.contains(".") && numero.contains(",") && numero.indexOf(",") > numero.indexOf(".") -> {
+                            numero.replace(".", "").replace(",", ".")
+                        }
+
+                        // Formato tipo americano: coma miles, punto decimal → "$125,678.00"
+                        numero.contains(",") && numero.contains(".") && numero.indexOf(".") > numero.indexOf(",") -> {
+                            numero.replace(",", "")
+                        }
+
+                        // Solo coma (asumimos coma miles) → "$125,678"
+                        numero.contains(",") && !numero.contains(".") -> {
+                            numero.replace(",", "")
+                        }
+
+                        // Solo punto (asumimos decimal) → "$125.50"
+                        numero.contains(".") && !numero.contains(",") -> {
+                            numero
+                        }
+
+                        else -> numero
                     }
+
+                    val budgetEntry = BudgetEntry(
+                        amount = normalizedAmount,
+                        description = description ?: "Transacción de ${bankConfig.displayName}",
+                        type = BudgetEntry.Type.OUTCOME,
+                        budgetId = preferencesManager.defaultBudgetId
+                    )
+
+                    budgetEntryRepository.create(budgetEntry)
+                    showTransactionNotification(budgetEntry)
                 } else {
                     Log.d("SmsService", "No se encontró monto en el SMS para ${bankConfig.displayName} usando regex: ${bankConfig.transactionAmountRegex}")
                 }
-
             } catch (e: Exception) {
                 Log.e("SmsService", "Error procesando SMS para ${bankConfig.displayName}: ${e.message}", e)
                 showNotification(

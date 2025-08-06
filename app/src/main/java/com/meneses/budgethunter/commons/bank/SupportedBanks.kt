@@ -37,7 +37,7 @@ object SupportedBanks {
         id = "bancolombia",
         displayName = "Bancolombia",
         senderKeywords = listOf("Bancolombia", "85784", "87400"),
-        transactionAmountRegex = Regex("(?:COP|\\$)\\s*([0-9,]+(?:\\.\\d{2})?)", RegexOption.IGNORE_CASE),
+        transactionAmountRegex = Regex("""(\$|COP)?\s?([\d.,]+)""", RegexOption.IGNORE_CASE),
         transactionDescriptionRegex = Regex("(?<=\\ba\\b)(.*?)(?=\\bdesde\\b)|(?<=\\ben\\b)(.*?)(?=\\bcon tu\\b)", RegexOption.IGNORE_CASE)
     )
 
