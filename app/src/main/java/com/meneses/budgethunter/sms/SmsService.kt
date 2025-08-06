@@ -4,17 +4,13 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
-import com.meneses.budgethunter.MyApplication
 import com.meneses.budgethunter.R
 import com.meneses.budgethunter.budgetEntry.data.BudgetEntryRepository
-import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.commons.bank.BankSmsConfig
-import com.meneses.budgethunter.commons.data.PreferencesManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -22,88 +18,20 @@ import kotlinx.coroutines.withContext
 
 class SmsService(
     private val context: Context,
-    private val preferencesManager: PreferencesManager = MyApplication.preferencesManager,
+    private val smsMapper: SmsMapper = SmsMapper(),
     private val budgetEntryRepository: BudgetEntryRepository = BudgetEntryRepository(),
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 ) {
     fun processSms(messageBody: String, bankConfig: BankSmsConfig) {
         scope.launch {
             try {
-                val match = bankConfig.transactionAmountRegex?.find(messageBody)
-                val description = bankConfig.transactionDescriptionRegex?.find(messageBody)?.groups?.first()?.value?.trim()
-
-                if (match != null) {
-                    val numero = match.groupValues[2]
-
-                    val normalizedAmount = when {
-                        // Formato tipo colombiano: punto miles, coma decimal → "$560.575,67"
-                        numero.contains(".") && numero.contains(",") && numero.indexOf(",") > numero.indexOf(".") -> {
-                            numero.replace(".", "").replace(",", ".")
-                        }
-
-                        // Formato tipo americano: coma miles, punto decimal → "$125,678.00"
-                        numero.contains(",") && numero.contains(".") && numero.indexOf(".") > numero.indexOf(",") -> {
-                            numero.replace(",", "")
-                        }
-
-                        // Solo coma (asumimos coma miles) → "$125,678"
-                        numero.contains(",") && !numero.contains(".") -> {
-                            numero.replace(",", "")
-                        }
-
-                        // Solo punto (asumimos decimal) → "$125.50"
-                        numero.contains(".") && !numero.contains(",") -> {
-                            numero
-                        }
-
-                        else -> numero
-                    }
-
-                    val budgetEntry = BudgetEntry(
-                        amount = normalizedAmount,
-                        description = description ?: "Transacción de ${bankConfig.displayName}",
-                        type = BudgetEntry.Type.OUTCOME,
-                        budgetId = preferencesManager.defaultBudgetId
-                    )
-
-                    budgetEntryRepository.create(budgetEntry)
-                    showTransactionNotification(budgetEntry)
-                } else {
-                    Log.d("SmsService", "No se encontró monto en el SMS para ${bankConfig.displayName} usando regex: ${bankConfig.transactionAmountRegex}")
-                }
+                val budgetEntry = smsMapper.smsToBudgetEntry(messageBody, bankConfig)
+                if (budgetEntry != null) budgetEntryRepository.create(budgetEntry)
             } catch (e: Exception) {
-                Log.e("SmsService", "Error procesando SMS para ${bankConfig.displayName}: ${e.message}", e)
                 showNotification(
-                    context.getString(R.string.transaction_failed),
-                    "Error procesando SMS: ${e.message}"
+                    title = context.getString(R.string.transaction_failed),
+                    message = "Error procesando SMS: ${e.message}"
                 )
-            }
-        }
-    }
-
-    private suspend fun showTransactionNotification(budgetEntry: BudgetEntry) {
-        withContext(Dispatchers.Main) {
-            val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-                .setSmallIcon(R.drawable.budget_hunter_logo)
-                .setContentTitle(context.getString(R.string.transaction_detected))
-                .setContentText(
-                    context.getString(
-                        R.string.transaction_detected_message,
-                        budgetEntry.amount
-                    )
-                )
-                .setStyle(
-                    NotificationCompat.BigTextStyle()
-                        .bigText(budgetEntry.description)
-                )
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setAutoCancel(true)
-                .build()
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && checkNotificationsPermission(context)) {
-                NotificationManagerCompat
-                    .from(context)
-                    .notify(TRANSACTION_NOTIFICATION_ID, notification)
             }
         }
     }
@@ -135,7 +63,6 @@ class SmsService(
 
     companion object {
         private const val CHANNEL_ID = "sms_transactions"
-        private const val TRANSACTION_NOTIFICATION_ID = 1001
         private const val INFO_NOTIFICATION_ID = 1002
     }
 } 

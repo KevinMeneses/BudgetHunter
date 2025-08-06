@@ -34,7 +34,7 @@ class SmsBroadcastReceiver : BroadcastReceiver() {
             }
 
             if (isFromSelectedBank) {
-                SmsService(context).processSms(messageBody, bankConfig)
+                SmsService(context.applicationContext).processSms(messageBody, bankConfig)
             } else {
                 Log.d("SmsReceiver", "SMS ignorado, no coincide con remitente de ${bankConfig.displayName}.")
             }

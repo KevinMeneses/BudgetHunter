@@ -87,4 +87,7 @@
     <string name="select_a_bank">Selecciona un banco</string>
     <string name="no_banks_configured">No hay bancos configurados</string>
 
+    <!-- Strings para Canales de Notificación -->
+    <string name="channel_name_sms_transactions">Transacciones por SMS</string>
+    <string name="channel_description_sms_transactions">Notificaciones para transacciones detectadas automáticamente desde mensajes SMS.</string>
 </resources>

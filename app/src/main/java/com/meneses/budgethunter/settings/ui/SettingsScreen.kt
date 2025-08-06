@@ -1,6 +1,7 @@
 package com.meneses.budgethunter.settings.ui
 
 import android.Manifest
+import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -71,10 +72,11 @@ object SettingsScreen {
         onEvent: (SettingsEvent) -> Unit,
         goBack: () -> Unit
     ) {
-        val permissionLauncher = rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.RequestPermission()
-        ) { isGranted ->
-            onEvent(SettingsEvent.HandleSMSPermissionResult(isGranted))
+        val permissionsLauncher = rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestMultiplePermissions()
+        ) {
+            val receiveSmsGranted = it[Manifest.permission.RECEIVE_SMS] ?: false
+            onEvent(SettingsEvent.HandleSMSPermissionResult(receiveSmsGranted))
         }
 
         Scaffold(
@@ -97,7 +99,11 @@ object SettingsScreen {
                     uiState = uiState,
                     onToggleSmsReading = { enabled ->
                         if (enabled && !uiState.hasSmsPermission) {
-                            permissionLauncher.launch(Manifest.permission.RECEIVE_SMS)
+                            val permissions = arrayOf(Manifest.permission.RECEIVE_SMS, "")
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                permissions[1] = Manifest.permission.POST_NOTIFICATIONS
+                            }
+                            permissionsLauncher.launch(permissions)
                         } else {
                             onEvent(SettingsEvent.ToggleSmsReading(enabled))
                         }

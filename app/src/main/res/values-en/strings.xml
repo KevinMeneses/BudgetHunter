@@ -63,4 +63,31 @@
     <string name="taxes">Taxes</string>
     <string name="other">Other</string>
     <string name="metrics">Metrics</string>
+    <string name="settings">Settings</string>
+
+    <!-- SMS Reading -->
+    <string name="sms_reading">SMS Reading</string>
+    <string name="sms_reading_description">Read Bancolombia messages to create entries automatically</string>
+    <string name="enable_sms_reading">Enable SMS reading</string>
+    <string name="sms_permission_required">SMS reading permission required</string>
+    <string name="sms_permission_explanation">This feature reads Bancolombia messages to create budget entries automatically</string>
+    <string name="transaction_detected">Transaction detected</string>
+    <string name="transaction_detected_message">A Bancolombia transaction was detected for %1$s</string>
+    <string name="add_transaction">Add transaction</string>
+    <string name="ignore_transaction">Ignore</string>
+    <string name="default_budget">Default budget</string>
+    <string name="select_default_budget">Select budget</string>
+    <string name="no_default_budget">No default budget configured</string>
+    <string name="transaction_added">Transaction added successfully</string>
+    <string name="transaction_failed">Error adding transaction</string>
+    <string name="save_default_budget">Save</string>
+
+    <!-- ... others ... -->
+    <string name="bank_for_sms_notifications">Bank for SMS notifications</string>
+    <string name="select_a_bank">Select a bank</string>
+    <string name="no_banks_configured">No banks configured</string>
+
+    <!-- Strings for Notification Channels -->
+    <string name="channel_name_sms_transactions">SMS Transactions</string>
+    <string name="channel_description_sms_transactions">Notifications for transactions automatically detected from SMS messages.</string>
 </resources>
