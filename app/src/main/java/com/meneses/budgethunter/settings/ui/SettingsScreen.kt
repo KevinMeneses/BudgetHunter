@@ -4,7 +4,7 @@ import android.Manifest
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -18,29 +18,24 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuAnchorType
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -48,7 +43,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.meneses.budgethunter.R
-import com.meneses.budgethunter.commons.bank.BankSmsConfig
 import com.meneses.budgethunter.commons.ui.AppBar
 import com.meneses.budgethunter.settings.application.SettingsEvent
 import com.meneses.budgethunter.settings.application.SettingsState
@@ -111,8 +105,8 @@ object SettingsScreen {
                     onSelectDefaultBudget = {
                         onEvent(SettingsEvent.ShowDefaultBudgetSelector)
                     },
-                    onBankSelected = { bank ->
-                        onEvent(SettingsEvent.SetSelectedBank(bank))
+                    onSelectBanks = {
+                        onEvent(SettingsEvent.ShowBankSelector)
                     }
                 )
 
@@ -135,6 +129,18 @@ object SettingsScreen {
                 }
             )
         }
+
+        // Bank Selector Modal
+        if (uiState.isBankSelectorVisible) {
+            BankSelectorModal(
+                availableBanks = uiState.availableBanks,
+                selectedBanks = uiState.selectedBanks,
+                onDismiss = { onEvent(SettingsEvent.HideBankSelector) },
+                onBanksSelected = { banks ->
+                    onEvent(SettingsEvent.SetSelectedBanks(banks))
+                }
+            )
+        }
     }
 
     @Composable
@@ -142,7 +148,7 @@ object SettingsScreen {
         uiState: SettingsState,
         onToggleSmsReading: (Boolean) -> Unit,
         onSelectDefaultBudget: () -> Unit,
-        onBankSelected: (BankSmsConfig) -> Unit
+        onSelectBanks: () -> Unit
     ) {
         Card(
             modifier = Modifier
@@ -151,22 +157,26 @@ object SettingsScreen {
             elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
         ) {
             Column(
-                modifier = Modifier.padding(16.dp)
+                modifier = Modifier.padding(20.dp)
             ) {
+                // Header
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Settings,
+                        imageVector = Icons.Default.Email,
                         contentDescription = null,
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(28.dp),
+                        tint = MaterialTheme.colorScheme.primary
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
                         text = stringResource(id = R.string.sms_reading),
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.SemiBold
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                        maxLines = 1
                     )
                 }
 
@@ -175,73 +185,156 @@ object SettingsScreen {
                 Text(
                     text = stringResource(id = R.string.sms_reading_description),
                     fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    lineHeight = 20.sp,
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(20.dp))
 
-                // SMS Reading Toggle
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                // Settings Items with better spacing
+                Column(
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(
-                        text = stringResource(id = R.string.enable_sms_reading),
-                        fontSize = 16.sp
+                    // SMS Reading Toggle
+                    SettingItem(
+                        icon = Icons.Default.Notifications,
+                        title = stringResource(id = R.string.enable_sms_reading),
+                        subtitle = if (uiState.isSmsReadingEnabled) "Activado" else "Desactivado",
+                        showSwitch = true,
+                        switchChecked = uiState.isSmsReadingEnabled,
+                        onSwitchChange = onToggleSmsReading,
+                        showError = !uiState.hasSmsPermission && uiState.isSmsReadingEnabled,
+                        errorMessage = stringResource(id = R.string.sms_permission_required)
                     )
-                    Switch(
-                        checked = uiState.isSmsReadingEnabled,
-                        onCheckedChange = onToggleSmsReading
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Default Budget Selection
+                    SettingItem(
+                        icon = Icons.Default.AccountCircle,
+                        title = stringResource(id = R.string.default_budget),
+                        subtitle = uiState.defaultBudget?.name ?: stringResource(id = R.string.no_default_budget),
+                        showButton = true,
+                        onButtonClick = onSelectDefaultBudget,
+                        enabled = uiState.isSmsReadingEnabled
                     )
-                }
 
-                if (!uiState.hasSmsPermission) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = stringResource(id = R.string.sms_permission_required),
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.error
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Bank Selection
+                    SettingItem(
+                        icon = Icons.Default.Build,
+                        title = stringResource(id = R.string.bank_for_sms_notifications),
+                        subtitle = if (uiState.selectedBanks.isEmpty()) {
+                            stringResource(id = R.string.no_banks_selected)
+                        } else {
+                            stringResource(id = R.string.banks_selected, uiState.selectedBanks.size)
+                        },
+                        showButton = true,
+                        onButtonClick = onSelectBanks,
+                        enabled = uiState.isSmsReadingEnabled
                     )
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Default Budget Selection
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(Modifier.weight(0.65f)) {
-                        Text(
-                            text = stringResource(id = R.string.default_budget),
-                            fontSize = 16.sp
-                        )
-                        Text(
-                            text = uiState.defaultBudget?.name ?: stringResource(id = R.string.no_default_budget),
-                            fontSize = 14.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    TextButton(
-                        modifier = Modifier.weight(0.3f),
-                        onClick = onSelectDefaultBudget
-                    ) {
-                        Text(
-                            text = stringResource(id = R.string.select_default_budget),
-                            overflow = TextOverflow.Ellipsis,
-                            maxLines = 2
-                        )
-                    }
                 }
             }
+        }
+    }
 
-            BankSelectionSection(
-                availableBanks = uiState.availableBanks,
-                selectedBank = uiState.selectedBank,
-                onBankSelected = onBankSelected
-            )
+    @Composable
+    private fun SettingItem(
+        icon: ImageVector,
+        title: String,
+        subtitle: String,
+        showSwitch: Boolean = false,
+        switchChecked: Boolean = false,
+        onSwitchChange: ((Boolean) -> Unit)? = null,
+        showButton: Boolean = false,
+        onButtonClick: (() -> Unit)? = null,
+        showError: Boolean = false,
+        errorMessage: String = "",
+        enabled: Boolean = true
+    ) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = if (enabled)
+                    MaterialTheme.colorScheme.surface
+                else
+                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        ) {
+            val clickableModifier = if (showButton && onButtonClick != null && enabled && !showSwitch) {
+                Modifier.clickable { onButtonClick() }
+            } else {
+                Modifier
+            }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .then(clickableModifier)
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp),
+                    tint = if (enabled) MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(
+                        text = title,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = if (enabled) MaterialTheme.colorScheme.onSurface
+                        else MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = subtitle,
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    if (showError) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = errorMessage,
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.error,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                if (showSwitch) {
+                    Switch(
+                        checked = switchChecked,
+                        onCheckedChange = onSwitchChange,
+                        enabled = enabled
+                    )
+                } else if (showButton) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
         }
     }
 
@@ -254,20 +347,38 @@ object SettingsScreen {
             elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
         ) {
             Column(
-                modifier = Modifier.padding(16.dp)
+                modifier = Modifier.padding(20.dp)
             ) {
-                Text(
-                    text = "Acerca de",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Settings,
+                        contentDescription = null,
+                        modifier = Modifier.size(28.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = "Acerca de",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
                     text = "Cazador de Presupuestos v1.0.0",
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
 
                 Spacer(modifier = Modifier.height(4.dp))
@@ -275,65 +386,12 @@ object SettingsScreen {
                 Text(
                     text = "Una aplicación para gestionar tus presupuestos de manera inteligente",
                     fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    lineHeight = 20.sp,
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
         }
-    }
-
-    @OptIn(ExperimentalMaterial3Api::class) // Para ExposedDropdownMenuBox
-    @Composable
-    fun BankSelectionSection(
-        availableBanks: List<BankSmsConfig>,
-        selectedBank: BankSmsConfig?,
-        onBankSelected: (BankSmsConfig) -> Unit,
-        modifier: Modifier = Modifier
-    ) {
-        var expandedBankDropdown by remember { mutableStateOf(false) }
-
-            Column(modifier = modifier.padding(16.dp)) {
-                Text(
-                    text = stringResource(id = R.string.bank_for_sms_notifications),
-                    modifier = Modifier.padding(bottom = 8.dp),
-                    fontSize = 16.sp
-                )
-                ExposedDropdownMenuBox(
-                    expanded = expandedBankDropdown,
-                    onExpandedChange = { expandedBankDropdown = !expandedBankDropdown },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    OutlinedTextField(
-                        value = selectedBank?.displayName ?: stringResource(id = R.string.select_a_bank),
-                        onValueChange = {}, // No se cambia directamente, solo por selección
-                        readOnly = true,
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedBankDropdown) },
-                        modifier = Modifier
-                            .menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
-                            .fillMaxWidth()
-                    )
-                    ExposedDropdownMenu(
-                        expanded = expandedBankDropdown,
-                        onDismissRequest = { expandedBankDropdown = false }
-                    ) {
-                        if (availableBanks.isEmpty()) {
-                            DropdownMenuItem(
-                                text = { Text(stringResource(id = R.string.no_banks_configured)) },
-                                onClick = { expandedBankDropdown = false }, // Cierra el menú
-                                enabled = false // Deshabilita el ítem
-                            )
-                        }
-                        availableBanks.forEach { bank ->
-                            DropdownMenuItem(
-                                text = { Text(bank.displayName) },
-                                onClick = {
-                                    onBankSelected(bank)
-                                    expandedBankDropdown =
-                                        false // Cierra el menú después de la selección
-                                }
-                            )
-                        }
-                    }
-                }
-            }
     }
 }

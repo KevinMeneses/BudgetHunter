@@ -16,11 +16,18 @@ class SmsBroadcastReceiver : BroadcastReceiver() {
         val preferencesManager = MyApplication.preferencesManager
         if (!preferencesManager.isSmsReadingEnabled) return
 
-        val selectedBankId = preferencesManager.selectedBankId
-        val bankConfig = SupportedBanks.getBankConfigById(selectedBankId)
+        val selectedBankIds = preferencesManager.selectedBankIds
+        if (selectedBankIds.isEmpty()) {
+            Log.w("SmsReceiver", "No hay bancos seleccionados.")
+            return
+        }
 
-        if (bankConfig == null) {
-            Log.w("SmsReceiver", "No hay banco seleccionado o configuración no encontrada.")
+        val selectedBankConfigs = selectedBankIds.mapNotNull { bankId ->
+            SupportedBanks.getBankConfigById(bankId)
+        }.toSet()
+
+        if (selectedBankConfigs.isEmpty()) {
+            Log.w("SmsReceiver", "No se encontraron configuraciones válidas para los bancos seleccionados.")
             return
         }
 
@@ -29,14 +36,17 @@ class SmsBroadcastReceiver : BroadcastReceiver() {
             val sender = smsMessage.originatingAddress
             val messageBody = smsMessage.messageBody ?: ""
 
-            val isFromSelectedBank = sender != null && bankConfig.senderKeywords.any { keyword ->
-                sender.contains(keyword, ignoreCase = true) || messageBody.contains(keyword, ignoreCase = true) // También revisa el cuerpo por si acaso
+            // Check if the SMS is from any of the selected banks
+            val isFromSelectedBank = sender != null && selectedBankConfigs.any { bankConfig ->
+                bankConfig.senderKeywords.any { keyword ->
+                    sender.contains(keyword, ignoreCase = true) || messageBody.contains(keyword, ignoreCase = true)
+                }
             }
 
             if (isFromSelectedBank) {
-                SmsService(context.applicationContext).processSms(messageBody, bankConfig)
+                SmsService(context.applicationContext).processSms(messageBody, selectedBankConfigs)
             } else {
-                Log.d("SmsReceiver", "SMS ignorado, no coincide con remitente de ${bankConfig.displayName}.")
+                Log.d("SmsReceiver", "SMS ignorado, no coincide con ningún banco seleccionado.")
             }
         }
     }

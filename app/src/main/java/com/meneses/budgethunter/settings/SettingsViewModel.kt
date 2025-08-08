@@ -34,22 +34,23 @@ class SettingsViewModel(
             is SettingsEvent.HandleSMSPermissionResult -> handleSmsPermission(event.granted)
             is SettingsEvent.ShowDefaultBudgetSelector -> showDefaultBudgetSelector()
             is SettingsEvent.HideDefaultBudgetSelector -> hideDefaultBudgetSelector()
-            is SettingsEvent.ShowBankSelector -> toggleBankSelector(true)
-            is SettingsEvent.HideBankSelector -> toggleBankSelector(false)
-            is SettingsEvent.SetSelectedBank -> setSelectedBank(event.bankConfig)
+            is SettingsEvent.ShowBankSelector -> showBankSelector()
+            is SettingsEvent.HideBankSelector -> hideBankSelector()
+            is SettingsEvent.SetSelectedBanks -> setSelectedBanks(event.bankConfigs)
         }
     }
 
-    private fun setSelectedBank(bankSmsConfig: BankSmsConfig) {
-        preferencesManager.selectedBankId = bankSmsConfig.id
-        _uiState.value = _uiState.value.copy(
-            selectedBank = bankSmsConfig,
-            isBankSelectorVisible = false
-        )
+    private fun setSelectedBanks(bankConfigs: Set<BankSmsConfig>) {
+        preferencesManager.selectedBankIds = bankConfigs.map { it.id }.toSet()
+        _uiState.update { it.copy(selectedBanks = bankConfigs) }
     }
 
-    private fun toggleBankSelector(show: Boolean) {
-        _uiState.value = _uiState.value.copy(isBankSelectorVisible = show)
+    private fun showBankSelector() {
+        _uiState.update { it.copy(isBankSelectorVisible = true) }
+    }
+
+    private fun hideBankSelector() {
+        _uiState.update { it.copy(isBankSelectorVisible = false) }
     }
 
     fun loadSettings(context: Context) {
@@ -62,8 +63,11 @@ class SettingsViewModel(
                     budgetRepository.getById(defaultBudgetId)
                 } else null
 
-                val currentSelectedBankId = preferencesManager.selectedBankId
-                val currentSelectedBank = SupportedBanks.getBankConfigById(currentSelectedBankId)
+                // Load selected bank IDs and convert to BankSmsConfig objects
+                val selectedBankIds = preferencesManager.selectedBankIds
+                val selectedBanks = selectedBankIds.mapNotNull { bankId ->
+                    SupportedBanks.getBankConfigById(bankId)
+                }.toSet()
 
                 _uiState.update {
                     it.copy(
@@ -72,7 +76,7 @@ class SettingsViewModel(
                         allBudgets = budgetRepository.getAllCached(),
                         hasSmsPermission = checkSmsPermission(context),
                         availableBanks = SupportedBanks.ALL_BANKS,
-                        selectedBank = currentSelectedBank,
+                        selectedBanks = selectedBanks,
                         isLoading = false
                     )
                 }

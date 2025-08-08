@@ -4,146 +4,148 @@ object SupportedBanks {
     val BANCAMIA = BankSmsConfig(
         id = "bancamia",
         displayName = "Bancamía",
-        senderKeywords = listOf("Bancamia", "890380"), // Reemplaza con remitentes reales
-        transactionAmountRegex = Regex("""\bvalor\s*\$([\d,.]+)""", RegexOption.IGNORE_CASE),
-        transactionDescriptionRegex = Regex("""compra\s*en\s*(.+?)\s*por""", RegexOption.IGNORE_CASE)
+        senderKeywords = listOf("Bancamia", "BANCAMIA", "890380"),
+        transactionAmountRegex = Regex("""(?:valor|monto|por|de)\s*\$?\s*([\d.,]+)""", RegexOption.IGNORE_CASE),
+        transactionDescriptionRegex = Regex("""(?:compra|pago|transaccion)\s*(?:en|por|de)\s*(.+?)(?:\s*(?:por|con|el|\.|$)|$)""", RegexOption.IGNORE_CASE)
     )
 
     val BANCO_AGRARIO = BankSmsConfig(
         id = "banco_agrario",
         displayName = "Banco Agrario",
-        senderKeywords = listOf("BancoAgrario", "890320"), // Reemplaza
-        transactionAmountRegex = Regex("""compra\s*por\s*\$([\d,.]+)""", RegexOption.IGNORE_CASE),
-        transactionDescriptionRegex = Regex("""en\s*el\s*establecimiento\s*(.+?)\.""", RegexOption.IGNORE_CASE)
+        senderKeywords = listOf("BancoAgrario", "BANCO AGRARIO", "890320"),
+        transactionAmountRegex = Regex("""(?:compra|pago|transaccion)\s*(?:por|de)\s*\$?\s*([\d.,]+)""", RegexOption.IGNORE_CASE),
+        transactionDescriptionRegex = Regex("""(?:en|del|establecimiento)\s*(.+?)(?:\s*\.|$)""", RegexOption.IGNORE_CASE)
     )
+    
     val BANCO_AV_VILLAS = BankSmsConfig(
         id = "banco_av_villas",
         displayName = "Banco AV Villas",
-        senderKeywords = listOf("AV Villas", "85660"), // Reemplaza
-        // Ejemplo simplificado: "AV Villas informa Compra por $10.000 en TIENDA XYZ."
-        transactionAmountRegex = Regex("""Compra\s*por\s*\$([\d,.]+)""", RegexOption.IGNORE_CASE),
-        transactionDescriptionRegex = Regex("""en\s*(.+?)\.""", RegexOption.IGNORE_CASE)
+        senderKeywords = listOf("AV Villas", "AVVILLAS", "85660"),
+        transactionAmountRegex = Regex("""(?:Compra|Pago|Transaccion)\s*(?:por|de)\s*\$?\s*([\d.,]+)""", RegexOption.IGNORE_CASE),
+        transactionDescriptionRegex = Regex("""(?:en|del|establecimiento)\s*(.+?)(?:\s*\.|$)""", RegexOption.IGNORE_CASE)
     )
 
     val BANCO_CAJA_SOCIAL = BankSmsConfig(
         id = "banco_caja_social",
         displayName = "Banco Caja Social",
-        senderKeywords = listOf("Caja Social", "890303"), // Reemplaza
-        transactionAmountRegex = Regex("""valor\s*\$([\d,.]+)""", RegexOption.IGNORE_CASE),
-        transactionDescriptionRegex = Regex("""compra\s*en\s*(.+?)\s*con""", RegexOption.IGNORE_CASE)
+        senderKeywords = listOf("Caja Social", "CAJA SOCIAL", "890303"),
+        transactionAmountRegex = Regex("""(?:valor|monto|por|de)\s*\$?\s*([\d.,]+)""", RegexOption.IGNORE_CASE),
+        transactionDescriptionRegex = Regex("""(?:compra|pago|transaccion)\s*(?:en|por|de)\s*(.+?)(?:\s*(?:con|\.|$)|$)""", RegexOption.IGNORE_CASE)
     )
 
     val BANCOLOMBIA = BankSmsConfig(
         id = "bancolombia",
         displayName = "Bancolombia",
-        senderKeywords = listOf("Bancolombia", "85784", "87400"),
-        transactionAmountRegex = Regex("""(\$|COP)?\s?([\d.,]+)""", RegexOption.IGNORE_CASE),
+        senderKeywords = listOf("Bancolombia", "BANCOLOMBIA", "85784", "87400"),
+        transactionAmountRegex = Regex("""(?:valor|monto|por|de)\s*\$?\s*([\d.,]+)""", RegexOption.IGNORE_CASE),
         transactionDescriptionRegex = Regex("(?<=\\ba\\b)(.*?)(?=\\bdesde\\b)|(?<=\\ben\\b)(.*?)(?=\\bcon tu\\b)", RegexOption.IGNORE_CASE)
     )
 
     val BANCO_DE_BOGOTA = BankSmsConfig(
         id = "banco_de_bogota",
         displayName = "Banco de Bogotá",
-        senderKeywords = listOf("Bco Bogota", "890031"), // Reemplaza
-        transactionAmountRegex = Regex("""valor\s*\$([\d,.]+)""", RegexOption.IGNORE_CASE),
-        transactionDescriptionRegex = Regex("""compra\s*en\s*(.+?)\s*con""", RegexOption.IGNORE_CASE)
+        senderKeywords = listOf("Bco Bogota", "BANCO BOGOTA", "890031"),
+        transactionAmountRegex = Regex("""(?:valor|monto|por|de)\s*\$?\s*([\d.,]+)""", RegexOption.IGNORE_CASE),
+        transactionDescriptionRegex = Regex("""(?:compra|pago|transaccion)\s*(?:en|por|de)\s*(.+?)(?:\s*(?:con|\.|$)|$)""", RegexOption.IGNORE_CASE)
     )
 
     val BANCO_DE_OCCIDENTE = BankSmsConfig(
         id = "banco_de_occidente",
         displayName = "Banco de Occidente",
-        senderKeywords = listOf("Bco Occidente", "85999"), // Reemplaza
-        transactionAmountRegex = Regex("""por\s*valor\s*de\s*\$([\d,.]+)""", RegexOption.IGNORE_CASE),
-        transactionDescriptionRegex = Regex("""compra\s*en\s*(.+?)\.""", RegexOption.IGNORE_CASE)
+        senderKeywords = listOf("Bco Occidente", "BANCO OCCIDENTE", "85999"),
+        transactionAmountRegex = Regex("""(?:por|de)\s*(?:valor|monto)\s*(?:de)?\s*\$?\s*([\d.,]+)""", RegexOption.IGNORE_CASE),
+        transactionDescriptionRegex = Regex("""(?:compra|pago|transaccion)\s*(?:en|por|de)\s*(.+?)(?:\s*\.|$)""", RegexOption.IGNORE_CASE)
     )
 
     val BANCO_FALABELLA = BankSmsConfig(
         id = "banco_falabella",
         displayName = "Banco Falabella",
-        senderKeywords = listOf("Falabella", "890700"), // Reemplaza
-        transactionAmountRegex = Regex("""monto\s*\$([\d,.]+)""", RegexOption.IGNORE_CASE),
-        transactionDescriptionRegex = Regex("""compra\s*en\s*(.+?)\.""", RegexOption.IGNORE_CASE)
+        senderKeywords = listOf("Falabella", "BANCO FALABELLA", "890700"),
+        transactionAmountRegex = Regex("""(?:monto|valor|por|de)\s*\$?\s*([\d.,]+)""", RegexOption.IGNORE_CASE),
+        transactionDescriptionRegex = Regex("""(?:compra|pago|transaccion)\s*(?:en|por|de)\s*(.+?)(?:\s*\.|$)""", RegexOption.IGNORE_CASE)
     )
 
     val BANCO_GNB_SUDAMERIS = BankSmsConfig(
         id = "banco_gnb_sudameris",
         displayName = "Banco GNB Sudameris",
-        senderKeywords = listOf("GNB Sudameris", "890201"), // Reemplaza
-        transactionAmountRegex = Regex("""valor\s*\$([\d,.]+)""", RegexOption.IGNORE_CASE),
-        transactionDescriptionRegex = Regex("""compra\s*en\s*(.+?)\s*con""", RegexOption.IGNORE_CASE)
+        senderKeywords = listOf("GNB Sudameris", "GNB SUDAMERIS", "890201"),
+        transactionAmountRegex = Regex("""(?:valor|monto|por|de)\s*\$?\s*([\d.,]+)""", RegexOption.IGNORE_CASE),
+        transactionDescriptionRegex = Regex("""(?:compra|pago|transaccion)\s*(?:en|por|de)\s*(.+?)(?:\s*(?:con|\.|$)|$)""", RegexOption.IGNORE_CASE)
     )
 
     val BANCO_PICHINCHA = BankSmsConfig(
         id = "banco_pichincha",
         displayName = "Banco Pichincha",
-        senderKeywords = listOf("Pichincha", "890310"), // Reemplaza
-        transactionAmountRegex = Regex("""monto\s*\$([\d,.]+)""", RegexOption.IGNORE_CASE),
-        transactionDescriptionRegex = Regex("""compra\s*en\s*(.+?)\.""", RegexOption.IGNORE_CASE)
+        senderKeywords = listOf("Pichincha", "BANCO PICHINCHA", "890310"),
+        transactionAmountRegex = Regex("""(?:monto|valor|por|de)\s*\$?\s*([\d.,]+)""", RegexOption.IGNORE_CASE),
+        transactionDescriptionRegex = Regex("""(?:compra|pago|transaccion)\s*(?:en|por|de)\s*(.+?)(?:\s*\.|$)""", RegexOption.IGNORE_CASE)
     )
 
     val BANCO_POPULAR = BankSmsConfig(
         id = "banco_popular",
         displayName = "Banco Popular",
-        senderKeywords = listOf("Bco Popular", "890102"), // Reemplaza
-        transactionAmountRegex = Regex("""por\s*\$([\d,.]+)""", RegexOption.IGNORE_CASE),
-        transactionDescriptionRegex = Regex("""compra\s*en\s*(.+?)\s*el""", RegexOption.IGNORE_CASE)
+        senderKeywords = listOf("Bco Popular", "BANCO POPULAR", "890102", "Popular"),
+        transactionAmountRegex = Regex("""(?:por|de|valor|monto)\s*\$?\s*([\d.,]+)""", RegexOption.IGNORE_CASE),
+        transactionDescriptionRegex = Regex("""(?:compra|pago|transaccion)\s*(?:en|por|de)\s*(.+?)(?:\s*(?:el|\.|$)|$)""", RegexOption.IGNORE_CASE)
     )
 
     val BBVA_COLOMBIA = BankSmsConfig(
         id = "bbva_colombia",
         displayName = "BBVA Colombia",
-        senderKeywords = listOf("BBVA", "85330", "890001"), // Reemplaza
-        transactionAmountRegex = Regex("""compra\s*por\s*\$?([\d,.]+)""", RegexOption.IGNORE_CASE),
-        transactionDescriptionRegex = Regex("""en\s*(.+?)\.""", RegexOption.IGNORE_CASE)
+        senderKeywords = listOf("BBVA", "BBVA COLOMBIA", "85330", "890001"),
+        transactionAmountRegex = Regex("""(?:compra|pago|transaccion)\s*(?:por|de)\s*\$?\s*([\d.,]+)""", RegexOption.IGNORE_CASE),
+        transactionDescriptionRegex = Regex("""(?:en|del|establecimiento)\s*(.+?)(?:\s*\.|$)""", RegexOption.IGNORE_CASE)
     )
 
-    val CITIBANK_COLOMBIA = BankSmsConfig( // Scotiabank Colpatria adquirió la banca de consumo de Citibank
-        id = "citibank_colombia", // Podrías mantenerlo por compatibilidad o renombrar
+    val CITIBANK_COLOMBIA = BankSmsConfig(
+        id = "citibank_colombia",
         displayName = "Citibank (ahora Scotiabank Colpatria)",
-        senderKeywords = listOf("Scotiabank Colpatria", "Colpatria", "85777"), // Reemplaza
-        transactionAmountRegex = Regex("""valor\s*\$([\d,.]+)""", RegexOption.IGNORE_CASE),
-        transactionDescriptionRegex = Regex("""compra\s*en\s*(.+?)\s*con""", RegexOption.IGNORE_CASE)
+        senderKeywords = listOf("Scotiabank Colpatria", "COLPATRIA", "85777", "Citibank"),
+        transactionAmountRegex = Regex("""(?:valor|monto|por|de)\s*\$?\s*([\d.,]+)""", RegexOption.IGNORE_CASE),
+        transactionDescriptionRegex = Regex("""(?:compra|pago|transaccion)\s*(?:en|por|de)\s*(.+?)(?:\s*(?:con|\.|$)|$)""", RegexOption.IGNORE_CASE)
     )
-     val DAVIVIENDA = BankSmsConfig(
+    
+    val DAVIVIENDA = BankSmsConfig(
         id = "davivienda",
         displayName = "Davivienda",
-        senderKeywords = listOf("Davivienda", "85888", "890002"), // Reemplaza
-        // Ejemplo: "Davivienda informa compra por $50.000 en SUPERMERCADO."
-        transactionAmountRegex = Regex("""compra\s*por\s*\$?([\d,.]+)""", RegexOption.IGNORE_CASE),
-        transactionDescriptionRegex = Regex("""en\s*(.+?)\.""", RegexOption.IGNORE_CASE)
+        senderKeywords = listOf("Davivienda", "DAVIVIENDA", "85888", "890002"),
+        transactionAmountRegex = Regex("""(?:compra|pago|transaccion)\s*(?:por|de)\s*\$?\s*([\d.,]+)""", RegexOption.IGNORE_CASE),
+        transactionDescriptionRegex = Regex("""(?:en|del|establecimiento)\s*(.+?)(?:\s*\.|$)""", RegexOption.IGNORE_CASE)
     )
+    
     val ITAU_COLOMBIA = BankSmsConfig(
         id = "itau_colombia",
         displayName = "Itaú Colombia",
-        senderKeywords = listOf("Itau", "890007"), // Reemplaza
-        transactionAmountRegex = Regex("""compra\s*por\s*\$?([\d,.]+)""", RegexOption.IGNORE_CASE),
-        transactionDescriptionRegex = Regex("""en\s*(.+?)\.""", RegexOption.IGNORE_CASE)
+        senderKeywords = listOf("Itau", "ITAU", "890007"),
+        transactionAmountRegex = Regex("""(?:compra|pago|transaccion)\s*(?:por|de)\s*\$?\s*([\d.,]+)""", RegexOption.IGNORE_CASE),
+        transactionDescriptionRegex = Regex("""(?:en|del|establecimiento)\s*(.+?)(?:\s*\.|$)""", RegexOption.IGNORE_CASE)
     )
+    
     val SCOTIABANK_COLPATRIA = BankSmsConfig(
         id = "scotiabank_colpatria",
         displayName = "Scotiabank Colpatria",
-        senderKeywords = listOf("Scotiabank Colpatria", "Colpatria", "85777"), // Reemplaza (similar a Citibank)
-        transactionAmountRegex = Regex("""valor\s*\$([\d,.]+)""", RegexOption.IGNORE_CASE),
-        transactionDescriptionRegex = Regex("""compra\s*en\s*(.+?)\s*con""", RegexOption.IGNORE_CASE)
+        senderKeywords = listOf("Scotiabank Colpatria", "COLPATRIA", "85777", "Scotiabank"),
+        transactionAmountRegex = Regex("""(?:valor|monto|por|de)\s*\$?\s*([\d.,]+)""", RegexOption.IGNORE_CASE),
+        transactionDescriptionRegex = Regex("""(?:compra|pago|transaccion)\s*(?:en|por|de)\s*(.+?)(?:\s*(?:con|\.|$)|$)""", RegexOption.IGNORE_CASE)
     )
 
     val ALL_BANKS = listOf(
-        //BANCAMIA,
-        //BANCO_AGRARIO,
-        //BANCO_AV_VILLAS,
-        //BANCO_CAJA_SOCIAL,
+        BANCAMIA,
+        BANCO_AGRARIO,
+        BANCO_AV_VILLAS,
+        BANCO_CAJA_SOCIAL,
         BANCOLOMBIA,
-        //BANCO_DE_BOGOTA,
-        //BANCO_DE_OCCIDENTE,
-        //BANCO_FALABELLA,
-        //BANCO_GNB_SUDAMERIS,
-        //BANCO_PICHINCHA,
-        //BANCO_POPULAR,
+        BANCO_DE_BOGOTA,
+        BANCO_DE_OCCIDENTE,
+        BANCO_FALABELLA,
+        BANCO_GNB_SUDAMERIS,
+        BANCO_PICHINCHA,
+        BANCO_POPULAR,
         BBVA_COLOMBIA,
-        //CITIBANK_COLOMBIA, // o Scotiabank Colpatria directamente
+        CITIBANK_COLOMBIA,
         DAVIVIENDA,
-        //ITAU_COLOMBIA,
-        //SCOTIABANK_COLPATRIA
+        ITAU_COLOMBIA,
+        SCOTIABANK_COLPATRIA
     ).sortedBy { it.displayName }
 
     fun getBankConfigById(id: String?): BankSmsConfig? {

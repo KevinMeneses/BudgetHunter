@@ -11,6 +11,6 @@ data class SettingsState(
     val allBudgets: List<Budget> = emptyList(),
     val isLoading: Boolean = false,
     val availableBanks: List<BankSmsConfig> = emptyList(),
-    val selectedBank: BankSmsConfig? = null,
+    val selectedBanks: Set<BankSmsConfig> = emptySet(),
     val isBankSelectorVisible: Boolean = false
 ) 

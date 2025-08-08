@@ -67,12 +67,12 @@
 
     <!-- SMS Reading -->
     <string name="sms_reading">Lectura de SMS</string>
-    <string name="sms_reading_description">Leer mensajes de Bancolombia para crear entradas automáticamente</string>
+    <string name="sms_reading_description">Leer mensajes de bancos para crear entradas automáticamente</string>
     <string name="enable_sms_reading">Habilitar lectura de SMS</string>
     <string name="sms_permission_required">Se requiere permiso para leer SMS</string>
-    <string name="sms_permission_explanation">Esta función lee mensajes de Bancolombia para crear entradas de presupuesto automáticamente</string>
+    <string name="sms_permission_explanation">Esta función lee mensajes de bancos para crear entradas de presupuesto automáticamente</string>
     <string name="transaction_detected">Transacción detectada</string>
-    <string name="transaction_detected_message">Se detectó una transacción de Bancolombia por %1$s</string>
+    <string name="transaction_detected_message">Se detectó una transacción por %1$s</string>
     <string name="add_transaction">Agregar transacción</string>
     <string name="ignore_transaction">Ignorar</string>
     <string name="default_budget">Presupuesto por defecto</string>
@@ -83,9 +83,12 @@
     <string name="save_default_budget">Guardar</string>
 
     <!-- ... otros ... -->
-    <string name="bank_for_sms_notifications">Banco para notificaciones SMS</string>
+    <string name="bank_for_sms_notifications">Bancos para notificaciones SMS</string>
     <string name="select_a_bank">Selecciona un banco</string>
     <string name="no_banks_configured">No hay bancos configurados</string>
+    <string name="select_banks">Selecciona los bancos</string>
+    <string name="banks_selected">%1$d bancos seleccionados</string>
+    <string name="no_banks_selected">Ningún banco seleccionado</string>
 
     <!-- Strings para Canales de Notificación -->
     <string name="channel_name_sms_transactions">Transacciones por SMS</string>

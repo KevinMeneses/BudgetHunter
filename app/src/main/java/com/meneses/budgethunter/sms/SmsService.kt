@@ -22,11 +22,27 @@ class SmsService(
     private val budgetEntryRepository: BudgetEntryRepository = BudgetEntryRepository(),
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 ) {
-    fun processSms(messageBody: String, bankConfig: BankSmsConfig) {
+    fun processSms(messageBody: String, bankConfigs: Set<BankSmsConfig>) {
         scope.launch {
             try {
-                val budgetEntry = smsMapper.smsToBudgetEntry(messageBody, bankConfig)
-                if (budgetEntry != null) budgetEntryRepository.create(budgetEntry)
+                // Try to process the SMS with each bank configuration
+                for (bankConfig in bankConfigs) {
+                    val budgetEntry = smsMapper.smsToBudgetEntry(messageBody, bankConfig)
+                    if (budgetEntry != null) {
+                        budgetEntryRepository.create(budgetEntry)
+                        showNotification(
+                            title = context.getString(R.string.transaction_added),
+                            message = context.getString(R.string.transaction_detected_message, budgetEntry.amount)
+                        )
+                        return@launch // Exit after successful processing
+                    }
+                }
+                
+                // If no bank configuration matched, show a notification
+                showNotification(
+                    title = context.getString(R.string.transaction_failed),
+                    message = "No matching bank configuration found for this SMS"
+                )
             } catch (e: Exception) {
                 showNotification(
                     title = context.getString(R.string.transaction_failed),

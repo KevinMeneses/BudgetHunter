@@ -11,5 +11,5 @@ sealed interface SettingsEvent {
     object HideDefaultBudgetSelector : SettingsEvent
     object ShowBankSelector : SettingsEvent
     object HideBankSelector : SettingsEvent
-    data class SetSelectedBank(val bankConfig: BankSmsConfig) : SettingsEvent
+    data class SetSelectedBanks(val bankConfigs: Set<BankSmsConfig>) : SettingsEvent
 } 

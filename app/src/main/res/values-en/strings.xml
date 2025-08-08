@@ -67,12 +67,12 @@
 
     <!-- SMS Reading -->
     <string name="sms_reading">SMS Reading</string>
-    <string name="sms_reading_description">Read Bancolombia messages to create entries automatically</string>
+    <string name="sms_reading_description">Read bank messages to create entries automatically</string>
     <string name="enable_sms_reading">Enable SMS reading</string>
     <string name="sms_permission_required">SMS reading permission required</string>
-    <string name="sms_permission_explanation">This feature reads Bancolombia messages to create budget entries automatically</string>
+    <string name="sms_permission_explanation">This feature reads bank messages to create budget entries automatically</string>
     <string name="transaction_detected">Transaction detected</string>
-    <string name="transaction_detected_message">A Bancolombia transaction was detected for %1$s</string>
+    <string name="transaction_detected_message">A transaction was detected for %1$s</string>
     <string name="add_transaction">Add transaction</string>
     <string name="ignore_transaction">Ignore</string>
     <string name="default_budget">Default budget</string>
@@ -83,9 +83,12 @@
     <string name="save_default_budget">Save</string>
 
     <!-- ... others ... -->
-    <string name="bank_for_sms_notifications">Bank for SMS notifications</string>
+    <string name="bank_for_sms_notifications">Banks for SMS notifications</string>
     <string name="select_a_bank">Select a bank</string>
     <string name="no_banks_configured">No banks configured</string>
+    <string name="select_banks">Select banks</string>
+    <string name="banks_selected">%1$d banks selected</string>
+    <string name="no_banks_selected">No banks selected</string>
 
     <!-- Strings for Notification Channels -->
     <string name="channel_name_sms_transactions">SMS Transactions</string>
