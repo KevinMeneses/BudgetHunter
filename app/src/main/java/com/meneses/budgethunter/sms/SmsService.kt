@@ -1,13 +1,16 @@
 package com.meneses.budgethunter.sms
 
 import android.Manifest
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import com.meneses.budgethunter.MainActivity
 import com.meneses.budgethunter.R
 import com.meneses.budgethunter.budgetEntry.data.BudgetEntryRepository
 import com.meneses.budgethunter.commons.bank.BankSmsConfig
@@ -54,12 +57,24 @@ class SmsService(
 
     private suspend fun showNotification(title: String, message: String) {
         withContext(Dispatchers.Main) {
+            val intent = Intent()
+                .setClass(context, MainActivity::class.java)
+                .setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+
+            val pendingIntent = PendingIntent.getActivity(
+                /* context = */ context,
+                /* requestCode = */ 999,
+                /* intent = */ intent,
+                /* flags = */ PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
+            )
+
             val notification = NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.drawable.budget_hunter_logo)
                 .setContentTitle(title)
                 .setContentText(message)
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setAutoCancel(true)
+                .setContentIntent(pendingIntent)
                 .build()
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && checkNotificationsPermission(context)) {
