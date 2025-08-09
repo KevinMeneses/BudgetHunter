@@ -34,6 +34,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.DialogProperties
 import com.meneses.budgethunter.R
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.commons.bank.BankSmsConfig
@@ -208,7 +209,8 @@ fun BankSelectorModal(
                     fontWeight = FontWeight.Medium
                 )
             }
-        }
+        },
+        properties = DialogProperties()
     )
 }
 
@@ -291,5 +293,3 @@ private fun BankOptionItem(
         }
     }
 }
-
-

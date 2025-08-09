@@ -1,26 +1,30 @@
 package com.meneses.budgethunter.budgetList.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -28,7 +32,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.meneses.budgethunter.R
@@ -36,9 +40,6 @@ import com.meneses.budgethunter.budgetList.application.BudgetListEvent
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.commons.ui.LoadingScreen
 import com.meneses.budgethunter.commons.ui.LottiePlaceholder
-import com.meneses.budgethunter.commons.ui.blinkEffect
-import com.meneses.budgethunter.commons.ui.dashedBorder
-import com.meneses.budgethunter.commons.ui.pulsateEffect
 import com.meneses.budgethunter.theme.AppColors
 import com.meneses.budgethunter.theme.BudgetHunterTheme
 
@@ -54,7 +55,6 @@ private fun Preview() {
             ),
             isLoading = false,
             paddingValues = PaddingValues(),
-            animate = false,
             onEvent = {}
         )
     }
@@ -65,17 +65,8 @@ fun BudgetListContent(
     list: List<Budget>,
     isLoading: Boolean,
     paddingValues: PaddingValues,
-    animate: Boolean,
     onEvent: (BudgetListEvent) -> Unit
 ) {
-    val onAddBudgetClick = remember {
-        fun() {
-            BudgetListEvent
-                .ToggleAddModal(true)
-                .run(onEvent)
-        }
-    }
-
     if (isLoading) {
         LoadingScreen()
     } else {
@@ -83,22 +74,22 @@ fun BudgetListContent(
             modifier = Modifier
                 .padding(paddingValues)
                 .fillMaxSize()
-                .padding(20.dp)
+                .padding(horizontal = 20.dp)
+                .padding(top = 5.dp)
+                .padding(bottom = 90.dp)
         ) {
             if (list.isEmpty()) {
                 item {
                     LottiePlaceholder(resId = R.raw.empty_state)
-                    AddBudgetCard(onAddBudgetClick, animate)
                 }
             } else {
                 items(list.size) {
+                    Spacer(Modifier.size(10.dp))
                     BudgetItem(
                         budget = list[it],
                         onEvent = onEvent
                     )
-                }
-                item {
-                    AddBudgetCard(onAddBudgetClick, animate)
+                    Spacer(modifier = Modifier.size(10.dp))
                 }
             }
         }
@@ -146,81 +137,91 @@ private fun BudgetItem(
                     )
                     DropdownMenu(
                         expanded = dropdownExpanded,
-                        onDismissRequest = {
-                            dropdownExpanded = false
-                        }
+                        onDismissRequest = { dropdownExpanded = false },
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(AppColors.surface)
                     ) {
-                        TextButton(
+                        DropdownMenuItem(
+                            text = {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Edit,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp),
+                                        tint = AppColors.primary
+                                    )
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Text(
+                                        text = "Cambiar nombre",
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                }
+                            },
                             onClick = {
                                 dropdownExpanded = false
                                 BudgetListEvent
                                     .ToggleUpdateModal(budget)
                                     .run(onEvent)
-                            },
-                            content = {
-                                Text(text = "Cambiar nombre")
                             }
                         )
-                        TextButton(
+                        
+                        DropdownMenuItem(
+                            text = {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Add,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp),
+                                        tint = AppColors.secondary
+                                    )
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Text(
+                                        text = "Duplicar",
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                }
+                            },
                             onClick = {
                                 dropdownExpanded = false
                                 BudgetListEvent
                                     .DuplicateBudget(budget)
                                     .run(onEvent)
-                            },
-                            content = {
-                                Text(text = "Duplicar")
                             }
                         )
-                        TextButton(
+                        
+                        DropdownMenuItem(
+                            text = {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Delete,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp),
+                                        tint = AppColors.error
+                                    )
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Text(
+                                        text = "Eliminar",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = AppColors.error
+                                    )
+                                }
+                            },
                             onClick = {
                                 dropdownExpanded = false
                                 BudgetListEvent
                                     .DeleteBudget(budget.id.toLong())
                                     .run(onEvent)
-                            },
-                            content = {
-                                Text(text = "Eliminar")
                             }
                         )
                     }
                 }
-            )
-        }
-    }
-    Spacer(modifier = Modifier.height(20.dp))
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun AddBudgetCard(
-    onAddBudgetClick: () -> Unit,
-    animate: Boolean
-) {
-    Card(
-        colors = CardDefaults.outlinedCardColors(),
-        modifier = Modifier
-            .dashedBorder(
-                width = 1.dp,
-                color = AppColors.onSecondaryContainer,
-                shape = AbsoluteRoundedCornerShape(15.dp),
-                on = 10.dp,
-                off = 8.dp
-            )
-            .pulsateEffect(animate)
-            .blinkEffect(animate),
-        onClick = onAddBudgetClick
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Default.Add,
-                contentDescription = stringResource(R.string.create_new_budget)
             )
         }
     }

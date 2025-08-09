@@ -47,7 +47,10 @@
     <string name="save_entry">Save entry</string>
     <string name="amount_mandatory">You must enter an amount for this entry</string>
     <string name="wait_for_update">Wait until the app update completes…</string>
-    <string name="attach_invoice">Attach invoice</string>
+    <string name="attach_invoice">Attach receipt</string>
+    <string name="search">Search</string>
+    <string name="search_budgets">Search budgets...</string>
+    <string name="clear_search">Clear search</string>
     <string name="invoice">Invoice: %s</string>
     <string name="select_from_files">Select from files</string>
     <string name="take_a_picture">Take a picture</string>
