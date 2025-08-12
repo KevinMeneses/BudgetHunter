@@ -1,25 +1,29 @@
 package com.meneses.budgethunter.budgetDetail.ui
 
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.Face
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.DialogProperties
 import com.meneses.budgethunter.R
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailEvent
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntryFilter
@@ -30,8 +34,6 @@ import com.meneses.budgethunter.budgetEntry.ui.DescriptionField
 import com.meneses.budgethunter.budgetEntry.ui.TypeSwitch
 import com.meneses.budgethunter.commons.EMPTY
 import com.meneses.budgethunter.commons.ui.ConfirmationModal
-import com.meneses.budgethunter.commons.ui.Modal
-import com.meneses.budgethunter.theme.AppColors
 
 @Composable
 fun BudgetModal(
@@ -58,25 +60,51 @@ fun BudgetModal(
             }
         }
 
-        Modal(onDismiss = onDismiss) {
-            Text(
-                text = stringResource(id = R.string.budget),
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(bottom = 20.dp)
-            )
-
-            AmountField(
-                amount = budget,
-                onAmountChanged = { budget = it }
-            )
-
-            Spacer(modifier = Modifier.height(25.dp))
-
-            Button(
-                onClick = onSaveClick,
-                content = { Text(text = stringResource(id = R.string.save)) }
-            )
-        }
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            title = {
+                Text(
+                    text = stringResource(id = R.string.budget),
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            },
+            text = {
+                Column {
+                    Text(
+                        text = "Establece el monto del presupuesto:",
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+                    AmountField(
+                        amount = budget,
+                        onAmountChanged = { budget = it }
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = onSaveClick,
+                    enabled = budget.toDoubleOrNull() != null
+                ) {
+                    Text(
+                        text = stringResource(id = R.string.save),
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = onDismiss) {
+                    Text(
+                        text = stringResource(id = R.string.cancel),
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            },
+            properties = DialogProperties()
+        )
     }
 }
 
@@ -126,86 +154,97 @@ fun FilterModal(
                     description.isNullOrBlank() &&
                     type == null &&
                     category == null &&
-                    startDate.isNullOrBlank() &&
-                    endDate.isNullOrBlank()
-                ) return
-
-                val updatedFilter = entryFilter.copy(
-                    description = description,
-                    type = type,
-                    category = category,
-                    startDate = startDate,
-                    endDate = endDate
-                )
-                onEvent(BudgetDetailEvent.FilterEntries(updatedFilter))
+                    startDate == null &&
+                    endDate == null
+                ) {
+                    onEvent(BudgetDetailEvent.ClearFilter)
+                } else {
+                    val budgetEntryFilter = BudgetEntryFilter(
+                        description = description,
+                        type = type,
+                        category = category,
+                        startDate = startDate,
+                        endDate = endDate
+                    )
+                    onEvent(BudgetDetailEvent.FilterEntries(budgetEntryFilter))
+                }
                 onDismiss()
             }
         }
 
-        Modal(onDismiss = onDismiss) {
-            Text(
-                text = stringResource(id = R.string.filter),
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(bottom = 20.dp)
-            )
-
-            DescriptionField(
-                description = description ?: EMPTY,
-                onDescriptionChanged = { description = it }
-            )
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            TypeSwitch(
-                type = type,
-                onTypeSelected = { type = it }
-            )
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            CategorySelector(
-                category = category,
-                onCategorySelected = { category = it }
-            )
-            
-            Spacer(modifier = Modifier.height(20.dp))
-
-            DateField(
-                date = startDate,
-                label = stringResource(id = R.string.start_date),
-                onDateSelected = { startDate = it }
-            )
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            DateField(
-                date = endDate,
-                label = stringResource(id = R.string.end_date),
-                onDateSelected = { endDate = it }
-            )
-
-            Spacer(modifier = Modifier.height(30.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                Button(
-                    border = BorderStroke(width = 1.dp, color = AppColors.onBackground),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = AppColors.background,
-                        contentColor = AppColors.onBackground
-                    ),
-                    onClick = onClear,
-                    content = { Text(text = stringResource(id = R.string.clean)) }
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            title = {
+                Text(
+                    text = stringResource(id = R.string.filter),
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
                 )
+            },
+            text = {
+                Column {
+                    Text(
+                        text = "Filtra las entradas por los siguientes criterios:",
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
 
-                Button(
-                    onClick = onApply,
-                    content = { Text(text = stringResource(id = R.string.apply)) }
-                )
-            }
-        }
+                    DescriptionField(
+                        description = description ?: EMPTY,
+                        onDescriptionChanged = { description = it }
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    TypeSwitch(
+                        type = type,
+                        onTypeSelected = { type = it }
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    CategorySelector(
+                        category = category,
+                        onCategorySelected = { category = it }
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    DateField(
+                        date = startDate,
+                        label = stringResource(id = R.string.start_date),
+                        onDateSelected = { startDate = it }
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    DateField(
+                        date = endDate,
+                        label = stringResource(id = R.string.end_date),
+                        onDateSelected = { endDate = it }
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = onApply) {
+                    Text(
+                        text = stringResource(id = R.string.apply),
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = onClear) {
+                    Text(
+                        text = stringResource(id = R.string.clean),
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            },
+            properties = DialogProperties()
+        )
     }
 }
 
@@ -260,22 +299,66 @@ fun CollaborateModal(
     show: Boolean,
     onEvent: (BudgetDetailEvent) -> Unit
 ) {
-    ConfirmationModal(
-        show = show,
-        message = stringResource(id = R.string.collaborate_confirmation_message),
-        confirmButtonText = stringResource(id = R.string.collaborate),
-        cancelButtonText = stringResource(id = R.string.cancel),
-        onDismiss = {
-            BudgetDetailEvent
-                .ToggleCollaborateModal(false)
-                .run(onEvent)
-        },
-        onConfirm = {
-            BudgetDetailEvent
-                .StartCollaboration
-                .run(onEvent)
-        }
-    )
+    if (show) {
+        AlertDialog(
+            onDismissRequest = {
+                BudgetDetailEvent
+                    .ToggleCollaborateModal(false)
+                    .run(onEvent)
+            },
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.Face,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            },
+            title = {
+                Text(
+                    text = stringResource(id = R.string.collaborate),
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            },
+            text = {
+                Text(
+                    text = stringResource(id = R.string.collaborate_confirmation_message),
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        BudgetDetailEvent
+                            .StartCollaboration
+                            .run(onEvent)
+                    }
+                ) {
+                    Text(
+                        text = stringResource(id = R.string.collaborate),
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        BudgetDetailEvent
+                            .ToggleCollaborateModal(false)
+                            .run(onEvent)
+                    }
+                ) {
+                    Text(
+                        text = stringResource(id = R.string.cancel),
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            },
+            properties = DialogProperties()
+        )
+    }
 }
 
 @Composable
@@ -290,19 +373,50 @@ fun CodeModal(
                 .run(onEvent)
         }
 
-        Modal(onDismiss = hideCodeModal) {
-            Text(text = "Share this code with your collaborators")
-            Spacer(modifier = Modifier.height(40.dp))
-            Text(
-                text = "$code",
-                fontWeight = FontWeight.Bold,
-                fontSize = 40.sp
-            )
-            Spacer(modifier = Modifier.height(35.dp))
-            Button(
-                onClick = hideCodeModal,
-                content = { Text(text = "Ok") }
-            )
-        }
+        AlertDialog(
+            onDismissRequest = hideCodeModal,
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.Build,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            },
+            title = {
+                Text(
+                    text = "Código de Colaboración",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            },
+            text = {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Comparte este código con tus colaboradores:",
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+                    Text(
+                        text = "$code",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 32.sp,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = hideCodeModal) {
+                    Text(
+                        text = "OK",
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            },
+            properties = DialogProperties()
+        )
     }
 }

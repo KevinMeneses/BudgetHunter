@@ -8,7 +8,6 @@ import com.meneses.budgethunter.budgetList.application.DeleteBudgetUseCase
 import com.meneses.budgethunter.budgetList.application.DuplicateBudgetUseCase
 import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.budgetList.domain.Budget
-import com.meneses.budgethunter.budgetList.domain.BudgetFilter
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -50,11 +49,9 @@ class BudgetListViewModel(
             is BudgetListEvent.UpdateBudget -> updateBudget(event.budget)
             is BudgetListEvent.DuplicateBudget -> duplicateBudget(event.budget)
             is BudgetListEvent.DeleteBudget -> deleteBudget(event.budgetId)
-            is BudgetListEvent.FilterList -> filterList(event.filter)
             is BudgetListEvent.OpenBudget -> openBudget(event.budget)
             is BudgetListEvent.ToggleAddModal -> setAddModalVisibility(event.isVisible)
             is BudgetListEvent.ToggleUpdateModal -> setUpdateModalVisibility(event.budget)
-            is BudgetListEvent.ToggleFilterModal -> setFilterModalVisibility(event.isVisible)
             is BudgetListEvent.ToggleSearchMode -> setSearchMode(event.isSearchMode)
             is BudgetListEvent.UpdateSearchQuery -> updateSearchQuery(event.query)
             is BudgetListEvent.ClearFilter -> clearFilter()
@@ -106,13 +103,6 @@ class BudgetListViewModel(
     private fun openBudget(budget: Budget) =
         _uiState.update { it.copy(navigateToBudget = budget) }
 
-    private fun filterList(filter: BudgetFilter) {
-        viewModelScope.launch {
-            val filteredList = budgetRepository.getAllFilteredBy(filter)
-            _uiState.update { it.copy(budgetList = filteredList, filter = filter) }
-        }
-    }
-
     private fun clearFilter() {
         viewModelScope.launch {
             val budgetList = budgetRepository.getAllCached()
@@ -128,9 +118,6 @@ class BudgetListViewModel(
 
     private fun setUpdateModalVisibility(budget: Budget?) =
         _uiState.update { it.copy(budgetToUpdate = budget) }
-
-    private fun setFilterModalVisibility(visible: Boolean) =
-        _uiState.update { it.copy(filterModalVisibility = visible) }
 
     private fun setSearchMode(isSearchMode: Boolean) {
         _uiState.update { 

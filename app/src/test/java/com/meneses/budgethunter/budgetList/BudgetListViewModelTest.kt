@@ -4,7 +4,8 @@ import com.meneses.budgethunter.budgetList.application.BudgetListEvent
 import com.meneses.budgethunter.budgetList.application.BudgetListState
 import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.budgetList.domain.Budget
-import com.meneses.budgethunter.budgetList.domain.BudgetFilter
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -32,7 +33,6 @@ class BudgetListViewModelTest {
     private val viewModel by lazy {
         BudgetListViewModel(
             budgetRepository = repository,
-            dispatcher = dispatcher
         )
     }
 
@@ -52,30 +52,12 @@ class BudgetListViewModelTest {
         val state = mutableListOf<BudgetListState>()
         val job = launch { viewModel.uiState.toList(state) }
 
-        every { repository.create(budget) } returns budget
+        coEvery { repository.create(budget) } returns budget
         viewModel.sendEvent(BudgetListEvent.CreateBudget(budget))
         runCurrent()
 
         Assert.assertEquals(budget, state.last().navigateToBudget)
-        verify { repository.create(budget) }
-        job.cancel()
-    }
-
-    @Test
-    fun sendFilterListEvent() = runTest(dispatcher) {
-        val budgetFilter = BudgetFilter()
-        val state = mutableListOf<BudgetListState>()
-        val job = launch { viewModel.uiState.toList(state) }
-
-        every { repository.getAllFilteredBy(budgetFilter) } returns budgetsMock
-        viewModel.sendEvent(BudgetListEvent.FilterList(budgetFilter))
-        runCurrent()
-
-        Assert.assertEquals(budgetsMock, state.last().budgetList)
-        Assert.assertNull(state.first().filter)
-        Assert.assertEquals(budgetFilter, state.last().filter)
-
-        verify { repository.getAllFilteredBy(budgetFilter) }
+        coVerify { repository.create(budget) }
         job.cancel()
     }
 
@@ -94,15 +76,6 @@ class BudgetListViewModelTest {
         viewModel.sendEvent(BudgetListEvent.ToggleAddModal(true))
         val state2 = viewModel.uiState.value
         Assert.assertTrue(state2.addModalVisibility)
-    }
-
-    @Test
-    fun sendToggleFilterModalEvent() = runTest {
-        val state = viewModel.uiState.value
-        Assert.assertFalse(state.filterModalVisibility)
-        viewModel.sendEvent(BudgetListEvent.ToggleFilterModal(true))
-        val state2 = viewModel.uiState.value
-        Assert.assertTrue(state2.filterModalVisibility)
     }
 
     @Test

@@ -1,19 +1,13 @@
 package com.meneses.budgethunter.commons.ui
 
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
-import com.meneses.budgethunter.theme.AppColors
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.DialogProperties
 
 @Composable
 fun ConfirmationModal(
@@ -25,41 +19,46 @@ fun ConfirmationModal(
     onConfirm: () -> Unit
 ) {
     if (show) {
-        Modal(onDismiss = onDismiss) {
-            Text(
-                text = message,
-                modifier = Modifier.padding(bottom = 20.dp),
-                fontWeight = FontWeight.SemiBold,
-                textAlign = TextAlign.Center
-            )
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                Button(
-                    border = BorderStroke(width = 1.dp, color = AppColors.onBackground),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = AppColors.background,
-                        contentColor = AppColors.onBackground
-                    ),
-                    onClick = onDismiss,
-                    content = { Text(text = cancelButtonText) }
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            title = {
+                Text(
+                    text = "Confirmación",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
                 )
-                Button(
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = AppColors.error,
-                        contentColor = AppColors.onError
-                    ),
+            },
+            text = {
+                Text(
+                    text = message,
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
+            confirmButton = {
+                TextButton(
                     onClick = {
                         onConfirm()
                         onDismiss()
-                    },
-                    content = {
-                        Text(text = confirmButtonText)
                     }
-                )
-            }
-        }
+                ) {
+                    Text(
+                        text = confirmButtonText,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = onDismiss) {
+                    Text(
+                        text = cancelButtonText,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            },
+            properties = DialogProperties()
+        )
     }
 }

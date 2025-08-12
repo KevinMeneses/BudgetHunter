@@ -183,12 +183,6 @@ object BudgetListScreen {
                 onEvent = onEvent
             )
 
-            FilterListModal(
-                show = uiState.filterModalVisibility,
-                filter = uiState.filter,
-                onEvent = onEvent
-            )
-
             JoinCollaborationModal(
                 show = uiState.joinCollaborationModalVisibility,
                 onEvent = onEvent

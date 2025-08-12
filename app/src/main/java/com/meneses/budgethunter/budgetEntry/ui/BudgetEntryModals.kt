@@ -2,23 +2,27 @@ package com.meneses.budgethunter.budgetEntry.ui
 
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -26,9 +30,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.DialogProperties
 import com.meneses.budgethunter.R
-import com.meneses.budgethunter.commons.ui.Modal
 import com.meneses.budgethunter.commons.ui.dashedBorder
 import com.meneses.budgethunter.commons.util.getBitmapFromPDFFile
 import com.meneses.budgethunter.theme.AppColors
@@ -41,71 +47,120 @@ fun AttachInvoiceModal(
     onSelectFile: () -> Unit
 ) {
     if (show) {
-        Modal(onDismiss) {
-            Spacer(modifier = Modifier.height(20.dp))
-
-            Card(
-                colors = CardDefaults.outlinedCardColors(),
-                modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .dashedBorder(
-                        width = 1.dp,
-                        color = AppColors.onSecondaryContainer,
-                        shape = AbsoluteRoundedCornerShape(5.dp),
-                        on = 10.dp,
-                        off = 8.dp
-                    )
-                    .clickable(onClick = onTakePhoto)
-                    .width(TextFieldDefaults.MinWidth)
-                    .padding(15.dp)
-            ) {
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            title = {
                 Text(
-                    text = stringResource(R.string.take_a_picture),
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                    modifier = Modifier.fillMaxWidth(),
+                    text = "Adjuntar Factura",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
                 )
-                Spacer(modifier = Modifier.height(10.dp))
-                Icon(
-                    painter = painterResource(id = R.drawable.camera),
-                    contentDescription = "",
-                    modifier = Modifier
-                        .align(Alignment.CenterHorizontally)
-                        .size(50.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            Card(
-                colors = CardDefaults.outlinedCardColors(),
-                modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .dashedBorder(
-                        width = 1.dp,
-                        color = AppColors.onSecondaryContainer,
-                        shape = AbsoluteRoundedCornerShape(5.dp),
-                        on = 10.dp,
-                        off = 8.dp
+            },
+            text = {
+                Column {
+                    Text(
+                        text = "Selecciona una opción para adjuntar tu factura:",
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(bottom = 28.dp)
                     )
-                    .clickable(onClick = onSelectFile)
-                    .width(TextFieldDefaults.MinWidth)
-                    .padding(15.dp)
-            ) {
-                Text(
-                    text = stringResource(R.string.select_from_files),
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                )
-                Spacer(modifier = Modifier.height(10.dp))
-                Icon(
-                    painter = painterResource(id = R.drawable.search_file),
-                    contentDescription = "",
-                    modifier = Modifier
-                        .align(Alignment.CenterHorizontally)
-                        .size(50.dp)
-                )
-            }
 
-            Spacer(modifier = Modifier.height(20.dp))
-        }
+                    Card(
+                        modifier = Modifier
+                            .dashedBorder(
+                                width = 1.dp,
+                                color = AppColors.onSecondaryContainer,
+                                shape = AbsoluteRoundedCornerShape(15.dp),
+                                on = 10.dp,
+                                off = 8.dp
+                            ),
+                        onClick = {
+                            onTakePhoto()
+                            onDismiss()
+                        },
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.camera),
+                                contentDescription = null,
+                                modifier = Modifier.size(32.dp),
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = stringResource(R.string.take_a_picture),
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Card(
+                        modifier = Modifier
+                            .dashedBorder(
+                                width = 1.dp,
+                                color = AppColors.onSecondaryContainer,
+                                shape = AbsoluteRoundedCornerShape(15.dp),
+                                on = 10.dp,
+                                off = 8.dp
+                            ),
+                        onClick = {
+                            onSelectFile()
+                            onDismiss()
+                        },
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.search_file),
+                                contentDescription = null,
+                                modifier = Modifier.size(32.dp),
+                                tint = MaterialTheme.colorScheme.onSecondaryContainer
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = stringResource(R.string.select_from_files),
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = onDismiss) {
+                    Text(
+                        text = stringResource(id = R.string.cancel),
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            },
+            properties = DialogProperties()
+        )
     }
 }
 
@@ -119,102 +174,99 @@ fun ShowInvoiceModal(
     onDelete: () -> Unit
 ) {
     if (show) {
-        Modal(onDismiss) {
-            Spacer(modifier = Modifier.height(20.dp))
-
-            remember(invoice) {
-                if (invoice?.contains(".pdf") == true) {
-                    val bitmap = getBitmapFromPDFFile(invoice)
-                    bitmap.asImageBitmap()
-                } else {
-                    BitmapFactory
-                        .decodeFile(invoice)
-                        ?.asImageBitmap()
-                }
-            }?.let {
-                Image(bitmap = it, contentDescription = "")
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            Row(
-                modifier = Modifier.width(TextFieldDefaults.MinWidth)
-            ) {
-                Card(
-                    colors = CardDefaults.outlinedCardColors(),
-                    modifier = Modifier
-                        .dashedBorder(
-                            width = 1.dp,
-                            color = AppColors.onSecondaryContainer,
-                            shape = AbsoluteRoundedCornerShape(5.dp),
-                            on = 10.dp,
-                            off = 8.dp
-                        )
-                        .clickable(onClick = onEdit)
-                        .weight(0.45f)
-                        .padding(15.dp)
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            text = {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Edit,
-                        contentDescription = "",
-                        modifier = Modifier
-                            .align(Alignment.CenterHorizontally)
-                            .size(25.dp)
-                    )
-                }
-
-                Spacer(modifier = Modifier.weight(0.1f))
-
-                Card(
-                    colors = CardDefaults.outlinedCardColors(),
-                    modifier = Modifier
-                        .dashedBorder(
-                            width = 1.dp,
-                            color = AppColors.onSecondaryContainer,
-                            shape = AbsoluteRoundedCornerShape(5.dp),
-                            on = 10.dp,
-                            off = 8.dp
+                    remember(invoice) {
+                        if (invoice?.contains(".pdf") == true) {
+                            val bitmap = getBitmapFromPDFFile(invoice)
+                            bitmap.asImageBitmap()
+                        } else {
+                            BitmapFactory
+                                .decodeFile(invoice)
+                                ?.asImageBitmap()
+                        }
+                    }?.let {
+                        Image(
+                            bitmap = it,
+                            contentDescription = "Factura",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(400.dp)
+                                .padding(bottom = 16.dp)
                         )
-                        .clickable(onClick = onShare)
-                        .weight(0.45f)
-                        .padding(15.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Share,
-                        contentDescription = "",
-                        modifier = Modifier
-                            .align(Alignment.CenterHorizontally)
-                            .size(25.dp)
-                    )
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        Card(
+                            onClick = {
+                                onEdit()
+                                onDismiss()
+                            },
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer
+                            ),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Edit,
+                                contentDescription = "Editar",
+                                modifier = Modifier
+                                    .padding(12.dp)
+                                    .size(20.dp),
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+
+                        Card(
+                            onClick = {
+                                onShare()
+                                onDismiss()
+                            },
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.secondaryContainer
+                            ),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Share,
+                                contentDescription = "Compartir",
+                                modifier = Modifier
+                                    .padding(12.dp)
+                                    .size(20.dp),
+                                tint = MaterialTheme.colorScheme.onSecondaryContainer
+                            )
+                        }
+
+                        Card(
+                            onClick = {
+                                onDelete()
+                                onDismiss()
+                            },
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.errorContainer
+                            ),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Eliminar",
+                                modifier = Modifier
+                                    .padding(12.dp)
+                                    .size(20.dp),
+                                tint = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                        }
+                    }
                 }
-
-                Spacer(modifier = Modifier.weight(0.1f))
-
-                Card(
-                    colors = CardDefaults.outlinedCardColors(),
-                    modifier = Modifier
-                        .dashedBorder(
-                            width = 1.dp,
-                            color = AppColors.onSecondaryContainer,
-                            shape = AbsoluteRoundedCornerShape(5.dp),
-                            on = 10.dp,
-                            off = 8.dp
-                        )
-                        .clickable(onClick = onDelete)
-                        .weight(0.45f)
-                        .padding(15.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = "",
-                        modifier = Modifier
-                            .align(Alignment.CenterHorizontally)
-                            .size(25.dp)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
-        }
+            },
+            confirmButton = {}
+        )
     }
 }
