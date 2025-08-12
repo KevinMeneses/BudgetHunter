@@ -31,9 +31,14 @@ class BudgetListViewModel(
         viewModelScope.launch {
             budgetRepository.budgets.collect { budgetList ->
                 _uiState.update {
-                    val updatedList = if (it.filter == null) budgetList
-                    else budgetRepository.getAllFilteredBy(it.filter)
-                    it.copy(budgetList = updatedList, isLoading = false)
+                    val filteredList = when {
+                        it.filter != null -> budgetRepository.getAllFilteredBy(it.filter)
+                        it.searchQuery.isNotBlank() -> budgetList.filter { budget ->
+                            budget.name.contains(it.searchQuery, ignoreCase = true)
+                        }
+                        else -> budgetList
+                    }
+                    it.copy(budgetList = filteredList, isLoading = false)
                 }
             }
         }
@@ -50,6 +55,8 @@ class BudgetListViewModel(
             is BudgetListEvent.ToggleAddModal -> setAddModalVisibility(event.isVisible)
             is BudgetListEvent.ToggleUpdateModal -> setUpdateModalVisibility(event.budget)
             is BudgetListEvent.ToggleFilterModal -> setFilterModalVisibility(event.isVisible)
+            is BudgetListEvent.ToggleSearchMode -> setSearchMode(event.isSearchMode)
+            is BudgetListEvent.UpdateSearchQuery -> updateSearchQuery(event.query)
             is BudgetListEvent.ClearFilter -> clearFilter()
             is BudgetListEvent.ClearNavigation -> clearNavigation()
             is BudgetListEvent.JoinCollaboration -> joinCollaboration(event.collaborationCode)
@@ -124,4 +131,45 @@ class BudgetListViewModel(
 
     private fun setFilterModalVisibility(visible: Boolean) =
         _uiState.update { it.copy(filterModalVisibility = visible) }
+
+    private fun setSearchMode(isSearchMode: Boolean) {
+        _uiState.update { 
+            it.copy(
+                isSearchMode = isSearchMode,
+                searchQuery = if (!isSearchMode) "" else it.searchQuery
+            ) 
+        }
+        // If exiting search mode, restore the full budget list
+        if (!isSearchMode) {
+            viewModelScope.launch {
+                val currentBudgets = budgetRepository.getAllCached()
+                _uiState.update { currentState ->
+                    val filteredList = if (currentState.filter != null) {
+                        budgetRepository.getAllFilteredBy(currentState.filter)
+                    } else {
+                        currentBudgets
+                    }
+                    currentState.copy(budgetList = filteredList)
+                }
+            }
+        }
+    }
+
+    private fun updateSearchQuery(query: String) {
+        _uiState.update { it.copy(searchQuery = query) }
+        // Trigger filtering by refreshing the budget list
+        viewModelScope.launch {
+            val currentBudgets = budgetRepository.getAllCached()
+            _uiState.update { currentState ->
+                val filteredList = when {
+                    currentState.filter != null -> budgetRepository.getAllFilteredBy(currentState.filter)
+                    query.isNotBlank() -> currentBudgets.filter { budget ->
+                        budget.name.contains(query, ignoreCase = true)
+                    }
+                    else -> currentBudgets
+                }
+                currentState.copy(budgetList = filteredList)
+            }
+        }
+    }
 }

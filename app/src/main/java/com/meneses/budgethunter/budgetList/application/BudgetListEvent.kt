@@ -15,6 +15,8 @@ sealed interface BudgetListEvent {
     data class ToggleFilterModal(val isVisible: Boolean) : BudgetListEvent
     data class ToggleJoinCollaborationModal(val isVisible: Boolean) : BudgetListEvent
     data class JoinCollaboration(val collaborationCode: String) : BudgetListEvent
+    data class ToggleSearchMode(val isSearchMode: Boolean) : BudgetListEvent
+    data class UpdateSearchQuery(val query: String) : BudgetListEvent
     object ClearFilter : BudgetListEvent
     object ClearNavigation : BudgetListEvent
 }

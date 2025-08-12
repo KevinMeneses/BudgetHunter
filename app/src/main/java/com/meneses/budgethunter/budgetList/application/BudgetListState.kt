@@ -13,5 +13,7 @@ data class BudgetListState(
     val isCollaborationActive: Boolean = false,
     val filter: BudgetFilter? = null,
     val navigateToBudget: Budget? = null,
-    val collaborationError: String? = null
+    val collaborationError: String? = null,
+    val isSearchMode: Boolean = false,
+    val searchQuery: String = ""
 )

@@ -98,24 +98,40 @@ object BudgetListScreen {
         ) {
             Scaffold(
                 topBar = {
-                    AppBar(
-                        title = stringResource(id = R.string.budgets),
-                        leftButtonIcon = Icons.Default.Menu,
-                        rightButtonIcon = Icons.Default.Search,
-                        leftButtonDescription = stringResource(id = R.string.open_menu_button),
-                        rightButtonDescription = stringResource(id = R.string.filter),
-                        onLeftButtonClick = {
-                            coroutineScope.launch {
-                                drawerState.open()
+                    if (uiState.isSearchMode) {
+                        SearchAppBar(
+                            searchQuery = uiState.searchQuery,
+                            onSearchQueryChange = { query ->
+                                BudgetListEvent
+                                    .UpdateSearchQuery(query)
+                                    .run(onEvent)
+                            },
+                            onBackClick = {
+                                BudgetListEvent
+                                    .ToggleSearchMode(false)
+                                    .run(onEvent)
                             }
-                        },
-                        onRightButtonClick = fun() {
-                            BudgetListEvent
-                                .ToggleFilterModal(true)
-                                .run(onEvent)
-                        },
-                        animateRightButton = uiState.filter != null
-                    )
+                        )
+                    } else {
+                        AppBar(
+                            title = stringResource(id = R.string.budgets),
+                            leftButtonIcon = Icons.Default.Menu,
+                            rightButtonIcon = Icons.Default.Search,
+                            leftButtonDescription = stringResource(id = R.string.open_menu_button),
+                            rightButtonDescription = stringResource(id = R.string.search),
+                            onLeftButtonClick = {
+                                coroutineScope.launch {
+                                    drawerState.open()
+                                }
+                            },
+                            onRightButtonClick = {
+                                BudgetListEvent
+                                    .ToggleSearchMode(true)
+                                    .run(onEvent)
+                            },
+                            animateRightButton = uiState.filter != null
+                        )
+                    }
                 },
                 snackbarHost = {
                     SnackbarHost(hostState = snackBarHostState)
