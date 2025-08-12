@@ -8,6 +8,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
@@ -139,7 +140,8 @@ object BudgetListScreen {
                 floatingActionButton = {
                     FloatingActionButton(
                         modifier = Modifier
-                            .fillMaxWidth(0.92f)
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp)
                             .dashedBorder(
                                 width = 1.dp,
                                 color = AppColors.onSecondaryContainer,
@@ -160,7 +162,8 @@ object BudgetListScreen {
                             contentDescription = stringResource(R.string.create_new_budget)
                         )
                     }
-                }
+                },
+                floatingActionButtonPosition = FabPosition.Center
             ) { paddingValues ->
                 BudgetListContent(
                     list = uiState.budgetList,

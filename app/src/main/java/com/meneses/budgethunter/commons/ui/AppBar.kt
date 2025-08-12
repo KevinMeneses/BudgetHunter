@@ -1,15 +1,14 @@
 package com.meneses.budgethunter.commons.ui
 
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -36,6 +35,7 @@ private fun Preview() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppBar(
+    modifier: Modifier = Modifier,
     title: String,
     leftButtonIcon: ImageVector? = null,
     rightButtonIcon: ImageVector? = null,
@@ -45,18 +45,16 @@ fun AppBar(
     onRightButtonClick: (() -> Unit)? = null,
     animateLeftButton: Boolean = false,
     animateRightButton: Boolean = false,
-    modifier: Modifier = Modifier
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
     
-    TopAppBar(
+    CenterAlignedTopAppBar(
         title = {
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.SemiBold,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
+                textAlign = TextAlign.Center
             )
         },
         navigationIcon = {
