@@ -1,23 +1,23 @@
 package com.meneses.budgethunter.commons.ui
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import com.meneses.budgethunter.theme.AppColors
 import com.meneses.budgethunter.theme.BudgetHunterTheme
 
@@ -27,12 +27,13 @@ private fun Preview() {
     BudgetHunterTheme {
         AppBar(
             title = "App Bar",
-            leftButtonIcon = Icons.Default.ArrowBack,
+            leftButtonIcon = Icons.AutoMirrored.Filled.ArrowBack,
             rightButtonIcon = Icons.Default.Add
         )
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppBar(
     title: String,
@@ -43,88 +44,66 @@ fun AppBar(
     onLeftButtonClick: (() -> Unit)? = null,
     onRightButtonClick: (() -> Unit)? = null,
     animateLeftButton: Boolean = false,
-    animateRightButton: Boolean = false
+    animateRightButton: Boolean = false,
+    modifier: Modifier = Modifier
 ) {
-    Box(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        LeftButton(
-            leftIcon = leftButtonIcon,
-            contentDescription = leftButtonDescription,
-            onLeftIconClick = onLeftButtonClick,
-            animate = animateLeftButton
-        )
-        Title(title)
-        RightButton(
-            rightIcon = rightButtonIcon,
-            contentDescription = rightButtonDescription,
-            onRightIconClick = onRightButtonClick,
-            animate = animateRightButton
-        )
-    }
-}
-
-@Composable
-private fun BoxScope.RightButton(
-    rightIcon: ImageVector?,
-    contentDescription: String?,
-    onRightIconClick: (() -> Unit)?,
-    animate: Boolean
-) {
-    if (rightIcon != null) {
-        IconButton(
-            modifier = Modifier
-                .align(Alignment.CenterEnd)
-                .pulsateEffect(animate)
-                .blinkEffect(animate),
-            onClick = {
-                onRightIconClick?.invoke()
-            }
-        ) {
-            Icon(
-                imageVector = rightIcon,
-                contentDescription = contentDescription,
-                tint = AppColors.onSecondaryContainer
+    val keyboardController = LocalSoftwareKeyboardController.current
+    
+    TopAppBar(
+        title = {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
             )
-        }
-    }
-}
-
-@Composable
-private fun BoxScope.Title(title: String) {
-    Text(
-        text = title,
-        fontWeight = FontWeight.SemiBold,
-        modifier = Modifier.Companion
-            .align(Alignment.Center)
-            .padding(vertical = 15.dp)
+        },
+        navigationIcon = {
+            if (leftButtonIcon != null) {
+                IconButton(
+                    modifier = Modifier
+                        .pulsateEffect(animateLeftButton)
+                        .blinkEffect(animateLeftButton),
+                    onClick = {
+                        keyboardController?.hide()
+                        onLeftButtonClick?.invoke()
+                    }
+                ) {
+                    Icon(
+                        imageVector = leftButtonIcon,
+                        contentDescription = leftButtonDescription,
+                        tint = AppColors.onSurface
+                    )
+                }
+            }
+        },
+        actions = {
+            if (rightButtonIcon != null) {
+                IconButton(
+                    modifier = Modifier
+                        .pulsateEffect(animateRightButton)
+                        .blinkEffect(animateRightButton),
+                    onClick = {
+                        onRightButtonClick?.invoke()
+                    }
+                ) {
+                    Icon(
+                        imageVector = rightButtonIcon,
+                        contentDescription = rightButtonDescription,
+                        tint = AppColors.onSurface
+                    )
+                }
+            }
+        },
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = AppColors.surface,
+            titleContentColor = AppColors.onSurface,
+            navigationIconContentColor = AppColors.onSurface,
+            actionIconContentColor = AppColors.onSurface
+        ),
+        modifier = modifier
     )
 }
 
-@Composable
-private fun BoxScope.LeftButton(
-    leftIcon: ImageVector?,
-    contentDescription: String?,
-    onLeftIconClick: (() -> Unit)?,
-    animate: Boolean
-) {
-    if (leftIcon != null) {
-        val keyboard = LocalSoftwareKeyboardController.current
-        IconButton(
-            modifier = Modifier
-                .align(Alignment.CenterStart)
-                .pulsateEffect(animate)
-                .blinkEffect(animate),
-            onClick = {
-                keyboard?.hide()
-                onLeftIconClick?.invoke()
-            }
-        ) {
-            Icon(
-                imageVector = leftIcon,
-                contentDescription = contentDescription,
-                tint = AppColors.onSecondaryContainer
-            )
-        }
-    }
-}
+
