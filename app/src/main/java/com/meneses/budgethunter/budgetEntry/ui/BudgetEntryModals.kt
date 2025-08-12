@@ -52,7 +52,7 @@ fun AttachInvoiceModal(
             title = {
                 Text(
                     modifier = Modifier.fillMaxWidth(),
-                    text = "Adjuntar Factura",
+                    text = stringResource(R.string.attach_invoice_title),
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
@@ -61,7 +61,7 @@ fun AttachInvoiceModal(
             text = {
                 Column {
                     Text(
-                        text = "Selecciona una opción para adjuntar tu factura:",
+                        text = stringResource(R.string.select_invoice_option),
                         fontSize = 14.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(bottom = 28.dp)
@@ -93,7 +93,7 @@ fun AttachInvoiceModal(
                         ) {
                             Icon(
                                 painter = painterResource(id = R.drawable.camera),
-                                contentDescription = null,
+                                contentDescription = stringResource(R.string.take_picture_icon_description),
                                 modifier = Modifier.size(32.dp),
                                 tint = MaterialTheme.colorScheme.onPrimaryContainer
                             )
@@ -135,7 +135,7 @@ fun AttachInvoiceModal(
                         ) {
                             Icon(
                                 painter = painterResource(id = R.drawable.search_file),
-                                contentDescription = null,
+                                contentDescription = stringResource(R.string.select_from_files_icon_description),
                                 modifier = Modifier.size(32.dp),
                                 tint = MaterialTheme.colorScheme.onSecondaryContainer
                             )
@@ -192,7 +192,7 @@ fun ShowInvoiceModal(
                     }?.let {
                         Image(
                             bitmap = it,
-                            contentDescription = "Factura",
+                            contentDescription = stringResource(R.string.invoice_content_description),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(400.dp)
@@ -216,7 +216,7 @@ fun ShowInvoiceModal(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Edit,
-                                contentDescription = "Editar",
+                                contentDescription = stringResource(R.string.edit_content_description),
                                 modifier = Modifier
                                     .padding(12.dp)
                                     .size(20.dp),
@@ -236,7 +236,7 @@ fun ShowInvoiceModal(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Share,
-                                contentDescription = "Compartir",
+                                contentDescription = stringResource(R.string.share_content_description),
                                 modifier = Modifier
                                     .padding(12.dp)
                                     .size(20.dp),
@@ -256,7 +256,7 @@ fun ShowInvoiceModal(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Delete,
-                                contentDescription = "Eliminar",
+                                contentDescription = stringResource(R.string.delete_content_description),
                                 modifier = Modifier
                                     .padding(12.dp)
                                     .size(20.dp),

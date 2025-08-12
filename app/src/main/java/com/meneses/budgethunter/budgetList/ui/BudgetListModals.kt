@@ -66,7 +66,7 @@ fun NewBudgetModal(
             text = {
                 Column {
                     Text(
-                        text = "Ingresa el nombre para tu nuevo presupuesto:",
+                        text = stringResource(R.string.enter_budget_name),
                         fontSize = 14.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(bottom = 16.dp)
@@ -135,13 +135,13 @@ fun UpdateBudgetModal(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Edit,
-                        contentDescription = null,
+                        contentDescription = stringResource(R.string.update_budget_icon_description),
                         modifier = Modifier.size(24.dp),
                         tint = MaterialTheme.colorScheme.primary
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        text = "Actualizar presupuesto",
+                        text = stringResource(R.string.update_budget_title),
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
@@ -151,7 +151,7 @@ fun UpdateBudgetModal(
             text = {
                 Column {
                     Text(
-                        text = "Modifica el nombre del presupuesto:",
+                        text = stringResource(R.string.modify_budget_name),
                         fontSize = 14.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(bottom = 16.dp)
@@ -177,7 +177,7 @@ fun UpdateBudgetModal(
                     enabled = name.isNotBlank()
                 ) {
                     Text(
-                        text = "Actualizar",
+                        text = stringResource(R.string.update),
                         fontWeight = FontWeight.Medium
                     )
                 }
@@ -214,7 +214,7 @@ fun JoinCollaborationModal(
             onDismissRequest = onDismiss,
             title = {
                 Text(
-                    text = "Unirse a Colaboración",
+                    text = stringResource(R.string.join_collaboration_title),
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
@@ -223,7 +223,7 @@ fun JoinCollaborationModal(
             text = {
                 Column {
                     Text(
-                        text = "Ingresa el código de colaboración:",
+                        text = stringResource(R.string.enter_collaboration_code),
                         fontSize = 14.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(bottom = 16.dp)
@@ -231,7 +231,7 @@ fun JoinCollaborationModal(
                     TextField(
                         value = collaborationCode,
                         onValueChange = { collaborationCode = it },
-                        label = { Text(text = "Código") }
+                        label = { Text(text = stringResource(R.string.code)) }
                     )
                 }
             },
@@ -247,7 +247,7 @@ fun JoinCollaborationModal(
                     enabled = collaborationCode.isNotBlank()
                 ) {
                     Text(
-                        text = "Enviar",
+                        text = stringResource(R.string.send),
                         fontWeight = FontWeight.Medium
                     )
                 }

@@ -166,7 +166,7 @@ object SettingsScreen {
                 ) {
                     Icon(
                         imageVector = Icons.Default.Email,
-                        contentDescription = null,
+                        contentDescription = stringResource(R.string.sms_reading_icon_description),
                         modifier = Modifier.size(28.dp),
                         tint = MaterialTheme.colorScheme.primary
                     )
@@ -279,7 +279,7 @@ object SettingsScreen {
             ) {
                 Icon(
                     imageVector = icon,
-                    contentDescription = null,
+                    contentDescription = stringResource(R.string.default_budget_icon_description),
                     modifier = Modifier.size(24.dp),
                     tint = if (enabled) MaterialTheme.colorScheme.primary
                     else MaterialTheme.colorScheme.onSurfaceVariant
@@ -330,7 +330,7 @@ object SettingsScreen {
                 } else if (showButton) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                        contentDescription = null,
+                        contentDescription = stringResource(R.string.bank_selection_icon_description),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -355,13 +355,13 @@ object SettingsScreen {
                 ) {
                     Icon(
                         imageVector = Icons.Default.Settings,
-                        contentDescription = null,
+                        contentDescription = stringResource(R.string.about_icon_description),
                         modifier = Modifier.size(28.dp),
                         tint = MaterialTheme.colorScheme.primary
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        text = "Acerca de",
+                        text = stringResource(R.string.about),
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary,
@@ -373,7 +373,7 @@ object SettingsScreen {
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
-                    text = "Cazador de Presupuestos v1.0.0",
+                    text = stringResource(R.string.app_version),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurface,
@@ -384,7 +384,7 @@ object SettingsScreen {
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
-                    text = "Una aplicación para gestionar tus presupuestos de manera inteligente",
+                    text = stringResource(R.string.app_description),
                     fontSize = 14.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     lineHeight = 20.sp,

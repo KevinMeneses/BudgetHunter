@@ -137,7 +137,7 @@ fun SearchAppBar(
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back",
+                    contentDescription = stringResource(R.string.back_content_description),
                     tint = AppColors.onSurface
                 )
             }

@@ -93,6 +93,52 @@
     <string name="banks_selected">%1$d banks selected</string>
     <string name="no_banks_selected">No banks selected</string>
 
+    <!-- UI Modal Strings -->
+    <string name="set_budget_amount">Set the budget amount:</string>
+    <string name="filter_entries_criteria">Filter entries by the following criteria:</string>
+    <string name="collaboration_code">Collaboration Code</string>
+    <string name="share_code_with_collaborators">Share this code with your collaborators:</string>
+    <string name="ok">OK</string>
+    <string name="attach_invoice_title">Attach Invoice</string>
+    <string name="select_invoice_option">Select an option to attach your invoice:</string>
+    <string name="enter_budget_name">Enter the name for your new budget:</string>
+    <string name="update_budget_title">Update budget</string>
+    <string name="modify_budget_name">Modify the budget name:</string>
+    <string name="update">Update</string>
+    <string name="join_collaboration_title">Join Collaboration</string>
+    <string name="enter_collaboration_code">Enter the collaboration code:</string>
+    <string name="code">Code</string>
+    <string name="send">Send</string>
+    <string name="no_budgets_available">No budgets available to select.</string>
+    <string name="select_default_budget_description">Select a default budget for automatic transactions:</string>
+    <string name="select_banks_description">Select banks to process automatic transactions:</string>
+    <string name="change_name">Change name</string>
+    <string name="duplicate">Duplicate</string>
+    <string name="about">About</string>
+    <string name="app_version">Budget Hunter v1.0.0</string>
+    <string name="app_description">An application to manage your budgets intelligently</string>
+    
+    <!-- Content Description Strings -->
+    <string name="invoice_content_description">Invoice</string>
+    <string name="edit_content_description">Edit</string>
+    <string name="share_content_description">Share</string>
+    <string name="delete_content_description">Delete</string>
+    <string name="back_content_description">Back</string>
+    <string name="collaborate_icon_description">Collaboration icon</string>
+    <string name="collaboration_code_icon_description">Collaboration code icon</string>
+    <string name="change_name_icon_description">Change name icon</string>
+    <string name="duplicate_icon_description">Duplicate icon</string>
+    <string name="delete_icon_description">Delete icon</string>
+    <string name="sms_reading_icon_description">SMS reading icon</string>
+    <string name="default_budget_icon_description">Default budget icon</string>
+    <string name="bank_selection_icon_description">Bank selection icon</string>
+    <string name="about_icon_description">About icon</string>
+    <string name="update_budget_icon_description">Update budget icon</string>
+    <string name="select_from_files_icon_description">Select files icon</string>
+    <string name="take_picture_icon_description">Take picture icon</string>
+    <string name="budget_list_icon_description">Budget list icon</string>
+    <string name="invoice_image_description">Invoice image</string>
+
     <!-- Strings for Notification Channels -->
     <string name="channel_name_sms_transactions">SMS Transactions</string>
     <string name="channel_description_sms_transactions">Notifications for transactions automatically detected from SMS messages.</string>

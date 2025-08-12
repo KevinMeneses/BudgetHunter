@@ -93,6 +93,52 @@
     <string name="banks_selected">%1$d bancos seleccionados</string>
     <string name="no_banks_selected">Ningún banco seleccionado</string>
 
+    <!-- UI Modal Strings -->
+    <string name="set_budget_amount">Establece el monto del presupuesto:</string>
+    <string name="filter_entries_criteria">Filtra las entradas por los siguientes criterios:</string>
+    <string name="collaboration_code">Código de Colaboración</string>
+    <string name="share_code_with_collaborators">Comparte este código con tus colaboradores:</string>
+    <string name="ok">OK</string>
+    <string name="attach_invoice_title">Adjuntar Factura</string>
+    <string name="select_invoice_option">Selecciona una opción para adjuntar tu factura:</string>
+    <string name="enter_budget_name">Ingresa el nombre para tu nuevo presupuesto:</string>
+    <string name="update_budget_title">Actualizar presupuesto</string>
+    <string name="modify_budget_name">Modifica el nombre del presupuesto:</string>
+    <string name="update">Actualizar</string>
+    <string name="join_collaboration_title">Unirse a Colaboración</string>
+    <string name="enter_collaboration_code">Ingresa el código de colaboración:</string>
+    <string name="code">Código</string>
+    <string name="send">Enviar</string>
+    <string name="no_budgets_available">No hay presupuestos disponibles para seleccionar.</string>
+    <string name="select_default_budget_description">Selecciona un presupuesto por defecto para las transacciones automáticas:</string>
+    <string name="select_banks_description">Selecciona los bancos para procesar transacciones automáticas:</string>
+    <string name="change_name">Cambiar nombre</string>
+    <string name="duplicate">Duplicar</string>
+    <string name="about">Acerca de</string>
+    <string name="app_version">Cazador de Presupuestos v1.0.0</string>
+    <string name="app_description">Una aplicación para gestionar tus presupuestos de manera inteligente</string>
+    
+    <!-- Content Description Strings -->
+    <string name="invoice_content_description">Factura</string>
+    <string name="edit_content_description">Editar</string>
+    <string name="share_content_description">Compartir</string>
+    <string name="delete_content_description">Eliminar</string>
+    <string name="back_content_description">Atrás</string>
+    <string name="collaborate_icon_description">Icono de colaboración</string>
+    <string name="collaboration_code_icon_description">Icono de código de colaboración</string>
+    <string name="change_name_icon_description">Icono de cambiar nombre</string>
+    <string name="duplicate_icon_description">Icono de duplicar</string>
+    <string name="delete_icon_description">Icono de eliminar</string>
+    <string name="sms_reading_icon_description">Icono de lectura de SMS</string>
+    <string name="default_budget_icon_description">Icono de presupuesto por defecto</string>
+    <string name="bank_selection_icon_description">Icono de selección de bancos</string>
+    <string name="about_icon_description">Icono de acerca de</string>
+    <string name="update_budget_icon_description">Icono de actualizar presupuesto</string>
+    <string name="select_from_files_icon_description">Icono de seleccionar archivos</string>
+    <string name="take_picture_icon_description">Icono de tomar foto</string>
+    <string name="budget_list_icon_description">Icono de lista de presupuestos</string>
+    <string name="invoice_image_description">Imagen de factura</string>
+
     <!-- Strings para Canales de Notificación -->
     <string name="channel_name_sms_transactions">Transacciones por SMS</string>
     <string name="channel_description_sms_transactions">Notificaciones para transacciones detectadas automáticamente desde mensajes SMS.</string>

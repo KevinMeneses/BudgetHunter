@@ -33,6 +33,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.meneses.budgethunter.R
@@ -133,7 +134,7 @@ private fun BudgetItem(
                 content = {
                     Icon(
                         imageVector = Icons.Default.MoreVert,
-                        contentDescription = ""
+                        contentDescription = stringResource(R.string.budget_list_icon_description)
                     )
                     DropdownMenu(
                         expanded = dropdownExpanded,
@@ -149,13 +150,13 @@ private fun BudgetItem(
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Edit,
-                                        contentDescription = null,
+                                        contentDescription = stringResource(R.string.change_name_icon_description),
                                         modifier = Modifier.size(18.dp),
                                         tint = AppColors.primary
                                     )
                                     Spacer(modifier = Modifier.width(12.dp))
                                     Text(
-                                        text = "Cambiar nombre",
+                                        text = stringResource(R.string.change_name),
                                         style = MaterialTheme.typography.bodyMedium
                                     )
                                 }
@@ -175,13 +176,13 @@ private fun BudgetItem(
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Add,
-                                        contentDescription = null,
+                                        contentDescription = stringResource(R.string.duplicate_icon_description),
                                         modifier = Modifier.size(18.dp),
                                         tint = AppColors.secondary
                                     )
                                     Spacer(modifier = Modifier.width(12.dp))
                                     Text(
-                                        text = "Duplicar",
+                                        text = stringResource(R.string.duplicate),
                                         style = MaterialTheme.typography.bodyMedium
                                     )
                                 }
@@ -201,13 +202,13 @@ private fun BudgetItem(
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Delete,
-                                        contentDescription = null,
+                                        contentDescription = stringResource(R.string.delete_icon_description),
                                         modifier = Modifier.size(18.dp),
                                         tint = AppColors.error
                                     )
                                     Spacer(modifier = Modifier.width(12.dp))
                                     Text(
-                                        text = "Eliminar",
+                                        text = stringResource(R.string.delete),
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = AppColors.error
                                     )

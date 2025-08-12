@@ -270,7 +270,7 @@ private fun ColumnScope.ListSection(
                     ) {
                         Icon(
                             imageVector = orderIcon,
-                            contentDescription = ""
+                            contentDescription = stringResource(R.string.budget_list_icon_description)
                         )
                     }
 

@@ -56,7 +56,7 @@ fun DefaultBudgetSelectorModal(
             ) {
                 Icon(
                     imageVector = Icons.Default.AccountCircle,
-                    contentDescription = null,
+                    contentDescription = stringResource(R.string.default_budget_icon_description),
                     modifier = Modifier.size(24.dp),
                     tint = MaterialTheme.colorScheme.primary
                 )
@@ -72,14 +72,14 @@ fun DefaultBudgetSelectorModal(
         text = {
             if (availableBudgets.isEmpty()) {
                 Text(
-                    text = "No hay presupuestos disponibles para seleccionar.",
+                    text = stringResource(R.string.no_budgets_available),
                     fontSize = 14.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             } else {
                 Column {
                     Text(
-                        text = "Selecciona un presupuesto por defecto para las transacciones automáticas:",
+                        text = stringResource(R.string.select_default_budget_description),
                         fontSize = 14.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(bottom = 16.dp)
@@ -140,7 +140,7 @@ fun BankSelectorModal(
             ) {
                 Icon(
                     imageVector = Icons.Default.Build,
-                    contentDescription = null,
+                    contentDescription = stringResource(R.string.bank_selection_icon_description),
                     modifier = Modifier.size(24.dp),
                     tint = MaterialTheme.colorScheme.primary
                 )
@@ -163,7 +163,7 @@ fun BankSelectorModal(
             } else {
                 Column {
                     Text(
-                        text = "Selecciona los bancos para procesar transacciones automáticas:",
+                        text = stringResource(R.string.select_banks_description),
                         fontSize = 14.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(bottom = 16.dp)

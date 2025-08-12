@@ -73,7 +73,7 @@ fun BudgetModal(
             text = {
                 Column {
                     Text(
-                        text = "Establece el monto del presupuesto:",
+                        text = stringResource(R.string.set_budget_amount),
                         fontSize = 14.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(bottom = 16.dp)
@@ -185,7 +185,7 @@ fun FilterModal(
             text = {
                 Column {
                     Text(
-                        text = "Filtra las entradas por los siguientes criterios:",
+                        text = stringResource(R.string.filter_entries_criteria),
                         fontSize = 14.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(bottom = 16.dp)
@@ -309,7 +309,7 @@ fun CollaborateModal(
             icon = {
                 Icon(
                     imageVector = Icons.Default.Face,
-                    contentDescription = null,
+                    contentDescription = stringResource(R.string.collaborate_icon_description),
                     tint = MaterialTheme.colorScheme.primary
                 )
             },
@@ -378,13 +378,13 @@ fun CodeModal(
             icon = {
                 Icon(
                     imageVector = Icons.Default.Build,
-                    contentDescription = null,
+                    contentDescription = stringResource(R.string.collaboration_code_icon_description),
                     tint = MaterialTheme.colorScheme.primary
                 )
             },
             title = {
                 Text(
-                    text = "Código de Colaboración",
+                    text = stringResource(R.string.collaboration_code),
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
@@ -395,7 +395,7 @@ fun CodeModal(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "Comparte este código con tus colaboradores:",
+                        text = stringResource(R.string.share_code_with_collaborators),
                         fontSize = 14.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(bottom = 16.dp)
@@ -411,7 +411,7 @@ fun CodeModal(
             confirmButton = {
                 TextButton(onClick = hideCodeModal) {
                     Text(
-                        text = "OK",
+                        text = stringResource(R.string.ok),
                         fontWeight = FontWeight.Medium
                     )
                 }
