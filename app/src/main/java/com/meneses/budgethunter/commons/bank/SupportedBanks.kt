@@ -38,7 +38,7 @@ object SupportedBanks {
         displayName = "Bancolombia",
         senderKeywords = listOf("Bancolombia", "BANCOLOMBIA", "85784", "87400"),
         transactionAmountRegex = Regex("""(?:valor|monto|por|de)\s*\$?\s*([\d.,]+)""", RegexOption.IGNORE_CASE),
-        transactionDescriptionRegex = Regex("(?<=\\ba\\b)(.*?)(?=\\bdesde\\b)|(?<=\\ben\\b)(.*?)(?=\\bcon tu\\b)", RegexOption.IGNORE_CASE)
+        transactionDescriptionRegex = Regex("(?<=\\b(?:en|a|de)\\s)([A-ZÁÉÍÓÚÑa-záéíóúñ0-9 .,&-]+?)(?=\\s+(?:con|desde|en|, el|\\$|COP))", RegexOption.IGNORE_CASE)
     )
 
     val BANCO_DE_BOGOTA = BankSmsConfig(
