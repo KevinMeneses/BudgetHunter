@@ -26,11 +26,10 @@ internal class BudgetLocalDataSourceTest {
     private val dispatcher = StandardTestDispatcher()
     private val dataSource by lazy { BudgetLocalDataSource(queries, dispatcher) }
 
-    private val budget = Budget(
+    private val budget = com.meneses.budgethunter.budgetList.domain.Budget(
         id = 1,
         amount = 20.0,
         name = "Gastos Mes",
-        frequency = com.meneses.budgethunter.budgetList.domain.Budget.Frequency.UNIQUE
     )
 
     @Before
@@ -61,44 +60,32 @@ internal class BudgetLocalDataSourceTest {
 
     @Test
     fun insert() {
-        every { queries.insert(any(), any(), any(), any()) } returns Unit
+        every { queries.insert(any(), any(), any()) } returns Unit
 
-        dataSource.insert(budget)
+        dataSource.create(budget)
 
         verify {
             queries.insert(
                 id = null,
                 name = budget.name,
-                amount = budget.amount,
-                frequency = budget.frequency
+                amount = budget.amount
             )
         }
     }
 
     @Test
-    fun selectLastId() {
-        every { queries.selectLastId() } returns mockk {
-            every { executeAsOne() } returns 5
-        }
-        val lastId = dataSource.selectLastId()
-        verify { queries.selectLastId() }
-        Assert.assertEquals(5, lastId)
-    }
-
-    @Test
     fun update() {
         every {
-            queries.update(any(), any(), any(), any())
+            queries.update(any(), any(), any())
         } returns Unit
 
         dataSource.update(budget)
 
         verify {
             queries.update(
-                id = budget.id,
+                id = budget.id.toLong(),
                 name = budget.name,
-                amount = budget.amount,
-                frequency = budget.frequency
+                amount = budget.amount
             )
         }
     }

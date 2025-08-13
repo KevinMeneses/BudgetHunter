@@ -2,9 +2,7 @@ package com.meneses.budgethunter.budgetList.data.repository
 
 import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.budgetList.data.datasource.BudgetLocalDataSource
-import com.meneses.budgethunter.budgetList.data.toDomain
 import com.meneses.budgethunter.budgetList.domain.BudgetFilter
-import com.meneses.budgethunter.db.Budget
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -21,14 +19,14 @@ class BudgetRepositoryTest {
 
     @Test
     fun getBudgets() = runTest {
-        val budgets = flowOf(listOf<Budget>(mockk(relaxed = true)))
+        val budgets = flowOf(listOf<com.meneses.budgethunter.budgetList.domain.Budget>(mockk(relaxed = true)))
         every { dataSource.budgets } returns budgets
         val domainBudgets = repository.budgets
         verify { dataSource.budgets }
 
         budgets.collect { db ->
             domainBudgets.collect { domain ->
-                Assert.assertEquals(db.first().toDomain(), domain.first())
+                Assert.assertEquals(db.first(), domain.first())
             }
         }
     }
@@ -40,41 +38,30 @@ class BudgetRepositoryTest {
 
     @Test
     fun getAllFilteredBy() {
-        val filter = BudgetFilter("name", com.meneses.budgethunter.budgetList.domain.Budget.Frequency.UNIQUE)
+        val filter = BudgetFilter("name")
         val budgets = repository.getAllFilteredBy(filter)
         Assert.assertTrue(budgets.isEmpty())
     }
 
     @Test
     fun getAllFilteredByNullFilter() {
-        val filter = BudgetFilter("name", com.meneses.budgethunter.budgetList.domain.Budget.Frequency.UNIQUE)
+        val filter = BudgetFilter("name")
         val budgets = repository.getAllFilteredBy(filter)
         Assert.assertTrue(budgets.isEmpty())
     }
 
     @Test
-    fun create() {
-        every { dataSource.insert(any()) } returns Unit
-        every { dataSource.selectLastId() } returns 1
+    fun create() = runTest {
+        every { dataSource.create(any()) } returns mockk()
         val actualBudget = repository.create(budget)
         Assert.assertEquals(1, actualBudget.id)
-        verify {
-            dataSource.insert(any())
-            dataSource.selectLastId()
-        }
+        verify { dataSource.create(any()) }
     }
 
     @Test
-    fun update() {
+    fun update() = runTest {
         every { dataSource.update(any()) } returns Unit
         repository.update(budget)
         verify { dataSource.update(any()) }
-    }
-
-    @Test
-    fun delete() {
-        every { dataSource.delete(any()) } returns Unit
-        repository.delete(budget)
-        verify { dataSource.delete(any()) }
     }
 }

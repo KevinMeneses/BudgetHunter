@@ -31,10 +31,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -46,11 +44,11 @@ import com.meneses.budgethunter.R
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.commons.EMPTY
 import com.meneses.budgethunter.commons.ui.OutlinedDropdown
+import com.meneses.budgethunter.commons.ui.ThousandSeparatorTransformation
 import com.meneses.budgethunter.commons.ui.dashedBorder
-import com.meneses.budgethunter.commons.util.fromCurrency
-import com.meneses.budgethunter.commons.util.toCurrency
 import com.meneses.budgethunter.theme.AppColors
 import com.meneses.budgethunter.theme.green_success
+
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
@@ -129,7 +127,6 @@ fun BudgetEntryForm(
 }
 
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
 private fun InvoiceField(
     onAttachInvoice: () -> Unit,
     invoice: String?
@@ -251,7 +248,6 @@ fun CategorySelector(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AmountField(
     amount: String,
@@ -259,28 +255,43 @@ fun AmountField(
     @StringRes amountError: Int? = null
 ) {
     OutlinedTextField(
-        value = TextFieldValue(
-            text = amount.toCurrency(),
-            selection = TextRange(amount.toCurrency().length)
-        ),
-        onValueChange = {
-            onAmountChanged(it.text.fromCurrency())
-            // TODO: fix decimal use case
-            /*if (it.isBlank()) {
-                onAmountChanged(EMPTY)
-                return@OutlinedTextField
+        value = amount,
+        onValueChange = { newValue ->
+            // Only allow digits and decimal point
+            val filtered = newValue.filter { it.isDigit() || it == '.' }
+            
+            // Handle multiple decimal points - keep only the first one
+            val parts = filtered.split(".")
+            val cleanValue = if (parts.size > 2) {
+                parts[0] + "." + parts.drop(1).joinToString("")
+            } else {
+                filtered
             }
-            val decimals = it.split(".").getOrNull(1) ?: EMPTY
-            if (decimals == "00") return@OutlinedTextField
-            val decimalsLength = decimals.length
-            if (decimalsLength > 2) return@OutlinedTextField
-            val amountNumber = it.toDoubleOrNull() ?: return@OutlinedTextField
-            if (amountNumber > 0) onAmountChanged(it)*/
+            
+            // Limit decimal places to 2
+            val finalValue = if (cleanValue.contains(".")) {
+                val decimalParts = cleanValue.split(".")
+                val integerPart = decimalParts[0]
+                val decimalPart = decimalParts[1].take(2)
+                if (decimalPart.isEmpty()) {
+                    // Keep the decimal point even if no digits follow yet
+                    "$integerPart."
+                } else {
+                    "$integerPart.$decimalPart"
+                }
+            } else {
+                cleanValue
+            }
+            
+            onAmountChanged(finalValue)
         },
         label = { Text(text = stringResource(id = R.string.amount)) },
+        placeholder = { Text(text = "0.00") },
+        prefix = { Text(text = "$") },
+        visualTransformation = ThousandSeparatorTransformation(),
         keyboardOptions = KeyboardOptions(
-            keyboardType = KeyboardType.Number,
-            autoCorrect = false
+            autoCorrectEnabled = false,
+            keyboardType = KeyboardType.Decimal
         ),
         singleLine = true,
         isError = amountError != null,
@@ -292,7 +303,6 @@ fun AmountField(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DescriptionField(
     description: String,

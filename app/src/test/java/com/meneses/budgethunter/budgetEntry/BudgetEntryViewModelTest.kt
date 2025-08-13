@@ -4,9 +4,9 @@ import com.meneses.budgethunter.budgetEntry.application.BudgetEntryEvent
 import com.meneses.budgethunter.budgetEntry.application.BudgetEntryState
 import com.meneses.budgethunter.budgetEntry.data.BudgetEntryRepository
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
-import io.mockk.every
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockk
-import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
@@ -24,7 +24,6 @@ class BudgetEntryViewModelTest {
 
     private val viewModel = BudgetEntryViewModel(
         budgetEntryRepository = repository,
-        dispatcher = dispatcher
     )
 
     @Test
@@ -69,13 +68,13 @@ class BudgetEntryViewModelTest {
         val state = mutableListOf<BudgetEntryState>()
         val job = launch { viewModel.uiState.toList(state) }
 
-        every { repository.create(budgetEntry) } returns Unit
+        coEvery { repository.create(budgetEntry) } returns Unit
 
         viewModel.sendEvent(BudgetEntryEvent.SetBudgetEntry(budgetEntry))
         viewModel.sendEvent(BudgetEntryEvent.SaveBudgetEntry)
         runCurrent()
 
-        verify { repository.create(budgetEntry) }
+        coVerify { repository.create(budgetEntry) }
 
         sendGoBackEvent()
         job.cancel()
@@ -87,13 +86,13 @@ class BudgetEntryViewModelTest {
         val state = mutableListOf<BudgetEntryState>()
         val job = launch { viewModel.uiState.toList(state) }
 
-        every { repository.update(budgetEntry) } returns Unit
+        coEvery { repository.update(budgetEntry) } returns Unit
 
         viewModel.sendEvent(BudgetEntryEvent.SetBudgetEntry(budgetEntry))
         viewModel.sendEvent(BudgetEntryEvent.SaveBudgetEntry)
         runCurrent()
 
-        verify { repository.update(budgetEntry) }
+        coVerify { repository.update(budgetEntry) }
 
         sendGoBackEvent()
         job.cancel()

@@ -7,7 +7,6 @@ import com.meneses.budgethunter.budgetEntry.data.datasource.BudgetEntryLocalData
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.db.Budget
 import com.meneses.budgethunter.db.BudgetEntryQueries
-import com.meneses.budgethunter.db.Budget_entry
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
@@ -26,13 +25,15 @@ class BudgetEntryLocalDataSourceTest {
     private val dispatcher = StandardTestDispatcher()
     private val dataSource = BudgetEntryLocalDataSource(queries, dispatcher)
 
-    private val entry = Budget_entry(
+    private val entry = BudgetEntry(
         id = 1,
-        budget_id = 1,
-        amount = 20.0,
+        budgetId = 1,
+        amount = 20.0.toString(),
         description = "description",
         type = BudgetEntry.Type.INCOME,
-        date = "date"
+        date = "date",
+        invoice = "invoice",
+        category = BudgetEntry.Category.FOOD
     )
 
     @Before
@@ -62,7 +63,7 @@ class BudgetEntryLocalDataSourceTest {
     @Test
     fun insert() {
         every {
-            queries.insert(any(), any(), any(), any(), any(), any())
+            queries.insert(any(), any(), any(), any(), any(), any(),any(),any())
         } returns Unit
 
         dataSource.create(entry)
@@ -70,11 +71,13 @@ class BudgetEntryLocalDataSourceTest {
         verify {
             queries.insert(
                 id = null,
-                budgetId = entry.budget_id,
-                amount = entry.amount,
+                budgetId = entry.budgetId.toLong(),
+                amount = entry.amount.toDouble(),
                 description = entry.description,
                 type = entry.type,
-                date = entry.date
+                date = entry.date,
+                category = entry.category,
+                invoice = entry.invoice
             )
         }
     }
@@ -82,19 +85,21 @@ class BudgetEntryLocalDataSourceTest {
     @Test
     fun update() {
         every {
-            queries.update(any(), any(), any(), any(), any(), any())
+            queries.update(any(), any(), any(), any(), any(), any(),any(),any())
         } returns Unit
 
         dataSource.update(entry)
 
         verify {
             queries.update(
-                id = entry.id,
-                budgetId = entry.budget_id,
-                amount = entry.amount,
+                id = entry.id.toLong(),
+                budgetId = entry.budgetId.toLong(),
+                amount = entry.amount.toDouble(),
                 description = entry.description,
                 type = entry.type,
-                date = entry.date
+                date = entry.date,
+                category = entry.category,
+                invoice = entry.invoice
             )
         }
     }
