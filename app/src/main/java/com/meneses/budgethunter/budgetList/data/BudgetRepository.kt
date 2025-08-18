@@ -22,7 +22,7 @@ class BudgetRepository(
     val budgets: Flow<List<Budget>>
         get() = localDataSource.budgets
 
-    fun getById(id: Int): Budget =
+    fun getById(id: Int): Budget? =
         localDataSource.getById(id)
 
     fun getAllCached(): List<Budget> =

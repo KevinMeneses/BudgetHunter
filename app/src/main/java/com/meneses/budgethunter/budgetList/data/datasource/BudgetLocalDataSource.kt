@@ -25,8 +25,8 @@ class BudgetLocalDataSource(
 
     fun getAllCached(): List<Budget> = cachedList.get()
 
-    fun getById(id: Int): Budget =
-        cachedList.get().first { it.id == id }
+    fun getById(id: Int): Budget? =
+        cachedList.get().firstOrNull { it.id == id }
 
     fun getAllFilteredBy(filter: BudgetFilter) =
         cachedList.get().filter {
