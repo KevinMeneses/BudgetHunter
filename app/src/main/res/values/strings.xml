@@ -67,6 +67,7 @@
     <string name="other">Otros</string>
     <string name="metrics">Metricas</string>
     <string name="settings">Configuración</string>
+    <string name="receipt">Comprobante</string>
 
     <!-- SMS Reading -->
     <string name="sms_reading">Lectura de SMS</string>

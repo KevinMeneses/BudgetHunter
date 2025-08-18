@@ -16,14 +16,13 @@ import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.AttachFile
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
@@ -35,7 +34,6 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.maxkeppeker.sheets.core.models.base.rememberSheetState
 import com.maxkeppeler.sheets.calendar.CalendarDialog
 import com.maxkeppeler.sheets.calendar.models.CalendarConfig
@@ -143,13 +141,23 @@ private fun InvoiceField(
             )
             .width(TextFieldDefaults.MinWidth)
             .clickable(onClick = onAttachInvoice)
-            .padding(15.dp)
+            .padding(vertical = 15.dp, horizontal = 10.dp)
     ) {
-        val invoiceText = invoice
-            ?.let { stringResource(R.string.invoice, it.split("/").last()) }
-            ?: stringResource(R.string.attach_invoice)
+        Row {
+            val invoiceText = invoice
+                ?.split("/")
+                ?.last()
+                ?: stringResource(R.string.attach_invoice)
 
-        Text(text = invoiceText)
+            Icon(
+                imageVector = Icons.Default.AttachFile,
+                contentDescription = null,
+                tint = AppColors.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.width(10.dp))
+            Text(text = invoiceText)
+        }
+
     }
     Spacer(modifier = Modifier.height(10.dp))
 }
@@ -205,32 +213,61 @@ fun TypeSwitch(
     val itemTypes = remember { BudgetEntry.getItemTypes() }
     Row(
         modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceEvenly
+        horizontalArrangement = Arrangement.Center
     ) {
-        Text(
-            text = itemTypes.first().toStringResource(),
-            fontSize = 16.sp
-        )
-        Switch(
-            checked = type == BudgetEntry.Type.INCOME,
-            onCheckedChange = {
-                val selection =
-                    if (it) BudgetEntry.Type.INCOME
-                    else BudgetEntry.Type.OUTCOME
-                onTypeSelected(selection)
-            },
-            colors = SwitchDefaults.colors(
-                uncheckedThumbColor = AppColors.onError,
-                uncheckedTrackColor = AppColors.error,
-                uncheckedBorderColor = AppColors.error,
-                checkedTrackColor = green_success
-            )
-        )
-        Text(
-            text = itemTypes.last().toStringResource(),
-            fontSize = 16.sp
-        )
+        Card(
+            colors = CardDefaults.cardColors(
+                containerColor = AppColors.surface
+            ),
+            shape = AbsoluteRoundedCornerShape(25.dp),
+            modifier = Modifier.fillMaxWidth(0.8f)
+        ) {
+            Row(
+                modifier = Modifier.padding(4.dp)
+            ) {
+                Card(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { onTypeSelected(BudgetEntry.Type.OUTCOME) },
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (type == BudgetEntry.Type.OUTCOME) AppColors.error else AppColors.surface
+                    ),
+                    shape = AbsoluteRoundedCornerShape(25.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = itemTypes.first().toStringResource(),
+                            modifier = Modifier.padding(vertical = 8.dp),
+                            color = if (type == BudgetEntry.Type.OUTCOME) AppColors.onError else AppColors.onSurface
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.width(4.dp))
+                Card(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { onTypeSelected(BudgetEntry.Type.INCOME) },
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (type == BudgetEntry.Type.INCOME) green_success else AppColors.surface
+                    ),
+                    shape = AbsoluteRoundedCornerShape(25.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = itemTypes.last().toStringResource(),
+                            modifier = Modifier.padding(vertical = 8.dp),
+                            color = if (type == BudgetEntry.Type.INCOME) AppColors.surface else AppColors.onSurface
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -285,6 +322,7 @@ fun AmountField(
             
             onAmountChanged(finalValue)
         },
+        modifier = Modifier.width(TextFieldDefaults.MinWidth),
         label = { Text(text = stringResource(id = R.string.amount)) },
         placeholder = { Text(text = "0.00") },
         prefix = { Text(text = "$") },
@@ -311,7 +349,9 @@ fun DescriptionField(
     OutlinedTextField(
         value = description,
         onValueChange = onDescriptionChanged,
+        modifier = Modifier.width(TextFieldDefaults.MinWidth),
         label = { Text(text = stringResource(id = R.string.description)) },
+        maxLines = 12,
         keyboardOptions = KeyboardOptions(
             capitalization = KeyboardCapitalization.Sentences
         )
