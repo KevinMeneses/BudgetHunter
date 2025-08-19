@@ -145,4 +145,5 @@
     <!-- Strings for Notification Channels -->
     <string name="channel_name_sms_transactions">SMS Transactions</string>
     <string name="channel_description_sms_transactions">Notifications for transactions automatically detected from SMS messages.</string>
+    <string name="created">Created: %1$s</string>
 </resources>

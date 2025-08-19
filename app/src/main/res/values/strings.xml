@@ -51,7 +51,7 @@
     <string name="wait_for_update">Espere mientras se actualiza la aplicación…</string>
     <string name="attach_invoice">Adjuntar comprobante</string>
     <string name="search">Buscar</string>
-    <string name="search_budgets">Buscar presupuestos...</string>
+    <string name="search_budgets">Buscar presupuestos…</string>
     <string name="clear_search">Limpiar búsqueda</string>
     <string name="invoice">Comprobante: %s</string>
     <string name="select_from_files">Seleccionar un archivo</string>
@@ -145,4 +145,5 @@
     <!-- Strings para Canales de Notificación -->
     <string name="channel_name_sms_transactions">Transacciones por SMS</string>
     <string name="channel_description_sms_transactions">Notificaciones para transacciones detectadas automáticamente desde mensajes SMS.</string>
+    <string name="created">Creado: %1$s</string>
 </resources>

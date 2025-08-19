@@ -37,7 +37,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.meneses.budgethunter.R
@@ -141,16 +145,18 @@ private fun BudgetItem(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
+                val date = try {
+                    LocalDate.parse(budget.date)
+                        .format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+                } catch (e: Exception) {
+                    budget.date
+                }
+
                 Text(
-                    text = try {
-                        LocalDate.parse(budget.date)
-                            .format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
-                    } catch (e: Exception) {
-                        budget.date
-                    },
+                    text = stringResource(R.string.created, date),
                     style = MaterialTheme.typography.bodyMedium
                 )
-                
+
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Row(
@@ -158,14 +164,8 @@ private fun BudgetItem(
                     verticalAlignment = Alignment.Bottom
                 ) {
                     Text(
-                        text = stringResource(R.string.expenses, budget.totalExpenses.toCurrency()),
+                        text = getExpensesWithBoldSlash(budget),
                         style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.width(5.dp))
-                    Text(
-                        text = stringResource(R.string.available, budget.amount.toCurrency()),
-                        style = MaterialTheme.typography.bodyMedium
                     )
                 }
             }
@@ -270,6 +270,31 @@ private fun BudgetItem(
                     }
                 }
             )
+        }
+    }
+}
+
+@Composable
+private fun getExpensesWithBoldSlash(budget: Budget): AnnotatedString {
+    return buildAnnotatedString {
+        withStyle(
+            style = SpanStyle(
+                fontWeight = FontWeight.SemiBold,
+                fontSize = MaterialTheme.typography.bodyLarge.fontSize)
+        ) {
+            append(budget.totalExpenses.toCurrency())
+        }
+        withStyle(
+            style = SpanStyle(
+                fontSize = MaterialTheme.typography.bodyLarge.fontSize)
+        ) {
+            append(" / ")
+        }
+        withStyle(
+            style = SpanStyle(
+                fontSize = MaterialTheme.typography.bodySmall.fontSize)
+        ) {
+            append(budget.amount.toCurrency())
         }
     }
 }
