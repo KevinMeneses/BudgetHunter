@@ -63,7 +63,7 @@ class BudgetEntryLocalDataSourceTest {
     @Test
     fun insert() {
         every {
-            queries.insert(any(), any(), any(), any(), any(), any(),any(),any())
+            queries.insert(any(), any(), any(), any(), any(), any(), any(), any())
         } returns Unit
 
         dataSource.create(entry)
@@ -85,7 +85,7 @@ class BudgetEntryLocalDataSourceTest {
     @Test
     fun update() {
         every {
-            queries.update(any(), any(), any(), any(), any(), any(),any(),any())
+            queries.update(any(), any(), any(), any(), any(), any(), any(), any())
         } returns Unit
 
         dataSource.update(entry)

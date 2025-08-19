@@ -30,6 +30,7 @@ internal class BudgetLocalDataSourceTest {
         id = 1,
         amount = 20.0,
         name = "Gastos Mes",
+        date = "2024-01-01"
     )
 
     @Before
@@ -60,7 +61,7 @@ internal class BudgetLocalDataSourceTest {
 
     @Test
     fun insert() {
-        every { queries.insert(any(), any(), any()) } returns Unit
+        every { queries.insert(any(), any(), any(), any()) } returns Unit
 
         dataSource.create(budget)
 
@@ -68,7 +69,8 @@ internal class BudgetLocalDataSourceTest {
             queries.insert(
                 id = null,
                 name = budget.name,
-                amount = budget.amount
+                amount = budget.amount,
+                date = budget.date
             )
         }
     }
@@ -76,7 +78,7 @@ internal class BudgetLocalDataSourceTest {
     @Test
     fun update() {
         every {
-            queries.update(any(), any(), any())
+            queries.update(any(), any(), any(), any())
         } returns Unit
 
         dataSource.update(budget)
@@ -85,7 +87,8 @@ internal class BudgetLocalDataSourceTest {
             queries.update(
                 id = budget.id.toLong(),
                 name = budget.name,
-                amount = budget.amount
+                amount = budget.amount,
+                date = budget.date
             )
         }
     }

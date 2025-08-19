@@ -3,7 +3,7 @@ package com.meneses.budgethunter.budgetList.data.datasource
 import androidx.lifecycle.AtomicReference
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
-import com.meneses.budgethunter.budgetList.data.toDomain
+import com.meneses.budgethunter.budgetList.data.mapSelectAllToBudget
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.budgetList.domain.BudgetFilter
 import com.meneses.budgethunter.commons.data.AndroidDatabaseFactory
@@ -17,10 +17,9 @@ class BudgetLocalDataSource(
     dispatcher: CoroutineDispatcher = Dispatchers.IO
 ) {
     val budgets = queries
-        .selectAll()
+        .selectAll(::mapSelectAllToBudget)
         .asFlow()
         .mapToList(dispatcher)
-        .toDomain()
         .onEach { cachedList.set(it) }
 
     fun getAllCached(): List<Budget> = cachedList.get()
@@ -39,7 +38,8 @@ class BudgetLocalDataSource(
         queries.insert(
             id = null,
             name = budget.name,
-            amount = budget.amount
+            amount = budget.amount,
+            date = budget.date
         )
 
         val savedId = queries
@@ -53,7 +53,8 @@ class BudgetLocalDataSource(
     fun update(budget: Budget) = queries.update(
         id = budget.id.toLong(),
         amount = budget.amount,
-        name = budget.name
+        name = budget.name,
+        date = budget.date
     )
 
     fun delete(id: Long) = queries.delete(id)

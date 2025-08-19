@@ -4,6 +4,8 @@
     <string name="budget_amount">Budget\n%1$s</string>
     <string name="no_description">No description</string>
     <string name="total_outcomes">Total outcome:</string>
+    <string name="expenses">%1$s spent</string>
+    <string name="available">of %1$s</string>
     <string name="balance">Balance:</string>
     <string name="delete">Delete</string>
     <string name="filter">Filter</string>
@@ -49,7 +51,7 @@
     <string name="wait_for_update">Wait until the app update completes…</string>
     <string name="attach_invoice">Attach receipt</string>
     <string name="search">Search</string>
-    <string name="search_budgets">Search budgets...</string>
+    <string name="search_budgets">Search budgets…</string>
     <string name="clear_search">Clear search</string>
     <string name="invoice">Invoice: %s</string>
     <string name="select_from_files">Select from files</string>

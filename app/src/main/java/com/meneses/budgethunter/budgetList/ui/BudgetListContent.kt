@@ -2,11 +2,13 @@ package com.meneses.budgethunter.budgetList.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -33,7 +35,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.meneses.budgethunter.R
@@ -41,8 +45,11 @@ import com.meneses.budgethunter.budgetList.application.BudgetListEvent
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.commons.ui.LoadingScreen
 import com.meneses.budgethunter.commons.ui.LottiePlaceholder
+import com.meneses.budgethunter.commons.util.toCurrency
 import com.meneses.budgethunter.theme.AppColors
 import com.meneses.budgethunter.theme.BudgetHunterTheme
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
@@ -50,9 +57,9 @@ private fun Preview() {
     BudgetHunterTheme {
         BudgetListContent(
             list = listOf(
-                Budget(name = "Noviembre"),
-                Budget(name = "Diciembre"),
-                Budget(name = "Enero"),
+                Budget(name = "Noviembre", amount = 1500.0, totalExpenses = 450.0, date = "2024-11-01"),
+                Budget(name = "Diciembre", amount = 2000.0, totalExpenses = 1200.0, date = "2024-12-01"),
+                Budget(name = "Enero", amount = 1800.0, totalExpenses = 300.0, date = "2025-01-01"),
             ),
             isLoading = false,
             paddingValues = PaddingValues(),
@@ -108,7 +115,7 @@ private fun BudgetItem(
             contentColor = AppColors.onTertiaryContainer
         ),
         elevation = CardDefaults.cardElevation(
-            defaultElevation = 5.dp
+            defaultElevation = 4.dp
         ),
         onClick = {
             BudgetListEvent
@@ -119,22 +126,61 @@ private fun BudgetItem(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 20.dp)
-                .padding(vertical = 10.dp),
+                .padding(start = 16.dp, end = 12.dp, top = 16.dp, bottom = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = budget.name,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = try {
+                        LocalDate.parse(budget.date)
+                            .format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+                    } catch (e: Exception) {
+                        budget.date
+                    },
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.Bottom
+                ) {
+                    Text(
+                        text = stringResource(R.string.expenses, budget.totalExpenses.toCurrency()),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.width(5.dp))
+                    Text(
+                        text = stringResource(R.string.available, budget.amount.toCurrency()),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+            
             var dropdownExpanded by remember {
                 mutableStateOf(false)
             }
 
-            Text(text = budget.name)
             IconButton(
                 onClick = { dropdownExpanded = true },
                 content = {
                     Icon(
                         imageVector = Icons.Default.MoreVert,
-                        contentDescription = stringResource(R.string.budget_list_icon_description)
+                        contentDescription = stringResource(R.string.budget_list_icon_description),
+                        tint = Color(0xFF424242)
                     )
                     DropdownMenu(
                         expanded = dropdownExpanded,

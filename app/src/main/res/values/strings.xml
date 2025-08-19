@@ -4,6 +4,8 @@
     <string name="budget_amount">Presupuesto\n%1$s</string>
     <string name="no_description">Sin descripcion</string>
     <string name="total_outcomes">Total gastos:</string>
+    <string name="expenses">%1$s gastados</string>
+    <string name="available">de %1$s</string>
     <string name="balance">Balance:</string>
     <string name="delete">Eliminar</string>
     <string name="filter">Filtrar</string>
