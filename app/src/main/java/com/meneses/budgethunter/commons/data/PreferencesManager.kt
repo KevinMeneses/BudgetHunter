@@ -5,18 +5,18 @@ import android.content.SharedPreferences
 import androidx.core.content.edit
 
 class PreferencesManager(context: Context) {
-    
+
     private val sharedPreferences: SharedPreferences =
         context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-    
+
     var isCollaborationEnabled: Boolean
         get() = sharedPreferences.getBoolean(KEY_COLLABORATION_ENABLED, false)
         set(value) = sharedPreferences.edit { putBoolean(KEY_COLLABORATION_ENABLED, value) }
-    
+
     var isSmsReadingEnabled: Boolean
         get() = sharedPreferences.getBoolean(KEY_SMS_READING_ENABLED, false)
         set(value) = sharedPreferences.edit { putBoolean(KEY_SMS_READING_ENABLED, value) }
-    
+
     var defaultBudgetId: Int
         get() = sharedPreferences.getInt(KEY_DEFAULT_BUDGET_ID, -1)
         set(value) = sharedPreferences.edit { putInt(KEY_DEFAULT_BUDGET_ID, value) }
@@ -31,7 +31,7 @@ class PreferencesManager(context: Context) {
                 emptySet()
             }
         }
-        set(value) = sharedPreferences.edit { 
+        set(value) = sharedPreferences.edit {
             putString(KEY_SELECTED_BANK_IDS, value.joinToString(","))
         }
 

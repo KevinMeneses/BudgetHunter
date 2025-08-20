@@ -33,7 +33,7 @@ class BudgetRepositoryTest {
         totalExpenses = 200.0,
         date = LocalDate.now().toString()
     )
-    
+
     private val testBudget2 = Budget(
         id = 2,
         name = "Entertainment Budget",
@@ -41,7 +41,7 @@ class BudgetRepositoryTest {
         totalExpenses = 50.0,
         date = LocalDate.now().toString()
     )
-    
+
     private val testBudgets = listOf(testBudget1, testBudget2)
 
     @Before

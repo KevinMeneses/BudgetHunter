@@ -4,3 +4,4 @@ ij_kotlin_allow_trailing_comma = false
 ij_kotlin_allow_trailing_comma_on_call_site = false
 ktlint_standard_multiline-if-else = disabled
 ktlint_standard_import-ordering = disabled
+ktlint_standard_comment-wrapping = disabled

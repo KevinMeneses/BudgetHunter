@@ -13,4 +13,4 @@ data class SettingsState(
     val availableBanks: List<BankSmsConfig> = emptyList(),
     val selectedBanks: Set<BankSmsConfig> = emptySet(),
     val isBankSelectorVisible: Boolean = false
-) 
+)

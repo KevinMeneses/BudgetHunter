@@ -36,9 +36,10 @@ fun PieChart(
     val angles = proportions.mapValues { it.value * 360f }
 
     Column(modifier = modifier) {
-        Canvas(modifier = Modifier
-            .fillMaxWidth()
-            .fillMaxHeight(0.52f)
+        Canvas(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.52f)
         ) {
             var startAngle = 180f
             angles.onEachIndexed { index, entry ->
@@ -89,7 +90,7 @@ fun PieChart(
                         .format(percentage)
 
                     Text(
-                        text = "%$formattedPercentage",
+                        text = "$formattedPercentage%",
                         style = textStyle,
                         fontSize = 18.sp
                     )

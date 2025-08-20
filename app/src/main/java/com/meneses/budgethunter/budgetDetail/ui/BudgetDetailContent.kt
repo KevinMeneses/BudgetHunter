@@ -65,7 +65,6 @@ private fun Preview() {
         paddingValues = PaddingValues(0.dp),
         uiState = BudgetDetailState()
     ) {
-
     }
 }
 
@@ -273,7 +272,6 @@ private fun ColumnScope.ListSection(
                             contentDescription = stringResource(R.string.budget_list_icon_description)
                         )
                     }
-
                 }
                 DefDivider()
             }

@@ -12,7 +12,7 @@ class SmsBroadcastReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != Telephony.Sms.Intents.SMS_RECEIVED_ACTION) return
-        
+
         val preferencesManager = MyApplication.preferencesManager
         if (!preferencesManager.isSmsReadingEnabled) return
 
@@ -50,4 +50,4 @@ class SmsBroadcastReceiver : BroadcastReceiver() {
             }
         }
     }
-} 
+}

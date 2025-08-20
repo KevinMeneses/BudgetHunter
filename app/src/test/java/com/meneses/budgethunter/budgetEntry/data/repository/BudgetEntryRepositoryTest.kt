@@ -3,7 +3,6 @@ package com.meneses.budgethunter.budgetEntry.data.repository
 import com.meneses.budgethunter.budgetEntry.data.BudgetEntryRepository
 import com.meneses.budgethunter.budgetEntry.data.datasource.BudgetEntryLocalDataSource
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
-import com.meneses.budgethunter.budgetEntry.domain.BudgetEntryFilter
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -12,7 +11,6 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.runCurrent
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
@@ -23,7 +21,7 @@ class BudgetEntryRepositoryTest {
     private val dataSource: BudgetEntryLocalDataSource = mockk(relaxed = true)
     private val dispatcher = StandardTestDispatcher()
     private lateinit var repository: BudgetEntryRepository
-    
+
     // Test data
     private val testEntry1 = BudgetEntry(
         id = 1,
@@ -33,7 +31,7 @@ class BudgetEntryRepositoryTest {
         type = BudgetEntry.Type.OUTCOME,
         category = BudgetEntry.Category.FOOD
     )
-    
+
     private val testEntry2 = BudgetEntry(
         id = 2,
         budgetId = 1,
@@ -42,7 +40,7 @@ class BudgetEntryRepositoryTest {
         type = BudgetEntry.Type.INCOME,
         category = BudgetEntry.Category.OTHER
     )
-    
+
     private val testEntries = listOf(testEntry1, testEntry2)
 
     @Before
@@ -90,10 +88,10 @@ class BudgetEntryRepositoryTest {
         // Then
         verify { dataSource.update(testEntry1) }
     }
-    
-    // Note: Repository only has basic CRUD operations - deleteByIds, getAllCached, and getAllFilteredBy 
+
+    // Note: Repository only has basic CRUD operations - deleteByIds, getAllCached, and getAllFilteredBy
     // are not in the current repository interface, so these tests are removed
-    
+
     @Test
     fun `create should handle entry with negative id correctly`() = runTest(dispatcher) {
         // Given - new entry with negative id
@@ -106,7 +104,7 @@ class BudgetEntryRepositoryTest {
         // Then
         verify { dataSource.create(newEntry) }
     }
-    
+
     @Test
     fun `update should handle entry with valid id correctly`() = runTest(dispatcher) {
         // Given - existing entry with positive id

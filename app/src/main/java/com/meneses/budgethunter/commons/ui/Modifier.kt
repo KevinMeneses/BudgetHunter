@@ -25,7 +25,8 @@ fun Modifier.pulsateEffect(
         animationSpec = infiniteRepeatable(
             animation = tween(duration),
             repeatMode = RepeatMode.Reverse
-        ), label = "pulsateEffect"
+        ),
+        label = "pulsateEffect"
     )
 
     this.scale(scale)
@@ -45,7 +46,8 @@ fun Modifier.blinkEffect(
         animationSpec = infiniteRepeatable(
             animation = tween(duration),
             repeatMode = RepeatMode.Reverse
-        ), label = "blinkEffect"
+        ),
+        label = "blinkEffect"
     )
 
     this.alpha(alpha)
