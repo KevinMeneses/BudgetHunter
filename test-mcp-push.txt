@@ -1,0 +1,3 @@
+Test file to verify MCP push permissions
+Created on: 2025-08-20
+Branch: test/mcp-push-permissions
