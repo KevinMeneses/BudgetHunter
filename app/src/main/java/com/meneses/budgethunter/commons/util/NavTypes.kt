@@ -10,8 +10,9 @@ import java.nio.charset.StandardCharsets
 
 inline fun <reified T : Any> serializableType(
     isNullableAllowed: Boolean = false,
-    json: Json = Json,
+    json: Json = Json
 ) = object : NavType<T>(isNullableAllowed = isNullableAllowed) {
+
     override fun get(bundle: Bundle, key: String) =
         bundle.getString(key)?.let<String, T>(json::decodeFromString)
 

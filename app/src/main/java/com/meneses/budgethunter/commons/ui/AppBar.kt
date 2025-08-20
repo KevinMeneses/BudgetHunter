@@ -44,10 +44,10 @@ fun AppBar(
     onLeftButtonClick: (() -> Unit)? = null,
     onRightButtonClick: (() -> Unit)? = null,
     animateLeftButton: Boolean = false,
-    animateRightButton: Boolean = false,
+    animateRightButton: Boolean = false
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
-    
+
     CenterAlignedTopAppBar(
         title = {
             Text(
@@ -103,5 +103,3 @@ fun AppBar(
         modifier = modifier
     )
 }
-
-

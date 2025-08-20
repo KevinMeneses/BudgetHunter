@@ -16,7 +16,7 @@ object SupportedBanks {
         transactionAmountRegex = Regex("""(?:compra|pago|transaccion)\s*(?:por|de)\s*\$?\s*([\d.,]+)""", RegexOption.IGNORE_CASE),
         transactionDescriptionRegex = Regex("""(?:en|del|establecimiento)\s*(.+?)(?:\s*\.|$)""", RegexOption.IGNORE_CASE)
     )
-    
+
     val BANCO_AV_VILLAS = BankSmsConfig(
         id = "banco_av_villas",
         displayName = "Banco AV Villas",
@@ -104,7 +104,7 @@ object SupportedBanks {
         transactionAmountRegex = Regex("""(?:valor|monto|por|de)\s*\$?\s*([\d.,]+)""", RegexOption.IGNORE_CASE),
         transactionDescriptionRegex = Regex("""(?:compra|pago|transaccion)\s*(?:en|por|de)\s*(.+?)(?:\s*(?:con|\.|$)|$)""", RegexOption.IGNORE_CASE)
     )
-    
+
     val DAVIVIENDA = BankSmsConfig(
         id = "davivienda",
         displayName = "Davivienda",
@@ -112,7 +112,7 @@ object SupportedBanks {
         transactionAmountRegex = Regex("""(?:compra|pago|transaccion)\s*(?:por|de)\s*\$?\s*([\d.,]+)""", RegexOption.IGNORE_CASE),
         transactionDescriptionRegex = Regex("""(?:en|del|establecimiento)\s*(.+?)(?:\s*\.|$)""", RegexOption.IGNORE_CASE)
     )
-    
+
     val ITAU_COLOMBIA = BankSmsConfig(
         id = "itau_colombia",
         displayName = "Itaú Colombia",
@@ -120,7 +120,7 @@ object SupportedBanks {
         transactionAmountRegex = Regex("""(?:compra|pago|transaccion)\s*(?:por|de)\s*\$?\s*([\d.,]+)""", RegexOption.IGNORE_CASE),
         transactionDescriptionRegex = Regex("""(?:en|del|establecimiento)\s*(.+?)(?:\s*\.|$)""", RegexOption.IGNORE_CASE)
     )
-    
+
     val SCOTIABANK_COLPATRIA = BankSmsConfig(
         id = "scotiabank_colpatria",
         displayName = "Scotiabank Colpatria",

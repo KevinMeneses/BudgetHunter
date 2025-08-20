@@ -1,7 +1,7 @@
 package com.meneses.budgethunter.commons.util
 
 import org.junit.Test
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
 
 class CurrencyTest {
 
@@ -47,7 +47,7 @@ class CurrencyTest {
         assertTrue("100".isValidCurrencyAmount())
         assertTrue("100.50".isValidCurrencyAmount())
         assertTrue("0.01".isValidCurrencyAmount())
-        
+
         assertFalse("".isValidCurrencyAmount())
         assertFalse("0".isValidCurrencyAmount())
         assertFalse("-100".isValidCurrencyAmount())

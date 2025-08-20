@@ -31,7 +31,6 @@ import com.meneses.budgethunter.commons.ui.ConfirmationModal
 import kotlinx.serialization.Serializable
 import java.io.File
 
-
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 private fun Preview() {

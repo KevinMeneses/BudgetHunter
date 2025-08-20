@@ -195,7 +195,6 @@ fun UpdateBudgetModal(
     }
 }
 
-
 @Composable
 fun JoinCollaborationModal(
     show: Boolean,

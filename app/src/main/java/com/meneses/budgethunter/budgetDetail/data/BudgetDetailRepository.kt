@@ -30,7 +30,7 @@ class BudgetDetailRepository(
     private val deleteBudgetUseCase: DeleteBudgetUseCase = DeleteBudgetUseCase(budgetLocalDataSource, entriesLocalDataSource, ioDispatcher),
     private val messagingClient: () -> KtorRealtimeMessagingClient = {
         KtorRealtimeMessagingClient.getInstance()
-    },
+    }
 ) {
 
     private var collaborationJob: Job? = null

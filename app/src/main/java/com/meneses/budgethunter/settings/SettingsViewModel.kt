@@ -23,10 +23,10 @@ class SettingsViewModel(
     private val preferencesManager: PreferencesManager = MyApplication.preferencesManager,
     private val budgetRepository: BudgetRepository = BudgetRepository()
 ) : ViewModel() {
-    
+
     private val _uiState = MutableStateFlow(SettingsState())
     val uiState = _uiState.asStateFlow()
-    
+
     fun sendEvent(event: SettingsEvent) {
         when (event) {
             is SettingsEvent.ToggleSmsReading -> toggleSmsReading(event.enabled)
@@ -56,7 +56,7 @@ class SettingsViewModel(
     fun loadSettings(context: Context) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
-            
+
             try {
                 val defaultBudgetId = preferencesManager.defaultBudgetId
                 val defaultBudget = if (defaultBudgetId != -1) {
@@ -85,35 +85,35 @@ class SettingsViewModel(
             }
         }
     }
-    
+
     private fun toggleSmsReading(enabled: Boolean) {
         preferencesManager.isSmsReadingEnabled = enabled
         _uiState.update { it.copy(isSmsReadingEnabled = enabled) }
     }
-    
+
     private fun setDefaultBudget(budget: Budget) {
         preferencesManager.defaultBudgetId = budget.id
-        _uiState.update { 
+        _uiState.update {
             it.copy(
                 defaultBudget = budget,
                 isDefaultBudgetSelectorVisible = false
             )
         }
     }
-    
+
     private fun handleSmsPermission(granted: Boolean) {
         _uiState.update { it.copy(hasSmsPermission = granted) }
         toggleSmsReading(granted)
     }
-    
+
     private fun showDefaultBudgetSelector() {
         _uiState.update { it.copy(isDefaultBudgetSelectorVisible = true) }
     }
-    
+
     private fun hideDefaultBudgetSelector() {
         _uiState.update { it.copy(isDefaultBudgetSelectorVisible = false) }
     }
-    
+
     private fun checkSmsPermission(context: Context): Boolean {
         val hasPermission = ContextCompat.checkSelfPermission(
             context,
@@ -122,4 +122,4 @@ class SettingsViewModel(
 
         return hasPermission
     }
-} 
+}

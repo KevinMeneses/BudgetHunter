@@ -120,11 +120,11 @@ class BudgetListViewModel(
         _uiState.update { it.copy(budgetToUpdate = budget) }
 
     private fun setSearchMode(isSearchMode: Boolean) {
-        _uiState.update { 
+        _uiState.update {
             it.copy(
                 isSearchMode = isSearchMode,
                 searchQuery = if (!isSearchMode) "" else it.searchQuery
-            ) 
+            )
         }
         // If exiting search mode, restore the full budget list
         if (!isSearchMode) {

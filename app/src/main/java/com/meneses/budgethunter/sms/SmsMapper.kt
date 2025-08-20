@@ -26,7 +26,6 @@ class SmsMapper(
         val amount = extractAmount(messageBody, bankConfig) ?: return null
         val description = extractDescription(messageBody, bankConfig)
 
-
         return BudgetEntry(
             amount = amount,
             description = description ?: "Transacción de ${bankConfig.displayName}",

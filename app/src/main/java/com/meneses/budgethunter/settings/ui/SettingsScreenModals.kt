@@ -175,7 +175,7 @@ fun BankSelectorModal(
                             BankOptionItem(
                                 bank = bank,
                                 isSelected = tempSelectedBanks.contains(bank),
-                                onToggle = { 
+                                onToggle = {
                                     tempSelectedBanks = if (tempSelectedBanks.contains(bank)) {
                                         tempSelectedBanks - bank
                                     } else {
@@ -226,9 +226,9 @@ private fun BudgetOptionItem(
             .padding(vertical = 4.dp)
             .clickable { onSelect() },
         colors = CardDefaults.cardColors(
-            containerColor = if (isSelected) 
-                MaterialTheme.colorScheme.primaryContainer 
-            else 
+            containerColor = if (isSelected)
+                MaterialTheme.colorScheme.primaryContainer
+            else
                 MaterialTheme.colorScheme.surface
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = if (isSelected) 4.dp else 1.dp)
@@ -266,9 +266,9 @@ private fun BankOptionItem(
             .padding(vertical = 4.dp)
             .clickable { onToggle() },
         colors = CardDefaults.cardColors(
-            containerColor = if (isSelected) 
-                MaterialTheme.colorScheme.primaryContainer 
-            else 
+            containerColor = if (isSelected)
+                MaterialTheme.colorScheme.primaryContainer
+            else
                 MaterialTheme.colorScheme.surface
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = if (isSelected) 4.dp else 1.dp)

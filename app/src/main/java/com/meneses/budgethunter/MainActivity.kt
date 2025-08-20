@@ -112,7 +112,7 @@ class MainActivity : ComponentActivity() {
                         }
 
                         composable<BudgetEntryScreen>(
-                            typeMap = mapOf(typeOf<BudgetEntry>() to serializableType<BudgetEntry>()),
+                            typeMap = mapOf(typeOf<BudgetEntry>() to serializableType<BudgetEntry>())
                         ) {
                             val budgetEntryViewModel: BudgetEntryViewModel = viewModel()
                             it.toRoute<BudgetEntryScreen>().Show(

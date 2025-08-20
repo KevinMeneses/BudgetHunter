@@ -20,11 +20,11 @@ class GetAIBudgetEntryFromImageUseCase(
     private val generativeModel: GenerativeModel = GenerativeModel(
         modelName = "gemini-2.0-flash",
         apiKey = BuildConfig.GEMINI_API_KEY
-    ),
+    )
 ) {
     private val prompt =
         """this is the image of a receipt, obtain the following items:
-            
+
             - total amount (ignore dots and only consider commas as a decimal part)
             - a high level description of what was paid (avoid adding the words receipt, invoice, bill, or document)
             - a category among these: ${BudgetEntry.getCategories()}
@@ -32,9 +32,9 @@ class GetAIBudgetEntryFromImageUseCase(
 
         present this information in the following JSON structure as an API valid JSON response
         without any additional character that would break serialization:
-        
+
         { "amount": "0", "description": "something", "category": "GROCERIES", "date:"2025-04-01" }
-        
+
         or return an empty response if the image is not an invoice, receipt or bill"""
 
     suspend fun execute(

@@ -21,10 +21,10 @@ fun Double.toCurrency(): String {
  */
 fun String.toCurrency(): String {
     if (this.isBlank()) return EMPTY
-    
+
     val cleanAmount = this.replace(",", "").replace("$", "")
     val amount = cleanAmount.toBigDecimalOrNull() ?: return EMPTY
-    
+
     return amount.setScale(2, RoundingMode.HALF_UP).toCurrency()
 }
 
@@ -33,7 +33,7 @@ fun String.toCurrency(): String {
  */
 private fun BigDecimal.toCurrency(): String {
     val formatter = NumberFormat.getCurrencyInstance(Locale.US) as DecimalFormat
-    
+
     // If the amount is a whole number, don't show decimals
     if (this.remainder(BigDecimal.ONE).compareTo(BigDecimal.ZERO) == 0) {
         formatter.maximumFractionDigits = 0
@@ -42,7 +42,7 @@ private fun BigDecimal.toCurrency(): String {
         formatter.maximumFractionDigits = 2
         formatter.minimumFractionDigits = 2
     }
-    
+
     return formatter.format(this)
 }
 
@@ -51,7 +51,7 @@ private fun BigDecimal.toCurrency(): String {
  */
 fun String.fromCurrency(): String {
     if (this.isBlank()) return EMPTY
-    
+
     return this.replace("$", "")
         .replace(",", "")
         .let { cleanAmount ->
@@ -71,13 +71,12 @@ fun String.fromCurrency(): String {
  */
 fun String.isValidCurrencyAmount(): Boolean {
     if (this.isBlank()) return false
-    
+
     val cleanAmount = this.replace(",", "").replace("$", "")
     val amount = cleanAmount.toBigDecimalOrNull() ?: return false
-    
+
     // Check if it's positive and has at most 2 decimal places
-    return amount > BigDecimal.ZERO && 
-           (cleanAmount.split(".").getOrNull(1)?.length ?: 0) <= 2
+    return amount > BigDecimal.ZERO && (cleanAmount.split(".").getOrNull(1)?.length ?: 0) <= 2
 }
 
 /**
@@ -86,10 +85,10 @@ fun String.isValidCurrencyAmount(): Boolean {
  */
 fun String.formatCurrencyInput(): String {
     if (this.isBlank()) return EMPTY
-    
+
     // Remove all non-numeric characters except decimal point
     val cleanInput = this.filter { it.isDigit() || it == '.' }
-    
+
     // Handle multiple decimal points - keep only the first one
     val parts = cleanInput.split(".")
     val cleanAmount = if (parts.size > 2) {
@@ -97,7 +96,7 @@ fun String.formatCurrencyInput(): String {
     } else {
         cleanInput
     }
-    
+
     // Limit decimal places to 2
     val finalAmount = if (cleanAmount.contains(".")) {
         val decimalParts = cleanAmount.split(".")
@@ -107,7 +106,6 @@ fun String.formatCurrencyInput(): String {
     } else {
         cleanAmount
     }
-    
+
     return finalAmount
 }
-

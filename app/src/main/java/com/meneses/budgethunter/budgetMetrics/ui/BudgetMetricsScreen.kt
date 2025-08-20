@@ -4,8 +4,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -22,17 +21,16 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class BudgetMetricsScreen(val budget: Budget) {
 
-    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun Show(
         uiState: BudgetMetricsState,
-        goBack: () -> Unit,
+        goBack: () -> Unit
     ) {
         Scaffold(
             topBar = {
                 AppBar(
                     title = budget.name,
-                    leftButtonIcon = Icons.Default.ArrowBack,
+                    leftButtonIcon = Icons.AutoMirrored.Filled.ArrowBack,
                     leftButtonDescription = stringResource(id = R.string.come_back),
                     onLeftButtonClick = goBack
                 )

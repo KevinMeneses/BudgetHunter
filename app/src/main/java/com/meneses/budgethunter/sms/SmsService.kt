@@ -40,7 +40,7 @@ class SmsService(
                         return@launch // Exit after successful processing
                     }
                 }
-                
+
                 // If no bank configuration matched, show a notification
                 showNotification(
                     title = context.getString(R.string.transaction_failed),
@@ -96,4 +96,4 @@ class SmsService(
         private const val CHANNEL_ID = "sms_transactions"
         private const val INFO_NOTIFICATION_ID = 1002
     }
-} 
+}

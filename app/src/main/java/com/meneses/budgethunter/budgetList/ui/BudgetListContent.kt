@@ -63,7 +63,7 @@ private fun Preview() {
             list = listOf(
                 Budget(name = "Noviembre", amount = 1500.0, totalExpenses = 450.0, date = "2024-11-01"),
                 Budget(name = "Diciembre", amount = 2000.0, totalExpenses = 1200.0, date = "2024-12-01"),
-                Budget(name = "Enero", amount = 1800.0, totalExpenses = 300.0, date = "2025-01-01"),
+                Budget(name = "Enero", amount = 1800.0, totalExpenses = 300.0, date = "2025-01-01")
             ),
             isLoading = false,
             paddingValues = PaddingValues(),
@@ -165,11 +165,11 @@ private fun BudgetItem(
                 ) {
                     Text(
                         text = getExpensesWithBoldSlash(budget),
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.bodyMedium
                     )
                 }
             }
-            
+
             var dropdownExpanded by remember {
                 mutableStateOf(false)
             }
@@ -214,7 +214,7 @@ private fun BudgetItem(
                                     .run(onEvent)
                             }
                         )
-                        
+
                         DropdownMenuItem(
                             text = {
                                 Row(
@@ -240,7 +240,7 @@ private fun BudgetItem(
                                     .run(onEvent)
                             }
                         )
-                        
+
                         DropdownMenuItem(
                             text = {
                                 Row(
@@ -280,19 +280,22 @@ private fun getExpensesWithBoldSlash(budget: Budget): AnnotatedString {
         withStyle(
             style = SpanStyle(
                 fontWeight = FontWeight.SemiBold,
-                fontSize = MaterialTheme.typography.bodyLarge.fontSize)
+                fontSize = MaterialTheme.typography.bodyLarge.fontSize
+            )
         ) {
             append(budget.totalExpenses.toCurrency())
         }
         withStyle(
             style = SpanStyle(
-                fontSize = MaterialTheme.typography.bodyLarge.fontSize)
+                fontSize = MaterialTheme.typography.bodyLarge.fontSize
+            )
         ) {
             append(" / ")
         }
         withStyle(
             style = SpanStyle(
-                fontSize = MaterialTheme.typography.bodySmall.fontSize)
+                fontSize = MaterialTheme.typography.bodySmall.fontSize
+            )
         ) {
             append(budget.amount.toCurrency())
         }

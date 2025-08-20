@@ -59,7 +59,7 @@ private fun CollaborateButton(
 
 @Composable
 fun UserGuideButton(
-    onClick: () -> Unit,
+    onClick: () -> Unit
 ) {
     MenuButton(
         text = stringResource(id = R.string.user_guide),
@@ -70,7 +70,7 @@ fun UserGuideButton(
 
 @Composable
 fun SettingsButton(
-    onClick: () -> Unit,
+    onClick: () -> Unit
 ) {
     MenuButton(
         text = stringResource(id = R.string.settings),

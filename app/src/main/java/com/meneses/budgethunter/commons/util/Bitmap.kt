@@ -7,6 +7,7 @@ import android.graphics.pdf.PdfRenderer
 import android.graphics.pdf.PdfRenderer.Page
 import android.os.ParcelFileDescriptor
 import java.io.File
+import androidx.core.graphics.createBitmap
 
 fun getBitmapFromPDFFile(filePath: String): Bitmap {
     val descriptor = ParcelFileDescriptor.open(
@@ -18,11 +19,7 @@ fun getBitmapFromPDFFile(filePath: String): Bitmap {
 
 fun getBitmapFromPDFFileDescriptor(descriptor: ParcelFileDescriptor): Bitmap {
     val page = PdfRenderer(descriptor).openPage(0)
-    val bitmap = Bitmap.createBitmap(
-        /* width = */ page.width,
-        /* height = */ page.height,
-        /* config = */ Bitmap.Config.ARGB_8888
-    )
+    val bitmap = createBitmap(page.width, page.height)
     val rect = Rect(0, page.height, page.width, 0)
     page.render(bitmap, rect, Matrix(), Page.RENDER_MODE_FOR_DISPLAY)
     return bitmap

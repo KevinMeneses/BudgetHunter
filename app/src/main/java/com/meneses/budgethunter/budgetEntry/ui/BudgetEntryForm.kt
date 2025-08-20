@@ -47,7 +47,6 @@ import com.meneses.budgethunter.commons.ui.dashedBorder
 import com.meneses.budgethunter.theme.AppColors
 import com.meneses.budgethunter.theme.green_success
 
-
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 private fun Preview() {
@@ -157,7 +156,6 @@ private fun InvoiceField(
             Spacer(modifier = Modifier.width(10.dp))
             Text(text = invoiceText)
         }
-
     }
     Spacer(modifier = Modifier.height(10.dp))
 }
@@ -296,7 +294,7 @@ fun AmountField(
         onValueChange = { newValue ->
             // Only allow digits and decimal point
             val filtered = newValue.filter { it.isDigit() || it == '.' }
-            
+
             // Handle multiple decimal points - keep only the first one
             val parts = filtered.split(".")
             val cleanValue = if (parts.size > 2) {
@@ -304,7 +302,7 @@ fun AmountField(
             } else {
                 filtered
             }
-            
+
             // Limit decimal places to 2
             val finalValue = if (cleanValue.contains(".")) {
                 val decimalParts = cleanValue.split(".")
@@ -319,7 +317,7 @@ fun AmountField(
             } else {
                 cleanValue
             }
-            
+
             onAmountChanged(finalValue)
         },
         modifier = Modifier.width(TextFieldDefaults.MinWidth),

@@ -32,7 +32,6 @@ class BudgetEntryLocalDataSourceTest {
     fun setUp() {
     }
 
-
     @Test
     fun selectAllByBudgetId() {
         val id = 10L

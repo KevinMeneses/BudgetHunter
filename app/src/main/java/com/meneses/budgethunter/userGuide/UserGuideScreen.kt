@@ -95,4 +95,3 @@ object UserGuideScreen {
         R.drawable.user_guide_page_15
     )
 }
-
