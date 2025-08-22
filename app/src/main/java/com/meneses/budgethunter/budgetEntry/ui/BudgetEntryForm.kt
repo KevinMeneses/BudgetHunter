@@ -303,9 +303,21 @@ fun AmountField(
                 filtered
             }
 
+            // Prevent leading zeros (except for "0.")
+            val noLeadingZeros = when {
+                cleanValue.isEmpty() -> ""
+                cleanValue == "0" -> cleanValue // Allow single "0"
+                cleanValue.startsWith("0.") -> cleanValue // Allow "0.xx"
+                cleanValue.startsWith("0") && !cleanValue.contains(".") -> {
+                    // Remove leading zeros from integer part
+                    cleanValue.dropWhile { it == '0' }.ifEmpty { "0" }
+                }
+                else -> cleanValue
+            }
+
             // Limit decimal places to 2
-            val finalValue = if (cleanValue.contains(".")) {
-                val decimalParts = cleanValue.split(".")
+            val finalValue = if (noLeadingZeros.contains(".")) {
+                val decimalParts = noLeadingZeros.split(".")
                 val integerPart = decimalParts[0]
                 val decimalPart = decimalParts[1].take(2)
                 if (decimalPart.isEmpty()) {
@@ -315,7 +327,7 @@ fun AmountField(
                     "$integerPart.$decimalPart"
                 }
             } else {
-                cleanValue
+                noLeadingZeros
             }
 
             onAmountChanged(finalValue)
