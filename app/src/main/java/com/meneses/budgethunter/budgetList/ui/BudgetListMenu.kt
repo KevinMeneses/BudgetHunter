@@ -34,8 +34,8 @@ fun BudgetListMenu(
             LazyColumn(
                 modifier = Modifier.background(AppColors.primary)
             ) {
-                item { CollaborateButton(isCollaborationActive, onCollaborateClick) }
-                item { UserGuideButton(onUserGuideClick) }
+                // item { CollaborateButton(isCollaborationActive, onCollaborateClick) }
+                // item { UserGuideButton(onUserGuideClick) }
                 item { SettingsButton(onSettingsClick) }
             }
         }

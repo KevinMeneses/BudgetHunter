@@ -34,7 +34,8 @@ private fun Preview() {
         onEvent = {},
         goBack = {},
         showBudgetEntry = {},
-        showBudgetMetrics = {}
+        showBudgetMetrics = {},
+        showSettings = {}
     )
 }
 
@@ -47,7 +48,8 @@ data class BudgetDetailScreen(val budget: Budget) {
         onEvent: (BudgetDetailEvent) -> Unit,
         goBack: () -> Unit,
         showBudgetEntry: (BudgetEntry) -> Unit,
-        showBudgetMetrics: (Budget) -> Unit
+        showBudgetMetrics: (Budget) -> Unit,
+        showSettings: () -> Unit
     ) {
         val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
         val snackBarHostState = remember { SnackbarHostState() }
@@ -108,6 +110,12 @@ data class BudgetDetailScreen(val budget: Budget) {
                                 .ToggleDeleteBudgetModal(true)
                                 .run(onEvent)
                         }
+                    },
+                    onSettingsClick = {
+                        coroutineScope.launch {
+                            drawerState.close()
+                        }
+                        showSettings()
                     }
                 )
             },

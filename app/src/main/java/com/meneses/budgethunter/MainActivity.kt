@@ -107,7 +107,8 @@ class MainActivity : ComponentActivity() {
                                 },
                                 showBudgetMetrics = { budget ->
                                     navController.navigate(BudgetMetricsScreen(budget))
-                                }
+                                },
+                                showSettings = { navController.navigate(SettingsScreen) }
                             )
                         }
 

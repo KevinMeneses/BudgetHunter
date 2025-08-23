@@ -25,6 +25,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.meneses.budgethunter.R
+import com.meneses.budgethunter.budgetList.ui.SettingsButton
 import com.meneses.budgethunter.commons.ui.DefDivider
 import com.meneses.budgethunter.commons.ui.blinkEffect
 import com.meneses.budgethunter.commons.ui.pulsateEffect
@@ -39,7 +40,8 @@ private fun Preview() {
         onFilterClick = {},
         onMetricsClick = {},
         onCollaborateClick = {},
-        onDeleteClick = {}
+        onDeleteClick = {},
+        onSettingsClick = {}
     )
 }
 
@@ -50,7 +52,8 @@ fun BudgetDetailMenu(
     onFilterClick: () -> Unit,
     onMetricsClick: () -> Unit,
     onCollaborateClick: () -> Unit,
-    onDeleteClick: () -> Unit
+    onDeleteClick: () -> Unit,
+    onSettingsClick: () -> Unit
 ) {
     ModalDrawerSheet {
         Column(
@@ -62,8 +65,9 @@ fun BudgetDetailMenu(
             ) {
                 item { FilterButton(animateFilterButton, onFilterClick) }
                 item { MetricsButton(onMetricsClick) }
-                item { CollaborateButton(animateCollaborateButton, onCollaborateClick) }
+                // item { CollaborateButton(animateCollaborateButton, onCollaborateClick) }
                 item { DeleteButton(onDeleteClick) }
+                item { SettingsButton(onSettingsClick) }
             }
         }
     }
@@ -114,7 +118,7 @@ private fun DeleteButton(onClick: () -> Unit) {
         text = stringResource(id = R.string.delete_budget),
         icon = Icons.Default.Delete,
         onClick = onClick,
-        withDivider = false
+        withDivider = true
     )
 }
 
