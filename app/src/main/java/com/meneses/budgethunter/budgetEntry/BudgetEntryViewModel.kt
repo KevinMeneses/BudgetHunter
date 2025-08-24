@@ -62,6 +62,8 @@ class BudgetEntryViewModel(
 
     private fun attachInvoice(event: BudgetEntryEvent.AttachInvoice) = viewModelScope.launch {
         try {
+            _uiState.update { it.copy(isProcessingInvoice = true) }
+            toggleAttachInvoiceModal(false)
             if (wasNewInvoiceAttached) deleteAttachedInvoice()
             val invoiceDir = saveInvoiceInAppInternalStorage(event)
             wasNewInvoiceAttached = true
@@ -79,11 +81,13 @@ class BudgetEntryViewModel(
                     ?.copy(invoice = invoiceDir.absolutePath)
                     ?: it.budgetEntry
 
-                it.copy(budgetEntry = updatedEntry)
+                it.copy(
+                    budgetEntry = updatedEntry,
+                    isProcessingInvoice = false
+                )
             }
-
-            toggleAttachInvoiceModal(false)
         } catch (e: Exception) {
+            _uiState.update { it.copy(isProcessingInvoice = false) }
             updateInvoiceError("Something went wrong loading file, please try again")
             delay(2000)
             updateInvoiceError(null)

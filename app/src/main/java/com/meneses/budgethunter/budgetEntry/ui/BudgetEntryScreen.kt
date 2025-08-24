@@ -7,7 +7,7 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
@@ -20,7 +20,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.core.content.ContextCompat.startActivity
 import androidx.core.content.FileProvider
 import com.meneses.budgethunter.R
 import com.meneses.budgethunter.budgetEntry.application.BudgetEntryEvent
@@ -28,6 +27,7 @@ import com.meneses.budgethunter.budgetEntry.application.BudgetEntryState
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.commons.ui.AppBar
 import com.meneses.budgethunter.commons.ui.ConfirmationModal
+import com.meneses.budgethunter.commons.ui.LoadingOverlay
 import kotlinx.serialization.Serializable
 import java.io.File
 
@@ -82,7 +82,7 @@ data class BudgetEntryScreen(val budgetEntry: BudgetEntry) {
 
                 AppBar(
                     title = title,
-                    leftButtonIcon = Icons.Default.ArrowBack,
+                    leftButtonIcon = Icons.AutoMirrored.Filled.ArrowBack,
                     leftButtonDescription = stringResource(R.string.come_back),
                     rightButtonIcon = Icons.Default.Done,
                     rightButtonDescription = stringResource(R.string.save_entry),
@@ -108,6 +108,10 @@ data class BudgetEntryScreen(val budgetEntry: BudgetEntry) {
                     }.run(onEvent)
                 }
             )
+        }
+
+        if (uiState.isProcessingInvoice) {
+            LoadingOverlay()
         }
 
         ConfirmationModal(
@@ -155,11 +159,7 @@ data class BudgetEntryScreen(val budgetEntry: BudgetEntry) {
                     .setType("*/*")
                     .putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("application/pdf", "image/jpeg"))
 
-                startActivity(
-                    /* context = */ context,
-                    /* intent = */ Intent.createChooser(shareIntent, "Share Invoice"),
-                    /* options = */ null
-                )
+                context.startActivity(Intent.createChooser(shareIntent, "Share Invoice"))
             },
             onDelete = {
                 BudgetEntryEvent
