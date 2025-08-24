@@ -21,9 +21,9 @@ import kotlinx.coroutines.withContext
 
 class SmsService(
     private val context: Context,
-    private val smsMapper: SmsMapper = SmsMapper(),
-    private val budgetEntryRepository: BudgetEntryRepository = BudgetEntryRepository(),
-    private val scope: CoroutineScope = CoroutineScope(Dispatchers.IO)
+    private val smsMapper: SmsMapper,
+    private val budgetEntryRepository: BudgetEntryRepository,
+    private val scope: CoroutineScope
 ) {
     fun processSms(messageBody: String, bankConfigs: Set<BankSmsConfig>) {
         scope.launch {

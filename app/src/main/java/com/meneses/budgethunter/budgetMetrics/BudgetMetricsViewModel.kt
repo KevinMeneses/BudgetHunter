@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class BudgetMetricsViewModel(
-    private val getTotalsPerCategoryUseCase: GetTotalsPerCategoryUseCase = GetTotalsPerCategoryUseCase()
+    private val getTotalsPerCategoryUseCase: GetTotalsPerCategoryUseCase
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(BudgetMetricsState())
     val uiState = _uiState.asStateFlow()

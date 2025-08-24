@@ -1,23 +1,19 @@
 package com.meneses.budgethunter.budgetList.data
 
-import com.meneses.budgethunter.MyApplication
 import com.meneses.budgethunter.budgetList.data.datasource.BudgetLocalDataSource
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.budgetList.domain.BudgetFilter
 import com.meneses.budgethunter.commons.data.KtorRealtimeMessagingClient
 import com.meneses.budgethunter.commons.data.PreferencesManager
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 
 class BudgetRepository(
-    private val localDataSource: BudgetLocalDataSource = BudgetLocalDataSource(),
-    private val preferencesManager: PreferencesManager = MyApplication.preferencesManager,
-    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
-    private val messagingClient: () -> KtorRealtimeMessagingClient = {
-        KtorRealtimeMessagingClient.getInstance()
-    }
+    private val localDataSource: BudgetLocalDataSource,
+    private val preferencesManager: PreferencesManager,
+    private val ioDispatcher: CoroutineDispatcher,
+    private val messagingClient: () -> KtorRealtimeMessagingClient
 ) {
     val budgets: Flow<List<Budget>>
         get() = localDataSource.budgets

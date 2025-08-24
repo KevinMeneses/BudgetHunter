@@ -3,12 +3,11 @@ package com.meneses.budgethunter.budgetMetrics.application
 import com.meneses.budgethunter.budgetEntry.data.datasource.BudgetEntryLocalDataSource
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class GetTotalsPerCategoryUseCase(
-    private val budgetEntryLocalDataSource: BudgetEntryLocalDataSource = BudgetEntryLocalDataSource(),
-    private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default
+    private val budgetEntryLocalDataSource: BudgetEntryLocalDataSource,
+    private val defaultDispatcher: CoroutineDispatcher
 ) {
     suspend fun execute(): Map<BudgetEntry.Category, Double> = withContext(defaultDispatcher) {
         val categories = BudgetEntry

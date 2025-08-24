@@ -4,16 +4,40 @@ import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
-import app.cash.sqldelight.driver.android.AndroidSqliteDriver
-import com.meneses.budgethunter.commons.data.PreferencesManager
-import com.meneses.budgethunter.db.Database
+import com.meneses.budgethunter.budgetDetail.di.BudgetDetailModule
+import com.meneses.budgethunter.budgetEntry.di.BudgetEntryModule
+import com.meneses.budgethunter.budgetList.di.BudgetListModule
+import com.meneses.budgethunter.budgetMetrics.di.BudgetMetricsModule
+import com.meneses.budgethunter.di.AppModule
+import com.meneses.budgethunter.settings.di.SettingsModule
+import com.meneses.budgethunter.sms.di.SmsModule
+import com.meneses.budgethunter.splash.di.SplashModule
+import org.koin.android.ext.koin.androidContext
+import org.koin.android.ext.koin.androidLogger
+import org.koin.core.context.startKoin
+import org.koin.ksp.generated.module
 
 class MyApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        driver = AndroidSqliteDriver(Database.Schema, applicationContext, "budgethunter.db")
-        preferencesManager = PreferencesManager(applicationContext)
+
+        // Initialize Koin
+        startKoin {
+            androidLogger()
+            androidContext(this@MyApplication)
+            modules(
+                AppModule().module,
+                BudgetListModule().module,
+                BudgetDetailModule().module,
+                BudgetEntryModule().module,
+                BudgetMetricsModule().module,
+                SettingsModule().module,
+                SplashModule().module,
+                SmsModule().module
+            )
+        }
+
         createNotificationChannels()
     }
 
@@ -30,9 +54,6 @@ class MyApplication : Application() {
     }
 
     companion object {
-        lateinit var driver: AndroidSqliteDriver
-        lateinit var preferencesManager: PreferencesManager
-
         private const val SMS_TRANSACTION_CHANNEL_ID = "sms_transactions"
     }
 }

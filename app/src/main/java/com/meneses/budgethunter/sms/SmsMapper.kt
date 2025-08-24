@@ -1,13 +1,12 @@
 package com.meneses.budgethunter.sms
 
 import android.util.Log
-import com.meneses.budgethunter.MyApplication
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.commons.bank.BankSmsConfig
 import com.meneses.budgethunter.commons.data.PreferencesManager
 
 class SmsMapper(
-    private val preferencesManager: PreferencesManager = MyApplication.preferencesManager
+    private val preferencesManager: PreferencesManager
 ) {
     fun smsToBudgetEntry(messageBody: String, bankConfig: BankSmsConfig): BudgetEntry? {
         val containsBankKeyword = bankConfig.senderKeywords.any { keyword ->

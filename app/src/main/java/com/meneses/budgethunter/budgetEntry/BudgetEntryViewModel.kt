@@ -18,8 +18,8 @@ import java.io.File
 import java.io.IOException
 
 class BudgetEntryViewModel(
-    private val budgetEntryRepository: BudgetEntryRepository = BudgetEntryRepository(),
-    private val getAIBudgetEntryFromImageUseCase: GetAIBudgetEntryFromImageUseCase = GetAIBudgetEntryFromImageUseCase()
+    private val budgetEntryRepository: BudgetEntryRepository,
+    private val getAIBudgetEntryFromImageUseCase: GetAIBudgetEntryFromImageUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(BudgetEntryState())
@@ -84,7 +84,6 @@ class BudgetEntryViewModel(
 
             toggleAttachInvoiceModal(false)
         } catch (e: Exception) {
-            e
             updateInvoiceError("Something went wrong loading file, please try again")
             delay(2000)
             updateInvoiceError(null)

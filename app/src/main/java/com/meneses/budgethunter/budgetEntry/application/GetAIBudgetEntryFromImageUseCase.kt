@@ -5,22 +5,17 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.content
-import com.meneses.budgethunter.BuildConfig
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.commons.util.getBitmapFromPDFFileDescriptor
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import java.time.LocalDate
 
 class GetAIBudgetEntryFromImageUseCase(
-    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
-    private val json: Json = Json { coerceInputValues = true },
-    private val generativeModel: GenerativeModel = GenerativeModel(
-        modelName = "gemini-2.0-flash",
-        apiKey = BuildConfig.GEMINI_API_KEY
-    )
+    private val ioDispatcher: CoroutineDispatcher,
+    private val json: Json,
+    private val generativeModel: GenerativeModel
 ) {
     private val prompt =
         """this is the image of a receipt, obtain the following items:

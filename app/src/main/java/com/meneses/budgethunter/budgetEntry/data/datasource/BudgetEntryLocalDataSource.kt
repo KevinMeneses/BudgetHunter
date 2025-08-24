@@ -6,16 +6,14 @@ import app.cash.sqldelight.coroutines.mapToList
 import com.meneses.budgethunter.budgetEntry.data.toDomain
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntryFilter
-import com.meneses.budgethunter.commons.data.AndroidDatabaseFactory
 import com.meneses.budgethunter.db.BudgetEntryQueries
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 
 class BudgetEntryLocalDataSource(
-    private val queries: BudgetEntryQueries = AndroidDatabaseFactory().create().budgetEntryQueries,
-    private val dispatcher: CoroutineDispatcher = Dispatchers.IO
+    private val queries: BudgetEntryQueries,
+    private val dispatcher: CoroutineDispatcher
 ) {
     fun getAllCached(): List<BudgetEntry> = cachedEntries.get()
 

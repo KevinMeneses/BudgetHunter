@@ -3,12 +3,11 @@ package com.meneses.budgethunter.budgetEntry.data
 import com.meneses.budgethunter.budgetEntry.data.datasource.BudgetEntryLocalDataSource
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class BudgetEntryRepository(
-    private val localDataSource: BudgetEntryLocalDataSource = BudgetEntryLocalDataSource(),
-    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
+    private val localDataSource: BudgetEntryLocalDataSource,
+    private val ioDispatcher: CoroutineDispatcher
 ) {
     fun getAllByBudgetId(budgetId: Long) =
         localDataSource.selectAllByBudgetId(budgetId)

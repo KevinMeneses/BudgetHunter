@@ -9,7 +9,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
+import org.koin.androidx.compose.koinViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -51,7 +51,7 @@ class MainActivity : ComponentActivity() {
                         startDestination = SplashScreen
                     ) {
                         composable<SplashScreen> {
-                            val splashScreenViewModel: SplashScreenViewModel = viewModel()
+                            val splashScreenViewModel: SplashScreenViewModel = koinViewModel()
                             SplashScreen.Show(
                                 uiState = splashScreenViewModel.uiState.collectAsStateWithLifecycle().value,
                                 onEvent = splashScreenViewModel::sendEvent,
@@ -67,7 +67,7 @@ class MainActivity : ComponentActivity() {
                         }
 
                         composable<BudgetListScreen> {
-                            val budgetListViewModel: BudgetListViewModel = viewModel()
+                            val budgetListViewModel: BudgetListViewModel = koinViewModel()
                             BudgetListScreen.Show(
                                 uiState = budgetListViewModel.uiState.collectAsStateWithLifecycle().value,
                                 onEvent = budgetListViewModel::sendEvent,
@@ -84,7 +84,7 @@ class MainActivity : ComponentActivity() {
                         }
 
                         composable<SettingsScreen> {
-                            val settingsViewModel: SettingsViewModel = viewModel()
+                            val settingsViewModel: SettingsViewModel = koinViewModel()
                             val context = LocalContext.current
                             LaunchedEffect(Unit) { settingsViewModel.loadSettings(context) }
                             SettingsScreen.Show(
@@ -97,8 +97,9 @@ class MainActivity : ComponentActivity() {
                         composable<BudgetDetailScreen>(
                             typeMap = mapOf(typeOf<Budget>() to serializableType<Budget>())
                         ) {
-                            val budgetDetailViewModel: BudgetDetailViewModel = viewModel()
-                            it.toRoute<BudgetDetailScreen>().Show(
+                            val route = it.toRoute<BudgetDetailScreen>()
+                            val budgetDetailViewModel: BudgetDetailViewModel = koinViewModel()
+                            route.Show(
                                 uiState = budgetDetailViewModel.uiState.collectAsStateWithLifecycle().value,
                                 onEvent = budgetDetailViewModel::sendEvent,
                                 goBack = navController::popBackStack,
@@ -115,8 +116,9 @@ class MainActivity : ComponentActivity() {
                         composable<BudgetEntryScreen>(
                             typeMap = mapOf(typeOf<BudgetEntry>() to serializableType<BudgetEntry>())
                         ) {
-                            val budgetEntryViewModel: BudgetEntryViewModel = viewModel()
-                            it.toRoute<BudgetEntryScreen>().Show(
+                            val route = it.toRoute<BudgetEntryScreen>()
+                            val budgetEntryViewModel: BudgetEntryViewModel = koinViewModel()
+                            route.Show(
                                 uiState = budgetEntryViewModel.uiState.collectAsStateWithLifecycle().value,
                                 onEvent = budgetEntryViewModel::sendEvent,
                                 goBack = navController::popBackStack
@@ -126,8 +128,9 @@ class MainActivity : ComponentActivity() {
                         composable<BudgetMetricsScreen>(
                             typeMap = mapOf(typeOf<Budget>() to serializableType<Budget>())
                         ) {
-                            val budgetMetricsViewModel: BudgetMetricsViewModel = viewModel()
-                            it.toRoute<BudgetMetricsScreen>().Show(
+                            val route = it.toRoute<BudgetMetricsScreen>()
+                            val budgetMetricsViewModel: BudgetMetricsViewModel = koinViewModel()
+                            route.Show(
                                 uiState = budgetMetricsViewModel.uiState.collectAsStateWithLifecycle().value,
                                 goBack = navController::popBackStack
                             )

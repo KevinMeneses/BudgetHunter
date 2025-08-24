@@ -6,15 +6,13 @@ import app.cash.sqldelight.coroutines.mapToList
 import com.meneses.budgethunter.budgetList.data.mapSelectAllToBudget
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.budgetList.domain.BudgetFilter
-import com.meneses.budgethunter.commons.data.AndroidDatabaseFactory
 import com.meneses.budgethunter.db.BudgetQueries
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.onEach
 
 class BudgetLocalDataSource(
-    private val queries: BudgetQueries = AndroidDatabaseFactory().create().budgetQueries,
-    dispatcher: CoroutineDispatcher = Dispatchers.IO
+    private val queries: BudgetQueries,
+    dispatcher: CoroutineDispatcher
 ) {
     val budgets = queries
         .selectAll(::mapSelectAllToBudget)

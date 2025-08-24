@@ -1,7 +1,6 @@
 package com.meneses.budgethunter.budgetDetail.data
 
 import androidx.lifecycle.AtomicReference
-import com.meneses.budgethunter.MyApplication
 import com.meneses.budgethunter.budgetDetail.domain.BudgetDetail
 import com.meneses.budgethunter.budgetEntry.data.datasource.BudgetEntryLocalDataSource
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntryFilter
@@ -11,7 +10,6 @@ import com.meneses.budgethunter.commons.data.KtorRealtimeMessagingClient
 import com.meneses.budgethunter.commons.data.PreferencesManager
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -23,14 +21,12 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 class BudgetDetailRepository(
-    private val budgetLocalDataSource: BudgetLocalDataSource = BudgetLocalDataSource(),
-    private val entriesLocalDataSource: BudgetEntryLocalDataSource = BudgetEntryLocalDataSource(),
-    private val preferencesManager: PreferencesManager = MyApplication.preferencesManager,
-    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
-    private val deleteBudgetUseCase: DeleteBudgetUseCase = DeleteBudgetUseCase(budgetLocalDataSource, entriesLocalDataSource, ioDispatcher),
-    private val messagingClient: () -> KtorRealtimeMessagingClient = {
-        KtorRealtimeMessagingClient.getInstance()
-    }
+    private val budgetLocalDataSource: BudgetLocalDataSource,
+    private val entriesLocalDataSource: BudgetEntryLocalDataSource,
+    private val preferencesManager: PreferencesManager,
+    private val ioDispatcher: CoroutineDispatcher,
+    private val deleteBudgetUseCase: DeleteBudgetUseCase,
+    private val messagingClient: () -> KtorRealtimeMessagingClient
 ) {
 
     private var collaborationJob: Job? = null

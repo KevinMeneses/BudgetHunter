@@ -14,6 +14,7 @@ import io.mockk.verify
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.StandardTestDispatcher
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
@@ -49,6 +50,7 @@ class BudgetRepositoryTest {
         repository = BudgetRepository(
             localDataSource = dataSource,
             preferencesManager = preferencesManager,
+            ioDispatcher = StandardTestDispatcher(),
             messagingClient = messagingClient
         )
     }

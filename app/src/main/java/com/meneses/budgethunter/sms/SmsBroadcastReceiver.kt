@@ -5,15 +5,19 @@ import android.content.Context
 import android.content.Intent
 import android.provider.Telephony
 import android.util.Log
-import com.meneses.budgethunter.MyApplication
 import com.meneses.budgethunter.commons.bank.SupportedBanks
+import com.meneses.budgethunter.commons.data.PreferencesManager
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
-class SmsBroadcastReceiver : BroadcastReceiver() {
+class SmsBroadcastReceiver : BroadcastReceiver(), KoinComponent {
+
+    private val smsService: SmsService by inject()
+    private val preferencesManager: PreferencesManager by inject()
 
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != Telephony.Sms.Intents.SMS_RECEIVED_ACTION) return
 
-        val preferencesManager = MyApplication.preferencesManager
         if (!preferencesManager.isSmsReadingEnabled) return
 
         val selectedBankIds = preferencesManager.selectedBankIds
@@ -44,7 +48,7 @@ class SmsBroadcastReceiver : BroadcastReceiver() {
             }
 
             if (isFromSelectedBank) {
-                SmsService(context.applicationContext).processSms(messageBody, selectedBankConfigs)
+                smsService.processSms(messageBody, selectedBankConfigs)
             } else {
                 Log.d("SmsReceiver", "SMS ignorado, no coincide con ningún banco seleccionado.")
             }

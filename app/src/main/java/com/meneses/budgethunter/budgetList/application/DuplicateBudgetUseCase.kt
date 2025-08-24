@@ -4,14 +4,13 @@ import com.meneses.budgethunter.budgetEntry.data.BudgetEntryRepository
 import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.budgetList.domain.Budget
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.withContext
 
 class DuplicateBudgetUseCase(
     private val budgetRepository: BudgetRepository,
-    private val budgetEntryRepository: BudgetEntryRepository = BudgetEntryRepository(),
-    private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default
+    private val budgetEntryRepository: BudgetEntryRepository,
+    private val defaultDispatcher: CoroutineDispatcher
 ) {
     suspend fun execute(budget: Budget) = withContext(defaultDispatcher) {
         val updatedBudget = budget.copy(name = budget.name + " (copy)")

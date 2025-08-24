@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class BudgetDetailViewModel(
-    private val budgetDetailRepository: BudgetDetailRepository = BudgetDetailRepository()
+    private val budgetDetailRepository: BudgetDetailRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(BudgetDetailState())

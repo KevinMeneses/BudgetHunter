@@ -15,9 +15,9 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class BudgetListViewModel(
-    private val budgetRepository: BudgetRepository = BudgetRepository(),
-    private val duplicateBudgetUseCase: DuplicateBudgetUseCase = DuplicateBudgetUseCase(budgetRepository),
-    private val deleteBudgetUseCase: DeleteBudgetUseCase = DeleteBudgetUseCase()
+    private val budgetRepository: BudgetRepository,
+    private val duplicateBudgetUseCase: DuplicateBudgetUseCase,
+    private val deleteBudgetUseCase: DeleteBudgetUseCase
 ) : ViewModel() {
     val uiState get() = _uiState.asStateFlow()
     private val _uiState = MutableStateFlow(BudgetListState())
