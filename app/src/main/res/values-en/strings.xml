@@ -121,6 +121,13 @@
     <string name="app_version">Budget Hunter v1.0.0</string>
     <string name="app_description">An application to manage your budgets intelligently</string>
     
+    <!-- AI Processing Strings -->
+    <string name="ai_processing">AI Processing</string>
+    <string name="enable_ai_processing">Enable AI processing</string>
+    <string name="ai_processing_description">Automatically processes invoices and receipts using artificial intelligence to complete the entry form</string>
+    <string name="activated">Activated</string>
+    <string name="deactivated">Deactivated</string>
+    
     <!-- Content Description Strings -->
     <string name="invoice_content_description">Invoice</string>
     <string name="edit_content_description">Edit</string>
@@ -136,6 +143,7 @@
     <string name="default_budget_icon_description">Default budget icon</string>
     <string name="bank_selection_icon_description">Bank selection icon</string>
     <string name="about_icon_description">About icon</string>
+    <string name="ai_processing_icon_description">AI processing icon</string>
     <string name="update_budget_icon_description">Update budget icon</string>
     <string name="select_from_files_icon_description">Select files icon</string>
     <string name="take_picture_icon_description">Take picture icon</string>

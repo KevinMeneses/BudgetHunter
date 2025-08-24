@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -107,6 +108,17 @@ object SettingsScreen {
                     },
                     onSelectBanks = {
                         onEvent(SettingsEvent.ShowBankSelector)
+                    }
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+                HorizontalDivider()
+
+                Spacer(modifier = Modifier.height(16.dp))
+                AiProcessingSection(
+                    uiState = uiState,
+                    onToggleAiProcessing = { enabled ->
+                        onEvent(SettingsEvent.ToggleAiProcessing(enabled))
                     }
                 )
 
@@ -201,7 +213,7 @@ object SettingsScreen {
                     SettingItem(
                         icon = Icons.Default.Notifications,
                         title = stringResource(id = R.string.enable_sms_reading),
-                        subtitle = if (uiState.isSmsReadingEnabled) "Activado" else "Desactivado",
+                        subtitle = if (uiState.isSmsReadingEnabled) stringResource(id = R.string.activated) else stringResource(id = R.string.deactivated),
                         showSwitch = true,
                         switchChecked = uiState.isSmsReadingEnabled,
                         onSwitchChange = onToggleSmsReading,
@@ -334,6 +346,67 @@ object SettingsScreen {
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+            }
+        }
+    }
+
+    @Composable
+    private fun AiProcessingSection(
+        uiState: SettingsState,
+        onToggleAiProcessing: (Boolean) -> Unit
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(20.dp)
+            ) {
+                // Header
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Psychology,
+                        contentDescription = stringResource(R.string.ai_processing_icon_description),
+                        modifier = Modifier.size(28.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = stringResource(id = R.string.ai_processing),
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                        maxLines = 1
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Text(
+                    text = stringResource(id = R.string.ai_processing_description),
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    lineHeight = 20.sp,
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // AI Processing Toggle
+                SettingItem(
+                    icon = Icons.Default.Psychology,
+                    title = stringResource(id = R.string.enable_ai_processing),
+                    subtitle = if (uiState.isAiProcessingEnabled) stringResource(id = R.string.activated) else stringResource(id = R.string.deactivated),
+                    showSwitch = true,
+                    switchChecked = uiState.isAiProcessingEnabled,
+                    onSwitchChange = onToggleAiProcessing
+                )
             }
         }
     }

@@ -121,6 +121,13 @@
     <string name="app_version">Cazador de Presupuestos v1.0.0</string>
     <string name="app_description">Una aplicación para gestionar tus presupuestos de manera inteligente</string>
     
+    <!-- AI Processing Strings -->
+    <string name="ai_processing">Procesamiento con IA</string>
+    <string name="enable_ai_processing">Habilitar procesamiento con IA</string>
+    <string name="ai_processing_description">Procesa automáticamente las facturas y comprobantes usando inteligencia artificial para completar el formulario de entrada</string>
+    <string name="activated">Activado</string>
+    <string name="deactivated">Desactivado</string>
+    
     <!-- Content Description Strings -->
     <string name="invoice_content_description">Factura</string>
     <string name="edit_content_description">Editar</string>
@@ -136,6 +143,7 @@
     <string name="default_budget_icon_description">Icono de presupuesto por defecto</string>
     <string name="bank_selection_icon_description">Icono de selección de bancos</string>
     <string name="about_icon_description">Icono de acerca de</string>
+    <string name="ai_processing_icon_description">Icono de procesamiento con IA</string>
     <string name="update_budget_icon_description">Icono de actualizar presupuesto</string>
     <string name="select_from_files_icon_description">Icono de seleccionar archivos</string>
     <string name="take_picture_icon_description">Icono de tomar foto</string>

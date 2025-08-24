@@ -36,6 +36,7 @@ class SettingsViewModel(
             is SettingsEvent.ShowBankSelector -> showBankSelector()
             is SettingsEvent.HideBankSelector -> hideBankSelector()
             is SettingsEvent.SetSelectedBanks -> setSelectedBanks(event.bankConfigs)
+            is SettingsEvent.ToggleAiProcessing -> toggleAiProcessing(event.enabled)
         }
     }
 
@@ -76,6 +77,7 @@ class SettingsViewModel(
                         hasSmsPermission = checkSmsPermission(context),
                         availableBanks = SupportedBanks.ALL_BANKS,
                         selectedBanks = selectedBanks,
+                        isAiProcessingEnabled = preferencesManager.isAiProcessingEnabled,
                         isLoading = false
                     )
                 }
@@ -88,6 +90,11 @@ class SettingsViewModel(
     private fun toggleSmsReading(enabled: Boolean) {
         preferencesManager.isSmsReadingEnabled = enabled
         _uiState.update { it.copy(isSmsReadingEnabled = enabled) }
+    }
+
+    private fun toggleAiProcessing(enabled: Boolean) {
+        preferencesManager.isAiProcessingEnabled = enabled
+        _uiState.update { it.copy(isAiProcessingEnabled = enabled) }
     }
 
     private fun setDefaultBudget(budget: Budget) {

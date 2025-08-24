@@ -12,5 +12,6 @@ data class SettingsState(
     val isLoading: Boolean = false,
     val availableBanks: List<BankSmsConfig> = emptyList(),
     val selectedBanks: Set<BankSmsConfig> = emptySet(),
-    val isBankSelectorVisible: Boolean = false
+    val isBankSelectorVisible: Boolean = false,
+    val isAiProcessingEnabled: Boolean = true
 )

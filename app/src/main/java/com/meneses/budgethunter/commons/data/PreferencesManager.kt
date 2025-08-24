@@ -35,11 +35,16 @@ class PreferencesManager(context: Context) {
             putString(KEY_SELECTED_BANK_IDS, value.joinToString(","))
         }
 
+    var isAiProcessingEnabled: Boolean
+        get() = sharedPreferences.getBoolean(KEY_AI_PROCESSING_ENABLED, true)
+        set(value) = sharedPreferences.edit { putBoolean(KEY_AI_PROCESSING_ENABLED, value) }
+
     companion object {
         private const val PREF_NAME = "budget_hunter_preferences"
         private const val KEY_COLLABORATION_ENABLED = "collaboration_enabled"
         private const val KEY_SMS_READING_ENABLED = "sms_reading_enabled"
         private const val KEY_DEFAULT_BUDGET_ID = "default_budget_id"
         private const val KEY_SELECTED_BANK_IDS = "selected_bank_ids"
+        private const val KEY_AI_PROCESSING_ENABLED = "ai_processing_enabled"
     }
 }

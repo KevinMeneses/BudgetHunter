@@ -12,4 +12,5 @@ sealed interface SettingsEvent {
     object ShowBankSelector : SettingsEvent
     object HideBankSelector : SettingsEvent
     data class SetSelectedBanks(val bankConfigs: Set<BankSmsConfig>) : SettingsEvent
+    data class ToggleAiProcessing(val enabled: Boolean) : SettingsEvent
 }

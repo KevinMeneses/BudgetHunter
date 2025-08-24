@@ -5,6 +5,7 @@ import com.meneses.budgethunter.budgetEntry.BudgetEntryViewModel
 import com.meneses.budgethunter.budgetEntry.application.GetAIBudgetEntryFromImageUseCase
 import com.meneses.budgethunter.budgetEntry.data.BudgetEntryRepository
 import com.meneses.budgethunter.budgetEntry.data.datasource.BudgetEntryLocalDataSource
+import com.meneses.budgethunter.commons.data.PreferencesManager
 import com.meneses.budgethunter.db.BudgetEntryQueries
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.serialization.json.Json
@@ -38,6 +39,7 @@ class BudgetEntryModule {
     @Factory
     fun provideBudgetEntryViewModel(
         budgetEntryRepository: BudgetEntryRepository,
-        getAIBudgetEntryFromImageUseCase: GetAIBudgetEntryFromImageUseCase
-    ): BudgetEntryViewModel = BudgetEntryViewModel(budgetEntryRepository, getAIBudgetEntryFromImageUseCase)
+        getAIBudgetEntryFromImageUseCase: GetAIBudgetEntryFromImageUseCase,
+        preferencesManager: PreferencesManager
+    ): BudgetEntryViewModel = BudgetEntryViewModel(budgetEntryRepository, getAIBudgetEntryFromImageUseCase, preferencesManager)
 }

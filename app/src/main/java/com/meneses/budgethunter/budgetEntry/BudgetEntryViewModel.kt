@@ -9,6 +9,7 @@ import com.meneses.budgethunter.budgetEntry.application.BudgetEntryState
 import com.meneses.budgethunter.budgetEntry.application.GetAIBudgetEntryFromImageUseCase
 import com.meneses.budgethunter.budgetEntry.data.BudgetEntryRepository
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
+import com.meneses.budgethunter.commons.data.PreferencesManager
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,7 +20,8 @@ import java.io.IOException
 
 class BudgetEntryViewModel(
     private val budgetEntryRepository: BudgetEntryRepository,
-    private val getAIBudgetEntryFromImageUseCase: GetAIBudgetEntryFromImageUseCase
+    private val getAIBudgetEntryFromImageUseCase: GetAIBudgetEntryFromImageUseCase,
+    private val preferencesManager: PreferencesManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(BudgetEntryState())
@@ -68,12 +70,16 @@ class BudgetEntryViewModel(
             val invoiceDir = saveInvoiceInAppInternalStorage(event)
             wasNewInvoiceAttached = true
 
-            val aiBudgetEntry = _uiState.value.budgetEntry?.let { budgetEntry ->
-                getAIBudgetEntryFromImageUseCase.execute(
-                    imageUri = invoiceDir.toUri(),
-                    budgetEntry = budgetEntry,
-                    contentResolver = event.contentResolver
-                )
+            val aiBudgetEntry = if (preferencesManager.isAiProcessingEnabled) {
+                _uiState.value.budgetEntry?.let { budgetEntry ->
+                    getAIBudgetEntryFromImageUseCase.execute(
+                        imageUri = invoiceDir.toUri(),
+                        budgetEntry = budgetEntry,
+                        contentResolver = event.contentResolver
+                    )
+                }
+            } else {
+                _uiState.value.budgetEntry
             }
 
             _uiState.update {
