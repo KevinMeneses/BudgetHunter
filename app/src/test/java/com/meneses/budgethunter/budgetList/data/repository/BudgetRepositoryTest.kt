@@ -15,12 +15,19 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.Dispatchers
 import org.junit.Assert
 import org.junit.Before
+import org.junit.After
 import org.junit.Test
 import java.time.LocalDate
 
+@ExperimentalCoroutinesApi
 class BudgetRepositoryTest {
+    private val testDispatcher = StandardTestDispatcher()
     private val dataSource: BudgetLocalDataSource = mockk(relaxed = true)
     private val preferencesManager = mockk<PreferencesManager>(relaxed = true)
     private val messagingClient = mockk<() -> KtorRealtimeMessagingClient>(relaxed = true)
@@ -47,12 +54,18 @@ class BudgetRepositoryTest {
 
     @Before
     fun setup() {
+        Dispatchers.setMain(testDispatcher)
         repository = BudgetRepository(
             localDataSource = dataSource,
             preferencesManager = preferencesManager,
-            ioDispatcher = StandardTestDispatcher(),
+            ioDispatcher = testDispatcher,
             messagingClient = messagingClient
         )
+    }
+
+    @After
+    fun tearDown() {
+        Dispatchers.resetMain()
     }
 
     @Test
