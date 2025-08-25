@@ -1,18 +1,20 @@
 package com.meneses.budgethunter.budgetEntry.di
 
+import android.content.Context
 import com.google.ai.client.generativeai.GenerativeModel
 import com.meneses.budgethunter.budgetEntry.BudgetEntryViewModel
-import com.meneses.budgethunter.budgetEntry.application.GetAIBudgetEntryFromImageUseCase
+import com.meneses.budgethunter.budgetEntry.application.CreateAndroidBudgetEntryFromImageUseCase
+import com.meneses.budgethunter.budgetEntry.application.CreateBudgetEntryFromImageUseCase
 import com.meneses.budgethunter.budgetEntry.data.BudgetEntryRepository
 import com.meneses.budgethunter.budgetEntry.data.datasource.BudgetEntryLocalDataSource
 import com.meneses.budgethunter.commons.data.PreferencesManager
 import com.meneses.budgethunter.db.BudgetEntryQueries
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.serialization.json.Json
+import org.koin.core.annotation.Factory
 import org.koin.core.annotation.Module
 import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
-import org.koin.core.annotation.Factory
 
 @Module
 class BudgetEntryModule {
@@ -31,15 +33,26 @@ class BudgetEntryModule {
 
     @Single
     fun provideGetAIBudgetEntryFromImageUseCase(
+        context: Context,
         @Named("IO") ioDispatcher: CoroutineDispatcher,
-        json: Json,
-        generativeModel: GenerativeModel
-    ): GetAIBudgetEntryFromImageUseCase = GetAIBudgetEntryFromImageUseCase(ioDispatcher, json, generativeModel)
+        generativeModel: GenerativeModel,
+        json: Json
+    ): CreateBudgetEntryFromImageUseCase =
+        CreateAndroidBudgetEntryFromImageUseCase(
+            contentResolver = context.contentResolver,
+            ioDispatcher = ioDispatcher,
+            generativeModel = generativeModel,
+            json = json
+        )
 
     @Factory
     fun provideBudgetEntryViewModel(
         budgetEntryRepository: BudgetEntryRepository,
-        getAIBudgetEntryFromImageUseCase: GetAIBudgetEntryFromImageUseCase,
+        createBudgetEntryFromImageUseCase: CreateBudgetEntryFromImageUseCase,
         preferencesManager: PreferencesManager
-    ): BudgetEntryViewModel = BudgetEntryViewModel(budgetEntryRepository, getAIBudgetEntryFromImageUseCase, preferencesManager)
+    ): BudgetEntryViewModel = BudgetEntryViewModel(
+        budgetEntryRepository,
+        createBudgetEntryFromImageUseCase,
+        preferencesManager
+    )
 }

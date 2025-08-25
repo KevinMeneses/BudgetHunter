@@ -20,10 +20,6 @@ sealed interface BudgetDetailEvent {
     data class ToggleDeleteEntriesModal(val isVisible: Boolean) : BudgetDetailEvent
     data class ToggleAllEntriesSelection(val isSelected: Boolean) : BudgetDetailEvent
     data class ToggleSelectionState(val isActivated: Boolean) : BudgetDetailEvent
-    data class ToggleCollaborateModal(val isVisible: Boolean) : BudgetDetailEvent
-    object HideCodeModal : BudgetDetailEvent
-    object StartCollaboration : BudgetDetailEvent
-    object StopCollaboration : BudgetDetailEvent
     object ClearNavigation : BudgetDetailEvent
     object SortList : BudgetDetailEvent
 }

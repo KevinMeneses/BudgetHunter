@@ -4,24 +4,20 @@ import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.budgetList.data.datasource.BudgetLocalDataSource
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.budgetList.domain.BudgetFilter
-import com.meneses.budgethunter.commons.data.KtorRealtimeMessagingClient
-import com.meneses.budgethunter.commons.data.PreferencesManager
-import io.mockk.coEvery
-import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.toList
-import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.setMain
 import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import org.junit.After
 import org.junit.Assert
 import org.junit.Before
-import org.junit.After
 import org.junit.Test
 import java.time.LocalDate
 
@@ -29,8 +25,6 @@ import java.time.LocalDate
 class BudgetRepositoryTest {
     private val testDispatcher = StandardTestDispatcher()
     private val dataSource: BudgetLocalDataSource = mockk(relaxed = true)
-    private val preferencesManager = mockk<PreferencesManager>(relaxed = true)
-    private val messagingClient = mockk<() -> KtorRealtimeMessagingClient>(relaxed = true)
     private lateinit var repository: BudgetRepository
 
     // Test data
@@ -57,9 +51,7 @@ class BudgetRepositoryTest {
         Dispatchers.setMain(testDispatcher)
         repository = BudgetRepository(
             localDataSource = dataSource,
-            preferencesManager = preferencesManager,
-            ioDispatcher = testDispatcher,
-            messagingClient = messagingClient
+            ioDispatcher = testDispatcher
         )
     }
 
@@ -167,23 +159,6 @@ class BudgetRepositoryTest {
 
         // Then
         verify { dataSource.update(testBudget1) }
-    }
-
-    // Note: Repository doesn't have delete method, only create and update
-
-    @Test
-    fun `joinCollaboration should call messaging client`() = runTest {
-        // Given
-        val collaborationCode = 12345
-        val mockMessagingClient = mockk<KtorRealtimeMessagingClient>()
-        every { messagingClient() } returns mockMessagingClient
-        coEvery { mockMessagingClient.joinCollaboration(collaborationCode) } returns Unit
-
-        // When
-        repository.joinCollaboration(collaborationCode)
-
-        // Then
-        coVerify { mockMessagingClient.joinCollaboration(collaborationCode) }
     }
 
     @Test

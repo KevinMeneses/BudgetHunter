@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.provider.Telephony
 import android.util.Log
+import com.meneses.budgethunter.commons.bank.BankSmsConfig
 import com.meneses.budgethunter.commons.bank.SupportedBanks
 import com.meneses.budgethunter.commons.data.PreferencesManager
 import org.koin.core.component.KoinComponent
@@ -38,20 +39,22 @@ class SmsBroadcastReceiver : BroadcastReceiver(), KoinComponent {
         val messages = Telephony.Sms.Intents.getMessagesFromIntent(intent)
         messages?.forEach { smsMessage ->
             val sender = smsMessage.originatingAddress
-            val messageBody = smsMessage.messageBody ?: ""
+            val messageBody = smsMessage.messageBody.orEmpty()
+            processSmsMessage(messageBody, sender, selectedBankConfigs)
+        }
+    }
 
-            // Check if the SMS is from any of the selected banks
-            val isFromSelectedBank = sender != null && selectedBankConfigs.any { bankConfig ->
-                bankConfig.senderKeywords.any { keyword ->
-                    sender.contains(keyword, ignoreCase = true) || messageBody.contains(keyword, ignoreCase = true)
-                }
+    private fun processSmsMessage(messageBody: String, sender: String?, bankConfigs: Set<BankSmsConfig>) {
+        val isFromSelectedBank = sender != null && bankConfigs.any { bankConfig ->
+            bankConfig.senderKeywords.any { keyword ->
+                sender.contains(keyword, ignoreCase = true) || messageBody.contains(keyword, ignoreCase = true)
             }
+        }
 
-            if (isFromSelectedBank) {
-                smsService.processSms(messageBody, selectedBankConfigs)
-            } else {
-                Log.d("SmsReceiver", "SMS ignorado, no coincide con ningún banco seleccionado.")
-            }
+        if (isFromSelectedBank) {
+            smsService.processSms(messageBody, bankConfigs)
+        } else {
+            Log.d("SmsReceiver", "SMS ignorado, no coincide con ningún banco seleccionado.")
         }
     }
 }

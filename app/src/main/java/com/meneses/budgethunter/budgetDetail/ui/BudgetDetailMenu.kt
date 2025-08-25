@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
@@ -36,10 +35,8 @@ import com.meneses.budgethunter.theme.AppColors
 private fun Preview() {
     BudgetDetailMenu(
         animateFilterButton = false,
-        animateCollaborateButton = false,
         onFilterClick = {},
         onMetricsClick = {},
-        onCollaborateClick = {},
         onDeleteClick = {},
         onSettingsClick = {}
     )
@@ -48,10 +45,8 @@ private fun Preview() {
 @Composable
 fun BudgetDetailMenu(
     animateFilterButton: Boolean,
-    animateCollaborateButton: Boolean,
     onFilterClick: () -> Unit,
     onMetricsClick: () -> Unit,
-    onCollaborateClick: () -> Unit,
     onDeleteClick: () -> Unit,
     onSettingsClick: () -> Unit
 ) {
@@ -65,7 +60,6 @@ fun BudgetDetailMenu(
             ) {
                 item { FilterButton(animateFilterButton, onFilterClick) }
                 item { MetricsButton(onMetricsClick) }
-                // item { CollaborateButton(animateCollaborateButton, onCollaborateClick) }
                 item { DeleteButton(onDeleteClick) }
                 item { SettingsButton(onSettingsClick) }
             }
@@ -93,21 +87,6 @@ private fun MetricsButton(onClick: () -> Unit) {
     MenuButton(
         text = stringResource(R.string.metrics),
         icon = Icons.Default.Star,
-        onClick = onClick
-    )
-}
-
-@Composable
-private fun CollaborateButton(
-    animate: Boolean,
-    onClick: () -> Unit
-) {
-    MenuButton(
-        modifier = Modifier
-            .blinkEffect(animate)
-            .pulsateEffect(animate, targetValue = 1.1f),
-        text = stringResource(id = R.string.collaborate),
-        icon = Icons.Default.Person,
         onClick = onClick
     )
 }

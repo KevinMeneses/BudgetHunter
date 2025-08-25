@@ -5,11 +5,9 @@ import androidx.lifecycle.viewModelScope
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailEvent
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailState
 import com.meneses.budgethunter.budgetDetail.data.BudgetDetailRepository
-import com.meneses.budgethunter.budgetDetail.data.CollaborationException
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntryFilter
 import com.meneses.budgethunter.budgetList.domain.Budget
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -40,11 +38,7 @@ class BudgetDetailViewModel(
             is BudgetDetailEvent.ToggleAllEntriesSelection -> toggleAllEntriesSelection(event.isSelected)
             is BudgetDetailEvent.ToggleSelectEntry -> toggleEntrySelection(event)
             is BudgetDetailEvent.ClearNavigation -> clearNavigation()
-            is BudgetDetailEvent.StartCollaboration -> startCollaboration()
-            is BudgetDetailEvent.ToggleCollaborateModal -> toggleCollaborationModal(event.isVisible)
-            BudgetDetailEvent.StopCollaboration -> stopCollaboration()
-            BudgetDetailEvent.HideCodeModal -> _uiState.update { it.copy(collaborationCode = null) }
-            BudgetDetailEvent.SortList -> orderList()
+            is BudgetDetailEvent.SortList -> orderList()
         }
     }
 
@@ -82,38 +76,6 @@ class BudgetDetailViewModel(
             listOrder = newOrder
         )
     }
-
-    private fun stopCollaboration() = viewModelScope.launch {
-        budgetDetailRepository.stopCollaboration()
-        _uiState.update { it.copy(isCollaborationActive = false) }
-    }
-
-    private fun startCollaboration() = viewModelScope.launch {
-        try {
-            val collaborationCode = budgetDetailRepository.startCollaboration()
-            budgetDetailRepository.consumeCollaborationStream()
-            _uiState.update {
-                it.copy(
-                    isCollaborationActive = true,
-                    collaborationCode = collaborationCode
-                )
-            }
-        } catch (e: CollaborationException) {
-            collaborationError(e.message.orEmpty())
-        } catch (e: Exception) {
-            val errorMessage = "An error occurred trying to collaborate, please try again later"
-            collaborationError(errorMessage)
-        }
-    }
-
-    private suspend fun collaborationError(errorMessage: String) {
-        _uiState.update { it.copy(collaborationError = errorMessage) }
-        delay(3000)
-        _uiState.update { it.copy(collaborationError = null) }
-    }
-
-    private fun toggleCollaborationModal(visible: Boolean) =
-        _uiState.update { it.copy(isCollaborateModalVisible = visible) }
 
     private fun setBudget(budget: Budget) =
         _uiState.update {
@@ -186,7 +148,6 @@ class BudgetDetailViewModel(
     private fun deleteBudget() = viewModelScope.launch {
         _uiState.update {
             budgetDetailRepository.deleteBudget()
-            budgetDetailRepository.stopCollaboration()
             it.copy(goBack = true)
         }
     }

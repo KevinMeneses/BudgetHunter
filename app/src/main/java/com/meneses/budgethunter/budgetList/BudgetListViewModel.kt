@@ -8,7 +8,6 @@ import com.meneses.budgethunter.budgetList.application.DeleteBudgetUseCase
 import com.meneses.budgethunter.budgetList.application.DuplicateBudgetUseCase
 import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.budgetList.domain.Budget
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -56,9 +55,6 @@ class BudgetListViewModel(
             is BudgetListEvent.UpdateSearchQuery -> updateSearchQuery(event.query)
             is BudgetListEvent.ClearFilter -> clearFilter()
             is BudgetListEvent.ClearNavigation -> clearNavigation()
-            is BudgetListEvent.JoinCollaboration -> joinCollaboration(event.collaborationCode)
-            is BudgetListEvent.ToggleJoinCollaborationModal ->
-                setJoinCollaborationModalVisibility(event.isVisible)
         }
     }
 
@@ -68,27 +64,6 @@ class BudgetListViewModel(
 
     private fun deleteBudget(budgetId: Long) = viewModelScope.launch {
         deleteBudgetUseCase.execute(budgetId)
-    }
-
-    private fun setJoinCollaborationModalVisibility(visible: Boolean) =
-        _uiState.update { it.copy(joinCollaborationModalVisibility = visible) }
-
-    private fun joinCollaboration(collaborationCode: String) {
-        viewModelScope.launch {
-            try {
-                budgetRepository.joinCollaboration(collaborationCode.toInt())
-                // TODO: navigate to detail and consume collaboration stream there
-            } catch (e: Exception) {
-                collaborationError()
-            }
-        }
-    }
-
-    private suspend fun collaborationError() {
-        val errorMessage = "An error occurred trying to collaborate, please try again later"
-        _uiState.update { it.copy(collaborationError = errorMessage) }
-        delay(3000)
-        _uiState.update { it.copy(collaborationError = null) }
     }
 
     private fun createBudget(budget: Budget) = viewModelScope.launch {

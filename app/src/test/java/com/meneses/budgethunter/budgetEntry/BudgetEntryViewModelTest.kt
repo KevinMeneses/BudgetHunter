@@ -5,10 +5,10 @@ import android.net.Uri
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.meneses.budgethunter.R
 import com.meneses.budgethunter.budgetEntry.application.BudgetEntryEvent
-import com.meneses.budgethunter.budgetEntry.application.GetAIBudgetEntryFromImageUseCase
+import com.meneses.budgethunter.budgetEntry.application.CreateBudgetEntryFromImageUseCase
 import com.meneses.budgethunter.budgetEntry.data.BudgetEntryRepository
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
-import com.meneses.budgethunter.commons.data.PreferencesManager
+import com.meneses.budgethunter.commons.data.AndroidPreferencesManager
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -37,8 +37,8 @@ class BudgetEntryViewModelTest {
 
     private val dispatcher = StandardTestDispatcher()
     private val repository: BudgetEntryRepository = mockk()
-    private val getAIBudgetEntryFromImageUseCase: GetAIBudgetEntryFromImageUseCase = mockk()
-    private val preferencesManager: PreferencesManager = mockk()
+    private val getAIBudgetEntryFromImageUseCase: CreateBudgetEntryFromImageUseCase = mockk()
+    private val preferencesManager: AndroidPreferencesManager = mockk()
 
     private lateinit var viewModel: BudgetEntryViewModel
 
@@ -67,7 +67,7 @@ class BudgetEntryViewModelTest {
         every { preferencesManager.isAiProcessingEnabled } returns true
         viewModel = BudgetEntryViewModel(
             budgetEntryRepository = repository,
-            getAIBudgetEntryFromImageUseCase = getAIBudgetEntryFromImageUseCase,
+            createBudgetEntryFromImageUseCase = getAIBudgetEntryFromImageUseCase,
             preferencesManager = preferencesManager
         )
     }

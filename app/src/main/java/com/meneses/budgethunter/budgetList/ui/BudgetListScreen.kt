@@ -48,7 +48,6 @@ private fun Preview() {
                 )
             ),
             onEvent = {},
-            showUserGuide = {},
             showBudgetDetail = {},
             showSettings = {}
         )
@@ -61,7 +60,6 @@ object BudgetListScreen {
     fun Show(
         uiState: BudgetListState,
         onEvent: (BudgetListEvent) -> Unit,
-        showUserGuide: () -> Unit,
         showBudgetDetail: (Budget) -> Unit,
         showSettings: () -> Unit
     ) {
@@ -72,21 +70,6 @@ object BudgetListScreen {
         ModalNavigationDrawer(
             drawerContent = {
                 BudgetListMenu(
-                    isCollaborationActive = uiState.isCollaborationActive,
-                    onCollaborateClick = {
-                        coroutineScope.launch {
-                            drawerState.close()
-                            BudgetListEvent
-                                .ToggleJoinCollaborationModal(true)
-                                .run(onEvent)
-                        }
-                    },
-                    onUserGuideClick = {
-                        coroutineScope.launch {
-                            drawerState.close()
-                            showUserGuide()
-                        }
-                    },
                     onSettingsClick = {
                         coroutineScope.launch {
                             drawerState.close()
@@ -182,19 +165,10 @@ object BudgetListScreen {
                 budget = uiState.budgetToUpdate,
                 onEvent = onEvent
             )
-
-            JoinCollaborationModal(
-                show = uiState.joinCollaborationModalVisibility,
-                onEvent = onEvent
-            )
         }
 
         LaunchedEffect(key1 = uiState.navigateToBudget) {
             uiState.navigateToBudget?.let { showBudgetDetail(it) }
-        }
-
-        LaunchedEffect(key1 = uiState.collaborationError) {
-            uiState.collaborationError?.let { snackBarHostState.showSnackbar(it) }
         }
 
         DisposableEffect(key1 = Unit) {

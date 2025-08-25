@@ -239,40 +239,6 @@ class BudgetListViewModelTest {
     }
 
     @Test
-    fun `toggleJoinCollaborationModal event should update modal visibility`() = runTest {
-        // When - show modal
-        viewModel.sendEvent(BudgetListEvent.ToggleJoinCollaborationModal(true))
-
-        // Then
-        Assert.assertTrue(viewModel.uiState.value.joinCollaborationModalVisibility)
-
-        // When - hide modal
-        viewModel.sendEvent(BudgetListEvent.ToggleJoinCollaborationModal(false))
-
-        // Then
-        Assert.assertFalse(viewModel.uiState.value.joinCollaborationModalVisibility)
-    }
-
-    @Test
-    fun `joinCollaboration event should call repository and handle success`() = runTest(dispatcher) {
-        // Given
-        val collaborationCode = "12345"
-        coEvery { repository.joinCollaboration(12345) } returns Unit
-
-        val states = mutableListOf<BudgetListState>()
-        val job = launch { viewModel.uiState.toList(states) }
-
-        // When
-        viewModel.sendEvent(BudgetListEvent.JoinCollaboration(collaborationCode))
-        runCurrent()
-
-        // Then
-        coVerify { repository.joinCollaboration(12345) }
-
-        job.cancel()
-    }
-
-    @Test
     fun `toggleSearchMode event should update search state`() = runTest(dispatcher) {
         // Given
         val states = mutableListOf<BudgetListState>()

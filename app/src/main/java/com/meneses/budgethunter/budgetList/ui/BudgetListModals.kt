@@ -15,7 +15,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -23,7 +22,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -178,75 +176,6 @@ fun UpdateBudgetModal(
                 ) {
                     Text(
                         text = stringResource(R.string.update),
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = onDismiss) {
-                    Text(
-                        text = stringResource(id = R.string.cancel),
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-            },
-            properties = DialogProperties()
-        )
-    }
-}
-
-@Composable
-fun JoinCollaborationModal(
-    show: Boolean,
-    onEvent: (BudgetListEvent) -> Unit
-) {
-    if (show) {
-        val keyboardController = LocalSoftwareKeyboardController.current
-        var collaborationCode by remember { mutableStateOf("") }
-        val onDismiss = {
-            BudgetListEvent
-                .ToggleJoinCollaborationModal(false)
-                .run(onEvent)
-        }
-
-        AlertDialog(
-            onDismissRequest = onDismiss,
-            title = {
-                Text(
-                    text = stringResource(R.string.join_collaboration_title),
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            },
-            text = {
-                Column {
-                    Text(
-                        text = stringResource(R.string.enter_collaboration_code),
-                        fontSize = 14.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(bottom = 16.dp)
-                    )
-                    TextField(
-                        value = collaborationCode,
-                        onValueChange = { collaborationCode = it },
-                        label = { Text(text = stringResource(R.string.code)) }
-                    )
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        onDismiss()
-                        keyboardController?.hide()
-                        BudgetListEvent
-                            .JoinCollaboration(collaborationCode)
-                            .run(onEvent)
-                    },
-                    enabled = collaborationCode.isNotBlank()
-                ) {
-                    Text(
-                        text = stringResource(R.string.send),
                         fontWeight = FontWeight.Medium
                     )
                 }

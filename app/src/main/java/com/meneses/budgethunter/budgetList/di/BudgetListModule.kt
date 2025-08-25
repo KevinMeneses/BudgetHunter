@@ -7,13 +7,11 @@ import com.meneses.budgethunter.budgetList.application.DeleteBudgetUseCase
 import com.meneses.budgethunter.budgetList.application.DuplicateBudgetUseCase
 import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.budgetList.data.datasource.BudgetLocalDataSource
-import com.meneses.budgethunter.commons.data.KtorRealtimeMessagingClient
-import com.meneses.budgethunter.commons.data.PreferencesManager
 import kotlinx.coroutines.CoroutineDispatcher
+import org.koin.core.annotation.Factory
 import org.koin.core.annotation.Module
 import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
-import org.koin.core.annotation.Factory
 
 @Module
 class BudgetListModule {
@@ -27,10 +25,8 @@ class BudgetListModule {
     @Single
     fun provideBudgetRepository(
         localDataSource: BudgetLocalDataSource,
-        preferencesManager: PreferencesManager,
-        @Named("IO") ioDispatcher: CoroutineDispatcher,
-        messagingClient: () -> KtorRealtimeMessagingClient
-    ): BudgetRepository = BudgetRepository(localDataSource, preferencesManager, ioDispatcher, messagingClient)
+        @Named("IO") ioDispatcher: CoroutineDispatcher
+    ): BudgetRepository = BudgetRepository(localDataSource, ioDispatcher)
 
     @Single
     fun provideDuplicateBudgetUseCase(

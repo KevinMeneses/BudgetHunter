@@ -4,11 +4,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Build
-import androidx.compose.material.icons.filled.Face
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -17,7 +13,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -292,131 +287,4 @@ fun DeleteEntriesConfirmationModal(
         onDismiss = onDismiss,
         onConfirm = onConfirm
     )
-}
-
-@Composable
-fun CollaborateModal(
-    show: Boolean,
-    onEvent: (BudgetDetailEvent) -> Unit
-) {
-    if (show) {
-        AlertDialog(
-            onDismissRequest = {
-                BudgetDetailEvent
-                    .ToggleCollaborateModal(false)
-                    .run(onEvent)
-            },
-            icon = {
-                Icon(
-                    imageVector = Icons.Default.Face,
-                    contentDescription = stringResource(R.string.collaborate_icon_description),
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            },
-            title = {
-                Text(
-                    text = stringResource(id = R.string.collaborate),
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            },
-            text = {
-                Text(
-                    text = stringResource(id = R.string.collaborate_confirmation_message),
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        BudgetDetailEvent
-                            .StartCollaboration
-                            .run(onEvent)
-                    }
-                ) {
-                    Text(
-                        text = stringResource(id = R.string.collaborate),
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = {
-                        BudgetDetailEvent
-                            .ToggleCollaborateModal(false)
-                            .run(onEvent)
-                    }
-                ) {
-                    Text(
-                        text = stringResource(id = R.string.cancel),
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-            },
-            properties = DialogProperties()
-        )
-    }
-}
-
-@Composable
-fun CodeModal(
-    code: Int?,
-    onEvent: (BudgetDetailEvent) -> Unit
-) {
-    if (code != null) {
-        val hideCodeModal = {
-            BudgetDetailEvent
-                .HideCodeModal
-                .run(onEvent)
-        }
-
-        AlertDialog(
-            onDismissRequest = hideCodeModal,
-            icon = {
-                Icon(
-                    imageVector = Icons.Default.Build,
-                    contentDescription = stringResource(R.string.collaboration_code_icon_description),
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            },
-            title = {
-                Text(
-                    text = stringResource(R.string.collaboration_code),
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            },
-            text = {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = stringResource(R.string.share_code_with_collaborators),
-                        fontSize = 14.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(bottom = 16.dp)
-                    )
-                    Text(
-                        text = "$code",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 32.sp,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = hideCodeModal) {
-                    Text(
-                        text = stringResource(R.string.ok),
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-            },
-            properties = DialogProperties()
-        )
-    }
 }

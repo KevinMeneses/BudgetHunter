@@ -1,8 +1,9 @@
 package com.meneses.budgethunter.budgetEntry.application
 
 import android.content.ContentResolver
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.net.Uri
+import androidx.core.net.toUri
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.content
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
@@ -12,11 +13,13 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import java.time.LocalDate
 
-class GetAIBudgetEntryFromImageUseCase(
+class CreateAndroidBudgetEntryFromImageUseCase(
+    private val contentResolver: ContentResolver,
     private val ioDispatcher: CoroutineDispatcher,
-    private val json: Json,
-    private val generativeModel: GenerativeModel
-) {
+    private val generativeModel: GenerativeModel,
+    private val json: Json
+) : CreateBudgetEntryFromImageUseCase {
+
     private val prompt =
         """this is the image of a receipt, obtain the following items:
 
@@ -32,27 +35,12 @@ class GetAIBudgetEntryFromImageUseCase(
 
         or return an empty response if the image is not an invoice, receipt or bill"""
 
-    suspend fun execute(
-        imageUri: Uri,
-        budgetEntry: BudgetEntry,
-        contentResolver: ContentResolver
+    override suspend fun execute(
+        imageUri: String,
+        budgetEntry: BudgetEntry
     ): BudgetEntry = withContext(ioDispatcher) {
         try {
-            val bitmap = when {
-                imageUri.path?.endsWith(".pdf") == true -> {
-                    val descriptor = contentResolver.openFileDescriptor(
-                        /* uri = */ imageUri,
-                        /* mode = */ "r"
-                    )!!
-                    getBitmapFromPDFFileDescriptor(descriptor)
-                }
-
-                else -> {
-                    contentResolver
-                        .openInputStream(imageUri)
-                        ?.use(BitmapFactory::decodeStream)!!
-                }
-            }
+            val bitmap = getBitmapFromUri(imageUri)
 
             val response = generativeModel.generateContent(
                 content {
@@ -76,5 +64,25 @@ class GetAIBudgetEntryFromImageUseCase(
         } catch (e: Exception) {
             budgetEntry
         }
+    }
+
+    private fun getBitmapFromUri(imageUri: String): Bitmap {
+        val uri = imageUri.toUri()
+        return when {
+            uri.path?.endsWith(".pdf") == true -> {
+                getBitmapFromPdfUri(imageUri)
+            }
+            else -> {
+                contentResolver
+                    .openInputStream(uri)
+                    ?.use(BitmapFactory::decodeStream)!!
+            }
+        }
+    }
+
+    private fun getBitmapFromPdfUri(pdfUri: String): Bitmap {
+        val uri = pdfUri.toUri()
+        val descriptor = contentResolver.openFileDescriptor(uri, "r")!!
+        return getBitmapFromPDFFileDescriptor(descriptor)
     }
 }

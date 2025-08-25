@@ -77,7 +77,6 @@ data class BudgetDetailScreen(val budget: Budget) {
             drawerContent = {
                 BudgetDetailMenu(
                     animateFilterButton = uiState.filter != null,
-                    animateCollaborateButton = uiState.isCollaborationActive,
                     onFilterClick = {
                         coroutineScope.launch {
                             drawerState.close()
@@ -88,20 +87,6 @@ data class BudgetDetailScreen(val budget: Budget) {
                     },
                     onMetricsClick = {
                         showBudgetMetrics(budget)
-                    },
-                    onCollaborateClick = {
-                        coroutineScope.launch {
-                            drawerState.close()
-                            if (uiState.isCollaborationActive) {
-                                BudgetDetailEvent
-                                    .StopCollaboration
-                                    .run(onEvent)
-                            } else {
-                                BudgetDetailEvent
-                                    .ToggleCollaborateModal(true)
-                                    .run(onEvent)
-                            }
-                        }
                     },
                     onDeleteClick = fun() {
                         coroutineScope.launch {
@@ -166,16 +151,6 @@ data class BudgetDetailScreen(val budget: Budget) {
                 onEvent = onEvent
             )
 
-            CollaborateModal(
-                show = uiState.isCollaborateModalVisible,
-                onEvent = onEvent
-            )
-
-            CodeModal(
-                code = uiState.collaborationCode,
-                onEvent = onEvent
-            )
-
             DeleteBudgetConfirmationModal(
                 show = uiState.isDeleteBudgetModalVisible,
                 onEvent = onEvent
@@ -189,10 +164,6 @@ data class BudgetDetailScreen(val budget: Budget) {
 
         LaunchedEffect(key1 = uiState.goBack) {
             if (uiState.goBack) goBack()
-        }
-
-        LaunchedEffect(key1 = uiState.collaborationError) {
-            uiState.collaborationError?.let { snackBarHostState.showSnackbar(it) }
         }
 
         LaunchedEffect(key1 = uiState.showEntry) {

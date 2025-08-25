@@ -6,7 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.meneses.budgethunter.R
 import com.meneses.budgethunter.budgetEntry.application.BudgetEntryEvent
 import com.meneses.budgethunter.budgetEntry.application.BudgetEntryState
-import com.meneses.budgethunter.budgetEntry.application.GetAIBudgetEntryFromImageUseCase
+import com.meneses.budgethunter.budgetEntry.application.CreateBudgetEntryFromImageUseCase
 import com.meneses.budgethunter.budgetEntry.data.BudgetEntryRepository
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.commons.data.PreferencesManager
@@ -20,7 +20,7 @@ import java.io.IOException
 
 class BudgetEntryViewModel(
     private val budgetEntryRepository: BudgetEntryRepository,
-    private val getAIBudgetEntryFromImageUseCase: GetAIBudgetEntryFromImageUseCase,
+    private val createBudgetEntryFromImageUseCase: CreateBudgetEntryFromImageUseCase,
     private val preferencesManager: PreferencesManager
 ) : ViewModel() {
 
@@ -72,10 +72,9 @@ class BudgetEntryViewModel(
 
             val aiBudgetEntry = if (preferencesManager.isAiProcessingEnabled) {
                 _uiState.value.budgetEntry?.let { budgetEntry ->
-                    getAIBudgetEntryFromImageUseCase.execute(
-                        imageUri = invoiceDir.toUri(),
-                        budgetEntry = budgetEntry,
-                        contentResolver = event.contentResolver
+                    createBudgetEntryFromImageUseCase.execute(
+                        imageUri = invoiceDir.toUri().toString(),
+                        budgetEntry = budgetEntry
                     )
                 }
             } else {

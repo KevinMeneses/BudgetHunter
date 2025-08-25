@@ -8,11 +8,8 @@ data class BudgetListState(
     val isLoading: Boolean = true,
     val addModalVisibility: Boolean = false,
     val budgetToUpdate: Budget? = null,
-    val joinCollaborationModalVisibility: Boolean = false,
-    val isCollaborationActive: Boolean = false,
     val filter: BudgetFilter? = null,
     val navigateToBudget: Budget? = null,
-    val collaborationError: String? = null,
     val isSearchMode: Boolean = false,
     val searchQuery: String = ""
 )

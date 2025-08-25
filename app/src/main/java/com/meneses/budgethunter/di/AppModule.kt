@@ -1,13 +1,14 @@
 package com.meneses.budgethunter.di
 
 import android.content.Context
-import app.cash.sqldelight.driver.android.AndroidSqliteDriver
 import com.google.ai.client.generativeai.GenerativeModel
 import com.meneses.budgethunter.BuildConfig
 import com.meneses.budgethunter.budgetList.data.adapter.categoryAdapter
 import com.meneses.budgethunter.budgetList.data.adapter.typeAdapter
-import com.meneses.budgethunter.commons.data.KtorRealtimeMessagingClient
+import com.meneses.budgethunter.commons.data.AndroidDatabaseFactory
+import com.meneses.budgethunter.commons.data.DatabaseFactory
 import com.meneses.budgethunter.commons.data.PreferencesManager
+import com.meneses.budgethunter.commons.data.AndroidPreferencesManager
 import com.meneses.budgethunter.db.BudgetEntryQueries
 import com.meneses.budgethunter.db.BudgetQueries
 import com.meneses.budgethunter.db.Budget_entry
@@ -29,24 +30,19 @@ class AppModule {
 
     @Single
     fun provideDatabase(
-        driver: AndroidSqliteDriver,
-        budgetEntryAdapter: Budget_entry.Adapter
+        databaseFactory: DatabaseFactory
     ): Database {
-        return Database(driver, budgetEntryAdapter)
+        return databaseFactory.createDatabase()
     }
 
     @Single
-    fun provideSqliteDriver(context: Context): AndroidSqliteDriver {
-        return AndroidSqliteDriver(
-            schema = Database.Schema,
-            context = context,
-            name = "budgethunter.db"
-        )
+    fun provideDatabaseDriverFactory(context: Context): DatabaseFactory {
+        return AndroidDatabaseFactory(context)
     }
 
     @Single
     fun providePreferencesManager(context: Context): PreferencesManager {
-        return PreferencesManager(context)
+        return AndroidPreferencesManager(context)
     }
 
     @Single
@@ -76,9 +72,4 @@ class AppModule {
             modelName = "gemini-2.0-flash",
             apiKey = BuildConfig.GEMINI_API_KEY
         )
-
-    @Single
-    fun provideMessagingClient(): () -> KtorRealtimeMessagingClient = {
-        KtorRealtimeMessagingClient.getInstance()
-    }
 }

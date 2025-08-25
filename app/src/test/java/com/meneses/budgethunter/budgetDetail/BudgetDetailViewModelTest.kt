@@ -4,7 +4,6 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailEvent
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailState
 import com.meneses.budgethunter.budgetDetail.data.BudgetDetailRepository
-import com.meneses.budgethunter.budgetDetail.data.CollaborationException
 import com.meneses.budgethunter.budgetDetail.domain.BudgetDetail
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntryFilter
@@ -20,7 +19,6 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -195,10 +193,6 @@ class BudgetDetailViewModelTest {
 
     @Test
     fun `deleteSelectedEntries event should delete selected entries and deactivate selection`() = runTest(dispatcher) {
-        // Given
-        val selectedEntry = testEntry.copy(isSelected = true)
-        val detailWithSelectedEntries = testBudgetDetail.copy(entries = listOf(selectedEntry))
-
         // Set initial state with selected entries
         viewModel.sendEvent(BudgetDetailEvent.SetBudget(testBudget))
         // We need to manually set the budget detail since it's private
@@ -311,12 +305,6 @@ class BudgetDetailViewModelTest {
     @Test
     fun `toggleAllEntriesSelection event should select all entries`() = runTest {
         // Given - set up state with entries
-        val entriesDetail = testBudgetDetail.copy(
-            entries = listOf(
-                testEntry.copy(id = 1, isSelected = false),
-                testEntry.copy(id = 2, isSelected = false)
-            )
-        )
         viewModel.sendEvent(BudgetDetailEvent.SetBudget(testBudget))
 
         val states = mutableListOf<BudgetDetailState>()
@@ -387,15 +375,6 @@ class BudgetDetailViewModelTest {
 
     @Test
     fun `sortList event should cycle through sort orders and sort entries correctly`() = runTest {
-        // Given - entries with different amounts
-        val entry1 = testEntry.copy(id = 1, amount = "100.0", type = BudgetEntry.Type.OUTCOME)
-        val entry2 = testEntry.copy(id = 2, amount = "50.0", type = BudgetEntry.Type.INCOME)
-        val entry3 = testEntry.copy(id = 3, amount = "200.0", type = BudgetEntry.Type.OUTCOME)
-
-        val budgetWithEntries = testBudgetDetail.copy(
-            entries = listOf(entry1, entry2, entry3)
-        )
-
         // We can't directly set the budgetDetail, so we'll test the sorting logic by checking the order
         val states = mutableListOf<BudgetDetailState>()
         val job = launch { viewModel.uiState.toList(states) }
@@ -420,76 +399,6 @@ class BudgetDetailViewModelTest {
 
         // Then - verify list order changed back to DEFAULT
         Assert.assertEquals(BudgetDetailState.ListOrder.DEFAULT, states.last().listOrder)
-
-        job.cancel()
-    }
-
-    @Test
-    fun `startCollaboration event should start collaboration successfully`() = runTest(dispatcher) {
-        // Given
-        val collaborationCode = 12345
-        coEvery { repository.startCollaboration() } returns collaborationCode
-        coEvery { repository.consumeCollaborationStream() } returns Unit
-
-        val states = mutableListOf<BudgetDetailState>()
-        val job = launch { viewModel.uiState.toList(states) }
-
-        // When
-        viewModel.sendEvent(BudgetDetailEvent.StartCollaboration)
-        runCurrent()
-
-        // Then
-        coVerify { repository.startCollaboration() }
-        coVerify { repository.consumeCollaborationStream() }
-        val finalState = states.last()
-        Assert.assertTrue(finalState.isCollaborationActive)
-        Assert.assertEquals(collaborationCode, finalState.collaborationCode)
-
-        job.cancel()
-    }
-
-    @Test
-    fun `startCollaboration event should handle collaboration exception`() = runTest(dispatcher) {
-        // Given
-        val errorMessage = "Collaboration already started"
-        coEvery { repository.startCollaboration() } throws CollaborationException(errorMessage)
-
-        val states = mutableListOf<BudgetDetailState>()
-        val job = launch { viewModel.uiState.toList(states) }
-
-        // When
-        viewModel.sendEvent(BudgetDetailEvent.StartCollaboration)
-        runCurrent()
-
-        // Then
-        val finalState = states.last()
-        Assert.assertEquals(errorMessage, finalState.collaborationError)
-        Assert.assertFalse(finalState.isCollaborationActive)
-
-        // After 3 seconds, error should be cleared
-        advanceTimeBy(3001)
-        runCurrent()
-
-        Assert.assertNull(states.last().collaborationError)
-
-        job.cancel()
-    }
-
-    @Test
-    fun `stopCollaboration event should stop collaboration`() = runTest(dispatcher) {
-        // Given
-        coEvery { repository.stopCollaboration() } returns Unit
-
-        val states = mutableListOf<BudgetDetailState>()
-        val job = launch { viewModel.uiState.toList(states) }
-
-        // When
-        viewModel.sendEvent(BudgetDetailEvent.StopCollaboration)
-        runCurrent()
-
-        // Then
-        coVerify { repository.stopCollaboration() }
-        Assert.assertFalse(states.last().isCollaborationActive)
 
         job.cancel()
     }

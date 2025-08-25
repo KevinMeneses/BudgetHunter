@@ -9,7 +9,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import org.koin.androidx.compose.koinViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -26,13 +25,13 @@ import com.meneses.budgethunter.budgetList.ui.BudgetListScreen
 import com.meneses.budgethunter.budgetMetrics.BudgetMetricsViewModel
 import com.meneses.budgethunter.budgetMetrics.ui.BudgetMetricsScreen
 import com.meneses.budgethunter.commons.util.serializableType
-import com.meneses.budgethunter.settings.ui.SettingsScreen
 import com.meneses.budgethunter.settings.SettingsViewModel
+import com.meneses.budgethunter.settings.ui.SettingsScreen
 import com.meneses.budgethunter.splash.SplashScreen
 import com.meneses.budgethunter.splash.SplashScreenViewModel
 import com.meneses.budgethunter.theme.AppColors
 import com.meneses.budgethunter.theme.BudgetHunterTheme
-import com.meneses.budgethunter.userGuide.UserGuideScreen
+import org.koin.androidx.compose.koinViewModel
 import kotlin.reflect.typeOf
 
 class MainActivity : ComponentActivity() {
@@ -71,16 +70,11 @@ class MainActivity : ComponentActivity() {
                             BudgetListScreen.Show(
                                 uiState = budgetListViewModel.uiState.collectAsStateWithLifecycle().value,
                                 onEvent = budgetListViewModel::sendEvent,
-                                showUserGuide = { navController.navigate(UserGuideScreen) },
                                 showBudgetDetail = { budget ->
                                     navController.navigate(BudgetDetailScreen(budget))
                                 },
                                 showSettings = { navController.navigate(SettingsScreen) }
                             )
-                        }
-
-                        composable<UserGuideScreen> {
-                            UserGuideScreen.Show(goBack = navController::popBackStack)
                         }
 
                         composable<SettingsScreen> {
