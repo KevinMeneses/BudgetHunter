@@ -40,8 +40,9 @@ class SettingsViewModel(
         }
     }
 
-    private fun setSelectedBanks(bankConfigs: Set<BankSmsConfig>) {
-        preferencesManager.selectedBankIds = bankConfigs.map { it.id }.toSet()
+    private fun setSelectedBanks(bankConfigs: Set<BankSmsConfig>) = viewModelScope.launch {
+        val selectedBankIds = bankConfigs.map { it.id }.toSet()
+        preferencesManager.setSelectedBankIds(selectedBankIds)
         _uiState.update { it.copy(selectedBanks = bankConfigs) }
     }
 
@@ -58,26 +59,26 @@ class SettingsViewModel(
             _uiState.update { it.copy(isLoading = true) }
 
             try {
-                val defaultBudgetId = preferencesManager.defaultBudgetId
+                val defaultBudgetId = preferencesManager.getDefaultBudgetId()
                 val defaultBudget = if (defaultBudgetId != -1) {
                     budgetRepository.getById(defaultBudgetId)
                 } else null
 
                 // Load selected bank IDs and convert to BankSmsConfig objects
-                val selectedBankIds = preferencesManager.selectedBankIds
+                val selectedBankIds = preferencesManager.getSelectedBankIds()
                 val selectedBanks = selectedBankIds.mapNotNull { bankId ->
                     SupportedBanks.getBankConfigById(bankId)
                 }.toSet()
 
                 _uiState.update {
                     it.copy(
-                        isSmsReadingEnabled = preferencesManager.isSmsReadingEnabled,
+                        isSmsReadingEnabled = preferencesManager.isSmsReadingEnabled(),
                         defaultBudget = defaultBudget,
                         allBudgets = budgetRepository.getAllCached(),
                         hasSmsPermission = checkSmsPermission(context),
                         availableBanks = SupportedBanks.ALL_BANKS,
                         selectedBanks = selectedBanks,
-                        isAiProcessingEnabled = preferencesManager.isAiProcessingEnabled,
+                        isAiProcessingEnabled = preferencesManager.isAiProcessingEnabled(),
                         isLoading = false
                     )
                 }
@@ -87,18 +88,18 @@ class SettingsViewModel(
         }
     }
 
-    private fun toggleSmsReading(enabled: Boolean) {
-        preferencesManager.isSmsReadingEnabled = enabled
+    private fun toggleSmsReading(enabled: Boolean) = viewModelScope.launch {
+        preferencesManager.setSmsReadingEnabled(enabled)
         _uiState.update { it.copy(isSmsReadingEnabled = enabled) }
     }
 
-    private fun toggleAiProcessing(enabled: Boolean) {
-        preferencesManager.isAiProcessingEnabled = enabled
+    private fun toggleAiProcessing(enabled: Boolean) = viewModelScope.launch {
+        preferencesManager.setAiProcessingEnabled(enabled)
         _uiState.update { it.copy(isAiProcessingEnabled = enabled) }
     }
 
-    private fun setDefaultBudget(budget: Budget) {
-        preferencesManager.defaultBudgetId = budget.id
+    private fun setDefaultBudget(budget: Budget) = viewModelScope.launch {
+        preferencesManager.setDefaultBudgetId(budget.id)
         _uiState.update {
             it.copy(
                 defaultBudget = budget,

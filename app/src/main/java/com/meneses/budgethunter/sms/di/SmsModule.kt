@@ -8,7 +8,6 @@ import com.meneses.budgethunter.commons.platform.NotificationService
 import com.meneses.budgethunter.sms.SmsService
 import com.meneses.budgethunter.sms.SmsMapper
 import com.meneses.budgethunter.sms.ProcessSmsUseCase
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import org.koin.core.annotation.Module
 import org.koin.core.annotation.Named
@@ -33,12 +32,12 @@ class SmsModule {
         smsMapper: SmsMapper,
         budgetEntryRepository: BudgetEntryRepository,
         notificationService: NotificationService,
-        @Named("IO") ioDispatcher: CoroutineDispatcher
+        @Named("ioScope") ioScope: CoroutineScope
     ): SmsService = ProcessSmsUseCase(
         context = context,
         smsMapper = smsMapper,
         budgetEntryRepository = budgetEntryRepository,
         notificationService = notificationService,
-        scope = CoroutineScope(ioDispatcher)
+        ioScope = ioScope
     )
 }

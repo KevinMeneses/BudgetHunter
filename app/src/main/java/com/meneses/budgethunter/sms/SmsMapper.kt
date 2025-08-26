@@ -8,7 +8,7 @@ import com.meneses.budgethunter.commons.data.PreferencesManager
 class SmsMapper(
     private val preferencesManager: PreferencesManager
 ) {
-    fun smsToBudgetEntry(messageBody: String, bankConfig: BankSmsConfig): BudgetEntry? {
+    suspend fun smsToBudgetEntry(messageBody: String, bankConfig: BankSmsConfig): BudgetEntry? {
         val containsBankKeyword = bankConfig.senderKeywords.any { keyword ->
             messageBody.contains(keyword, ignoreCase = true)
         }
@@ -29,7 +29,7 @@ class SmsMapper(
             amount = amount,
             description = description ?: "Transacción de ${bankConfig.displayName}",
             type = BudgetEntry.Type.OUTCOME,
-            budgetId = preferencesManager.defaultBudgetId
+            budgetId = preferencesManager.getDefaultBudgetId()
         )
     }
 

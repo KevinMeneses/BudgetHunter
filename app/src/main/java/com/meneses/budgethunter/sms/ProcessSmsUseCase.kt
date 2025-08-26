@@ -13,10 +13,10 @@ class ProcessSmsUseCase(
     private val smsMapper: SmsMapper,
     private val budgetEntryRepository: BudgetEntryRepository,
     private val notificationService: NotificationService,
-    private val scope: CoroutineScope
+    private val ioScope: CoroutineScope
 ) : SmsService {
     override fun processSms(messageBody: String, bankConfigs: Set<BankSmsConfig>) {
-        scope.launch {
+        ioScope.launch {
             try {
                 // Try to process the SMS with each bank configuration
                 for (bankConfig in bankConfigs) {

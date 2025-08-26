@@ -70,7 +70,7 @@ class BudgetEntryViewModel(
             val invoiceDir = saveInvoiceInAppInternalStorage(event)
             wasNewInvoiceAttached = true
 
-            val aiBudgetEntry = if (preferencesManager.isAiProcessingEnabled) {
+            val aiBudgetEntry = if (preferencesManager.isAiProcessingEnabled()) {
                 _uiState.value.budgetEntry?.let { budgetEntry ->
                     createBudgetEntryFromImageUseCase.execute(
                         imageUri = invoiceDir.toUri().toString(),

@@ -1,6 +1,6 @@
 package com.meneses.budgethunter.budgetDetail.data
 
-import androidx.lifecycle.AtomicReference
+import java.util.concurrent.atomic.AtomicReference
 import com.meneses.budgethunter.budgetDetail.domain.BudgetDetail
 import com.meneses.budgethunter.budgetEntry.data.datasource.BudgetEntryLocalDataSource
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntryFilter

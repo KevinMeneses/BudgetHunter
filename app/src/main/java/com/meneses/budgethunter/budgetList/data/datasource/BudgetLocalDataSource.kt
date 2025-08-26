@@ -1,6 +1,6 @@
 package com.meneses.budgethunter.budgetList.data.datasource
 
-import androidx.lifecycle.AtomicReference
+import java.util.concurrent.atomic.AtomicReference
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
 import com.meneses.budgethunter.budgetList.data.mapSelectAllToBudget

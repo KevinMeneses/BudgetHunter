@@ -8,7 +8,7 @@ import com.meneses.budgethunter.budgetEntry.application.BudgetEntryEvent
 import com.meneses.budgethunter.budgetEntry.application.CreateBudgetEntryFromImageUseCase
 import com.meneses.budgethunter.budgetEntry.data.BudgetEntryRepository
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
-import com.meneses.budgethunter.commons.data.AndroidPreferencesManager
+import com.meneses.budgethunter.commons.data.PreferencesManager
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -38,7 +38,7 @@ class BudgetEntryViewModelTest {
     private val dispatcher = StandardTestDispatcher()
     private val repository: BudgetEntryRepository = mockk()
     private val getAIBudgetEntryFromImageUseCase: CreateBudgetEntryFromImageUseCase = mockk()
-    private val preferencesManager: AndroidPreferencesManager = mockk()
+    private val preferencesManager: PreferencesManager = mockk()
 
     private lateinit var viewModel: BudgetEntryViewModel
 
@@ -64,7 +64,7 @@ class BudgetEntryViewModelTest {
     @Before
     fun setup() {
         Dispatchers.setMain(dispatcher)
-        every { preferencesManager.isAiProcessingEnabled } returns true
+        coEvery { preferencesManager.isAiProcessingEnabled() } returns true
         viewModel = BudgetEntryViewModel(
             budgetEntryRepository = repository,
             createBudgetEntryFromImageUseCase = getAIBudgetEntryFromImageUseCase,

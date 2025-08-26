@@ -1,6 +1,9 @@
 package com.meneses.budgethunter.di
 
 import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.preferencesDataStore
 import com.google.ai.client.generativeai.GenerativeModel
 import com.meneses.budgethunter.BuildConfig
 import com.meneses.budgethunter.budgetList.data.adapter.categoryAdapter
@@ -8,17 +11,19 @@ import com.meneses.budgethunter.budgetList.data.adapter.typeAdapter
 import com.meneses.budgethunter.commons.data.AndroidDatabaseFactory
 import com.meneses.budgethunter.commons.data.DatabaseFactory
 import com.meneses.budgethunter.commons.data.PreferencesManager
-import com.meneses.budgethunter.commons.data.AndroidPreferencesManager
 import com.meneses.budgethunter.db.BudgetEntryQueries
 import com.meneses.budgethunter.db.BudgetQueries
 import com.meneses.budgethunter.db.Budget_entry
 import com.meneses.budgethunter.db.Database
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.json.Json
 import org.koin.core.annotation.Module
 import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
+
+private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "budget_hunter_preferences")
 
 @Module
 class AppModule {
@@ -41,8 +46,13 @@ class AppModule {
     }
 
     @Single
-    fun providePreferencesManager(context: Context): PreferencesManager {
-        return AndroidPreferencesManager(context)
+    fun provideDataStore(context: Context): DataStore<Preferences> {
+        return context.dataStore
+    }
+
+    @Single
+    fun providePreferencesManager(preferences: DataStore<Preferences>): PreferencesManager {
+        return PreferencesManager(preferences)
     }
 
     @Single
@@ -58,6 +68,11 @@ class AppModule {
     @Single
     @Named("IO")
     fun provideIODispatcher(): CoroutineDispatcher = Dispatchers.IO
+
+    @Single
+    @Named("IOScope")
+    fun provideIOScope(@Named("IO") ioDispatcher: CoroutineDispatcher): CoroutineScope =
+        CoroutineScope(ioDispatcher)
 
     @Single
     @Named("Default")
