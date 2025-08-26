@@ -1,11 +1,11 @@
 plugins {
-    id 'com.android.application'
-    id 'org.jetbrains.kotlin.android'
-    id 'org.jetbrains.kotlin.plugin.compose'
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.compose)
     id 'kotlin-parcelize'
-    id 'com.google.devtools.ksp'
-    id "app.cash.sqldelight" version "2.0.2"
-    id 'org.jetbrains.kotlin.plugin.serialization'
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.sqldelight)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 apply from: "../ktlint.gradle"
@@ -93,50 +93,31 @@ android {
 }
 
 dependencies {
-    implementation 'androidx.core:core-ktx:1.17.0'
-    implementation "androidx.compose.ui:ui:$compose_ui_version"
-    implementation "androidx.compose.material3:material3:$compose_material3_version"
-    implementation "androidx.compose.ui:ui-tooling-preview:$compose_ui_version"
-    implementation "androidx.compose.material:material-icons-extended:$compose_ui_version"
-    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.9.2'
-    implementation 'androidx.activity:activity-compose:1.10.1'
-    implementation 'com.maxkeppeler.sheets-compose-dialogs:core:1.0.3'
-    implementation 'com.maxkeppeler.sheets-compose-dialogs:calendar:1.0.3'
-    implementation "androidx.lifecycle:lifecycle-runtime-compose:2.9.2"
-    implementation "app.cash.sqldelight:android-driver:2.0.2"
-    implementation "app.cash.sqldelight:coroutines-extensions:2.0.2"
-    implementation "com.airbnb.android:lottie-compose:6.0.0"
+    implementation libs.androidx.core.ktx
+    implementation libs.bundles.compose
+    implementation libs.bundles.androidx.lifecycle
+    implementation libs.androidx.activity.compose
+    implementation libs.bundles.sheets.compose
+    implementation libs.bundles.sqldelight
+    implementation libs.lottie.compose
 
-    implementation 'com.google.android.play:app-update:2.1.0'
-    implementation 'com.google.android.play:app-update-ktx:2.1.0'
+    implementation libs.bundles.play.update
 
-    implementation 'androidx.navigation:navigation-compose:2.9.3'
-    implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3'
+    implementation libs.androidx.navigation.compose
+    implementation libs.kotlinx.serialization.json
 
-    implementation 'io.ktor:ktor-client-core:2.3.12'
-    implementation 'io.ktor:ktor-client-cio:2.3.11'
-    implementation 'io.ktor:ktor-client-websockets:2.3.12'
-    implementation 'io.ktor:ktor-client-logging:2.3.12'
+    implementation libs.bundles.ktor
 
-    implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
+    implementation libs.google.ai.generativeai
 
     // DataStore
-    implementation "androidx.datastore:datastore-preferences:1.1.7"
-    implementation "androidx.datastore:datastore-preferences-core:1.1.7"
+    implementation libs.bundles.datastore
 
     // Koin
-    implementation "io.insert-koin:koin-android:$koin_version"
-    implementation "io.insert-koin:koin-androidx-compose:$koin_version"
-    implementation "io.insert-koin:koin-annotations:$koin_annotations_version"
-    ksp "io.insert-koin:koin-ksp-compiler:$koin_annotations_version"
+    implementation libs.bundles.koin
+    ksp libs.koin.ksp.compiler
 
-    testImplementation 'junit:junit:4.13.2'
-    testImplementation "io.mockk:mockk:1.13.5"
-    testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1"
-    testImplementation 'androidx.arch.core:core-testing:2.2.0'
-    androidTestImplementation 'androidx.test.ext:junit:1.3.0'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.7.0'
-    androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_ui_version"
-    debugImplementation "androidx.compose.ui:ui-tooling:$compose_ui_version"
-    debugImplementation "androidx.compose.ui:ui-test-manifest:1.9.0"
+    testImplementation libs.bundles.test.unit
+    androidTestImplementation libs.bundles.test.android
+    debugImplementation libs.bundles.test.debug
 }
