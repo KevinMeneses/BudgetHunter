@@ -75,7 +75,7 @@ object SplashScreen {
                     .VerifyUpdate(context)
                     .run(onEvent)
             } else {
-                delay(500)
+                delay(200)
                 showBudgetList()
             }
         }

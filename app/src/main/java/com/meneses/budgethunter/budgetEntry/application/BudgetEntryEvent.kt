@@ -7,10 +7,10 @@ import java.io.File
 
 sealed interface BudgetEntryEvent {
     data class SetBudgetEntry(val budgetEntry: BudgetEntry) : BudgetEntryEvent
-    object SaveBudgetEntry : BudgetEntryEvent
+    data object SaveBudgetEntry : BudgetEntryEvent
     data class ValidateChanges(val budgetEntry: BudgetEntry) : BudgetEntryEvent
-    object DiscardChanges : BudgetEntryEvent
-    object HideDiscardChangesModal : BudgetEntryEvent
+    data object DiscardChanges : BudgetEntryEvent
+    data object HideDiscardChangesModal : BudgetEntryEvent
     data class ToggleAttachInvoiceModal(val show: Boolean) : BudgetEntryEvent
     data class ToggleShowInvoiceModal(val show: Boolean) : BudgetEntryEvent
 
@@ -20,6 +20,6 @@ sealed interface BudgetEntryEvent {
         val internalFilesDir: File?
     ) : BudgetEntryEvent
 
-    object GoBack : BudgetEntryEvent
-    object DeleteAttachedInvoice : BudgetEntryEvent
+    data object GoBack : BudgetEntryEvent
+    data object DeleteAttachedInvoice : BudgetEntryEvent
 }

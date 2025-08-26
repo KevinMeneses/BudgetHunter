@@ -12,6 +12,6 @@ sealed interface BudgetListEvent {
     data class ToggleUpdateModal(val budget: Budget?) : BudgetListEvent
     data class ToggleSearchMode(val isSearchMode: Boolean) : BudgetListEvent
     data class UpdateSearchQuery(val query: String) : BudgetListEvent
-    object ClearFilter : BudgetListEvent
-    object ClearNavigation : BudgetListEvent
+    data object ClearFilter : BudgetListEvent
+    data object ClearNavigation : BudgetListEvent
 }

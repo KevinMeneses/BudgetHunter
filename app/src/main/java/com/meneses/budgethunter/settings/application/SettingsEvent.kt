@@ -7,10 +7,10 @@ sealed interface SettingsEvent {
     data class ToggleSmsReading(val enabled: Boolean) : SettingsEvent
     data class SetDefaultBudget(val budget: Budget) : SettingsEvent
     data class HandleSMSPermissionResult(val granted: Boolean) : SettingsEvent
-    object ShowDefaultBudgetSelector : SettingsEvent
-    object HideDefaultBudgetSelector : SettingsEvent
-    object ShowBankSelector : SettingsEvent
-    object HideBankSelector : SettingsEvent
+    data object ShowDefaultBudgetSelector : SettingsEvent
+    data object HideDefaultBudgetSelector : SettingsEvent
+    data object ShowBankSelector : SettingsEvent
+    data object HideBankSelector : SettingsEvent
     data class SetSelectedBanks(val bankConfigs: Set<BankSmsConfig>) : SettingsEvent
     data class ToggleAiProcessing(val enabled: Boolean) : SettingsEvent
 }
