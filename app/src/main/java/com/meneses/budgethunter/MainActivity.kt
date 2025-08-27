@@ -8,9 +8,7 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -27,17 +25,17 @@ import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.budgetList.ui.BudgetListScreen
 import com.meneses.budgethunter.budgetMetrics.BudgetMetricsViewModel
 import com.meneses.budgethunter.budgetMetrics.ui.BudgetMetricsScreen
-import com.meneses.budgethunter.commons.util.serializableType
-import com.meneses.budgethunter.settings.SettingsViewModel
-import com.meneses.budgethunter.settings.ui.SettingsScreen
-import com.meneses.budgethunter.splash.SplashScreen
-import com.meneses.budgethunter.splash.SplashScreenViewModel
 import com.meneses.budgethunter.commons.platform.AndroidCameraManager
 import com.meneses.budgethunter.commons.platform.AndroidFilePickerManager
 import com.meneses.budgethunter.commons.platform.CameraLauncherDelegate
 import com.meneses.budgethunter.commons.platform.CameraManager
 import com.meneses.budgethunter.commons.platform.FilePickerLauncherDelegate
 import com.meneses.budgethunter.commons.platform.FilePickerManager
+import com.meneses.budgethunter.commons.util.serializableType
+import com.meneses.budgethunter.settings.SettingsViewModel
+import com.meneses.budgethunter.settings.ui.SettingsScreen
+import com.meneses.budgethunter.splash.SplashScreen
+import com.meneses.budgethunter.splash.SplashScreenViewModel
 import com.meneses.budgethunter.theme.AppColors
 import com.meneses.budgethunter.theme.BudgetHunterTheme
 import org.koin.androidx.compose.koinViewModel
@@ -113,8 +111,6 @@ class MainActivity : ComponentActivity(), KoinComponent, CameraLauncherDelegate,
 
                         composable<SettingsScreen> {
                             val settingsViewModel: SettingsViewModel = koinViewModel()
-                            val context = LocalContext.current
-                            LaunchedEffect(Unit) { settingsViewModel.loadSettings(context) }
                             SettingsScreen.Show(
                                 uiState = settingsViewModel.uiState.collectAsStateWithLifecycle().value,
                                 onEvent = settingsViewModel::sendEvent,

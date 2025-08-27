@@ -16,10 +16,12 @@ import com.meneses.budgethunter.commons.data.PreferencesManager
 import com.meneses.budgethunter.commons.platform.AndroidCameraManager
 import com.meneses.budgethunter.commons.platform.AndroidFilePickerManager
 import com.meneses.budgethunter.commons.platform.AndroidNotificationManager
+import com.meneses.budgethunter.commons.platform.AndroidPermissionsManager
 import com.meneses.budgethunter.commons.platform.AndroidShareManager
 import com.meneses.budgethunter.commons.platform.CameraManager
 import com.meneses.budgethunter.commons.platform.FilePickerManager
 import com.meneses.budgethunter.commons.platform.NotificationManager
+import com.meneses.budgethunter.commons.platform.PermissionsManager
 import com.meneses.budgethunter.commons.platform.ShareManager
 import com.meneses.budgethunter.db.BudgetEntryQueries
 import com.meneses.budgethunter.db.BudgetQueries
@@ -116,4 +118,8 @@ class AppModule {
     @Single
     fun provideFilePickerManager(context: Context): FilePickerManager = 
         AndroidFilePickerManager(context)
+
+    @Single
+    fun providePermissionsManager(context: Context): PermissionsManager = 
+        AndroidPermissionsManager(context)
 }

@@ -1,9 +1,5 @@
 package com.meneses.budgethunter.settings
 
-import android.Manifest
-import android.content.Context
-import android.content.pm.PackageManager
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.meneses.budgethunter.budgetList.data.BudgetRepository
@@ -11,6 +7,7 @@ import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.commons.bank.BankSmsConfig
 import com.meneses.budgethunter.commons.bank.SupportedBanks
 import com.meneses.budgethunter.commons.data.PreferencesManager
+import com.meneses.budgethunter.commons.platform.PermissionsManager
 import com.meneses.budgethunter.settings.application.SettingsEvent
 import com.meneses.budgethunter.settings.application.SettingsState
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,11 +17,16 @@ import kotlinx.coroutines.launch
 
 class SettingsViewModel(
     private val preferencesManager: PreferencesManager,
-    private val budgetRepository: BudgetRepository
+    private val budgetRepository: BudgetRepository,
+    private val permissionsManager: PermissionsManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsState())
     val uiState = _uiState.asStateFlow()
+
+    init {
+        loadSettings()
+    }
 
     fun sendEvent(event: SettingsEvent) {
         when (event) {
@@ -54,7 +56,7 @@ class SettingsViewModel(
         _uiState.update { it.copy(isBankSelectorVisible = false) }
     }
 
-    fun loadSettings(context: Context) {
+    private fun loadSettings() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
 
@@ -75,7 +77,7 @@ class SettingsViewModel(
                         isSmsReadingEnabled = preferencesManager.isSmsReadingEnabled(),
                         defaultBudget = defaultBudget,
                         allBudgets = budgetRepository.getAllCached(),
-                        hasSmsPermission = checkSmsPermission(context),
+                        hasSmsPermission = permissionsManager.hasSmsPermission(),
                         availableBanks = SupportedBanks.ALL_BANKS,
                         selectedBanks = selectedBanks,
                         isAiProcessingEnabled = preferencesManager.isAiProcessingEnabled(),
@@ -121,12 +123,4 @@ class SettingsViewModel(
         _uiState.update { it.copy(isDefaultBudgetSelectorVisible = false) }
     }
 
-    private fun checkSmsPermission(context: Context): Boolean {
-        val hasPermission = ContextCompat.checkSelfPermission(
-            context,
-            Manifest.permission.RECEIVE_SMS
-        ) == PackageManager.PERMISSION_GRANTED
-
-        return hasPermission
-    }
 }
