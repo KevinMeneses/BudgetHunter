@@ -181,9 +181,16 @@ fun ShowInvoiceModal(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     remember(invoice) {
-                        if (invoice?.contains(".pdf") == true) {
-                            val bitmap = getBitmapFromPDFFile(invoice)
-                            bitmap.asImageBitmap()
+                        if (invoice?.endsWith(".pdf", ignoreCase = true) == true) {
+                            try {
+                                val bitmap = getBitmapFromPDFFile(invoice)
+                                bitmap.asImageBitmap()
+                            } catch (e: Exception) {
+                                // If PDF processing fails, try to decode as image
+                                BitmapFactory
+                                    .decodeFile(invoice)
+                                    ?.asImageBitmap()
+                            }
                         } else {
                             BitmapFactory
                                 .decodeFile(invoice)

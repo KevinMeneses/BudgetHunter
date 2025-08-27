@@ -1,8 +1,11 @@
 package com.meneses.budgethunter
 
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
@@ -29,14 +32,45 @@ import com.meneses.budgethunter.settings.SettingsViewModel
 import com.meneses.budgethunter.settings.ui.SettingsScreen
 import com.meneses.budgethunter.splash.SplashScreen
 import com.meneses.budgethunter.splash.SplashScreenViewModel
+import com.meneses.budgethunter.commons.platform.AndroidCameraManager
+import com.meneses.budgethunter.commons.platform.AndroidFilePickerManager
+import com.meneses.budgethunter.commons.platform.CameraLauncherDelegate
+import com.meneses.budgethunter.commons.platform.CameraManager
+import com.meneses.budgethunter.commons.platform.FilePickerLauncherDelegate
+import com.meneses.budgethunter.commons.platform.FilePickerManager
 import com.meneses.budgethunter.theme.AppColors
 import com.meneses.budgethunter.theme.BudgetHunterTheme
 import org.koin.androidx.compose.koinViewModel
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import kotlin.reflect.typeOf
 
-class MainActivity : ComponentActivity() {
+class MainActivity : ComponentActivity(), KoinComponent, CameraLauncherDelegate, FilePickerLauncherDelegate {
+    
+    // Activity result launchers
+    private lateinit var takePhotoLauncher: ActivityResultLauncher<Uri>
+    private lateinit var selectFileLauncher: ActivityResultLauncher<Array<String>>
+    
+    // Platform managers from Koin
+    private val cameraManager: CameraManager by inject()
+    private val filePickerManager: FilePickerManager by inject()
+    
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Setup activity result launchers
+        takePhotoLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
+            (cameraManager as AndroidCameraManager).handlePhotoResult(success)
+        }
+        
+        selectFileLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            (filePickerManager as AndroidFilePickerManager).handleFileResult(uri)
+        }
+        
+        // Set this activity as the launcher delegate
+        (cameraManager as AndroidCameraManager).setLauncherDelegate(this)
+        (filePickerManager as AndroidFilePickerManager).setLauncherDelegate(this)
+        
         setContent {
             BudgetHunterTheme {
                 // A surface container using the 'background' color from the theme
@@ -133,5 +167,15 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+    
+    // Implement CameraLauncherDelegate
+    override fun launchCamera(uri: Uri) {
+        takePhotoLauncher.launch(uri)
+    }
+    
+    // Implement FilePickerLauncherDelegate
+    override fun launchFilePicker(mimeTypes: Array<String>) {
+        selectFileLauncher.launch(mimeTypes)
     }
 }

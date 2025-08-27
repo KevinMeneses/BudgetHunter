@@ -1,6 +1,5 @@
 package com.meneses.budgethunter.budgetEntry
 
-import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.meneses.budgethunter.R
@@ -9,19 +8,27 @@ import com.meneses.budgethunter.budgetEntry.application.BudgetEntryState
 import com.meneses.budgethunter.budgetEntry.application.CreateBudgetEntryFromImageUseCase
 import com.meneses.budgethunter.budgetEntry.data.BudgetEntryRepository
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
+import com.meneses.budgethunter.commons.data.FileManager
 import com.meneses.budgethunter.commons.data.PreferencesManager
+import com.meneses.budgethunter.commons.platform.CameraManager
+import com.meneses.budgethunter.commons.platform.FilePickerManager
+import com.meneses.budgethunter.commons.platform.NotificationManager
+import com.meneses.budgethunter.commons.platform.ShareManager
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.io.File
-import java.io.IOException
 
 class BudgetEntryViewModel(
     private val budgetEntryRepository: BudgetEntryRepository,
     private val createBudgetEntryFromImageUseCase: CreateBudgetEntryFromImageUseCase,
-    private val preferencesManager: PreferencesManager
+    private val preferencesManager: PreferencesManager,
+    private val fileManager: FileManager,
+    private val cameraManager: CameraManager,
+    private val filePickerManager: FilePickerManager,
+    private val shareManager: ShareManager,
+    private val notificationManager: NotificationManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(BudgetEntryState())
@@ -42,6 +49,10 @@ class BudgetEntryViewModel(
             is BudgetEntryEvent.ToggleShowInvoiceModal -> toggleShowInvoiceModal(event.show)
             is BudgetEntryEvent.DeleteAttachedInvoice -> removeAttachedInvoice()
             is BudgetEntryEvent.DiscardChanges -> discardChanges()
+            is BudgetEntryEvent.TakePhoto -> takePhoto()
+            is BudgetEntryEvent.PickFile -> pickFile()
+            is BudgetEntryEvent.ShareFile -> shareFile(event.filePath)
+            is BudgetEntryEvent.ShowNotification -> showNotification(event.message, event.isError)
         }
     }
 
@@ -67,13 +78,13 @@ class BudgetEntryViewModel(
             _uiState.update { it.copy(isProcessingInvoice = true) }
             toggleAttachInvoiceModal(false)
             if (wasNewInvoiceAttached) deleteAttachedInvoice()
-            val invoiceDir = saveInvoiceInAppInternalStorage(event)
+            val invoicePath = fileManager.saveFile(event.fileData)
             wasNewInvoiceAttached = true
 
             val aiBudgetEntry = if (preferencesManager.isAiProcessingEnabled()) {
                 _uiState.value.budgetEntry?.let { budgetEntry ->
                     createBudgetEntryFromImageUseCase.execute(
-                        imageUri = invoiceDir.toUri().toString(),
+                        imageUri = fileManager.createUri(invoicePath),
                         budgetEntry = budgetEntry
                     )
                 }
@@ -83,7 +94,7 @@ class BudgetEntryViewModel(
 
             _uiState.update {
                 val updatedEntry = aiBudgetEntry
-                    ?.copy(invoice = invoiceDir.absolutePath)
+                    ?.copy(invoice = invoicePath)
                     ?: it.budgetEntry
 
                 it.copy(
@@ -97,19 +108,6 @@ class BudgetEntryViewModel(
             delay(2000)
             updateInvoiceError(null)
         }
-    }
-
-    private fun saveInvoiceInAppInternalStorage(event: BudgetEntryEvent.AttachInvoice): File {
-        val invoiceToSave = event.contentResolver
-            .openInputStream(event.fileToSave)
-            .use { it!!.readBytes() }
-
-        val fileFormat = if (event.fileToSave.path?.contains("image") == true) ".jpg" else ".pdf"
-        val invoiceDir =
-            File(event.internalFilesDir, System.currentTimeMillis().toString() + fileFormat)
-        invoiceDir.outputStream().use { it.write(invoiceToSave) }
-
-        return invoiceDir
     }
 
     private fun updateInvoiceError(message: String?) =
@@ -161,11 +159,7 @@ class BudgetEntryViewModel(
     }
 
     private fun deleteFile(invoice: String) {
-        try {
-            File(invoice).delete()
-        } catch (e: IOException) {
-            /* no-op */
-        }
+        fileManager.deleteFile(invoice)
     }
 
     private fun showAmountError() {
@@ -186,4 +180,32 @@ class BudgetEntryViewModel(
 
     private fun hideDiscardChangesModal() =
         _uiState.update { it.copy(isDiscardChangesModalVisible = false) }
+
+    private fun takePhoto() {
+        cameraManager.takePhoto { fileData ->
+            fileData?.let {
+                sendEvent(BudgetEntryEvent.AttachInvoice(it))
+            }
+        }
+    }
+
+    private fun pickFile() {
+        filePickerManager.pickFile { fileData ->
+            fileData?.let {
+                sendEvent(BudgetEntryEvent.AttachInvoice(it))
+            }
+        }
+    }
+
+    private fun shareFile(filePath: String) {
+        shareManager.shareFile(filePath)
+    }
+
+    private fun showNotification(message: String, isError: Boolean) {
+        if (isError) {
+            notificationManager.showError(message)
+        } else {
+            notificationManager.showToast(message)
+        }
+    }
 }

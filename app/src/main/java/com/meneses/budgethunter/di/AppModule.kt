@@ -9,8 +9,18 @@ import com.meneses.budgethunter.BuildConfig
 import com.meneses.budgethunter.budgetList.data.adapter.categoryAdapter
 import com.meneses.budgethunter.budgetList.data.adapter.typeAdapter
 import com.meneses.budgethunter.commons.data.AndroidDatabaseFactory
+import com.meneses.budgethunter.commons.data.AndroidFileManager
 import com.meneses.budgethunter.commons.data.DatabaseFactory
+import com.meneses.budgethunter.commons.data.FileManager
 import com.meneses.budgethunter.commons.data.PreferencesManager
+import com.meneses.budgethunter.commons.platform.AndroidCameraManager
+import com.meneses.budgethunter.commons.platform.AndroidFilePickerManager
+import com.meneses.budgethunter.commons.platform.AndroidNotificationManager
+import com.meneses.budgethunter.commons.platform.AndroidShareManager
+import com.meneses.budgethunter.commons.platform.CameraManager
+import com.meneses.budgethunter.commons.platform.FilePickerManager
+import com.meneses.budgethunter.commons.platform.NotificationManager
+import com.meneses.budgethunter.commons.platform.ShareManager
 import com.meneses.budgethunter.db.BudgetEntryQueries
 import com.meneses.budgethunter.db.BudgetQueries
 import com.meneses.budgethunter.db.Budget_entry
@@ -87,4 +97,23 @@ class AppModule {
             modelName = "gemini-2.0-flash",
             apiKey = BuildConfig.GEMINI_API_KEY
         )
+
+    @Single
+    fun provideFileManager(): FileManager = AndroidFileManager()
+
+    @Single
+    fun provideNotificationManager(context: Context): NotificationManager = 
+        AndroidNotificationManager(context)
+
+    @Single
+    fun provideShareManager(context: Context): ShareManager = 
+        AndroidShareManager(context)
+
+    @Single
+    fun provideCameraManager(context: Context): CameraManager = 
+        AndroidCameraManager(context)
+
+    @Single
+    fun provideFilePickerManager(context: Context): FilePickerManager = 
+        AndroidFilePickerManager(context)
 }

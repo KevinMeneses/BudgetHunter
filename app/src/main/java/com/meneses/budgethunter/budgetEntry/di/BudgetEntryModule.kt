@@ -7,7 +7,12 @@ import com.meneses.budgethunter.budgetEntry.application.CreateAndroidBudgetEntry
 import com.meneses.budgethunter.budgetEntry.application.CreateBudgetEntryFromImageUseCase
 import com.meneses.budgethunter.budgetEntry.data.BudgetEntryRepository
 import com.meneses.budgethunter.budgetEntry.data.datasource.BudgetEntryLocalDataSource
+import com.meneses.budgethunter.commons.data.FileManager
 import com.meneses.budgethunter.commons.data.PreferencesManager
+import com.meneses.budgethunter.commons.platform.CameraManager
+import com.meneses.budgethunter.commons.platform.FilePickerManager
+import com.meneses.budgethunter.commons.platform.NotificationManager
+import com.meneses.budgethunter.commons.platform.ShareManager
 import com.meneses.budgethunter.db.BudgetEntryQueries
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.serialization.json.Json
@@ -49,10 +54,20 @@ class BudgetEntryModule {
     fun provideBudgetEntryViewModel(
         budgetEntryRepository: BudgetEntryRepository,
         createBudgetEntryFromImageUseCase: CreateBudgetEntryFromImageUseCase,
-        preferencesManager: PreferencesManager
+        preferencesManager: PreferencesManager,
+        fileManager: FileManager,
+        cameraManager: CameraManager,
+        filePickerManager: FilePickerManager,
+        shareManager: ShareManager,
+        notificationManager: NotificationManager
     ): BudgetEntryViewModel = BudgetEntryViewModel(
         budgetEntryRepository,
         createBudgetEntryFromImageUseCase,
-        preferencesManager
+        preferencesManager,
+        fileManager,
+        cameraManager,
+        filePickerManager,
+        shareManager,
+        notificationManager
     )
 }
