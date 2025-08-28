@@ -5,12 +5,10 @@ import com.meneses.budgethunter.budgetEntry.data.BudgetEntryRepository
 import com.meneses.budgethunter.commons.data.PreferencesManager
 import com.meneses.budgethunter.commons.platform.AndroidNotificationService
 import com.meneses.budgethunter.commons.platform.NotificationService
-import com.meneses.budgethunter.sms.SmsService
-import com.meneses.budgethunter.sms.SmsMapper
 import com.meneses.budgethunter.sms.ProcessSmsUseCase
-import kotlinx.coroutines.CoroutineScope
+import com.meneses.budgethunter.sms.SmsMapper
+import com.meneses.budgethunter.sms.SmsService
 import org.koin.core.annotation.Module
-import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
 
 @Module
@@ -31,13 +29,11 @@ class SmsModule {
         context: Context,
         smsMapper: SmsMapper,
         budgetEntryRepository: BudgetEntryRepository,
-        notificationService: NotificationService,
-        @Named("ioScope") ioScope: CoroutineScope
+        notificationService: NotificationService
     ): SmsService = ProcessSmsUseCase(
         context = context,
         smsMapper = smsMapper,
         budgetEntryRepository = budgetEntryRepository,
         notificationService = notificationService,
-        ioScope = ioScope
     )
 }

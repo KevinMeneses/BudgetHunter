@@ -42,7 +42,7 @@ class SmsBroadcastReceiver : BroadcastReceiver(), KoinComponent {
         }
     }
 
-    private fun processSmsMessage(messageBody: String, sender: String?, bankConfigs: Set<BankSmsConfig>) {
+    private suspend fun processSmsMessage(messageBody: String, sender: String?, bankConfigs: Set<BankSmsConfig>) {
         val isFromSelectedBank = sender != null && bankConfigs.any { bankConfig ->
             bankConfig.senderKeywords.any { keyword ->
                 sender.contains(keyword, ignoreCase = true) || messageBody.contains(keyword, ignoreCase = true)
