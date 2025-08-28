@@ -1,9 +1,5 @@
 package com.meneses.budgethunter.settings.ui
 
-import android.Manifest
-import android.os.Build
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -34,6 +30,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -43,6 +40,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import com.meneses.budgethunter.R
 import com.meneses.budgethunter.commons.ui.AppBar
 import com.meneses.budgethunter.settings.application.SettingsEvent
@@ -65,13 +65,15 @@ object SettingsScreen {
     fun Show(
         uiState: SettingsState,
         onEvent: (SettingsEvent) -> Unit,
-        goBack: () -> Unit
+        goBack: () -> Unit,
     ) {
-        val permissionsLauncher = rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.RequestMultiplePermissions()
-        ) {
-            val receiveSmsGranted = it[Manifest.permission.RECEIVE_SMS] ?: false
-            onEvent(SettingsEvent.HandleSMSPermissionResult(receiveSmsGranted))
+        val lifecycleOwner = LocalLifecycleOwner.current
+        LaunchedEffect(lifecycleOwner) {
+            lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                SettingsEvent
+                    .LoadSettings
+                    .run(onEvent)
+            }
         }
 
         Scaffold(
@@ -93,15 +95,7 @@ object SettingsScreen {
                 SmsReadingSection(
                     uiState = uiState,
                     onToggleSmsReading = { enabled ->
-                        if (enabled && !uiState.hasSmsPermission) {
-                            val permissions = arrayOf(Manifest.permission.RECEIVE_SMS, "")
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                permissions[1] = Manifest.permission.POST_NOTIFICATIONS
-                            }
-                            permissionsLauncher.launch(permissions)
-                        } else {
-                            onEvent(SettingsEvent.ToggleSmsReading(enabled))
-                        }
+                        onEvent(SettingsEvent.ToggleSmsReading(enabled))
                     },
                     onSelectDefaultBudget = {
                         onEvent(SettingsEvent.ShowDefaultBudgetSelector)
@@ -151,6 +145,14 @@ object SettingsScreen {
                 onBanksSelected = { banks ->
                     onEvent(SettingsEvent.SetSelectedBanks(banks))
                 }
+            )
+        }
+
+        // Manual Permission Dialog
+        if (uiState.isManualPermissionDialogVisible) {
+            ManualPermissionDialog(
+                onDismiss = { onEvent(SettingsEvent.HideManualPermissionDialog) },
+                onOpenSettings = { onEvent(SettingsEvent.OpenAppSettings) }
             )
         }
     }
@@ -466,5 +468,41 @@ object SettingsScreen {
                 )
             }
         }
+    }
+
+    @Composable
+    private fun ManualPermissionDialog(
+        onDismiss: () -> Unit,
+        onOpenSettings: () -> Unit
+    ) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = onDismiss,
+            title = {
+                Text(
+                    text = stringResource(R.string.sms_permission_required),
+                    style = MaterialTheme.typography.headlineSmall
+                )
+            },
+            text = {
+                Text(
+                    text = stringResource(R.string.sms_permission_explanation),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                androidx.compose.material3.TextButton(
+                    onClick = onOpenSettings
+                ) {
+                    Text(stringResource(R.string.settings))
+                }
+            },
+            dismissButton = {
+                androidx.compose.material3.TextButton(
+                    onClick = onDismiss
+                ) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
     }
 }

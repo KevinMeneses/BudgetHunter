@@ -24,21 +24,20 @@ class SettingsViewModel(
     private val _uiState = MutableStateFlow(SettingsState())
     val uiState = _uiState.asStateFlow()
 
-    init {
-        loadSettings()
-    }
-
     fun sendEvent(event: SettingsEvent) {
         when (event) {
+            is SettingsEvent.LoadSettings -> loadSettings()
             is SettingsEvent.ToggleSmsReading -> toggleSmsReading(event.enabled)
             is SettingsEvent.SetDefaultBudget -> setDefaultBudget(event.budget)
-            is SettingsEvent.HandleSMSPermissionResult -> handleSmsPermission(event.granted)
             is SettingsEvent.ShowDefaultBudgetSelector -> showDefaultBudgetSelector()
             is SettingsEvent.HideDefaultBudgetSelector -> hideDefaultBudgetSelector()
             is SettingsEvent.ShowBankSelector -> showBankSelector()
             is SettingsEvent.HideBankSelector -> hideBankSelector()
             is SettingsEvent.SetSelectedBanks -> setSelectedBanks(event.bankConfigs)
             is SettingsEvent.ToggleAiProcessing -> toggleAiProcessing(event.enabled)
+            is SettingsEvent.ShowManualPermissionDialog -> showManualPermissionDialog()
+            is SettingsEvent.HideManualPermissionDialog -> hideManualPermissionDialog()
+            is SettingsEvent.OpenAppSettings -> openAppSettings()
         }
     }
 
@@ -66,7 +65,6 @@ class SettingsViewModel(
                     budgetRepository.getById(defaultBudgetId)
                 } else null
 
-                // Load selected bank IDs and convert to BankSmsConfig objects
                 val selectedBankIds = preferencesManager.getSelectedBankIds()
                 val selectedBanks = selectedBankIds.mapNotNull { bankId ->
                     SupportedBanks.getBankConfigById(bankId)
@@ -93,6 +91,23 @@ class SettingsViewModel(
     private fun toggleSmsReading(enabled: Boolean) = viewModelScope.launch {
         preferencesManager.setSmsReadingEnabled(enabled)
         _uiState.update { it.copy(isSmsReadingEnabled = enabled) }
+        if (!enabled) return@launch
+
+        when {
+            !permissionsManager.hasSmsPermission() && !permissionsManager.shouldShowSMSPermissionRationale() -> {
+                permissionsManager.requestSmsPermissions { granted ->
+                    _uiState.update { it.copy(hasSmsPermission = granted) }
+                }
+            }
+
+            permissionsManager.shouldShowSMSPermissionRationale() -> {
+                showManualPermissionDialog()
+            }
+
+            else -> {
+                _uiState.update { it.copy(hasSmsPermission = true) }
+            }
+        }
     }
 
     private fun toggleAiProcessing(enabled: Boolean) = viewModelScope.launch {
@@ -110,10 +125,6 @@ class SettingsViewModel(
         }
     }
 
-    private fun handleSmsPermission(granted: Boolean) {
-        _uiState.update { it.copy(hasSmsPermission = granted) }
-        toggleSmsReading(granted)
-    }
 
     private fun showDefaultBudgetSelector() {
         _uiState.update { it.copy(isDefaultBudgetSelectorVisible = true) }
@@ -123,4 +134,16 @@ class SettingsViewModel(
         _uiState.update { it.copy(isDefaultBudgetSelectorVisible = false) }
     }
 
+    private fun showManualPermissionDialog() {
+        _uiState.update { it.copy(isManualPermissionDialogVisible = true) }
+    }
+
+    private fun hideManualPermissionDialog() {
+        _uiState.update { it.copy(isManualPermissionDialogVisible = false) }
+    }
+
+    private fun openAppSettings() {
+        permissionsManager.openAppSettings()
+        hideManualPermissionDialog()
+    }
 }
