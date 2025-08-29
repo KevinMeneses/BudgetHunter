@@ -13,11 +13,13 @@ import com.meneses.budgethunter.commons.data.AndroidFileManager
 import com.meneses.budgethunter.commons.data.DatabaseFactory
 import com.meneses.budgethunter.commons.data.FileManager
 import com.meneses.budgethunter.commons.data.PreferencesManager
+import com.meneses.budgethunter.commons.platform.AndroidAppUpdateManager
 import com.meneses.budgethunter.commons.platform.AndroidCameraManager
 import com.meneses.budgethunter.commons.platform.AndroidFilePickerManager
 import com.meneses.budgethunter.commons.platform.AndroidNotificationManager
 import com.meneses.budgethunter.commons.platform.AndroidPermissionsManager
 import com.meneses.budgethunter.commons.platform.AndroidShareManager
+import com.meneses.budgethunter.commons.platform.AppUpdateManager
 import com.meneses.budgethunter.commons.platform.CameraManager
 import com.meneses.budgethunter.commons.platform.FilePickerManager
 import com.meneses.budgethunter.commons.platform.NotificationManager
@@ -122,4 +124,8 @@ class AppModule {
     @Single
     fun providePermissionsManager(context: Context): PermissionsManager = 
         AndroidPermissionsManager(context)
+
+    @Single
+    fun provideAppUpdateManager(context: Context): AppUpdateManager = 
+        AndroidAppUpdateManager(context)
 }

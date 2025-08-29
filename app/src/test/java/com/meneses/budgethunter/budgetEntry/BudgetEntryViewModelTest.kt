@@ -1,14 +1,18 @@
 package com.meneses.budgethunter.budgetEntry
 
-import android.content.ContentResolver
-import android.net.Uri
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.meneses.budgethunter.R
 import com.meneses.budgethunter.budgetEntry.application.BudgetEntryEvent
 import com.meneses.budgethunter.budgetEntry.application.CreateBudgetEntryFromImageUseCase
 import com.meneses.budgethunter.budgetEntry.data.BudgetEntryRepository
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
+import com.meneses.budgethunter.commons.data.FileData
+import com.meneses.budgethunter.commons.data.FileManager
 import com.meneses.budgethunter.commons.data.PreferencesManager
+import com.meneses.budgethunter.commons.platform.CameraManager
+import com.meneses.budgethunter.commons.platform.FilePickerManager
+import com.meneses.budgethunter.commons.platform.NotificationManager
+import com.meneses.budgethunter.commons.platform.ShareManager
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -26,7 +30,6 @@ import org.junit.Assert
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import java.io.File
 import java.io.IOException
 
 @ExperimentalCoroutinesApi
@@ -39,6 +42,11 @@ class BudgetEntryViewModelTest {
     private val repository: BudgetEntryRepository = mockk()
     private val getAIBudgetEntryFromImageUseCase: CreateBudgetEntryFromImageUseCase = mockk()
     private val preferencesManager: PreferencesManager = mockk()
+    private val fileManager: FileManager = mockk()
+    private val cameraManager: CameraManager = mockk()
+    private val filePickerManager: FilePickerManager = mockk()
+    private val shareManager: ShareManager = mockk()
+    private val notificationManager: NotificationManager = mockk()
 
     private lateinit var viewModel: BudgetEntryViewModel
 
@@ -68,7 +76,12 @@ class BudgetEntryViewModelTest {
         viewModel = BudgetEntryViewModel(
             budgetEntryRepository = repository,
             createBudgetEntryFromImageUseCase = getAIBudgetEntryFromImageUseCase,
-            preferencesManager = preferencesManager
+            preferencesManager = preferencesManager,
+            fileManager = fileManager,
+            cameraManager = cameraManager,
+            filePickerManager = filePickerManager,
+            shareManager = shareManager,
+            notificationManager = notificationManager
         )
     }
 
@@ -284,23 +297,15 @@ class BudgetEntryViewModelTest {
 
     @Test
     fun `attachInvoice event should process without crashing`() = runTest(dispatcher) {
-        // Given - mock dependencies that will cause an error to test error handling
-        val mockUri = mockk<Uri>()
-        val mockContentResolver = mockk<ContentResolver>()
-        val mockInternalFilesDir = mockk<File>()
-
-        // Make contentResolver throw an exception to test error handling
-        every { mockContentResolver.openInputStream(mockUri) } throws IOException("Mock file error")
+        // Given - mock file data that will cause fileManager to fail
+        val mockFileData = mockk<FileData>()
+        every { fileManager.saveFile(mockFileData) } throws IOException("Mock file error")
 
         // Set initial budget entry
         viewModel.sendEvent(BudgetEntryEvent.SetBudgetEntry(testBudgetEntry))
 
         // When - send attach invoice event (expect it to handle errors gracefully)
-        val attachEvent = BudgetEntryEvent.AttachInvoice(
-            fileToSave = mockUri,
-            contentResolver = mockContentResolver,
-            internalFilesDir = mockInternalFilesDir
-        )
+        val attachEvent = BudgetEntryEvent.AttachInvoice(fileData = mockFileData)
 
         viewModel.sendEvent(attachEvent)
         runCurrent()
@@ -311,22 +316,15 @@ class BudgetEntryViewModelTest {
 
     @Test
     fun `attachInvoice event should handle AI processing error and clear after delay`() = runTest(dispatcher) {
-        // Given - mock dependencies with error
-        val mockUri = mockk<Uri>()
-        val mockContentResolver = mockk<ContentResolver>()
-        val mockInternalFilesDir = mockk<File>()
-
-        every { mockContentResolver.openInputStream(mockUri) } throws IOException("File read error")
+        // Given - mock file data that will cause fileManager to fail
+        val mockFileData = mockk<FileData>()
+        every { fileManager.saveFile(mockFileData) } throws IOException("File read error")
 
         // Set initial budget entry
         viewModel.sendEvent(BudgetEntryEvent.SetBudgetEntry(testBudgetEntry))
 
         // When
-        val attachEvent = BudgetEntryEvent.AttachInvoice(
-            fileToSave = mockUri,
-            contentResolver = mockContentResolver,
-            internalFilesDir = mockInternalFilesDir
-        )
+        val attachEvent = BudgetEntryEvent.AttachInvoice(fileData = mockFileData)
         viewModel.sendEvent(attachEvent)
         runCurrent()
 

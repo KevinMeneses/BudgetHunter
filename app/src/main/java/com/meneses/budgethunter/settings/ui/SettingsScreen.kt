@@ -19,8 +19,8 @@ import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Psychology
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -29,8 +29,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -40,9 +40,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.lifecycle.repeatOnLifecycle
 import com.meneses.budgethunter.R
 import com.meneses.budgethunter.commons.ui.AppBar
 import com.meneses.budgethunter.settings.application.SettingsEvent
@@ -67,14 +64,6 @@ object SettingsScreen {
         onEvent: (SettingsEvent) -> Unit,
         goBack: () -> Unit,
     ) {
-        val lifecycleOwner = LocalLifecycleOwner.current
-        LaunchedEffect(lifecycleOwner) {
-            lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                SettingsEvent
-                    .LoadSettings
-                    .run(onEvent)
-            }
-        }
 
         Scaffold(
             topBar = {
@@ -490,14 +479,14 @@ object SettingsScreen {
                 )
             },
             confirmButton = {
-                androidx.compose.material3.TextButton(
+                TextButton(
                     onClick = onOpenSettings
                 ) {
                     Text(stringResource(R.string.settings))
                 }
             },
             dismissButton = {
-                androidx.compose.material3.TextButton(
+                TextButton(
                     onClick = onDismiss
                 ) {
                     Text(stringResource(R.string.cancel))
