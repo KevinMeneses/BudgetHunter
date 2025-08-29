@@ -3,28 +3,23 @@ package com.meneses.budgethunter
 import android.Manifest
 import android.net.Uri
 import android.os.Bundle
-import com.google.android.play.core.appupdate.AppUpdateInfo
-import com.google.android.play.core.appupdate.AppUpdateManager as GoogleAppUpdateManager
-import com.google.android.play.core.appupdate.AppUpdateOptions
-import com.google.android.play.core.install.model.AppUpdateType
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.core.app.ActivityCompat
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navOptions
 import androidx.navigation.toRoute
+import com.google.android.play.core.appupdate.AppUpdateInfo
+import com.google.android.play.core.appupdate.AppUpdateOptions
+import com.google.android.play.core.install.model.AppUpdateType
 import com.meneses.budgethunter.budgetDetail.BudgetDetailViewModel
 import com.meneses.budgethunter.budgetDetail.ui.BudgetDetailScreen
 import com.meneses.budgethunter.budgetEntry.BudgetEntryViewModel
@@ -45,11 +40,11 @@ import com.meneses.budgethunter.commons.platform.CameraLauncherDelegate
 import com.meneses.budgethunter.commons.platform.CameraManager
 import com.meneses.budgethunter.commons.platform.FilePickerLauncherDelegate
 import com.meneses.budgethunter.commons.platform.FilePickerManager
+import com.meneses.budgethunter.commons.platform.LifecycleManager
 import com.meneses.budgethunter.commons.platform.PermissionsLauncherDelegate
 import com.meneses.budgethunter.commons.platform.PermissionsManager
 import com.meneses.budgethunter.commons.util.serializableType
 import com.meneses.budgethunter.settings.SettingsViewModel
-import com.meneses.budgethunter.settings.application.SettingsEvent
 import com.meneses.budgethunter.settings.ui.SettingsScreen
 import com.meneses.budgethunter.splash.SplashScreen
 import com.meneses.budgethunter.splash.SplashScreenViewModel
@@ -59,6 +54,7 @@ import org.koin.androidx.compose.koinViewModel
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import kotlin.reflect.typeOf
+import com.google.android.play.core.appupdate.AppUpdateManager as GoogleAppUpdateManager
 
 class MainActivity : ComponentActivity(), KoinComponent, CameraLauncherDelegate, FilePickerLauncherDelegate, PermissionsLauncherDelegate, AppUpdateLauncherDelegate {
     
@@ -72,7 +68,8 @@ class MainActivity : ComponentActivity(), KoinComponent, CameraLauncherDelegate,
     private val filePickerManager: FilePickerManager by inject()
     private val permissionsManager: PermissionsManager by inject()
     private val appUpdateManager: AppUpdateManager by inject()
-    
+    private val lifecycleManager: LifecycleManager by inject()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
@@ -138,14 +135,6 @@ class MainActivity : ComponentActivity(), KoinComponent, CameraLauncherDelegate,
 
                         composable<SettingsScreen> {
                             val settingsViewModel: SettingsViewModel = koinViewModel()
-
-                            val lifecycleOwner = LocalLifecycleOwner.current
-                            LaunchedEffect(lifecycleOwner) {
-                                lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                                    settingsViewModel.sendEvent(SettingsEvent.LoadSettings)
-                                }
-                            }
-
                             SettingsScreen.Show(
                                 uiState = settingsViewModel.uiState.collectAsStateWithLifecycle().value,
                                 onEvent = settingsViewModel::sendEvent,
@@ -198,6 +187,11 @@ class MainActivity : ComponentActivity(), KoinComponent, CameraLauncherDelegate,
                 }
             }
         }
+    }
+
+    override fun onStart() {
+        lifecycleManager.onStart()
+        super.onStart()
     }
     
     // Implement CameraLauncherDelegate

@@ -7,6 +7,8 @@ import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.commons.bank.BankSmsConfig
 import com.meneses.budgethunter.commons.bank.SupportedBanks
 import com.meneses.budgethunter.commons.data.PreferencesManager
+import com.meneses.budgethunter.commons.platform.LifecycleDelegate
+import com.meneses.budgethunter.commons.platform.LifecycleManager
 import com.meneses.budgethunter.commons.platform.PermissionsManager
 import com.meneses.budgethunter.settings.application.SettingsEvent
 import com.meneses.budgethunter.settings.application.SettingsState
@@ -18,15 +20,20 @@ import kotlinx.coroutines.launch
 class SettingsViewModel(
     private val preferencesManager: PreferencesManager,
     private val budgetRepository: BudgetRepository,
-    private val permissionsManager: PermissionsManager
-) : ViewModel() {
+    private val permissionsManager: PermissionsManager,
+    lifecycleManager: LifecycleManager
+) : ViewModel(), LifecycleDelegate {
 
     private val _uiState = MutableStateFlow(SettingsState())
     val uiState = _uiState.asStateFlow()
 
+    init {
+        loadSettings()
+        lifecycleManager.setLifecycleDelegate(this)
+    }
+
     fun sendEvent(event: SettingsEvent) {
         when (event) {
-            is SettingsEvent.LoadSettings -> loadSettings()
             is SettingsEvent.ToggleSmsReading -> toggleSmsReading(event.enabled)
             is SettingsEvent.SetDefaultBudget -> setDefaultBudget(event.budget)
             is SettingsEvent.ShowDefaultBudgetSelector -> showDefaultBudgetSelector()
@@ -39,6 +46,10 @@ class SettingsViewModel(
             is SettingsEvent.HideManualPermissionDialog -> hideManualPermissionDialog()
             is SettingsEvent.OpenAppSettings -> openAppSettings()
         }
+    }
+
+    override fun onStart() {
+        loadSettings()
     }
 
     private fun setSelectedBanks(bankConfigs: Set<BankSmsConfig>) = viewModelScope.launch {
