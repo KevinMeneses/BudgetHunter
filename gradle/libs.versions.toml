@@ -31,7 +31,7 @@ ktor-cio = "2.3.11"
 # Other libraries
 kotlinx-serialization = "1.7.3"
 kotlinx-coroutines = "1.8.1"
-lottie-compose = "6.0.0"
+compottie = "2.0.0-rc04"
 play-app-update = "2.1.0"
 google-ai = "0.9.0"
 
@@ -85,7 +85,8 @@ ktor-client-logging = { group = "io.ktor", name = "ktor-client-logging", version
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 
 # UI Libraries
-lottie-compose = { group = "com.airbnb.android", name = "lottie-compose", version.ref = "lottie-compose" }
+compottie = { group = "io.github.alexzhirkevich", name = "compottie", version.ref = "compottie" }
+compottie-resources = { group = "io.github.alexzhirkevich", name = "compottie-resources", version.ref = "compottie" }
 
 # Google Play
 play-app-update = { group = "com.google.android.play", name = "app-update", version.ref = "play-app-update" }

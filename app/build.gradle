@@ -98,7 +98,8 @@ dependencies {
     implementation libs.bundles.androidx.lifecycle
     implementation libs.androidx.activity.compose
     implementation libs.bundles.sqldelight
-    implementation libs.lottie.compose
+    implementation libs.compottie
+    implementation libs.compottie.resources
 
     implementation libs.bundles.play.update
 

@@ -48,7 +48,7 @@ import com.meneses.budgethunter.R
 import com.meneses.budgethunter.budgetList.application.BudgetListEvent
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.commons.ui.LoadingScreen
-import com.meneses.budgethunter.commons.ui.LottiePlaceholder
+import com.meneses.budgethunter.commons.ui.CompottiePlaceholder
 import com.meneses.budgethunter.commons.util.toCurrency
 import com.meneses.budgethunter.theme.AppColors
 import com.meneses.budgethunter.theme.BudgetHunterTheme
@@ -88,11 +88,15 @@ fun BudgetListContent(
                 .fillMaxSize()
                 .padding(horizontal = 20.dp)
                 .padding(top = 5.dp)
-                .padding(bottom = 90.dp)
+                .padding(bottom = 90.dp),
+            verticalArrangement = if (list.isEmpty()) Arrangement.Center else Arrangement.Top
         ) {
             if (list.isEmpty()) {
                 item {
-                    LottiePlaceholder(resId = R.raw.empty_state)
+                    CompottiePlaceholder(
+                        resId = R.raw.empty_state,
+                        modifier = Modifier.fillMaxSize()
+                    )
                 }
             } else {
                 items(list.size) {
@@ -148,7 +152,7 @@ private fun BudgetItem(
                 val date = try {
                     LocalDate.parse(budget.date)
                         .format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     budget.date
                 }
 
