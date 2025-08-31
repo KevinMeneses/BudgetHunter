@@ -97,7 +97,6 @@ dependencies {
     implementation libs.bundles.compose
     implementation libs.bundles.androidx.lifecycle
     implementation libs.androidx.activity.compose
-    implementation libs.bundles.sheets.compose
     implementation libs.bundles.sqldelight
     implementation libs.lottie.compose
 

@@ -11,7 +11,7 @@ android-gradle-plugin = "8.10.1"
 
 # AndroidX
 androidx-core = "1.17.0"
-androidx-lifecycle = "2.9.2"
+androidx-lifecycle = "2.9.3"
 androidx-activity-compose = "1.10.1"
 androidx-navigation-compose = "2.9.3"
 androidx-datastore = "1.1.7"
@@ -31,7 +31,6 @@ ktor-cio = "2.3.11"
 # Other libraries
 kotlinx-serialization = "1.7.3"
 kotlinx-coroutines = "1.8.1"
-sheets-compose-dialogs = "1.0.3"
 lottie-compose = "6.0.0"
 play-app-update = "2.1.0"
 google-ai = "0.9.0"
@@ -86,8 +85,6 @@ ktor-client-logging = { group = "io.ktor", name = "ktor-client-logging", version
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 
 # UI Libraries
-sheets-compose-dialogs-core = { group = "com.maxkeppeler.sheets-compose-dialogs", name = "core", version.ref = "sheets-compose-dialogs" }
-sheets-compose-dialogs-calendar = { group = "com.maxkeppeler.sheets-compose-dialogs", name = "calendar", version.ref = "sheets-compose-dialogs" }
 lottie-compose = { group = "com.airbnb.android", name = "lottie-compose", version.ref = "lottie-compose" }
 
 # Google Play
@@ -159,10 +156,6 @@ play-update = [
     "play-app-update-ktx"
 ]
 
-sheets-compose = [
-    "sheets-compose-dialogs-core",
-    "sheets-compose-dialogs-calendar"
-]
 
 test-unit = [
     "junit",

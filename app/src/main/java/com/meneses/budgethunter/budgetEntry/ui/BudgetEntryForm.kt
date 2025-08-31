@@ -34,16 +34,17 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.maxkeppeker.sheets.core.models.base.rememberSheetState
-import com.maxkeppeler.sheets.calendar.CalendarDialog
-import com.maxkeppeler.sheets.calendar.models.CalendarConfig
-import com.maxkeppeler.sheets.calendar.models.CalendarSelection
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import com.meneses.budgethunter.R
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.commons.EMPTY
 import com.meneses.budgethunter.commons.ui.OutlinedDropdown
 import com.meneses.budgethunter.commons.ui.ThousandSeparatorTransformation
 import com.meneses.budgethunter.commons.ui.dashedBorder
+import com.meneses.budgethunter.commons.ui.SimpleDatePickerDialog
+import com.meneses.budgethunter.commons.ui.formatDateForDisplay
 import com.meneses.budgethunter.theme.AppColors
 import com.meneses.budgethunter.theme.green_success
 
@@ -167,28 +168,24 @@ fun DateField(
     label: String = stringResource(id = R.string.date),
     onDateSelected: (String) -> Unit
 ) {
-    val calendarState = rememberSheetState()
-
-    CalendarDialog(
-        state = calendarState,
-        config = CalendarConfig(
-            monthSelection = true,
-            yearSelection = true
-        ),
-        selection = CalendarSelection.Date {
-            onDateSelected(it.toString())
-        }
+    var showDatePicker by remember { mutableStateOf(false) }
+    
+    SimpleDatePickerDialog(
+        showDialog = showDatePicker,
+        onDateSelected = onDateSelected,
+        onDismiss = { showDatePicker = false },
+        initialDate = date
     )
 
     ExposedDropdownMenuBox(
         expanded = false,
         onExpandedChange = {
-            if (it) calendarState.show()
+            if (it) showDatePicker = true
         }
     ) {
         OutlinedTextField(
             modifier = Modifier.menuAnchor(),
-            value = date ?: EMPTY,
+            value = formatDateForDisplay(date),
             readOnly = true,
             label = { Text(text = label) },
             onValueChange = {},
