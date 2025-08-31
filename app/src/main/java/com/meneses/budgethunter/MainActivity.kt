@@ -7,9 +7,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Surface
-import androidx.compose.ui.Modifier
 import androidx.core.app.ActivityCompat
 import com.google.android.play.core.appupdate.AppUpdateInfo
 import com.google.android.play.core.appupdate.AppUpdateOptions
@@ -27,8 +24,6 @@ import com.meneses.budgethunter.commons.platform.FilePickerManager
 import com.meneses.budgethunter.commons.platform.LifecycleManager
 import com.meneses.budgethunter.commons.platform.PermissionsLauncherDelegate
 import com.meneses.budgethunter.commons.platform.PermissionsManager
-import com.meneses.budgethunter.theme.AppColors
-import com.meneses.budgethunter.theme.BudgetHunterTheme
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import com.google.android.play.core.appupdate.AppUpdateManager as GoogleAppUpdateManager
@@ -70,17 +65,7 @@ class MainActivity : ComponentActivity(), KoinComponent, CameraLauncherDelegate,
         (permissionsManager as AndroidPermissionsManager).setLauncherDelegate(this)
         (appUpdateManager as AndroidAppUpdateManager).setLauncherDelegate(this)
         
-        setContent {
-            BudgetHunterTheme {
-                // A surface container using the 'background' color from the theme
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = AppColors.background
-                ) {
-                    ScreenRouting()
-                }
-            }
-        }
+        setContent { App() }
     }
 
     override fun onStart() {
