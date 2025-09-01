@@ -97,7 +97,7 @@ dependencies {
     implementation libs.bundles.compose
     implementation libs.bundles.androidx.lifecycle
     implementation libs.androidx.activity.compose
-    implementation libs.bundles.sqldelight
+    implementation libs.bundles.sqldelight.android
     implementation libs.compottie
     implementation libs.compottie.resources
 
@@ -114,7 +114,7 @@ dependencies {
     implementation libs.bundles.datastore
 
     // Koin
-    implementation libs.bundles.koin
+    implementation libs.bundles.koin.android
     ksp libs.koin.ksp.compiler
 
     testImplementation libs.bundles.test.unit

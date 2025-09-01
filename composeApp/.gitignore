@@ -1,0 +1,43 @@
+# Gradle files
+.gradle/
+build/
+
+# Local configuration file (SDK path, etc)
+local.properties
+
+# IDE files
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# KMP/Native specific
+.kotlin/
+kotlin-js-store/
+
+# Generated files
+generated/
+
+# KMP Framework builds for iOS
+build/XCFrameworks/
+build/cocoapods/
+build/embedAndSignAppleFrameworkForXcode/
+
+# Android specific
+*.apk
+*.aab
+
+# Compose resources cache
+composeResources/
+
+# Test results
+test-results/
+**/build/test-results/
+
+# Temporary files
+*.tmp
+*.temp

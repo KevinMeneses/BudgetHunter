@@ -7,10 +7,31 @@
 /.idea/workspace.xml
 /.idea/navEditor.xml
 /.idea/assetWizardSettings.xml
-.DS_Store
 /build
 /captures
 .externalNativeBuild
 .cxx
 local.properties
 /CLAUDE.md
+
+# KMP specific
+.kotlin/
+kotlin-js-store/
+
+# Validation and build scripts (generated)
+validate-ios-build.sh
+
+# macOS specific
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+
+# IDE files
+/.idea/
+*.iws
+
+# Build outputs
+**/build/
