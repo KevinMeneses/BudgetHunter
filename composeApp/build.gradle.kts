@@ -43,6 +43,7 @@ kotlin {
             
             // Serialization
             implementation(libs.kotlinx.serialization.json)
+            implementation(libs.kotlinx.datetime)
             
             // Network
             implementation(libs.bundles.ktor)
