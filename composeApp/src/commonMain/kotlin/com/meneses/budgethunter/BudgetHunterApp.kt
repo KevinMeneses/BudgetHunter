@@ -2,12 +2,14 @@ package com.meneses.budgethunter
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.meneses.budgethunter.splash.application.SplashState
+import com.meneses.budgethunter.splash.ui.SplashScreen
+import com.meneses.budgethunter.theme.BudgetHunterTheme
 
 /**
  * Main entry point for the BudgetHunter Compose Multiplatform app.
@@ -15,14 +17,16 @@ import androidx.compose.ui.Modifier
  */
 @Composable
 fun BudgetHunterApp() {
-    MaterialTheme {
+    BudgetHunterTheme {
         Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background
+            modifier = Modifier.fillMaxSize()
         ) {
-            // TODO: Add navigation and screens here during migration
-            // For now, this is a placeholder that will be expanded as we migrate from the Android app
-            PlaceholderScreen()
+            // TODO: Add navigation here - temporarily showing SplashScreen
+            SplashScreen.Show(
+                uiState = SplashState(),
+                onEvent = { /* TODO: Handle events */ },
+                showBudgetList = { /* TODO: Navigate to BudgetList */ }
+            )
         }
     }
 }

@@ -1,18 +1,12 @@
-import UIKit
-import SwiftUI
 import ComposeApp
+import SwiftUI
+import UIKit
 
 struct ComposeView: UIViewControllerRepresentable {
-    
+
     func makeUIViewController(context: Context) -> UIViewController {
-        do {
-            let viewController = MainViewController_iosKt.MainViewController()
-            return viewController
-        } catch {
-            print("Error creating MainViewController: \(error)")
-            // Return a fallback controller if needed
-            return UIViewController()
-        }
+        let viewController = MainViewController_iosKt.MainViewController()
+        return viewController
     }
 
     func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
@@ -23,7 +17,7 @@ struct ComposeView: UIViewControllerRepresentable {
 struct ContentView: View {
     var body: some View {
         ComposeView()
-            .ignoresSafeArea(.keyboard) // Compose handles keyboard
+            .ignoresSafeArea(.keyboard)  // Compose handles keyboard
             .onAppear {
                 print("ContentView appeared")
             }

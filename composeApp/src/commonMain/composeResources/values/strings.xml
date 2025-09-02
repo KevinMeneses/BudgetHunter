@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="budget_hunter">Budget Hunter</string>
+    <string name="wait_for_update">Updating the app, please wait...</string>
+</resources>

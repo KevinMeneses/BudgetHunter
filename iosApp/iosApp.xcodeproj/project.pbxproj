@@ -13,6 +13,7 @@
 		7555FF83242A565900829871 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7555FF82242A565900829871 /* ContentView.swift */; };
 		7555FFB5242A651A00829871 /* ComposeApp.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7555FFB4242A651A00829871 /* ComposeApp.framework */; };
 		7555FFB6242A651A00829871 /* ComposeApp.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 7555FFB4242A651A00829871 /* ComposeApp.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		B1A7B2B82C82D1F200B2E6F8 /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = B1A7B2B72C82D1F200B2E6F8 /* libsqlite3.tbd */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -38,6 +39,7 @@
 		7555FF8C242A565B00829871 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		7555FFB4242A651A00829871 /* ComposeApp.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ComposeApp.framework; path = ../composeApp/build/xcode-frameworks/Debug/iphonesimulator18.0/ComposeApp.framework; sourceTree = "<group>"; };
 		AB3632DC29227652001CCB65 /* Config.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
+		B1A7B2B72C82D1F200B2E6F8 /* libsqlite3.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libsqlite3.tbd; path = usr/lib/libsqlite3.tbd; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -46,6 +48,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				7555FFB5242A651A00829871 /* ComposeApp.framework in Frameworks */,
+				B1A7B2B82C82D1F200B2E6F8 /* libsqlite3.tbd in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -94,6 +97,7 @@
 			isa = PBXGroup;
 			children = (
 				7555FFB4242A651A00829871 /* ComposeApp.framework */,
+				B1A7B2B72C82D1F200B2E6F8 /* libsqlite3.tbd */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -348,6 +352,7 @@
 					"$(inherited)",
 					"-framework",
 					ComposeApp,
+					"-lsqlite3",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.meneses.budgethunter;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -378,6 +383,7 @@
 					"$(inherited)",
 					"-framework",
 					ComposeApp,
+					"-lsqlite3",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.meneses.budgethunter;
 				PRODUCT_NAME = "$(TARGET_NAME)";

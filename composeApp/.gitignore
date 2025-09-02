@@ -31,8 +31,8 @@ build/embedAndSignAppleFrameworkForXcode/
 *.apk
 *.aab
 
-# Compose resources cache
-composeResources/
+# Compose resources cache (keep source resources, ignore generated cache)
+build/generated/compose/
 
 # Test results
 test-results/
