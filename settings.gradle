@@ -1,17 +1,17 @@
 pluginManagement {
     repositories {
-        gradlePluginPortal()
         google()
         mavenCentral()
-        maven { url = uri("https://maven.pkg.jetbrains.space/public/p/compose/dev") }
+        gradlePluginPortal()
     }
 }
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
-        google()
         mavenCentral()
-        maven { url = uri("https://maven.pkg.jetbrains.space/public/p/compose/dev") }
+        google()
+        maven { url "https://maven.pkg.jetbrains.space/public/p/compose/dev" }
+        maven { url "https://jitpack.io" }
     }
 }
 rootProject.name = "BudgetHunter"

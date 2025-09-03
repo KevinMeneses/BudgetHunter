@@ -21,7 +21,7 @@ actual class DatabaseFactory(
         return AndroidSqliteDriver(
             schema = Database.Schema,
             context = context,
-            name = "budgethunter.db"
+            name = "budgethunter_kmp.db"
         )
     }
 }

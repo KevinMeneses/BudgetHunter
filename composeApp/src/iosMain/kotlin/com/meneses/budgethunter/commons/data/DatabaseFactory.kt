@@ -17,7 +17,7 @@ actual class DatabaseFactory {
     private fun createDriver(): SqlDriver {
         return NativeSqliteDriver(
             schema = Database.Schema,
-            name = "budgethunter.db"
+            name = "budgethunter_kmp.db"
         )
     }
 }

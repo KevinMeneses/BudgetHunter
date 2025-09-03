@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
+import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSetTree
 import java.util.Properties
 
 plugins {
@@ -13,6 +15,10 @@ plugins {
 
 kotlin {
     androidTarget {
+        @OptIn(ExperimentalKotlinGradlePluginApi::class)
+        instrumentedTestVariant {
+            sourceSetTree.set(KotlinSourceSetTree.test)
+        }
         compilations.all {
             kotlinOptions {
                 jvmTarget = "17"
@@ -37,6 +43,7 @@ kotlin {
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material3)
+            implementation(compose.materialIconsExtended)
             implementation(compose.ui)
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
@@ -54,9 +61,16 @@ kotlin {
             // Koin
             implementation(libs.bundles.koin)
             
+            // Lifecycle ViewModels
+            implementation(libs.jetbrains.lifecycle.viewmodel)
+            
             // Lottie animations
             implementation(libs.compottie)
             implementation(libs.compottie.resources)
+            
+            // Navigation Compose (multiplatform support) - temporarily disabled for iOS build
+            // implementation(libs.jetbrains.navigation.compose)
+            
         }
         
         androidMain.dependencies {
@@ -65,7 +79,7 @@ kotlin {
             implementation(libs.androidx.activity.compose)
             implementation(libs.bundles.koin.android)
             
-            // Navigation (Android only for now)
+            // Navigation Compose (Android only for now)
             implementation(libs.androidx.navigation.compose)
             
             // Lifecycle (Android only for now)
@@ -106,19 +120,21 @@ android {
         versionCode = 2
         versionName = "1.0.0"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        val instrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = instrumentationRunner
+        
         vectorDrawables {
             useSupportLibrary = true
         }
         
         // Load API key from local.properties
-        val localProperties = Properties()
-        val localPropertiesFile = rootProject.file("local.properties")
-        if (localPropertiesFile.exists()) {
-            localProperties.load(localPropertiesFile.inputStream())
+        val props = Properties()
+        val propsFile = rootProject.file("local.properties")
+        if (propsFile.exists()) {
+            props.load(propsFile.inputStream())
         }
 
-        val geminiApiKey = localProperties.getProperty("GEMINI_API_KEY") ?: ""
+        val geminiApiKey = props.getProperty("GEMINI_API_KEY") ?: ""
         buildConfigField("String", "GEMINI_API_KEY", "\"$geminiApiKey\"")
     }
 
