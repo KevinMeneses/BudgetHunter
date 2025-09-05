@@ -51,9 +51,10 @@ import com.meneses.budgethunter.budgetDetail.application.BudgetDetailEvent
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailState
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.commons.EMPTY
+import com.meneses.budgethunter.commons.ui.CompottiePlaceholder
 import com.meneses.budgethunter.commons.ui.DefDivider
 import com.meneses.budgethunter.commons.ui.LoadingScreen
-import com.meneses.budgethunter.commons.ui.CompottiePlaceholder
+import com.meneses.budgethunter.commons.util.loadRawResourceAsString
 import com.meneses.budgethunter.commons.util.toCurrency
 import com.meneses.budgethunter.theme.AppColors
 import com.meneses.budgethunter.theme.green_success
@@ -103,12 +104,14 @@ fun BudgetDetailContent(
                 Spacer(modifier = Modifier.height(20.dp))
 
                 if (uiState.budgetDetail.entries.isEmpty()) {
-                    CompottiePlaceholder(
-                        resId = R.raw.empty_list,
-                        modifier = Modifier
-                            .padding(vertical = 40.dp)
-                            .weight(0.8f, true)
-                    )
+                    loadRawResourceAsString(R.raw.empty_list)?.let {
+                        CompottiePlaceholder(
+                            jsonContent = it,
+                            modifier = Modifier
+                                .padding(vertical = 40.dp)
+                                .weight(0.8f, true)
+                        )
+                    }
                 } else {
                     ListSection(
                         budgetEntries = uiState.budgetDetail.entries,

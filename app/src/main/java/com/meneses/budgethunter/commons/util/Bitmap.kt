@@ -6,16 +6,7 @@ import android.graphics.Rect
 import android.graphics.pdf.PdfRenderer
 import android.graphics.pdf.PdfRenderer.Page
 import android.os.ParcelFileDescriptor
-import java.io.File
 import androidx.core.graphics.createBitmap
-
-fun getBitmapFromPDFFile(filePath: String): Bitmap {
-    val descriptor = ParcelFileDescriptor.open(
-        /* file = */ File(filePath),
-        /* mode = */ ParcelFileDescriptor.MODE_READ_ONLY
-    )
-    return getBitmapFromPDFFileDescriptor(descriptor)
-}
 
 fun getBitmapFromPDFFileDescriptor(descriptor: ParcelFileDescriptor): Bitmap {
     val page = PdfRenderer(descriptor).openPage(0)

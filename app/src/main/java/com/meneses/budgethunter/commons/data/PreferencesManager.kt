@@ -13,7 +13,7 @@ class PreferencesManager(private val preferences: DataStore<Preferences>) {
 
     suspend fun isSmsReadingEnabled() = preferences.data
         .map { it[KEY_SMS_READING_ENABLED] }
-        .firstOrNull() ?: false
+        .firstOrNull() == true
 
     suspend fun setSmsReadingEnabled(value: Boolean) {
         preferences.edit { it[KEY_SMS_READING_ENABLED] = value }
@@ -37,7 +37,7 @@ class PreferencesManager(private val preferences: DataStore<Preferences>) {
 
     suspend fun isAiProcessingEnabled() = preferences.data
         .map { it[KEY_AI_PROCESSING_ENABLED] }
-        .firstOrNull() ?: true
+        .firstOrNull() != false
 
     suspend fun setAiProcessingEnabled(value: Boolean) {
         preferences.edit { it[KEY_AI_PROCESSING_ENABLED] = value }

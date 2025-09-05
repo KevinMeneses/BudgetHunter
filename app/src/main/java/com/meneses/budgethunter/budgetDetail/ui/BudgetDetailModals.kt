@@ -187,7 +187,7 @@ fun FilterModal(
                     )
 
                     DescriptionField(
-                        description = description ?: EMPTY,
+                        description = description.orEmpty(),
                         onDescriptionChanged = { description = it }
                     )
 
