@@ -56,3 +56,27 @@ data class BudgetEntry(
         )
     }
 }
+// TODO: get the real string resources not just hardcoded strings
+fun BudgetEntry.Type.toStringResource(): String {
+    return when (this) {
+        BudgetEntry.Type.OUTCOME -> "Outcome"
+        BudgetEntry.Type.INCOME -> "Income"
+    }
+}
+
+// TODO: get the real string resources not just hardcoded strings
+fun BudgetEntry.Category.toStringResource(): String {
+    return when (this) {
+        BudgetEntry.Category.FOOD -> "Food"
+        BudgetEntry.Category.GROCERIES -> "Groceries"
+        BudgetEntry.Category.SELF_CARE -> "Self Care"
+        BudgetEntry.Category.TRANSPORTATION -> "Transportation"
+        BudgetEntry.Category.HOUSEHOLD_ITEMS -> "Household Items"
+        BudgetEntry.Category.SERVICES -> "Services"
+        BudgetEntry.Category.EDUCATION -> "Education"
+        BudgetEntry.Category.HEALTH -> "Health"
+        BudgetEntry.Category.LEISURE -> "Leisure"
+        BudgetEntry.Category.TAXES -> "Taxes"
+        BudgetEntry.Category.OTHER -> "Other"
+    }
+}
