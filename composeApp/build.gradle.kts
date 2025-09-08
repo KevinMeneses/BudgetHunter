@@ -64,6 +64,9 @@ kotlin {
             // Lifecycle ViewModels
             implementation(libs.jetbrains.lifecycle.viewmodel)
             
+            // DataStore (KMP support)
+            implementation(libs.bundles.datastore)
+            
             // Lottie animations
             implementation(libs.compottie)
             implementation(libs.compottie.resources)
@@ -84,9 +87,6 @@ kotlin {
             
             // Lifecycle (Android only for now)
             implementation(libs.bundles.androidx.lifecycle)
-            
-            // DataStore (Android only for now)
-            implementation(libs.bundles.datastore)
             
             // SqlDelight Android driver
             implementation(libs.sqldelight.android.driver)
