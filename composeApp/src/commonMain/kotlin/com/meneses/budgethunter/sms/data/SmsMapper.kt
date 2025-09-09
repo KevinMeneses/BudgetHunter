@@ -1,6 +1,7 @@
-package com.meneses.budgethunter.sms.domain
+package com.meneses.budgethunter.sms.data
 
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
+import com.meneses.budgethunter.sms.domain.BankSmsConfig
 import com.meneses.budgethunter.commons.data.PreferencesManager
 
 class SmsMapper(
@@ -12,7 +13,7 @@ class SmsMapper(
         }
 
         if (!containsBankKeyword) {
-            // Platform-specific logging will be handled by implementations
+            // Log could be added here for debugging
             return null
         }
 

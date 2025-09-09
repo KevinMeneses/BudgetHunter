@@ -9,9 +9,9 @@ actual class NotificationManager {
         println("NotificationManager.showToast(): $message")
     }
     
-    actual fun showError(message: String) {
-        // iOS implementation placeholder  
-        // This could show a UIAlertController or custom error UI
-        println("NotificationManager.showError(): $message")
+    actual fun showNotification(title: String, message: String) {
+        // iOS implementation placeholder
+        // This would typically use UserNotifications framework
+        println("NotificationManager.showNotification(): $title - $message")
     }
 }
