@@ -1,6 +1,11 @@
 package com.meneses.budgethunter.di
 
 import android.content.Context
+import com.google.ai.client.generativeai.GenerativeModel
+import com.meneses.budgethunter.BuildConfig
+import com.meneses.budgethunter.budgetEntry.data.ImageProcessor
+import com.meneses.budgethunter.budgetEntry.domain.AIImageProcessor
+import com.meneses.budgethunter.budgetEntry.domain.AndroidAIImageProcessor
 import com.meneses.budgethunter.commons.data.DatabaseFactory
 import com.meneses.budgethunter.commons.platform.AppUpdateManager
 import com.meneses.budgethunter.commons.platform.CameraManager
@@ -9,6 +14,9 @@ import com.meneses.budgethunter.commons.platform.NotificationManager
 import com.meneses.budgethunter.commons.platform.PermissionsManager
 import com.meneses.budgethunter.commons.platform.ShareManager
 import com.meneses.budgethunter.db.Database
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.serialization.json.Json
+import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
 val androidPlatformModule = module {
@@ -24,4 +32,25 @@ val androidPlatformModule = module {
     single<AppUpdateManager> { AppUpdateManager(get<Context>()) }
     single<NotificationManager> { NotificationManager(get<Context>()) }
     single<ShareManager> { ShareManager(get<Context>()) }
+    
+    // AI and Image Processing - Android specific
+    single<GenerativeModel> {
+        GenerativeModel(
+            modelName = "gemini-1.5-flash",
+            apiKey = BuildConfig.GEMINI_API_KEY
+        )
+    }
+    
+    single<ImageProcessor> {
+        ImageProcessor(get<Context>().contentResolver)
+    }
+    
+    single<AIImageProcessor> {
+        AndroidAIImageProcessor(
+            generativeModel = get<GenerativeModel>(),
+            imageProcessor = get<ImageProcessor>(),
+            json = get<Json>(),
+            ioDispatcher = get<CoroutineDispatcher>(named("IO"))
+        )
+    }
 }
