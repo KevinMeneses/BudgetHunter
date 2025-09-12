@@ -71,8 +71,8 @@ kotlin {
             implementation(libs.compottie)
             implementation(libs.compottie.resources)
             
-            // Navigation Compose (multiplatform support) - temporarily disabled for iOS build
-            // implementation(libs.jetbrains.navigation.compose)
+            // Navigation Compose (multiplatform support)
+            implementation(libs.jetbrains.navigation.compose)
             
         }
         

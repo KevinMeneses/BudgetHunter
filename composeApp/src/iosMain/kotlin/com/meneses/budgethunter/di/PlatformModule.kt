@@ -1,5 +1,7 @@
 package com.meneses.budgethunter.di
 
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
 import com.meneses.budgethunter.budgetEntry.data.ImageProcessor
 import com.meneses.budgethunter.budgetEntry.domain.AIImageProcessor
 import com.meneses.budgethunter.budgetEntry.domain.IosAIImageProcessor
@@ -19,6 +21,15 @@ val iosPlatformModule = module {
     // Provide the database using iOS-specific factory
     single<Database> { 
         DatabaseFactory().createDatabase()
+    }
+    
+    // DataStore for preferences (iOS placeholder)
+    single<DataStore<Preferences>> { 
+        // TODO: Implement proper iOS DataStore when iOS functionality is added
+        object : DataStore<Preferences> {
+            override val data = kotlinx.coroutines.flow.flowOf(androidx.datastore.preferences.core.emptyPreferences())
+            override suspend fun updateData(transform: suspend (t: Preferences) -> Preferences): Preferences = androidx.datastore.preferences.core.emptyPreferences()
+        }
     }
     
     // Platform-specific managers

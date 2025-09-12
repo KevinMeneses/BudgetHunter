@@ -2,6 +2,7 @@ package com.meneses.budgethunter.di
 
 import com.meneses.budgethunter.budgetList.data.adapter.categoryAdapter
 import com.meneses.budgethunter.budgetList.data.adapter.typeAdapter
+import com.meneses.budgethunter.commons.data.PreferencesManager
 import com.meneses.budgethunter.db.BudgetEntryQueries
 import com.meneses.budgethunter.db.BudgetQueries
 import com.meneses.budgethunter.db.Budget_entry
@@ -32,4 +33,6 @@ val commonModule = module {
     single<CoroutineDispatcher>(named("Default")) { Dispatchers.Default }
 
     single<Json> { Json { coerceInputValues = true } }
+
+    single<PreferencesManager> { PreferencesManager(get()) }
 }

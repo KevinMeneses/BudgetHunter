@@ -17,6 +17,7 @@ fun initKoin(platformModule: org.koin.core.module.Module = module { }) = startKo
         budgetMetricsModule,
         splashModule,
         smsModule,
+        settingsModule,
         
         // Platform-specific module
         platformModule

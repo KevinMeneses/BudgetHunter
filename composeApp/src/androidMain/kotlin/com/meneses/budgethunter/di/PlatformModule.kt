@@ -1,6 +1,9 @@
 package com.meneses.budgethunter.di
 
 import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.preferencesDataStore
 import com.google.ai.client.generativeai.GenerativeModel
 import com.meneses.budgethunter.BuildConfig
 import com.meneses.budgethunter.budgetEntry.data.ImageProcessor
@@ -19,10 +22,17 @@ import kotlinx.serialization.json.Json
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
+private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "budget_hunter_preferences")
+
 val androidPlatformModule = module {
     // Provide the database using Android-specific factory
     single<Database> { 
         DatabaseFactory(get<Context>()).createDatabase()
+    }
+    
+    // DataStore for preferences
+    single<DataStore<Preferences>> { 
+        get<Context>().dataStore 
     }
     
     // Platform-specific managers
