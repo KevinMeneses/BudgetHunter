@@ -1,5 +1,6 @@
 package com.meneses.budgethunter.di
 
+import com.meneses.budgethunter.budgetEntry.BudgetEntryViewModel
 import com.meneses.budgethunter.budgetEntry.application.CreateBudgetEntryFromImageUseCase
 import com.meneses.budgethunter.budgetEntry.data.BudgetEntryRepository
 import com.meneses.budgethunter.budgetEntry.data.datasource.BudgetEntryLocalDataSource
@@ -24,6 +25,20 @@ val budgetEntryModule = module {
         CreateBudgetEntryFromImageUseCase(
             aiImageProcessor = get<AIImageProcessor>(),
             ioDispatcher = get<CoroutineDispatcher>(named("IO"))
+        )
+    }
+
+    // BudgetEntryViewModel with all required dependencies
+    factory {
+        BudgetEntryViewModel(
+            budgetEntryRepository = get(),
+            createBudgetEntryFromImageUseCase = get(),
+            preferencesManager = get(),
+            fileManager = get(),
+            cameraManager = get(),
+            filePickerManager = get(),
+            shareManager = get(),
+            notificationManager = get()
         )
     }
 }
