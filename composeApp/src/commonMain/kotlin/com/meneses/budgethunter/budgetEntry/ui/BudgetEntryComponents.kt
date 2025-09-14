@@ -39,7 +39,6 @@ import com.meneses.budgethunter.budgetEntry.domain.toStringResource
 import com.meneses.budgethunter.commons.ui.OutlinedDropdown
 import com.meneses.budgethunter.commons.ui.SimpleDatePickerDialog
 import com.meneses.budgethunter.commons.ui.ThousandSeparatorTransformation
-import com.meneses.budgethunter.commons.util.formatDateForDisplay
 import com.meneses.budgethunter.theme.AppColors
 import com.meneses.budgethunter.theme.green_success
 import org.jetbrains.compose.resources.stringResource
@@ -140,7 +139,7 @@ fun DateField(
     ) {
         OutlinedTextField(
             modifier = Modifier.menuAnchor(),
-            value = formatDateForDisplay(date),
+            value = date.orEmpty(),
             readOnly = true,
             label = { Text(text = label) },
             onValueChange = {},

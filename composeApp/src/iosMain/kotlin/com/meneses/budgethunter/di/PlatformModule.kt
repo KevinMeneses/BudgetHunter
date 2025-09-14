@@ -6,6 +6,7 @@ import com.meneses.budgethunter.budgetEntry.data.ImageProcessor
 import com.meneses.budgethunter.budgetEntry.domain.AIImageProcessor
 import com.meneses.budgethunter.budgetEntry.domain.IosAIImageProcessor
 import com.meneses.budgethunter.commons.data.DatabaseFactory
+import com.meneses.budgethunter.commons.data.FileManager
 import com.meneses.budgethunter.commons.platform.AppUpdateManager
 import com.meneses.budgethunter.commons.platform.CameraManager
 import com.meneses.budgethunter.commons.platform.FilePickerManager
@@ -33,6 +34,7 @@ val iosPlatformModule = module {
     }
     
     // Platform-specific managers
+    single<FileManager> { FileManager() }
     single<CameraManager> { CameraManager() }
     single<FilePickerManager> { FilePickerManager() }
     single<PermissionsManager> { PermissionsManager() }
