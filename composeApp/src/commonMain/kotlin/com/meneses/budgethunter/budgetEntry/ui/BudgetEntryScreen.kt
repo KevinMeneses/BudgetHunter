@@ -76,7 +76,7 @@ data class BudgetEntryScreen(val budgetEntry: BudgetEntry) {
         ) { paddingValues ->
             BudgetEntryForm(
                 budgetEntry = uiState.budgetEntry ?: budgetEntry,
-                amountError = false, // TODO: Fix this once BudgetEntryState is properly migrated
+                amountError = uiState.emptyAmountError,
                 paddingValues = paddingValues,
                 onBudgetItemChanged = setBudgetEntry,
                 onInvoiceFieldClick = {

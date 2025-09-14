@@ -52,7 +52,7 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun BudgetEntryForm(
     budgetEntry: BudgetEntry,
-    amountError: Boolean,
+    amountError: String?,
     paddingValues: PaddingValues,
     onBudgetItemChanged: (BudgetEntry) -> Unit,
     onInvoiceFieldClick: () -> Unit
@@ -80,7 +80,7 @@ fun BudgetEntryForm(
                     .copy(amount = it)
                     .run(onBudgetItemChanged)
             },
-            amountError = if (amountError) "Invalid amount" else null
+            amountError = amountError
         )
         DescriptionField(
             description = budgetEntry.description,
@@ -167,7 +167,7 @@ fun ShowInvoiceModal(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "Invoice: ${invoice?.split("/")?.last() ?: "Unknown"}",
+                        text = "Invoice attached: ${invoice?.split("/")?.last() ?: "Unknown"}",
                         style = MaterialTheme.typography.bodyLarge,
                         modifier = Modifier.padding(bottom = 16.dp)
                     )

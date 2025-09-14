@@ -16,6 +16,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
@@ -138,7 +139,7 @@ fun DateField(
         }
     ) {
         OutlinedTextField(
-            modifier = Modifier.menuAnchor(),
+            modifier = Modifier.menuAnchor(type = MenuAnchorType.PrimaryNotEditable),
             value = date.orEmpty(),
             readOnly = true,
             label = { Text(text = label) },
