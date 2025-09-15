@@ -60,7 +60,7 @@ import com.meneses.budgethunter.budgetDetail.application.BudgetDetailEvent
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailState
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.commons.EMPTY
-import com.meneses.budgethunter.commons.ui.EmptyStatePlaceholder
+import com.meneses.budgethunter.commons.ui.CompottiePlaceholder
 import com.meneses.budgethunter.commons.ui.DefDivider
 import com.meneses.budgethunter.commons.ui.LoadingScreen
 import com.meneses.budgethunter.commons.util.toCurrency
@@ -104,7 +104,8 @@ fun BudgetDetailContent(
                 Spacer(modifier = Modifier.height(20.dp))
 
                 if (uiState.budgetDetail.entries.isEmpty()) {
-                    EmptyStatePlaceholder(
+                    CompottiePlaceholder(
+                        fileName = "empty_list.json",
                         modifier = Modifier
                             .padding(vertical = 40.dp)
                             .weight(0.8f, true)

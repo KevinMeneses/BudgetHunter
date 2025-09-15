@@ -45,22 +45,20 @@ import androidx.compose.ui.unit.dp
 import budgethunter.composeapp.generated.resources.Res
 import budgethunter.composeapp.generated.resources.budget_options
 import budgethunter.composeapp.generated.resources.change_name
-import budgethunter.composeapp.generated.resources.create_first_budget
 import budgethunter.composeapp.generated.resources.created
 import budgethunter.composeapp.generated.resources.delete
 import budgethunter.composeapp.generated.resources.delete_budget
 import budgethunter.composeapp.generated.resources.duplicate
 import budgethunter.composeapp.generated.resources.duplicate_budget
 import budgethunter.composeapp.generated.resources.edit_budget
-import budgethunter.composeapp.generated.resources.no_budgets_yet
 import com.meneses.budgethunter.budgetList.application.BudgetListEvent
-import org.jetbrains.compose.resources.stringResource
 import com.meneses.budgethunter.budgetList.domain.Budget
-import com.meneses.budgethunter.commons.ui.EmptyStatePlaceholder
+import com.meneses.budgethunter.commons.ui.CompottiePlaceholder
 import com.meneses.budgethunter.commons.ui.LoadingScreen
 import com.meneses.budgethunter.commons.util.toCurrency
 import com.meneses.budgethunter.theme.AppColors
 import kotlinx.datetime.LocalDate
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun BudgetListContent(
@@ -83,10 +81,9 @@ fun BudgetListContent(
         ) {
             if (list.isEmpty()) {
                 item {
-                    EmptyStatePlaceholder(
-                        modifier = Modifier.fillMaxSize(),
-                        title = stringResource(Res.string.no_budgets_yet),
-                        subtitle = stringResource(Res.string.create_first_budget)
+                    CompottiePlaceholder(
+                        fileName = "empty_state.json",
+                        modifier = Modifier.fillMaxSize()
                     )
                 }
             } else {
