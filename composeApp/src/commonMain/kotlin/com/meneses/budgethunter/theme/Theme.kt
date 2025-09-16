@@ -75,7 +75,7 @@ fun getMaterialColors(
     darkTheme: Boolean = isSystemInDarkTheme()
 ) = if (!darkTheme) LightColors else DarkColors
 
-val AppColors @Composable get() = getMaterialColors()
+val AppColors @Composable get() = MaterialTheme.colorScheme
 
 @Composable
 fun BudgetHunterTheme(
@@ -85,6 +85,7 @@ fun BudgetHunterTheme(
     MaterialTheme(
         colorScheme = getMaterialColors(darkTheme),
         typography = Typography,
+        shapes = Shapes,
         content = content
     )
 }

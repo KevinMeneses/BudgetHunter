@@ -26,7 +26,7 @@ import com.meneses.budgethunter.settings.SettingsViewModel
 import com.meneses.budgethunter.settings.ui.SettingsScreen
 import com.meneses.budgethunter.splash.SplashScreenViewModel
 import com.meneses.budgethunter.splash.ui.SplashScreen
-import com.meneses.budgethunter.theme.AppColors
+import androidx.compose.material3.MaterialTheme
 import org.koin.compose.koinInject
 import kotlin.reflect.typeOf
 
@@ -34,7 +34,7 @@ import kotlin.reflect.typeOf
 fun BudgetHunterNavigation() {
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = AppColors.background
+        color = MaterialTheme.colorScheme.background
     ) {
         val navController = rememberNavController()
         

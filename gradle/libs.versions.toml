@@ -165,17 +165,8 @@ ktor = [
     "ktor-client-logging"
 ]
 
-sqldelight = [
-    "sqldelight-coroutines-extensions"
-]
-
 sqldelight-android = [
     "sqldelight-android-driver",
-    "sqldelight-coroutines-extensions"
-]
-
-sqldelight-ios = [
-    "sqldelight-ios-driver", 
     "sqldelight-coroutines-extensions"
 ]
 

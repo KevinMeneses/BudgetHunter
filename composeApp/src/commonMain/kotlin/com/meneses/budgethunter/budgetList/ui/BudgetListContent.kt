@@ -35,7 +35,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -173,7 +172,7 @@ private fun BudgetItem(
                     Icon(
                         imageVector = Icons.Default.MoreVert,
                         contentDescription = stringResource(Res.string.budget_options),
-                        tint = Color(0xFF424242)
+                        tint = MaterialTheme.colorScheme.onSurface
                     )
                     DropdownMenu(
                         expanded = dropdownExpanded,
