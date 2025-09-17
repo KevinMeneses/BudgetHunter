@@ -4,15 +4,16 @@ import android.content.ContentResolver
 import android.net.Uri
 import java.io.File
 
-fun Uri.toFileData(
-    contentResolver: ContentResolver,
-    internalFilesDir: File?
-): FileData {
+/**
+ * Converts Android URI to FileData for cross-platform usage.
+ * Essential for file picker and camera integration.
+ */
+fun Uri.toFileData(contentResolver: ContentResolver, defaultDirectory: File): FileData {
     val data = contentResolver
         .openInputStream(this)
         ?.use { it.readBytes() }
         ?: byteArrayOf()
-    
+
     val mimeType = contentResolver.getType(this)
     val fileFormat = when {
         mimeType?.startsWith("image/") == true -> {
@@ -27,11 +28,12 @@ fun Uri.toFileData(
         else -> ".jpg" // Default fallback
     }
     val filename = System.currentTimeMillis().toString() + fileFormat
-    
+
     return FileData(
         data = data,
         filename = filename,
         mimeType = mimeType,
-        directory = internalFilesDir?.absolutePath.orEmpty()
+        directory = defaultDirectory.absolutePath
     )
 }
+

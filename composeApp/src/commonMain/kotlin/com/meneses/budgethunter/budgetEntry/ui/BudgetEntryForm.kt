@@ -1,5 +1,6 @@
 package com.meneses.budgethunter.budgetEntry.ui
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -28,6 +29,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -44,8 +46,11 @@ import budgethunter.composeapp.generated.resources.select_from_files
 import budgethunter.composeapp.generated.resources.select_invoice_option
 import budgethunter.composeapp.generated.resources.share_content_description
 import budgethunter.composeapp.generated.resources.take_a_picture
+import budgethunter.composeapp.generated.resources.invoice_content_description
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.commons.ui.dashedBorder
+import com.meneses.budgethunter.commons.util.getImageBitmapFromFile
+import com.meneses.budgethunter.commons.util.getImageBitmapFromPDFFile
 import com.meneses.budgethunter.theme.AppColors
 import org.jetbrains.compose.resources.stringResource
 
@@ -166,11 +171,22 @@ fun ShowInvoiceModal(
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(
-                        text = "Invoice attached: ${invoice?.split("/")?.last() ?: "Unknown"}",
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.padding(bottom = 16.dp)
-                    )
+                    remember(invoice) {
+                        if (invoice?.endsWith(".pdf", ignoreCase = true) == true) {
+                            getImageBitmapFromPDFFile(invoice)
+                        } else {
+                            getImageBitmapFromFile(invoice.orEmpty())
+                        }
+                    }?.let {
+                        Image(
+                            bitmap = it,
+                            contentDescription = stringResource(Res.string.invoice_content_description),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(400.dp)
+                                .padding(bottom = 16.dp)
+                        )
+                    }
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
