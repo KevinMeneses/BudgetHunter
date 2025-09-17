@@ -34,7 +34,7 @@ class BudgetEntryLocalDataSource(
             } 
         }
 
-    suspend fun getAllFilteredBy(filter: BudgetEntryFilter): List<BudgetEntry> = 
+    suspend fun getAllFilteredBy(filter: BudgetEntryFilter): List<BudgetEntry> =
         cacheMutex.withLock {
             cachedEntries.asSequence().filter {
                 if (filter.description.isNullOrBlank()) true

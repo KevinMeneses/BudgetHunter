@@ -28,14 +28,15 @@ class BudgetListViewModel(
     private fun collectBudgetList() {
         viewModelScope.launch {
             budgetRepository.budgets.collect { budgetList ->
-                _uiState.update {
-                    val filteredList = when {
-                        it.filter != null -> budgetRepository.getAllFilteredBy(it.filter)
-                        it.searchQuery.isNotBlank() -> budgetList.filter { budget ->
-                            budget.name.contains(it.searchQuery, ignoreCase = true)
-                        }
-                        else -> budgetList
+                val currentState = _uiState.value
+                val filteredList = when {
+                    currentState.filter != null -> budgetRepository.getAllFilteredBy(currentState.filter)
+                    currentState.searchQuery.isNotBlank() -> budgetList.filter { budget ->
+                        budget.name.contains(currentState.searchQuery, ignoreCase = true)
                     }
+                    else -> budgetList
+                }
+                _uiState.update {
                     it.copy(budgetList = filteredList, isLoading = false)
                 }
             }

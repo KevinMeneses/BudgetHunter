@@ -28,8 +28,8 @@ class BudgetLocalDataSource(
             } 
         }
 
-    suspend fun getAllCached(): List<Budget> = cacheMutex.withLock { 
-        cachedList 
+    suspend fun getAllCached(): List<Budget> = cacheMutex.withLock {
+        cachedList
     }
 
     suspend fun getById(id: Int): Budget? = cacheMutex.withLock {

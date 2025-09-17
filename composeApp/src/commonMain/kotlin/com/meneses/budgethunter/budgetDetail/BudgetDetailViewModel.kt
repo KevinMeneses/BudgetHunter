@@ -90,9 +90,10 @@ class BudgetDetailViewModel(
         budgetDetailRepository
             .getBudgetDetailById(budgetId)
             .collect { detail ->
+                val currentFilter = _uiState.value.filter
+                val updatedDetail = if (currentFilter == null) detail
+                else budgetDetailRepository.getAllFilteredBy(currentFilter)
                 _uiState.update {
-                    val updatedDetail = if (it.filter == null) detail
-                    else budgetDetailRepository.getAllFilteredBy(it.filter)
                     it.copy(budgetDetail = updatedDetail, isLoading = false)
                 }
             }
