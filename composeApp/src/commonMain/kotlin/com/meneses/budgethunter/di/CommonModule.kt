@@ -10,6 +10,7 @@ import com.meneses.budgethunter.db.Database
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.serialization.json.Json
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
@@ -24,7 +25,7 @@ val commonModule = module {
 
     single<BudgetQueries> { get<Database>().budgetQueries }
 
-    single<CoroutineDispatcher>(named("IO")) { Dispatchers.Default }
+    single<CoroutineDispatcher>(named("IO")) { Dispatchers.IO }
 
     single<CoroutineScope>(named("IOScope")) { 
         CoroutineScope(get(named("IO")))
