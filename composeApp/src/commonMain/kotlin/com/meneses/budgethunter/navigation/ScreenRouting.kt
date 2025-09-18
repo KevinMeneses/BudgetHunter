@@ -3,7 +3,7 @@ package com.meneses.budgethunter.navigation
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
@@ -44,7 +44,7 @@ fun BudgetHunterNavigation() {
         ) {
             composable<SplashScreen> {
                 val splashScreenViewModel: SplashScreenViewModel = koinInject()
-                val uiState by splashScreenViewModel.uiState.collectAsState()
+                val uiState by splashScreenViewModel.uiState.collectAsStateWithLifecycle()
                 
                 SplashScreen.Show(
                     uiState = uiState,
@@ -62,7 +62,7 @@ fun BudgetHunterNavigation() {
 
             composable<BudgetListScreen> {
                 val budgetListViewModel: BudgetListViewModel = koinInject()
-                val uiState by budgetListViewModel.uiState.collectAsState()
+                val uiState by budgetListViewModel.uiState.collectAsStateWithLifecycle()
                 
                 BudgetListScreen.Show(
                     uiState = uiState,
@@ -78,7 +78,7 @@ fun BudgetHunterNavigation() {
 
             composable<SettingsScreen> {
                 val settingsViewModel: SettingsViewModel = koinInject()
-                val uiState by settingsViewModel.uiState.collectAsState()
+                val uiState by settingsViewModel.uiState.collectAsStateWithLifecycle()
                 
                 SettingsScreen.Show(
                     uiState = uiState,
@@ -92,7 +92,7 @@ fun BudgetHunterNavigation() {
             ) { backStackEntry ->
                 val budgetDetailRoute = backStackEntry.toRoute<BudgetDetailScreen>()
                 val budgetDetailViewModel: BudgetDetailViewModel = koinInject()
-                val uiState by budgetDetailViewModel.uiState.collectAsState()
+                val uiState by budgetDetailViewModel.uiState.collectAsStateWithLifecycle()
                 
                 budgetDetailRoute.Show(
                     uiState = uiState,
@@ -115,7 +115,7 @@ fun BudgetHunterNavigation() {
             ) { backStackEntry ->
                 val budgetEntryRoute = backStackEntry.toRoute<BudgetEntryScreen>()
                 val budgetEntryViewModel: BudgetEntryViewModel = koinInject()
-                val uiState by budgetEntryViewModel.uiState.collectAsState()
+                val uiState by budgetEntryViewModel.uiState.collectAsStateWithLifecycle()
                 
                 budgetEntryRoute.Show(
                     uiState = uiState,
@@ -129,7 +129,7 @@ fun BudgetHunterNavigation() {
             ) { backStackEntry ->
                 val budgetMetricsRoute = backStackEntry.toRoute<BudgetMetricsScreen>()
                 val budgetMetricsViewModel: BudgetMetricsViewModel = koinInject()
-                val uiState by budgetMetricsViewModel.uiState.collectAsState()
+                val uiState by budgetMetricsViewModel.uiState.collectAsStateWithLifecycle()
                 
                 budgetMetricsRoute.Show(
                     uiState = uiState,
