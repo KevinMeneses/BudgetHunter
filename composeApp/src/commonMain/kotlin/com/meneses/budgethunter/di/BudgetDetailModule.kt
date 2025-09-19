@@ -20,7 +20,7 @@ val budgetDetailModule = module {
         )
     }
 
-    single<BudgetDetailViewModel> {
+    factory<BudgetDetailViewModel> {
         BudgetDetailViewModel(
             get<BudgetDetailRepository>()
         )

@@ -5,7 +5,7 @@ import com.meneses.budgethunter.splash.SplashScreenViewModel
 import org.koin.dsl.module
 
 val splashModule = module {
-    single<SplashScreenViewModel> {
+    factory<SplashScreenViewModel> {
         SplashScreenViewModel(get<AppUpdateManager>())
     }
 }

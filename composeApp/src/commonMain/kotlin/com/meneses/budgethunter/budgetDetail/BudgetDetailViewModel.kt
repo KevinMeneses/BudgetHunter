@@ -147,8 +147,9 @@ class BudgetDetailViewModel(
     }
 
     private fun deleteBudget() = viewModelScope.launch {
+        val budgetId = _uiState.value.budgetDetail.budget.id
         _uiState.update {
-            budgetDetailRepository.deleteBudget()
+            budgetDetailRepository.deleteBudget(budgetId)
             it.copy(goBack = true)
         }
     }

@@ -13,12 +13,12 @@ class DuplicateBudgetUseCase(
     private val defaultDispatcher: CoroutineDispatcher
 ) {
     suspend fun execute(budget: Budget) = withContext(defaultDispatcher) {
-        val updatedBudget = budget.copy(name = budget.name + " (copy)")
+        val updatedBudget = budget.copy(id = -1, name = budget.name + " (copy)")
         val copyBudgetId = budgetRepository.create(updatedBudget).id
         budgetEntryRepository
             .getAllByBudgetId(budget.id.toLong())
             .firstOrNull()?.forEach {
-                val updatedEntry = it.copy(budgetId = copyBudgetId)
+                val updatedEntry = it.copy(id = -1, budgetId = copyBudgetId)
                 budgetEntryRepository.create(updatedEntry)
             }
     }

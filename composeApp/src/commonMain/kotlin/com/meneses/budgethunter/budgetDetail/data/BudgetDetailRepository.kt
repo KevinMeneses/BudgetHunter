@@ -21,10 +21,9 @@ class BudgetDetailRepository(
     private val deleteBudgetUseCase: DeleteBudgetUseCase
 ) {
     private val cacheMutex = Mutex()
-    private var cachedBudgetDetail = BudgetDetail()
 
-    suspend fun getCachedDetail(): BudgetDetail = cacheMutex.withLock { 
-        cachedBudgetDetail 
+    suspend fun getCachedDetail(): BudgetDetail = cacheMutex.withLock {
+        cachedBudgetDetail
     }
 
     fun getBudgetDetailById(budgetId: Int): Flow<BudgetDetail> =
@@ -57,14 +56,16 @@ class BudgetDetailRepository(
         budgetLocalDataSource.update(budget)
     }
 
-    suspend fun deleteBudget() = withContext(ioDispatcher) {
-        val cached = getCachedDetail()
-        val budgetId = cached.budget.id.toLong()
-        deleteBudgetUseCase.execute(budgetId)
+    suspend fun deleteBudget(budgetId: Int) = withContext(ioDispatcher) {
+        deleteBudgetUseCase.execute(budgetId.toLong())
     }
 
     suspend fun deleteEntriesByIds(ids: List<Int>) = withContext(ioDispatcher) {
         val dbIds = ids.map { it.toLong() }
         entriesLocalDataSource.deleteByIds(dbIds)
+    }
+
+    companion object {
+        private var cachedBudgetDetail = BudgetDetail()
     }
 }

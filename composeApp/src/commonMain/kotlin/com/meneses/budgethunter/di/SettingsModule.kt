@@ -8,7 +8,7 @@ import org.koin.dsl.module
 
 val settingsModule = module {
 
-    single<SettingsViewModel> {
+    factory<SettingsViewModel> {
         SettingsViewModel(
             preferencesManager = get<PreferencesManager>(),
             budgetRepository = get<BudgetRepository>(),

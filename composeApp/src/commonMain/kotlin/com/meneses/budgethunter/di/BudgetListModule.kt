@@ -38,7 +38,7 @@ val budgetListModule = module {
         )
     }
 
-    single<BudgetListViewModel> {
+    factory<BudgetListViewModel> {
         BudgetListViewModel(
             get<BudgetRepository>(),
             get<DuplicateBudgetUseCase>(),
