@@ -18,10 +18,13 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import budgethunter.composeapp.generated.resources.Res
@@ -52,104 +55,110 @@ object BudgetListScreen {
         val snackBarHostState = remember { SnackbarHostState() }
         val coroutineScope = rememberCoroutineScope()
 
-        ModalNavigationDrawer(
-            drawerContent = {
-                BudgetListMenu(
-                    onSettingsClick = {
-                        coroutineScope.launch {
-                            drawerState.close()
-                            showSettings()
-                        }
-                    }
-                )
-            },
-            drawerState = drawerState
-        ) {
-            Scaffold(
-                topBar = {
-                    if (uiState.isSearchMode) {
-                        SearchAppBar(
-                            searchQuery = uiState.searchQuery,
-                            onSearchQueryChange = { query ->
-                                BudgetListEvent
-                                    .UpdateSearchQuery(query)
-                                    .run(onEvent)
-                            },
-                            onBackClick = {
-                                BudgetListEvent
-                                    .ToggleSearchMode(false)
-                                    .run(onEvent)
+        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+            ModalNavigationDrawer(
+                drawerContent = {
+                    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                        BudgetListMenu(
+                            onSettingsClick = {
+                                coroutineScope.launch {
+                                    drawerState.close()
+                                    showSettings()
+                                }
                             }
                         )
-                    } else {
-                        AppBar(
-                            title = stringResource(Res.string.budgets),
-                            leftButtonIcon = Icons.Default.Menu,
-                            rightButtonIcon = Icons.Default.Search,
-                            leftButtonDescription = stringResource(Res.string.open_menu),
-                            rightButtonDescription = stringResource(Res.string.search),
-                            onLeftButtonClick = {
-                                coroutineScope.launch {
-                                    drawerState.open()
+                    }
+                },
+                drawerState = drawerState
+            ) {
+                CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                    Scaffold(
+                        topBar = {
+                            if (uiState.isSearchMode) {
+                                SearchAppBar(
+                                    searchQuery = uiState.searchQuery,
+                                    onSearchQueryChange = { query ->
+                                        BudgetListEvent
+                                            .UpdateSearchQuery(query)
+                                            .run(onEvent)
+                                    },
+                                    onBackClick = {
+                                        BudgetListEvent
+                                            .ToggleSearchMode(false)
+                                            .run(onEvent)
+                                    }
+                                )
+                            } else {
+                                AppBar(
+                                    title = stringResource(Res.string.budgets),
+                                    leftButtonIcon = Icons.Default.Search,
+                                    rightButtonIcon = Icons.Default.Menu,
+                                    leftButtonDescription = stringResource(Res.string.search),
+                                    rightButtonDescription = stringResource(Res.string.open_menu),
+                                    onLeftButtonClick = {
+                                        BudgetListEvent
+                                            .ToggleSearchMode(true)
+                                            .run(onEvent)
+                                    },
+                                    onRightButtonClick = {
+                                        coroutineScope.launch {
+                                            drawerState.open()
+                                        }
+                                    },
+                                    animateRightButton = uiState.filter != null
+                                )
+                            }
+                        },
+                        snackbarHost = {
+                            SnackbarHost(hostState = snackBarHostState)
+                        },
+                        floatingActionButton = {
+                            FloatingActionButton(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 20.dp)
+                                    .dashedBorder(
+                                        width = 1.dp,
+                                        color = AppColors.onSecondaryContainer,
+                                        shape = AbsoluteRoundedCornerShape(15.dp),
+                                        on = 10.dp,
+                                        off = 8.dp
+                                    ),
+                                elevation = FloatingActionButtonDefaults.elevation(5.dp),
+                                onClick = {
+                                    BudgetListEvent
+                                        .ToggleAddModal(true)
+                                        .run(onEvent)
                                 }
-                            },
-                            onRightButtonClick = {
-                                BudgetListEvent
-                                    .ToggleSearchMode(true)
-                                    .run(onEvent)
-                            },
-                            animateRightButton = uiState.filter != null
+                            ) {
+                                Icon(
+                                    modifier = Modifier.padding(20.dp),
+                                    imageVector = Icons.Default.Add,
+                                    contentDescription = stringResource(Res.string.create_new_budget)
+                                )
+                            }
+                        },
+                        floatingActionButtonPosition = FabPosition.Center
+                    ) { paddingValues ->
+                        BudgetListContent(
+                            list = uiState.budgetList,
+                            isLoading = uiState.isLoading,
+                            paddingValues = paddingValues,
+                            onEvent = onEvent
                         )
                     }
-                },
-                snackbarHost = {
-                    SnackbarHost(hostState = snackBarHostState)
-                },
-                floatingActionButton = {
-                    FloatingActionButton(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 20.dp)
-                            .dashedBorder(
-                                width = 1.dp,
-                                color = AppColors.onSecondaryContainer,
-                                shape = AbsoluteRoundedCornerShape(15.dp),
-                                on = 10.dp,
-                                off = 8.dp
-                            ),
-                        elevation = FloatingActionButtonDefaults.elevation(5.dp),
-                        onClick = {
-                            BudgetListEvent
-                                .ToggleAddModal(true)
-                                .run(onEvent)
-                        }
-                    ) {
-                        Icon(
-                            modifier = Modifier.padding(20.dp),
-                            imageVector = Icons.Default.Add,
-                            contentDescription = stringResource(Res.string.create_new_budget)
-                        )
-                    }
-                },
-                floatingActionButtonPosition = FabPosition.Center
-            ) { paddingValues ->
-                BudgetListContent(
-                    list = uiState.budgetList,
-                    isLoading = uiState.isLoading,
-                    paddingValues = paddingValues,
-                    onEvent = onEvent
-                )
+
+                    NewBudgetModal(
+                        show = uiState.addModalVisibility,
+                        onEvent = onEvent
+                    )
+
+                    UpdateBudgetModal(
+                        budget = uiState.budgetToUpdate,
+                        onEvent = onEvent
+                    )
+                }
             }
-
-            NewBudgetModal(
-                show = uiState.addModalVisibility,
-                onEvent = onEvent
-            )
-
-            UpdateBudgetModal(
-                budget = uiState.budgetToUpdate,
-                onEvent = onEvent
-            )
         }
 
         LaunchedEffect(key1 = uiState.navigateToBudget) {
