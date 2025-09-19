@@ -2,7 +2,6 @@ package com.meneses.budgethunter.budgetDetail.ui
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalNavigationDrawer
@@ -17,12 +16,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import budgethunter.composeapp.generated.resources.Res
 import budgethunter.composeapp.generated.resources.create_budget_entry
-import budgethunter.composeapp.generated.resources.open_menu_button
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailEvent
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailState
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.budgetList.domain.Budget
-import com.meneses.budgethunter.commons.ui.AppBar
+import com.meneses.budgethunter.commons.ui.PlatformAwareAppBar
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import org.jetbrains.compose.resources.stringResource
@@ -96,13 +94,12 @@ data class BudgetDetailScreen(val budget: Budget) {
         ) {
             Scaffold(
                 topBar = {
-                    AppBar(
+                    PlatformAwareAppBar(
                         title = uiState.budgetDetail.budget.name,
-                        leftButtonIcon = Icons.Default.Menu,
                         rightButtonIcon = Icons.Default.Add,
-                        leftButtonDescription = stringResource(Res.string.open_menu_button),
                         rightButtonDescription = stringResource(Res.string.create_budget_entry),
-                        onLeftButtonClick = {
+                        onBackClick = goBack,
+                        onMenuClick = {
                             coroutineScope.launch {
                                 drawerState.open()
                             }
