@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -183,80 +182,71 @@ private fun BudgetItem(
                     ) {
                         DropdownMenuItem(
                             text = {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Edit,
-                                        contentDescription = stringResource(Res.string.edit_budget),
-                                        modifier = Modifier.size(18.dp),
-                                        tint = AppColors.primary
-                                    )
-                                    Spacer(modifier = Modifier.width(12.dp))
-                                    Text(
-                                        text = stringResource(Res.string.change_name),
-                                        style = MaterialTheme.typography.bodyMedium
-                                    )
-                                }
+                                Text(
+                                    text = stringResource(Res.string.change_name),
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
                             },
                             onClick = {
                                 dropdownExpanded = false
                                 BudgetListEvent
                                     .ToggleUpdateModal(budget)
                                     .run(onEvent)
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.Edit,
+                                    contentDescription = stringResource(Res.string.edit_budget),
+                                    modifier = Modifier.size(18.dp),
+                                    tint = AppColors.primary
+                                )
                             }
                         )
 
                         DropdownMenuItem(
                             text = {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Add,
-                                        contentDescription = stringResource(Res.string.duplicate_budget),
-                                        modifier = Modifier.size(18.dp),
-                                        tint = AppColors.secondary
-                                    )
-                                    Spacer(modifier = Modifier.width(12.dp))
-                                    Text(
-                                        text = stringResource(Res.string.duplicate),
-                                        style = MaterialTheme.typography.bodyMedium
-                                    )
-                                }
+                                Text(
+                                    text = stringResource(Res.string.duplicate),
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
                             },
                             onClick = {
                                 dropdownExpanded = false
                                 BudgetListEvent
                                     .DuplicateBudget(budget)
                                     .run(onEvent)
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.Add,
+                                    contentDescription = stringResource(Res.string.duplicate_budget),
+                                    modifier = Modifier.size(18.dp),
+                                    tint = AppColors.secondary
+                                )
                             }
                         )
 
                         DropdownMenuItem(
                             text = {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Delete,
-                                        contentDescription = stringResource(Res.string.delete_budget),
-                                        modifier = Modifier.size(18.dp),
-                                        tint = AppColors.error
-                                    )
-                                    Spacer(modifier = Modifier.width(12.dp))
-                                    Text(
-                                        text = stringResource(Res.string.delete),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = AppColors.error
-                                    )
-                                }
+                                Text(
+                                    text = stringResource(Res.string.delete),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = AppColors.error
+                                )
                             },
                             onClick = {
                                 dropdownExpanded = false
                                 BudgetListEvent
                                     .DeleteBudget(budget.id.toLong())
                                     .run(onEvent)
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.Delete,
+                                    contentDescription = stringResource(Res.string.delete_budget),
+                                    modifier = Modifier.size(18.dp),
+                                    tint = AppColors.error
+                                )
                             }
                         )
                     }

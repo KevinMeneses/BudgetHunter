@@ -5,26 +5,22 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import budgethunter.composeapp.generated.resources.Res
@@ -38,7 +34,6 @@ import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.commons.ui.AppBar
 import com.meneses.budgethunter.commons.ui.dashedBorder
 import com.meneses.budgethunter.theme.AppColors
-import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import org.jetbrains.compose.resources.stringResource
 
@@ -51,28 +46,10 @@ object BudgetListScreen {
         showBudgetDetail: (Budget) -> Unit,
         showSettings: () -> Unit
     ) {
-        val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
         val snackBarHostState = remember { SnackbarHostState() }
-        val coroutineScope = rememberCoroutineScope()
+        var dropdownExpanded by remember { mutableStateOf(false) }
 
-        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
-            ModalNavigationDrawer(
-                drawerContent = {
-                    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
-                        BudgetListMenu(
-                            onSettingsClick = {
-                                coroutineScope.launch {
-                                    drawerState.close()
-                                    showSettings()
-                                }
-                            }
-                        )
-                    }
-                },
-                drawerState = drawerState
-            ) {
-                CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
-                    Scaffold(
+        Scaffold(
                         topBar = {
                             if (uiState.isSearchMode) {
                                 SearchAppBar(
@@ -92,7 +69,7 @@ object BudgetListScreen {
                                 AppBar(
                                     title = stringResource(Res.string.budgets),
                                     leftButtonIcon = Icons.Default.Search,
-                                    rightButtonIcon = Icons.Default.Menu,
+                                    rightButtonIcon = Icons.Default.MoreVert,
                                     leftButtonDescription = stringResource(Res.string.search),
                                     rightButtonDescription = stringResource(Res.string.open_menu),
                                     onLeftButtonClick = {
@@ -101,11 +78,16 @@ object BudgetListScreen {
                                             .run(onEvent)
                                     },
                                     onRightButtonClick = {
-                                        coroutineScope.launch {
-                                            drawerState.open()
-                                        }
+                                        dropdownExpanded = true
                                     },
-                                    animateRightButton = uiState.filter != null
+                                    animateRightButton = uiState.filter != null,
+                                    rightButtonDropdownContent = {
+                                        BudgetListMenu(
+                                            expanded = dropdownExpanded,
+                                            onDismiss = { dropdownExpanded = false },
+                                            onSettingsClick = showSettings
+                                        )
+                                    }
                                 )
                             }
                         },
@@ -148,18 +130,15 @@ object BudgetListScreen {
                         )
                     }
 
-                    NewBudgetModal(
-                        show = uiState.addModalVisibility,
-                        onEvent = onEvent
-                    )
+        NewBudgetModal(
+            show = uiState.addModalVisibility,
+            onEvent = onEvent
+        )
 
-                    UpdateBudgetModal(
-                        budget = uiState.budgetToUpdate,
-                        onEvent = onEvent
-                    )
-                }
-            }
-        }
+        UpdateBudgetModal(
+            budget = uiState.budgetToUpdate,
+            onEvent = onEvent
+        )
 
         LaunchedEffect(key1 = uiState.navigateToBudget) {
             uiState.navigateToBudget?.let { showBudgetDetail(it) }

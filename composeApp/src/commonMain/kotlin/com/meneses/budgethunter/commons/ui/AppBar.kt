@@ -1,5 +1,6 @@
 package com.meneses.budgethunter.commons.ui
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -30,7 +31,8 @@ fun AppBar(
     onRightButtonClick: (() -> Unit)? = null,
     onSecondRightButtonClick: (() -> Unit)? = null,
     animateLeftButton: Boolean = false,
-    animateRightButton: Boolean = false
+    animateRightButton: Boolean = false,
+    rightButtonDropdownContent: (@Composable () -> Unit)? = null
 ) {
     CenterAlignedTopAppBar(
         title = {
@@ -75,19 +77,22 @@ fun AppBar(
                     }
                 }
                 if (rightButtonIcon != null) {
-                    IconButton(
-                        modifier = Modifier
-                            .pulsateEffect(animateRightButton)
-                            .blinkEffect(animateRightButton),
-                        onClick = {
-                            onRightButtonClick?.invoke()
+                    Box {
+                        IconButton(
+                            modifier = Modifier
+                                .pulsateEffect(animateRightButton)
+                                .blinkEffect(animateRightButton),
+                            onClick = {
+                                onRightButtonClick?.invoke()
+                            }
+                        ) {
+                            Icon(
+                                imageVector = rightButtonIcon,
+                                contentDescription = rightButtonDescription,
+                                tint = AppColors.onSurface
+                            )
                         }
-                    ) {
-                        Icon(
-                            imageVector = rightButtonIcon,
-                            contentDescription = rightButtonDescription,
-                            tint = AppColors.onSurface
-                        )
+                        rightButtonDropdownContent?.invoke()
                     }
                 }
             }
