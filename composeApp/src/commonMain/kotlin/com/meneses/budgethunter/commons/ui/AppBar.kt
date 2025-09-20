@@ -1,5 +1,6 @@
 package com.meneses.budgethunter.commons.ui
 
+import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -21,10 +22,13 @@ fun AppBar(
     title: String,
     leftButtonIcon: ImageVector? = null,
     rightButtonIcon: ImageVector? = null,
+    secondRightButtonIcon: ImageVector? = null,
     leftButtonDescription: String? = null,
     rightButtonDescription: String? = null,
+    secondRightButtonDescription: String? = null,
     onLeftButtonClick: (() -> Unit)? = null,
     onRightButtonClick: (() -> Unit)? = null,
+    onSecondRightButtonClick: (() -> Unit)? = null,
     animateLeftButton: Boolean = false,
     animateRightButton: Boolean = false
 ) {
@@ -56,20 +60,35 @@ fun AppBar(
             }
         },
         actions = {
-            if (rightButtonIcon != null) {
-                IconButton(
-                    modifier = Modifier
-                        .pulsateEffect(animateRightButton)
-                        .blinkEffect(animateRightButton),
-                    onClick = {
-                        onRightButtonClick?.invoke()
+            Row {
+                if (secondRightButtonIcon != null) {
+                    IconButton(
+                        onClick = {
+                            onSecondRightButtonClick?.invoke()
+                        }
+                    ) {
+                        Icon(
+                            imageVector = secondRightButtonIcon,
+                            contentDescription = secondRightButtonDescription,
+                            tint = AppColors.onSurface
+                        )
                     }
-                ) {
-                    Icon(
-                        imageVector = rightButtonIcon,
-                        contentDescription = rightButtonDescription,
-                        tint = AppColors.onSurface
-                    )
+                }
+                if (rightButtonIcon != null) {
+                    IconButton(
+                        modifier = Modifier
+                            .pulsateEffect(animateRightButton)
+                            .blinkEffect(animateRightButton),
+                        onClick = {
+                            onRightButtonClick?.invoke()
+                        }
+                    ) {
+                        Icon(
+                            imageVector = rightButtonIcon,
+                            contentDescription = rightButtonDescription,
+                            tint = AppColors.onSurface
+                        )
+                    }
                 }
             }
         },

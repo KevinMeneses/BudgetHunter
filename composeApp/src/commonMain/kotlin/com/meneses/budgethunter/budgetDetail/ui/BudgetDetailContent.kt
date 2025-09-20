@@ -18,10 +18,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
@@ -52,7 +50,6 @@ import budgethunter.composeapp.generated.resources.balance
 import budgethunter.composeapp.generated.resources.budget_amount
 import budgethunter.composeapp.generated.resources.budget_list_icon_description
 import budgethunter.composeapp.generated.resources.close_entries_selection_mode
-import budgethunter.composeapp.generated.resources.create_budget_entry
 import budgethunter.composeapp.generated.resources.date
 import budgethunter.composeapp.generated.resources.delete
 import budgethunter.composeapp.generated.resources.description
@@ -66,7 +63,6 @@ import com.meneses.budgethunter.commons.EMPTY
 import com.meneses.budgethunter.commons.ui.CompottiePlaceholder
 import com.meneses.budgethunter.commons.ui.DefDivider
 import com.meneses.budgethunter.commons.ui.LoadingScreen
-import com.meneses.budgethunter.commons.ui.dashedBorder
 import com.meneses.budgethunter.commons.util.toCurrency
 import com.meneses.budgethunter.theme.AppColors
 import com.meneses.budgethunter.theme.green_success
@@ -126,8 +122,6 @@ fun BudgetDetailContent(
                 Spacer(modifier = Modifier.height(20.dp))
 
                 if (!uiState.isSelectionActive) {
-                    AddEntryButton(uiState, onEvent)
-                    Spacer(modifier = Modifier.height(20.dp))
                     BalanceSection(
                         budgetEntries = uiState.budgetDetail.entries,
                         budgetAmount = uiState.budgetDetail.budget.amount
@@ -140,35 +134,6 @@ fun BudgetDetailContent(
     }
 }
 
-@Composable
-private fun AddEntryButton(
-    uiState: BudgetDetailState,
-    onEvent: (BudgetDetailEvent) -> Unit
-) {
-    IconButton(
-        modifier = Modifier
-            .padding(horizontal = 5.dp)
-            .dashedBorder(
-                width = 1.dp,
-                color = AppColors.onSecondaryContainer,
-                shape = AbsoluteRoundedCornerShape(10.dp),
-                on = 10.dp,
-                off = 8.dp
-            )
-            .fillMaxWidth(),
-        onClick = {
-            val budgetEntry = BudgetEntry(budgetId = uiState.budgetDetail.budget.id)
-            BudgetDetailEvent
-                .ShowEntry(budgetEntry)
-                .run(onEvent)
-        }
-    ) {
-        Icon(
-            imageVector = Icons.Default.Add,
-            contentDescription = stringResource(Res.string.create_budget_entry)
-        )
-    }
-}
 
 @Composable
 fun BudgetSection(
