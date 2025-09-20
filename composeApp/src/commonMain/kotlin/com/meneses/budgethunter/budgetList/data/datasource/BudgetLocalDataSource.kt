@@ -45,17 +45,20 @@ class BudgetLocalDataSource(
     }
 
     fun create(budget: Budget): Budget {
-        queries.insert(
-            id = null,
-            name = budget.name,
-            amount = budget.amount,
-            date = budget.date
-        )
+        var savedId = 0
 
-        val savedId = queries
-            .selectLastId()
-            .executeAsOne()
-            .toInt()
+        queries.transaction {
+            queries.insert(
+                name = budget.name,
+                amount = budget.amount,
+                date = budget.date
+            )
+
+            savedId = queries
+                .selectLastId()
+                .executeAsOne()
+                .toInt()
+        }
 
         return budget.copy(id = savedId)
     }

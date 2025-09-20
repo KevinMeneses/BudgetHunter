@@ -15,8 +15,8 @@ GROUP BY b.id, b.amount, b.name, b.date
 ORDER BY b.id DESC;
 
 insert:
-INSERT INTO budget
-VALUES (:id, :amount, :name, :date);
+INSERT INTO budget (amount, name, date)
+VALUES (:amount, :name, :date);
 
 selectLastId:
 SELECT last_insert_rowid();
