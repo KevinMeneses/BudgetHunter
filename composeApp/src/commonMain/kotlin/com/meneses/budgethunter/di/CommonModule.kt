@@ -27,8 +27,8 @@ val commonModule = module {
 
     single<CoroutineDispatcher>(named("IO")) { Dispatchers.IO }
 
-    single<CoroutineScope>(named("IOScope")) { 
-        CoroutineScope(get(named("IO")))
+    single<CoroutineScope>(named("IOScope")) {
+        CoroutineScope(get<CoroutineDispatcher>(named("IO")))
     }
 
     single<CoroutineDispatcher>(named("Default")) { Dispatchers.Default }

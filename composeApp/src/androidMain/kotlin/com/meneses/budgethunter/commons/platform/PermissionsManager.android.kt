@@ -28,14 +28,20 @@ actual class PermissionsManager(private val context: Context) {
     }
 
     actual fun hasSmsPermission(): Boolean {
-        return ContextCompat
+        val receiveSmsGranted = ContextCompat
             .checkSelfPermission(context, Manifest.permission.RECEIVE_SMS) ==
                 PackageManager.PERMISSION_GRANTED
+
+        val readSmsGranted = ContextCompat
+            .checkSelfPermission(context, Manifest.permission.READ_SMS) ==
+                PackageManager.PERMISSION_GRANTED
+
+        return receiveSmsGranted && readSmsGranted
     }
 
     actual fun requestSmsPermissions(callback: (granted: Boolean) -> Unit) {
         permissionResultCallback = callback
-        val permissions = mutableListOf(Manifest.permission.RECEIVE_SMS)
+        val permissions = mutableListOf(Manifest.permission.RECEIVE_SMS, Manifest.permission.READ_SMS)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             permissions.add(Manifest.permission.POST_NOTIFICATIONS)
         }
