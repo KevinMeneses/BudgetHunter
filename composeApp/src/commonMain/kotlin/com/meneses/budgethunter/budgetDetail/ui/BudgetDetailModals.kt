@@ -41,6 +41,7 @@ import com.meneses.budgethunter.budgetEntry.ui.DescriptionField
 import com.meneses.budgethunter.budgetEntry.ui.TypeSwitch
 import com.meneses.budgethunter.commons.EMPTY
 import com.meneses.budgethunter.commons.ui.ConfirmationModal
+import com.meneses.budgethunter.commons.util.toPlainString
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -51,8 +52,9 @@ fun BudgetModal(
 ) {
     if (show) {
         var budget by remember {
-            val amount = if (budgetAmount == 0.0) EMPTY
-            else budgetAmount.toString()
+            val amount =
+                if (budgetAmount == 0.0) EMPTY
+                else budgetAmount.toPlainString()
             mutableStateOf(amount)
         }
 

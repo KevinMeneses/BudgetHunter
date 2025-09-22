@@ -1,13 +1,13 @@
 package com.meneses.budgethunter.commons.util
 
 import com.meneses.budgethunter.commons.EMPTY
-import kotlin.math.roundToInt
 
 /**
  * Formats a Double as currency with proper decimal handling
+ * Avoids scientific notation for large numbers
  */
 fun Double.toCurrency(): String {
-    return this.toString().toCurrency()
+    return this.formatAsCurrency()
 }
 
 /**
@@ -23,30 +23,69 @@ fun String.toCurrency(): String {
 }
 
 /**
- * Formats a Double as currency using basic formatting without platform-specific locale
+ * Formats a Double as currency using proper formatting with thousand separators
+ * Handles large numbers without scientific notation
  */
 private fun Double.formatAsCurrency(): String {
-    // Round to 2 decimal places
-    val roundedAmount = (this * 100.0).roundToInt() / 100.0
-    
-    // Format with proper decimal places
-    val formatted = if (roundedAmount == roundedAmount.toInt().toDouble()) {
+    // Handle negative numbers
+    val isNegative = this < 0
+    val absValue = if (isNegative) -this else this
+
+    // Round to 2 decimal places more carefully
+    val roundedCents = kotlin.math.round(absValue * 100.0).toLong()
+    val integerPart = roundedCents / 100
+    val decimalPart = roundedCents % 100
+
+    // Format integer part with thousand separators
+    val formattedInteger = integerPart.formatWithThousandSeparators()
+
+    // Format the result
+    val formatted = if (decimalPart == 0L) {
         // Whole number, don't show decimals
-        "$${roundedAmount.toInt()}"
+        "$$formattedInteger"
     } else {
         // Show 2 decimal places
-        val integerPart = roundedAmount.toInt()
-        val decimalPart = ((roundedAmount - integerPart) * 100).roundToInt()
-        "$${integerPart}.${decimalPart.toString().padStart(2, '0')}"
+        "$$formattedInteger.${decimalPart.toString().padStart(2, '0')}"
     }
-    
-    return formatted
+
+    return if (isNegative) "-$formatted" else formatted
 }
 
 /**
- * Converts currency string to double value
+ * Formats a long integer with thousand separators (commas)
+ * Supports large numbers without overflow
  */
-fun String.currencyToDouble(): Double {
-    val cleanAmount = this.replace("$", "").replace(",", "").replace("€", "").replace("£", "")
-    return cleanAmount.toDoubleOrNull() ?: 0.0
+private fun Long.formatWithThousandSeparators(): String {
+    if (this < 1000) return this.toString()
+
+    val str = this.toString()
+    val result = StringBuilder()
+    var count = 0
+
+    // Process digits from right to left
+    for (i in str.length - 1 downTo 0) {
+        if (count > 0 && count % 3 == 0) {
+            result.insert(0, ',')
+        }
+        result.insert(0, str[i])
+        count++
+    }
+
+    return result.toString()
+}
+
+/**
+ * Formats a Double as a plain number string without scientific notation
+ * Used for form fields and data conversion where currency symbols are not needed
+ */
+fun Double.toPlainString(): String {
+    val roundedCents = kotlin.math.round(this * 100.0).toLong()
+    val integerPart = roundedCents / 100
+    val decimalPart = roundedCents % 100
+
+    return if (decimalPart == 0L) {
+        integerPart.toString()
+    } else {
+        "$integerPart.${decimalPart.toString().padStart(2, '0')}"
+    }
 }
