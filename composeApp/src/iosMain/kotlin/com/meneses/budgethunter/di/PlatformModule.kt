@@ -2,6 +2,13 @@ package com.meneses.budgethunter.di
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import kotlinx.cinterop.ExperimentalForeignApi
+import okio.Path.Companion.toPath
+import platform.Foundation.NSDocumentDirectory
+import platform.Foundation.NSFileManager
+import platform.Foundation.NSURL
+import platform.Foundation.NSUserDomainMask
 import com.meneses.budgethunter.budgetEntry.data.ImageProcessor
 import com.meneses.budgethunter.budgetEntry.domain.AIImageProcessor
 import com.meneses.budgethunter.budgetEntry.domain.IosAIImageProcessor
@@ -24,13 +31,21 @@ val iosPlatformModule = module {
         DatabaseFactory().createDatabase()
     }
     
-    // DataStore for preferences (iOS placeholder)
-    single<DataStore<Preferences>> { 
-        // TODO: Implement proper iOS DataStore when iOS functionality is added
-        object : DataStore<Preferences> {
-            override val data = kotlinx.coroutines.flow.flowOf(androidx.datastore.preferences.core.emptyPreferences())
-            override suspend fun updateData(transform: suspend (t: Preferences) -> Preferences): Preferences = androidx.datastore.preferences.core.emptyPreferences()
-        }
+    // DataStore for preferences using KMP support
+    single<DataStore<Preferences>> {
+        @OptIn(ExperimentalForeignApi::class)
+        PreferenceDataStoreFactory.createWithPath(
+            produceFile = {
+                val documentDirectory: NSURL? = NSFileManager.defaultManager.URLForDirectory(
+                    directory = NSDocumentDirectory,
+                    inDomain = NSUserDomainMask,
+                    appropriateForURL = null,
+                    create = false,
+                    error = null,
+                )
+                (requireNotNull(documentDirectory).path + "/budget_hunter_preferences.preferences_pb").toPath()
+            }
+        )
     }
     
     // Platform-specific managers
