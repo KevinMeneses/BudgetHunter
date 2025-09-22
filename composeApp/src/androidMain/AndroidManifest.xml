@@ -11,6 +11,8 @@
 
     <application
         android:allowBackup="true"
+        android:icon="@drawable/budget_hunter_logo"
+        android:roundIcon="@drawable/budget_hunter_logo"
         android:label="Budget Hunter KMP"
         android:supportsRtl="true"
         android:name=".MyApplication">
