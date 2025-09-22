@@ -102,10 +102,11 @@ object BudgetListScreen {
                                     .dashedBorder(
                                         width = 1.dp,
                                         color = AppColors.onSecondaryContainer,
-                                        shape = AbsoluteRoundedCornerShape(15.dp),
+                                        shape = AbsoluteRoundedCornerShape(10.dp),
                                         on = 10.dp,
                                         off = 8.dp
                                     ),
+                                shape = AbsoluteRoundedCornerShape(10.dp),
                                 elevation = FloatingActionButtonDefaults.elevation(5.dp),
                                 onClick = {
                                     BudgetListEvent

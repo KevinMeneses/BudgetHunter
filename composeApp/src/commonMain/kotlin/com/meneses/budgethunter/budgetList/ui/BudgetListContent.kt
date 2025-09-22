@@ -1,6 +1,5 @@
 package com.meneses.budgethunter.budgetList.ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -12,16 +11,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -33,7 +27,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -42,13 +35,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import budgethunter.composeapp.generated.resources.Res
 import budgethunter.composeapp.generated.resources.budget_options
-import budgethunter.composeapp.generated.resources.change_name
 import budgethunter.composeapp.generated.resources.created
-import budgethunter.composeapp.generated.resources.delete
-import budgethunter.composeapp.generated.resources.delete_budget
-import budgethunter.composeapp.generated.resources.duplicate
-import budgethunter.composeapp.generated.resources.duplicate_budget
-import budgethunter.composeapp.generated.resources.edit_budget
 import com.meneses.budgethunter.budgetList.application.BudgetListEvent
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.commons.ui.CompottiePlaceholder
@@ -108,6 +95,7 @@ private fun BudgetItem(
             containerColor = AppColors.tertiaryContainer,
             contentColor = AppColors.onTertiaryContainer
         ),
+        shape = AbsoluteRoundedCornerShape(10.dp),
         elevation = CardDefaults.cardElevation(
             defaultElevation = 4.dp
         ),
@@ -173,83 +161,26 @@ private fun BudgetItem(
                         contentDescription = stringResource(Res.string.budget_options),
                         tint = MaterialTheme.colorScheme.onSurface
                     )
-                    DropdownMenu(
-                        expanded = dropdownExpanded,
-                        onDismissRequest = { dropdownExpanded = false },
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(AppColors.surface)
-                    ) {
-                        DropdownMenuItem(
-                            text = {
-                                Text(
-                                    text = stringResource(Res.string.change_name),
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
-                            },
-                            onClick = {
-                                dropdownExpanded = false
-                                BudgetListEvent
-                                    .ToggleUpdateModal(budget)
-                                    .run(onEvent)
-                            },
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = Icons.Default.Edit,
-                                    contentDescription = stringResource(Res.string.edit_budget),
-                                    modifier = Modifier.size(18.dp),
-                                    tint = AppColors.primary
-                                )
-                            }
-                        )
 
-                        DropdownMenuItem(
-                            text = {
-                                Text(
-                                    text = stringResource(Res.string.duplicate),
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
-                            },
-                            onClick = {
-                                dropdownExpanded = false
-                                BudgetListEvent
-                                    .DuplicateBudget(budget)
-                                    .run(onEvent)
-                            },
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = Icons.Default.Add,
-                                    contentDescription = stringResource(Res.string.duplicate_budget),
-                                    modifier = Modifier.size(18.dp),
-                                    tint = AppColors.secondary
-                                )
-                            }
-                        )
-
-                        DropdownMenuItem(
-                            text = {
-                                Text(
-                                    text = stringResource(Res.string.delete),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = AppColors.error
-                                )
-                            },
-                            onClick = {
-                                dropdownExpanded = false
-                                BudgetListEvent
-                                    .DeleteBudget(budget.id.toLong())
-                                    .run(onEvent)
-                            },
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = Icons.Default.Delete,
-                                    contentDescription = stringResource(Res.string.delete_budget),
-                                    modifier = Modifier.size(18.dp),
-                                    tint = AppColors.error
-                                )
-                            }
-                        )
-                    }
+                    BudgetListItemMenu(
+                        dropdownExpanded = dropdownExpanded,
+                        onDismiss = { dropdownExpanded = false },
+                        onUpdateClick = {
+                            BudgetListEvent
+                                .ToggleUpdateModal(budget)
+                                .run(onEvent)
+                        },
+                        onDuplicateClick = {
+                            BudgetListEvent
+                                .DuplicateBudget(budget)
+                                .run(onEvent)
+                        },
+                        onDeleteClick = {
+                            BudgetListEvent
+                                .DeleteBudget(budget.id.toLong())
+                                .run(onEvent)
+                        }
+                    )
                 }
             )
         }

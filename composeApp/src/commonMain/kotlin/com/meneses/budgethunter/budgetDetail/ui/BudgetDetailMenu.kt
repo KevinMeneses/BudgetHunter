@@ -1,8 +1,7 @@
 package com.meneses.budgethunter.budgetDetail.ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Search
@@ -15,7 +14,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import budgethunter.composeapp.generated.resources.Res
 import budgethunter.composeapp.generated.resources.delete_budget
@@ -37,9 +35,8 @@ fun BudgetDetailMenu(
     DropdownMenu(
         expanded = expanded,
         onDismissRequest = onDismiss,
-        modifier = Modifier
-            .clip(RoundedCornerShape(12.dp))
-            .background(AppColors.surface)
+        shape = AbsoluteRoundedCornerShape(10.dp),
+        containerColor = AppColors.surface
     ) {
         DropdownMenuItem(
             text = {

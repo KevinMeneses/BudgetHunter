@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Close
@@ -148,6 +149,7 @@ fun BudgetSection(
 
     Card(
         modifier = Modifier.clickable(onClick = onClick),
+        shape = AbsoluteRoundedCornerShape(10.dp),
         colors = CardDefaults.elevatedCardColors(
             containerColor = AppColors.tertiaryContainer,
             contentColor = AppColors.onTertiaryContainer
@@ -380,6 +382,7 @@ fun BalanceSection(
 
     Card(
         modifier = Modifier.fillMaxWidth(),
+        shape = AbsoluteRoundedCornerShape(10.dp),
         colors = CardDefaults.outlinedCardColors(
             containerColor = AppColors.primaryContainer,
             contentColor = AppColors.onPrimaryContainer
