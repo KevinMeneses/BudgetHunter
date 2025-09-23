@@ -54,6 +54,7 @@ import budgethunter.composeapp.generated.resources.settings
 import budgethunter.composeapp.generated.resources.sms_reading
 import budgethunter.composeapp.generated.resources.sms_reading_description
 import com.meneses.budgethunter.commons.ui.AppBar
+import com.meneses.budgethunter.commons.util.Platform
 import com.meneses.budgethunter.settings.application.SettingsEvent
 import com.meneses.budgethunter.settings.application.SettingsState
 import kotlinx.serialization.Serializable
@@ -155,87 +156,90 @@ object SettingsScreen {
         onSelectDefaultBudget: () -> Unit,
         onSelectBanks: () -> Unit
     ) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-        ) {
-            Column(
-                modifier = Modifier.padding(20.dp)
+        // SMS Reading section - Only show on Android platform
+        if (Platform.isAndroid) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
-                // Header
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
+                Column(
+                    modifier = Modifier.padding(20.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Email,
-                        contentDescription = null,
-                        modifier = Modifier.size(28.dp),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
+                    // Header
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Email,
+                            contentDescription = null,
+                            modifier = Modifier.size(28.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = stringResource(Res.string.sms_reading),
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary,
+                            maxLines = 1
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
                     Text(
-                        text = stringResource(Res.string.sms_reading),
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary,
-                        maxLines = 1
+                        text = stringResource(Res.string.sms_reading_description),
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        lineHeight = 20.sp,
+                        maxLines = 3,
+                        overflow = TextOverflow.Ellipsis
+                    )
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    // SMS Reading Toggle
+                    SettingItem(
+                        icon = Icons.Default.Email,
+                        title = stringResource(Res.string.enable_sms_reading),
+                        subtitle = if (uiState.isSmsReadingEnabled) stringResource(Res.string.activated) else stringResource(Res.string.deactivated),
+                        showSwitch = true,
+                        switchChecked = uiState.isSmsReadingEnabled,
+                        onSwitchChange = onToggleSmsReading,
+                        enabled = uiState.hasSmsPermission || !uiState.isSmsReadingEnabled
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Default Budget
+                    SettingItem(
+                        icon = Icons.Default.AccountCircle,
+                        title = stringResource(Res.string.default_budget),
+                        subtitle = uiState.defaultBudget?.name ?: stringResource(Res.string.no_default_budget),
+                        showButton = true,
+                        onButtonClick = onSelectDefaultBudget,
+                        enabled = uiState.isSmsReadingEnabled
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Bank Selection
+                    SettingItem(
+                        icon = Icons.Default.Build,
+                        title = stringResource(Res.string.bank_for_sms_notifications),
+                        subtitle = if (uiState.selectedBanks.isNotEmpty()) {
+                            "${uiState.selectedBanks.size} banks selected"
+                        } else {
+                            "No banks selected"
+                        },
+                        showButton = true,
+                        onButtonClick = onSelectBanks,
+                        enabled = uiState.isSmsReadingEnabled
                     )
                 }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Text(
-                    text = stringResource(Res.string.sms_reading_description),
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    lineHeight = 20.sp,
-                    maxLines = 3,
-                    overflow = TextOverflow.Ellipsis
-                )
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                // SMS Reading Toggle
-                SettingItem(
-                    icon = Icons.Default.Email,
-                    title = stringResource(Res.string.enable_sms_reading),
-                    subtitle = if (uiState.isSmsReadingEnabled) stringResource(Res.string.activated) else stringResource(Res.string.deactivated),
-                    showSwitch = true,
-                    switchChecked = uiState.isSmsReadingEnabled,
-                    onSwitchChange = onToggleSmsReading,
-                    enabled = uiState.hasSmsPermission || !uiState.isSmsReadingEnabled
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Default Budget
-                SettingItem(
-                    icon = Icons.Default.AccountCircle,
-                    title = stringResource(Res.string.default_budget),
-                    subtitle = uiState.defaultBudget?.name ?: stringResource(Res.string.no_default_budget),
-                    showButton = true,
-                    onButtonClick = onSelectDefaultBudget,
-                    enabled = uiState.isSmsReadingEnabled
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Bank Selection
-                SettingItem(
-                    icon = Icons.Default.Build,
-                    title = stringResource(Res.string.bank_for_sms_notifications),
-                    subtitle = if (uiState.selectedBanks.isNotEmpty()) {
-                        "${uiState.selectedBanks.size} banks selected"
-                    } else {
-                        "No banks selected"
-                    },
-                    showButton = true,
-                    onButtonClick = onSelectBanks,
-                    enabled = uiState.isSmsReadingEnabled
-                )
             }
         }
     }

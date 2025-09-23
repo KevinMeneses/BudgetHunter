@@ -40,10 +40,12 @@ val iosPlatformModule = module {
                     directory = NSDocumentDirectory,
                     inDomain = NSUserDomainMask,
                     appropriateForURL = null,
-                    create = false,
+                    create = true,
                     error = null,
                 )
-                (requireNotNull(documentDirectory).path + "/budget_hunter_preferences.preferences_pb").toPath()
+                (requireNotNull(documentDirectory) {
+                    "iOS Documents directory is unavailable - check app permissions"
+                }.path + "/budget_hunter_preferences.preferences_pb").toPath()
             }
         )
     }
