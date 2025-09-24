@@ -1,14 +1,8 @@
 package com.meneses.budgethunter.di
 
 import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
-import kotlinx.cinterop.ExperimentalForeignApi
-import okio.Path.Companion.toPath
-import platform.Foundation.NSDocumentDirectory
-import platform.Foundation.NSFileManager
-import platform.Foundation.NSURL
-import platform.Foundation.NSUserDomainMask
+import androidx.datastore.preferences.core.Preferences
 import com.meneses.budgethunter.budgetEntry.data.ImageProcessor
 import com.meneses.budgethunter.budgetEntry.domain.AIImageProcessor
 import com.meneses.budgethunter.budgetEntry.domain.IosAIImageProcessor
@@ -21,9 +15,15 @@ import com.meneses.budgethunter.commons.platform.NotificationManager
 import com.meneses.budgethunter.commons.platform.PermissionsManager
 import com.meneses.budgethunter.commons.platform.ShareManager
 import com.meneses.budgethunter.db.Database
+import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.CoroutineDispatcher
+import okio.Path.Companion.toPath
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
+import platform.Foundation.NSDocumentDirectory
+import platform.Foundation.NSFileManager
+import platform.Foundation.NSURL
+import platform.Foundation.NSUserDomainMask
 
 val iosPlatformModule = module {
     // Provide the database using iOS-specific factory
@@ -52,7 +52,7 @@ val iosPlatformModule = module {
     
     // Platform-specific managers
     single<FileManager> { FileManager() }
-    single<CameraManager> { CameraManager() }
+    single<CameraManager> { IOSBridge.cameraManager }
     single<FilePickerManager> { FilePickerManager() }
     single<PermissionsManager> { PermissionsManager() }
     single<AppUpdateManager> { AppUpdateManager() }

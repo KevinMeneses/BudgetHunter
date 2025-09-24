@@ -11,8 +11,8 @@ import com.meneses.budgethunter.budgetEntry.domain.AIImageProcessor
 import com.meneses.budgethunter.budgetEntry.domain.AndroidAIImageProcessor
 import com.meneses.budgethunter.commons.data.DatabaseFactory
 import com.meneses.budgethunter.commons.data.FileManager
+import com.meneses.budgethunter.commons.platform.AndroidCameraManager
 import com.meneses.budgethunter.commons.platform.AppUpdateManager
-import com.meneses.budgethunter.commons.platform.CameraManager
 import com.meneses.budgethunter.commons.platform.FilePickerManager
 import com.meneses.budgethunter.commons.platform.NotificationManager
 import com.meneses.budgethunter.commons.platform.PermissionsManager
@@ -38,7 +38,7 @@ val androidPlatformModule = module {
     
     // Platform-specific managers
     single<FileManager> { FileManager() }
-    single<CameraManager> { CameraManager(get<Context>()) }
+    single<AndroidCameraManager> { AndroidCameraManager(get<Context>()) }
     single<FilePickerManager> { FilePickerManager(get<Context>()) }
     single<PermissionsManager> { PermissionsManager(get<Context>()) }
     single<AppUpdateManager> { AppUpdateManager(get<Context>()) }

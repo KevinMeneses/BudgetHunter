@@ -8,8 +8,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
+import com.meneses.budgethunter.commons.platform.AndroidCameraManager
 import com.meneses.budgethunter.commons.platform.CameraLauncherDelegate
-import com.meneses.budgethunter.commons.platform.CameraManager
 import com.meneses.budgethunter.commons.platform.FilePickerLauncherDelegate
 import com.meneses.budgethunter.commons.platform.FilePickerManager
 import com.meneses.budgethunter.commons.platform.PermissionsLauncherDelegate
@@ -25,7 +25,7 @@ class MainActivity : ComponentActivity(), KoinComponent, CameraLauncherDelegate,
     private lateinit var permissionsLauncher: ActivityResultLauncher<Array<String>>
 
     // Platform managers from Koin
-    private val cameraManager: CameraManager by inject()
+    private val cameraManager: AndroidCameraManager by inject()
     private val filePickerManager: FilePickerManager by inject()
     private val permissionsManager: PermissionsManager by inject()
 
