@@ -127,7 +127,9 @@ data class BudgetEntryScreen(val budgetEntry: BudgetEntry) {
             },
             onShare = {
                 uiState.budgetEntry?.invoice?.let { filePath ->
-                    BudgetEntryEvent.ShareFile(filePath).run(onEvent)
+                    BudgetEntryEvent
+                        .ShareFile(filePath)
+                        .run(onEvent)
                 }
             },
             onDelete = {
@@ -154,7 +156,9 @@ data class BudgetEntryScreen(val budgetEntry: BudgetEntry) {
 
         if (uiState.attachInvoiceError != null) {
             LaunchedEffect(uiState.attachInvoiceError) {
-                BudgetEntryEvent.ShowNotification(uiState.attachInvoiceError, isError = true).run(onEvent)
+                BudgetEntryEvent
+                    .ShowNotification(uiState.attachInvoiceError, isError = true)
+                    .run(onEvent)
             }
         }
 

@@ -56,7 +56,7 @@ val iosPlatformModule = module {
     single<FilePickerManager> { IOSBridge.filePickerManager }
     single<PermissionsManager> { PermissionsManager() }
     single<AppUpdateManager> { AppUpdateManager() }
-    single<NotificationManager> { NotificationManager() }
+    single<NotificationManager> { IOSBridge.notificationManager }
     single<ShareManager> { IOSBridge.shareManager }
     
     // AI and Image Processing - iOS placeholder implementations

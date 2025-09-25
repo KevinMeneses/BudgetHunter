@@ -11,6 +11,7 @@
 		058557D9273AAEEB004C7B11 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */; };
 		2152FB042600AC8F00CF470E /* iOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* iOSApp.swift */; };
 		24BAC3E72E85FDE7009584F1 /* IOSShareManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24BAC3E62E85FDE7009584F1 /* IOSShareManager.swift */; };
+		24BAC3E92E860B20009584F1 /* IOSNotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24BAC3E82E860B20009584F1 /* IOSNotificationManager.swift */; };
 		3CC2ECF63D184BD7B9459B8F /* IOSCameraManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56C2619B9E644D8F950C014E /* IOSCameraManager.swift */; };
 		4AA3ECF63D184BD7B9459C8F /* IOSFilePickerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67C2619B9E644D8F950C015E /* IOSFilePickerManager.swift */; };
 		7555FF83242A565900829871 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7555FF82242A565900829871 /* ContentView.swift */; };
@@ -38,6 +39,7 @@
 		058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		2152FB032600AC8F00CF470E /* iOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSApp.swift; sourceTree = "<group>"; };
 		24BAC3E62E85FDE7009584F1 /* IOSShareManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSShareManager.swift; sourceTree = "<group>"; };
+		24BAC3E82E860B20009584F1 /* IOSNotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSNotificationManager.swift; sourceTree = "<group>"; };
 		56C2619B9E644D8F950C014E /* IOSCameraManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSCameraManager.swift; sourceTree = "<group>"; };
 		67C2619B9E644D8F950C015E /* IOSFilePickerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSFilePickerManager.swift; sourceTree = "<group>"; };
 		7555FF7B242A565900829871 /* iosApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iosApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -90,6 +92,7 @@
 		7555FF7D242A565900829871 /* iosApp */ = {
 			isa = PBXGroup;
 			children = (
+				24BAC3E82E860B20009584F1 /* IOSNotificationManager.swift */,
 				058557BA273AAA24004C7B11 /* Assets.xcassets */,
 				2152FB032600AC8F00CF470E /* iOSApp.swift */,
 				56C2619B9E644D8F950C014E /* IOSCameraManager.swift */,
@@ -217,6 +220,7 @@
 				3CC2ECF63D184BD7B9459B8F /* IOSCameraManager.swift in Sources */,
 				24BAC3E72E85FDE7009584F1 /* IOSShareManager.swift in Sources */,
 				7555FF83242A565900829871 /* ContentView.swift in Sources */,
+				24BAC3E92E860B20009584F1 /* IOSNotificationManager.swift in Sources */,
 				4AA3ECF63D184BD7B9459C8F /* IOSFilePickerManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

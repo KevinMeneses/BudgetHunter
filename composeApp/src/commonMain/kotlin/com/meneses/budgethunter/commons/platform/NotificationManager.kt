@@ -1,6 +1,6 @@
 package com.meneses.budgethunter.commons.platform
 
-expect class NotificationManager {
+interface NotificationManager {
     fun showToast(message: String)
     fun showNotification(title: String, message: String)
 }

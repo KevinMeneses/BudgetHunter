@@ -14,15 +14,15 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.meneses.budgethunter.MainActivity
 
-actual class NotificationManager(
+class AndroidNotificationManager(
     private val context: Context
-) {
-    
-    actual fun showToast(message: String) {
+) : NotificationManager {
+
+    override fun showToast(message: String) {
         Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
     }
     
-    actual fun showNotification(title: String, message: String) {
+    override fun showNotification(title: String, message: String) {
         // Check if we have notification permission (Android 13+)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
