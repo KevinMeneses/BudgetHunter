@@ -10,8 +10,9 @@
 		058557BB273AAA24004C7B11 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 058557BA273AAA24004C7B11 /* Assets.xcassets */; };
 		058557D9273AAEEB004C7B11 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */; };
 		2152FB042600AC8F00CF470E /* iOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* iOSApp.swift */; };
-		3CC2ECF63D184BD7B9459B8F /* CameraInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56C2619B9E644D8F950C014E /* CameraInterface.swift */; };
-		4AA3ECF63D184BD7B9459C8F /* FilePickerInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67C2619B9E644D8F950C015E /* FilePickerInterface.swift */; };
+		24BAC3E72E85FDE7009584F1 /* IOSShareManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24BAC3E62E85FDE7009584F1 /* IOSShareManager.swift */; };
+		3CC2ECF63D184BD7B9459B8F /* IOSCameraManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56C2619B9E644D8F950C014E /* IOSCameraManager.swift */; };
+		4AA3ECF63D184BD7B9459C8F /* IOSFilePickerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67C2619B9E644D8F950C015E /* IOSFilePickerManager.swift */; };
 		7555FF83242A565900829871 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7555FF82242A565900829871 /* ContentView.swift */; };
 		7555FFB5242A651A00829871 /* ComposeApp.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7555FFB4242A651A00829871 /* ComposeApp.framework */; };
 		7555FFB6242A651A00829871 /* ComposeApp.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 7555FFB4242A651A00829871 /* ComposeApp.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
@@ -36,12 +37,13 @@
 		058557BA273AAA24004C7B11 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		2152FB032600AC8F00CF470E /* iOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSApp.swift; sourceTree = "<group>"; };
-		56C2619B9E644D8F950C014E /* CameraInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraInterface.swift; sourceTree = "<group>"; };
-		67C2619B9E644D8F950C015E /* FilePickerInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilePickerInterface.swift; sourceTree = "<group>"; };
+		24BAC3E62E85FDE7009584F1 /* IOSShareManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSShareManager.swift; sourceTree = "<group>"; };
+		56C2619B9E644D8F950C014E /* IOSCameraManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSCameraManager.swift; sourceTree = "<group>"; };
+		67C2619B9E644D8F950C015E /* IOSFilePickerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSFilePickerManager.swift; sourceTree = "<group>"; };
 		7555FF7B242A565900829871 /* iosApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iosApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7555FF82242A565900829871 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		7555FF8C242A565B00829871 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		7555FFB4242A651A00829871 /* ComposeApp.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ComposeApp.framework; path = ../composeApp/build/xcode-frameworks/Debug/iphonesimulator18.0/ComposeApp.framework; sourceTree = "<group>"; };
+		7555FFB4242A651A00829871 /* ComposeApp.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ComposeApp.framework; path = "../composeApp/build/xcode-frameworks/Debug/iphonesimulator18.0/ComposeApp.framework"; sourceTree = "<group>"; };
 		AB3632DC29227652001CCB65 /* Config.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
 		B1A7B2B72C82D1F200B2E6F8 /* libsqlite3.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libsqlite3.tbd; path = usr/lib/libsqlite3.tbd; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
@@ -89,11 +91,12 @@
 			isa = PBXGroup;
 			children = (
 				058557BA273AAA24004C7B11 /* Assets.xcassets */,
-				56C2619B9E644D8F950C014E /* CameraInterface.swift */,
-				7555FF82242A565900829871 /* ContentView.swift */,
-				67C2619B9E644D8F950C015E /* FilePickerInterface.swift */,
-				7555FF8C242A565B00829871 /* Info.plist */,
 				2152FB032600AC8F00CF470E /* iOSApp.swift */,
+				56C2619B9E644D8F950C014E /* IOSCameraManager.swift */,
+				67C2619B9E644D8F950C015E /* IOSFilePickerManager.swift */,
+				24BAC3E62E85FDE7009584F1 /* IOSShareManager.swift */,
+				7555FF82242A565900829871 /* ContentView.swift */,
+				7555FF8C242A565B00829871 /* Info.plist */,
 				058557D7273AAEEB004C7B11 /* Preview Content */,
 			);
 			path = iosApp;
@@ -211,9 +214,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				2152FB042600AC8F00CF470E /* iOSApp.swift in Sources */,
-				3CC2ECF63D184BD7B9459B8F /* CameraInterface.swift in Sources */,
+				3CC2ECF63D184BD7B9459B8F /* IOSCameraManager.swift in Sources */,
+				24BAC3E72E85FDE7009584F1 /* IOSShareManager.swift in Sources */,
 				7555FF83242A565900829871 /* ContentView.swift in Sources */,
-				4AA3ECF63D184BD7B9459C8F /* FilePickerInterface.swift in Sources */,
+				4AA3ECF63D184BD7B9459C8F /* IOSFilePickerManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -16,6 +16,7 @@ import com.meneses.budgethunter.commons.platform.AndroidFilePickerManager
 import com.meneses.budgethunter.commons.platform.AppUpdateManager
 import com.meneses.budgethunter.commons.platform.NotificationManager
 import com.meneses.budgethunter.commons.platform.PermissionsManager
+import com.meneses.budgethunter.commons.platform.AndroidShareManager
 import com.meneses.budgethunter.commons.platform.ShareManager
 import com.meneses.budgethunter.db.Database
 import kotlinx.coroutines.CoroutineDispatcher
@@ -43,7 +44,7 @@ val androidPlatformModule = module {
     single<PermissionsManager> { PermissionsManager(get<Context>()) }
     single<AppUpdateManager> { AppUpdateManager(get<Context>()) }
     single<NotificationManager> { NotificationManager(get<Context>()) }
-    single<ShareManager> { ShareManager(get<Context>()) }
+    single<ShareManager> { AndroidShareManager(get<Context>()) }
     
     // AI and Image Processing - Android specific
     single<GenerativeModel> {
