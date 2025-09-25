@@ -112,9 +112,8 @@ class IOSFilePickerManager: NSObject, FilePickerManager {
         do {
             let data = try Data(contentsOf: url)
             let filename = url.lastPathComponent
-            let directory = url.deletingLastPathComponent().path
 
-            // Convert Data to KotlinByteArray
+            // Convert Data to KotlinByteArray for FileManager to save
             let byteArray = data.withUnsafeBytes { (bytes: UnsafeRawBufferPointer) in
                 KotlinByteArray(size: Int32(data.count)) { index in
                     let i = Int(index.int32Value)
@@ -126,11 +125,24 @@ class IOSFilePickerManager: NSObject, FilePickerManager {
             // Determine MIME type
             let mimeType = determineMimeType(from: url)
 
+            // Get Documents/BudgetHunter/Invoices directory for FileManager
+            let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+            let budgetHunterDirectory = documentsDirectory.appendingPathComponent("BudgetHunter", isDirectory: true)
+            let invoicesDirectory = budgetHunterDirectory.appendingPathComponent("Invoices", isDirectory: true)
+            let persistentDirectory = invoicesDirectory.path
+
+            // Create timestamp filename to match Android format (timestamp + extension)
+            let timestamp = Int64(Date().timeIntervalSince1970 * 1000)
+            let fileExtension = "." + url.pathExtension
+            let persistentFileName = "\(timestamp)\(fileExtension)"
+
+            print("FilePickerInterface: Will let FileManager save to: \(persistentDirectory)/\(persistentFileName)")
+
             return FileData(
                 data: byteArray,
-                filename: filename,
+                filename: persistentFileName,
                 mimeType: mimeType,
-                directory: directory
+                directory: persistentDirectory
             )
 
         } catch {
