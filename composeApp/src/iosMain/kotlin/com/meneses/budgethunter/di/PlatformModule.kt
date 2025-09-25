@@ -53,7 +53,7 @@ val iosPlatformModule = module {
     // Platform-specific managers
     single<FileManager> { FileManager() }
     single<CameraManager> { IOSBridge.cameraManager }
-    single<FilePickerManager> { FilePickerManager() }
+    single<FilePickerManager> { IOSBridge.filePickerManager }
     single<PermissionsManager> { PermissionsManager() }
     single<AppUpdateManager> { AppUpdateManager() }
     single<NotificationManager> { NotificationManager() }

@@ -9,9 +9,9 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import com.meneses.budgethunter.commons.platform.AndroidCameraManager
+import com.meneses.budgethunter.commons.platform.AndroidFilePickerManager
 import com.meneses.budgethunter.commons.platform.CameraLauncherDelegate
 import com.meneses.budgethunter.commons.platform.FilePickerLauncherDelegate
-import com.meneses.budgethunter.commons.platform.FilePickerManager
 import com.meneses.budgethunter.commons.platform.PermissionsLauncherDelegate
 import com.meneses.budgethunter.commons.platform.PermissionsManager
 import org.koin.core.component.KoinComponent
@@ -26,7 +26,7 @@ class MainActivity : ComponentActivity(), KoinComponent, CameraLauncherDelegate,
 
     // Platform managers from Koin
     private val cameraManager: AndroidCameraManager by inject()
-    private val filePickerManager: FilePickerManager by inject()
+    private val filePickerManager: AndroidFilePickerManager by inject()
     private val permissionsManager: PermissionsManager by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {

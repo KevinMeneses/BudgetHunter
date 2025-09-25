@@ -9,9 +9,9 @@ interface FilePickerLauncherDelegate {
     fun launchFilePicker(mimeTypes: Array<String>)
 }
 
-actual class FilePickerManager(
+class AndroidFilePickerManager(
     private val context: Context
-) {
+): FilePickerManager {
     
     private var currentCallback: ((FileData?) -> Unit)? = null
     private var launcherDelegate: FilePickerLauncherDelegate? = null
@@ -20,7 +20,7 @@ actual class FilePickerManager(
         this.launcherDelegate = delegate
     }
     
-    actual fun pickFile(mimeTypes: Array<String>, onResult: (FileData?) -> Unit) {
+    override fun pickFile(mimeTypes: Array<String>, onResult: (FileData?) -> Unit) {
         currentCallback = onResult
         launcherDelegate?.launchFilePicker(mimeTypes)
     }
@@ -33,7 +33,7 @@ actual class FilePickerManager(
             try {
                 val fileData = uri.toFileData(context.contentResolver, context.filesDir)
                 callback(fileData)
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 callback(null)
             }
         } else {
