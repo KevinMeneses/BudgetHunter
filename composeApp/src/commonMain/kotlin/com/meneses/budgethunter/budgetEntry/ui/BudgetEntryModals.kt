@@ -351,27 +351,3 @@ fun AttachInvoiceModal(
         )
     }
 }
-
-@Composable
-private fun FileNotLoadableMessage(onReattach: () -> Unit) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.padding(16.dp)
-    ) {
-        Text(
-            text = stringResource(Res.string.unable_to_display_file),
-            color = MaterialTheme.colorScheme.error,
-            fontWeight = FontWeight.Medium,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
-        Text(
-            text = stringResource(Res.string.file_exists_cannot_load),
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-            fontSize = 14.sp,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
-        TextButton(onClick = onReattach) {
-            Text(stringResource(Res.string.replace_file))
-        }
-    }
-}
