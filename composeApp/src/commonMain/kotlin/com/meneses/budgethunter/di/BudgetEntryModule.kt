@@ -33,6 +33,7 @@ val budgetEntryModule = module {
         BudgetEntryViewModel(
             budgetEntryRepository = get(),
             createBudgetEntryFromImageUseCase = get(),
+            validateFilePathUseCase = get(),
             preferencesManager = get(),
             fileManager = get(),
             cameraManager = get(),

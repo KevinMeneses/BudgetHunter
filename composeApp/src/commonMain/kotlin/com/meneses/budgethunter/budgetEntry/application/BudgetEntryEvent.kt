@@ -18,4 +18,5 @@ sealed interface BudgetEntryEvent {
     data class ShowNotification(val message: String, val isError: Boolean = false) : BudgetEntryEvent
     data object GoBack : BudgetEntryEvent
     data object DeleteAttachedInvoice : BudgetEntryEvent
+    data object UpdateInvoice : BudgetEntryEvent
 }

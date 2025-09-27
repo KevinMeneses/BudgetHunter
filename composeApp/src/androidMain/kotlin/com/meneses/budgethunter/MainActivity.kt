@@ -24,7 +24,7 @@ class MainActivity : ComponentActivity(), KoinComponent, CameraLauncherDelegate,
     private lateinit var selectFileLauncher: ActivityResultLauncher<Array<String>>
     private lateinit var permissionsLauncher: ActivityResultLauncher<Array<String>>
 
-    // Platform managers from Koin
+    // Platform managers from Koin - need concrete types for delegate setup
     private val cameraManager: AndroidCameraManager by inject()
     private val filePickerManager: AndroidFilePickerManager by inject()
     private val permissionsManager: PermissionsManager by inject()

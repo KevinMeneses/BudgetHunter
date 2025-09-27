@@ -2,6 +2,7 @@ package com.meneses.budgethunter.di
 
 import com.meneses.budgethunter.budgetList.data.adapter.categoryAdapter
 import com.meneses.budgethunter.budgetList.data.adapter.typeAdapter
+import com.meneses.budgethunter.commons.application.ValidateFilePathUseCase
 import com.meneses.budgethunter.commons.data.PreferencesManager
 import com.meneses.budgethunter.db.BudgetEntryQueries
 import com.meneses.budgethunter.db.BudgetQueries
@@ -36,4 +37,11 @@ val commonModule = module {
     single<Json> { Json { coerceInputValues = true } }
 
     single<PreferencesManager> { PreferencesManager(get()) }
+
+    single<ValidateFilePathUseCase> {
+        ValidateFilePathUseCase(
+            fileManager = get(),
+            ioDispatcher = get(named("IO"))
+        )
+    }
 }

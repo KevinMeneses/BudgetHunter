@@ -26,4 +26,11 @@ expect class FileManager {
      * @return URI string for the file
      */
     fun createUri(filePath: String): String
+
+    /**
+     * Validates if a file exists at the specified path
+     * @param filePath The absolute path to check
+     * @return true if file exists, false otherwise
+     */
+    fun fileExists(filePath: String): Boolean
 }

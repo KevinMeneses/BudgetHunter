@@ -7,6 +7,7 @@ import com.meneses.budgethunter.budgetEntry.application.BudgetEntryState
 import com.meneses.budgethunter.budgetEntry.application.CreateBudgetEntryFromImageUseCase
 import com.meneses.budgethunter.budgetEntry.data.BudgetEntryRepository
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
+import com.meneses.budgethunter.commons.application.ValidateFilePathUseCase
 import com.meneses.budgethunter.commons.data.FileManager
 import com.meneses.budgethunter.commons.data.PreferencesManager
 import com.meneses.budgethunter.commons.platform.CameraManager
@@ -27,6 +28,7 @@ import kotlinx.coroutines.launch
 class BudgetEntryViewModel(
     private val budgetEntryRepository: BudgetEntryRepository,
     private val createBudgetEntryFromImageUseCase: CreateBudgetEntryFromImageUseCase,
+    private val validateFilePathUseCase: ValidateFilePathUseCase,
     private val preferencesManager: PreferencesManager,
     private val fileManager: FileManager,
     private val cameraManager: CameraManager,
@@ -57,6 +59,7 @@ class BudgetEntryViewModel(
             is BudgetEntryEvent.PickFile -> pickFile()
             is BudgetEntryEvent.ShareFile -> shareFile(event.filePath)
             is BudgetEntryEvent.ShowNotification -> showNotification(event.message, event.isError)
+            is BudgetEntryEvent.UpdateInvoice -> updateInvoice()
         }
     }
 
@@ -123,13 +126,26 @@ class BudgetEntryViewModel(
     private fun toggleShowInvoiceModal(show: Boolean) =
         _uiState.update { it.copy(isShowInvoiceModalVisible = show) }
 
-    private fun setBudgetEntry(budgetEntry: BudgetEntry) =
+    private fun updateInvoice() {
+        _uiState.update {
+            it.copy(
+                isShowInvoiceModalVisible = false,
+                isAttachInvoiceModalVisible = true
+            )
+        }
+    }
+
+    private fun setBudgetEntry(budgetEntry: BudgetEntry) {
         _uiState.update {
             it.copy(
                 budgetEntry = budgetEntry,
                 emptyAmountError = null
             )
         }
+
+        // Validate file path when budget entry changes
+        validateInvoiceFile(budgetEntry.invoice)
+    }
 
     private fun saveBudgetEntry() = viewModelScope.launch {
         _uiState.value.budgetEntry?.let { entry ->
@@ -210,6 +226,27 @@ class BudgetEntryViewModel(
             notificationManager.showNotification(title = "Error", message = message)
         } else {
             notificationManager.showToast(message)
+        }
+    }
+
+    private fun validateInvoiceFile(invoice: String?) = viewModelScope.launch {
+        if (invoice == null) {
+            _uiState.update {
+                it.copy(
+                    isFileValid = true,
+                    validatedFilePath = null,
+                )
+            }
+            return@launch
+        }
+
+        val validatedPath = validateFilePathUseCase.execute(invoice)
+
+        _uiState.update {
+            it.copy(
+                isFileValid = validatedPath != null,
+                validatedFilePath = validatedPath,
+            )
         }
     }
 }

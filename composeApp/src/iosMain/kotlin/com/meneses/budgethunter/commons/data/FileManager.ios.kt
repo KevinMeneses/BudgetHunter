@@ -13,33 +13,72 @@ actual class FileManager {
         val targetDirectory = if (fileData.directory.isNotEmpty()) {
             fileData.directory
         } else {
-            getInternalFilesDir()
+            getDefaultInvoicesDirectory()
         }
 
         // Ensure directory exists
         createDirectoryIfNeeded(targetDirectory)
 
         val filePath = "$targetDirectory/${fileData.filename}"
+        println("FileManager.saveFile: Saving to $filePath")
+
         val data = fileData.data.toNSData()
         val success = data.writeToFile(filePath, true)
 
-        return if (success) filePath else throw Exception("Failed to save file")
+        if (success) {
+            // Verify the file was actually saved
+            val fileExists = NSFileManager.defaultManager.fileExistsAtPath(filePath)
+            println("FileManager.saveFile: File saved successfully, exists: $fileExists")
+            return filePath
+        } else {
+            throw Exception("Failed to save file to $filePath")
+        }
     }
 
     actual fun deleteFile(filePath: String): Boolean {
         return try {
+            println("FileManager.deleteFile: Attempting to delete $filePath")
+
+            // Check if file exists before trying to delete
+            val fileExists = NSFileManager.defaultManager.fileExistsAtPath(filePath)
+            if (!fileExists) {
+                println("FileManager.deleteFile: File does not exist: $filePath")
+                return false
+            }
+
             memScoped {
                 val error = alloc<ObjCObjectVar<NSError?>>()
                 val success = NSFileManager.defaultManager.removeItemAtPath(filePath, error.ptr)
+
+                if (success) {
+                    println("FileManager.deleteFile: Successfully deleted $filePath")
+                } else {
+                    val errorMsg = error.value?.localizedDescription ?: "Unknown error"
+                    println("FileManager.deleteFile: Failed to delete $filePath - $errorMsg")
+                }
+
                 success
             }
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            println("FileManager.deleteFile: Exception deleting $filePath - ${e.message}")
             false
         }
     }
 
     actual fun createUri(filePath: String): String {
         return "file://$filePath"
+    }
+
+    /**
+     * Validates if a file exists and is accessible
+     */
+    actual fun fileExists(filePath: String): Boolean {
+        val cleanPath = if (filePath.startsWith("file://")) {
+            filePath.removePrefix("file://")
+        } else {
+            filePath
+        }
+        return NSFileManager.defaultManager.fileExistsAtPath(cleanPath)
     }
 
     private fun getInternalFilesDir(): String {
@@ -50,17 +89,34 @@ actual class FileManager {
         ).first() as String
     }
 
+    private fun getDefaultInvoicesDirectory(): String {
+        val documentsDir = getInternalFilesDir()
+        return "$documentsDir/BudgetHunter/Invoices"
+    }
+
     private fun createDirectoryIfNeeded(directoryPath: String) {
+        println("FileManager.createDirectoryIfNeeded: Checking directory $directoryPath")
+
         if (!NSFileManager.defaultManager.fileExistsAtPath(directoryPath)) {
+            println("FileManager.createDirectoryIfNeeded: Creating directory $directoryPath")
             memScoped {
                 val error = alloc<ObjCObjectVar<NSError?>>()
-                NSFileManager.defaultManager.createDirectoryAtPath(
+                val success = NSFileManager.defaultManager.createDirectoryAtPath(
                     directoryPath,
                     withIntermediateDirectories = true,
                     attributes = null,
                     error = error.ptr
                 )
+
+                if (success) {
+                    println("FileManager.createDirectoryIfNeeded: Successfully created directory")
+                } else {
+                    val errorMsg = error.value?.localizedDescription ?: "Unknown error"
+                    println("FileManager.createDirectoryIfNeeded: Failed to create directory - $errorMsg")
+                }
             }
+        } else {
+            println("FileManager.createDirectoryIfNeeded: Directory already exists")
         }
     }
 }

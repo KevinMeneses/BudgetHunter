@@ -16,6 +16,8 @@ import com.meneses.budgethunter.commons.platform.AndroidFilePickerManager
 import com.meneses.budgethunter.commons.platform.AndroidNotificationManager
 import com.meneses.budgethunter.commons.platform.AndroidShareManager
 import com.meneses.budgethunter.commons.platform.AppUpdateManager
+import com.meneses.budgethunter.commons.platform.CameraManager
+import com.meneses.budgethunter.commons.platform.FilePickerManager
 import com.meneses.budgethunter.commons.platform.NotificationManager
 import com.meneses.budgethunter.commons.platform.PermissionsManager
 import com.meneses.budgethunter.commons.platform.ShareManager
@@ -40,12 +42,16 @@ val androidPlatformModule = module {
     
     // Platform-specific managers
     single<FileManager> { FileManager() }
-    single<AndroidCameraManager> { AndroidCameraManager(get<Context>()) }
-    single<AndroidFilePickerManager> { AndroidFilePickerManager(get<Context>()) }
+    single<CameraManager> { AndroidCameraManager(get<Context>()) }
+    single<FilePickerManager> { AndroidFilePickerManager(get<Context>()) }
     single<PermissionsManager> { PermissionsManager(get<Context>()) }
     single<AppUpdateManager> { AppUpdateManager(get<Context>()) }
     single<NotificationManager> { AndroidNotificationManager(get<Context>()) }
     single<ShareManager> { AndroidShareManager(get<Context>()) }
+
+    // Keep concrete types available if needed elsewhere - use the same instance as the interface
+    single<AndroidCameraManager> { get<CameraManager>() as AndroidCameraManager }
+    single<AndroidFilePickerManager> { get<FilePickerManager>() as AndroidFilePickerManager }
     
     // AI and Image Processing - Android specific
     single<GenerativeModel> {

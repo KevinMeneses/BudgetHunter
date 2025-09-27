@@ -34,4 +34,8 @@ actual class FileManager {
     actual fun createUri(filePath: String): String {
         return File(filePath).toUri().toString()
     }
+
+    actual fun fileExists(filePath: String): Boolean {
+        return File(filePath).exists()
+    }
 }

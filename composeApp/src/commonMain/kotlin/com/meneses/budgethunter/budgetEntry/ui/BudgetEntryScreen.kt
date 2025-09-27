@@ -6,7 +6,10 @@ import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import budgethunter.composeapp.generated.resources.Res
 import budgethunter.composeapp.generated.resources.come_back
 import budgethunter.composeapp.generated.resources.discard
@@ -77,6 +80,7 @@ data class BudgetEntryScreen(val budgetEntry: BudgetEntry) {
             BudgetEntryForm(
                 budgetEntry = uiState.budgetEntry ?: budgetEntry,
                 amountError = uiState.emptyAmountError,
+                isFileValid = uiState.isFileValid,
                 paddingValues = paddingValues,
                 onBudgetItemChanged = setBudgetEntry,
                 onInvoiceFieldClick = {
@@ -109,35 +113,65 @@ data class BudgetEntryScreen(val budgetEntry: BudgetEntry) {
             }
         )
 
-        ShowInvoiceModal(
-            show = uiState.isShowInvoiceModalVisible,
-            invoice = uiState.budgetEntry?.invoice,
+        FileNotFoundModal(
+            show = uiState.shouldShowFileNotFoundModal(),
             onDismiss = {
                 BudgetEntryEvent
                     .ToggleShowInvoiceModal(false)
                     .run(onEvent)
             },
-            onEdit = {
+            onReattach = {
                 BudgetEntryEvent
-                    .ToggleAttachInvoiceModal(true)
-                    .run(onEvent)
-                BudgetEntryEvent
-                    .ToggleShowInvoiceModal(false)
-                    .run(onEvent)
-            },
-            onShare = {
-                uiState.budgetEntry?.invoice?.let { filePath ->
-                    BudgetEntryEvent
-                        .ShareFile(filePath)
-                        .run(onEvent)
-                }
-            },
-            onDelete = {
-                BudgetEntryEvent
-                    .DeleteAttachedInvoice
+                    .UpdateInvoice
                     .run(onEvent)
             }
         )
+
+        uiState.validatedFilePath?.let { validatedPath ->
+            var isFileLoadable by remember {
+                mutableStateOf(true)
+            }
+
+            InvoiceDisplayModal(
+                show = uiState.shouldShowInvoiceDisplayModal(),
+                validatedFilePath = validatedPath,
+                onDismiss = {
+                    BudgetEntryEvent
+                        .ToggleShowInvoiceModal(false)
+                        .run(onEvent)
+                },
+                onEdit = {
+                    BudgetEntryEvent
+                        .UpdateInvoice
+                        .run(onEvent)
+                },
+                onShare = {
+                    BudgetEntryEvent
+                        .ShareFile(validatedPath)
+                        .run(onEvent)
+                },
+                onDelete = {
+                    BudgetEntryEvent
+                        .DeleteAttachedInvoice
+                        .run(onEvent)
+                },
+                onError = {
+                    isFileLoadable = false
+                }
+            )
+
+            FileNotLoadableModal(
+                show = !isFileLoadable,
+                onDismiss = {
+                    isFileLoadable = true
+                },
+                onReplace = {
+                    BudgetEntryEvent
+                        .UpdateInvoice
+                        .run(onEvent)
+                }
+            )
+        }
 
         AttachInvoiceModal(
             show = uiState.isAttachInvoiceModalVisible,

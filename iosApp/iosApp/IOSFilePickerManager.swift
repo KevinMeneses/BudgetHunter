@@ -125,11 +125,10 @@ class IOSFilePickerManager: NSObject, FilePickerManager {
             // Determine MIME type
             let mimeType = determineMimeType(from: url)
 
-            // Get Documents/BudgetHunter/Invoices directory for FileManager
-            let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-            let budgetHunterDirectory = documentsDirectory.appendingPathComponent("BudgetHunter", isDirectory: true)
-            let invoicesDirectory = budgetHunterDirectory.appendingPathComponent("Invoices", isDirectory: true)
-            let persistentDirectory = invoicesDirectory.path
+            // Get Documents/BudgetHunter/Invoices directory - matching FileManager.ios.kt format
+            let documentsDirectoryUrl = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+            let documentsDirectory = documentsDirectoryUrl.path
+            let persistentDirectory = "\(documentsDirectory)/BudgetHunter/Invoices"
 
             // Create timestamp filename to match Android format (timestamp + extension)
             let timestamp = Int64(Date().timeIntervalSince1970 * 1000)

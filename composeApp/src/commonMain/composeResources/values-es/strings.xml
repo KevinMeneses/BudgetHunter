@@ -190,4 +190,13 @@
     <!-- Notification Channels -->
     <string name="channel_name_sms_transactions">Transacciones por SMS</string>
     <string name="channel_description_sms_transactions">Notificaciones para transacciones detectadas automáticamente desde mensajes SMS.</string>
+
+    <!-- File Validation Messages -->
+    <string name="file_no_longer_available">Archivo no disponible</string>
+    <string name="file_no_longer_accessible">Por alguna razón, el archivo que adjuntaste ya no es accesible.</string>
+    <string name="attach_new_file">Adjuntar Nuevo Archivo</string>
+    <string name="unable_to_display_file">No se puede mostrar el archivo</string>
+    <string name="file_exists_cannot_load">El archivo existe pero no se puede cargar.</string>
+    <string name="replace_file">Reemplazar Archivo</string>
+    <string name="file_missing">Archivo faltante - %1$s</string>
 </resources>
