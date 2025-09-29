@@ -101,6 +101,9 @@ kotlin {
         iosMain.dependencies {
             // SqlDelight iOS driver
             implementation(libs.sqldelight.ios.driver)
+
+            // Ktor Darwin engine for iOS
+            implementation(libs.ktor.client.darwin)
         }
         
         commonTest.dependencies {
