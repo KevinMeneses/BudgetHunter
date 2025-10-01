@@ -11,6 +11,7 @@ import com.meneses.budgethunter.budgetEntry.domain.AIImageProcessor
 import com.meneses.budgethunter.budgetEntry.domain.AndroidAIImageProcessor
 import com.meneses.budgethunter.commons.data.DatabaseFactory
 import com.meneses.budgethunter.commons.data.FileManager
+import com.meneses.budgethunter.commons.data.createDatabase
 import com.meneses.budgethunter.commons.platform.AndroidCameraManager
 import com.meneses.budgethunter.commons.platform.AndroidFilePickerManager
 import com.meneses.budgethunter.commons.platform.AndroidNotificationManager
@@ -24,6 +25,8 @@ import com.meneses.budgethunter.commons.platform.ShareManager
 import com.meneses.budgethunter.db.Database
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.android.Android
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.serialization.json.Json
 import org.koin.core.qualifier.named
@@ -62,7 +65,11 @@ val androidPlatformModule = module {
 
     // HTTP Client for AI API calls (using Android engine)
     single<HttpClient> {
-        HttpClient(Android)
+        HttpClient(Android) {
+            install(ContentNegotiation) {
+                json(get<Json>())
+            }
+        }
     }
 
     // API key from BuildConfig

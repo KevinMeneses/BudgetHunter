@@ -2,6 +2,7 @@ package com.meneses.budgethunter.budgetEntry.ui
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -18,18 +19,26 @@ import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import budgethunter.composeapp.generated.resources.Res
 import budgethunter.composeapp.generated.resources.attach_invoice_title
 import budgethunter.composeapp.generated.resources.attach_new_file
@@ -63,29 +72,63 @@ fun InvoiceDisplayModal(
     onError: () -> Unit
 ) {
     if (show) {
+        var bitmap by remember(validatedFilePath) { mutableStateOf<ImageBitmap?>(null) }
+        var isLoading by remember(validatedFilePath) { mutableStateOf(true) }
+
+        LaunchedEffect(validatedFilePath) {
+            isLoading = true
+            try {
+                val loadedBitmap = withContext(Dispatchers.Default) {
+                    if (validatedFilePath.endsWith(".pdf", ignoreCase = true)) {
+                        getImageBitmapFromPDFFile(validatedFilePath)
+                    } else {
+                        getImageBitmapFromFile(validatedFilePath)
+                    }
+                }
+                bitmap = loadedBitmap
+                if (loadedBitmap == null) {
+                    onError()
+                }
+            } catch (_: Exception) {
+                onError()
+            } finally {
+                isLoading = false
+            }
+        }
+
         AlertDialog(
             onDismissRequest = onDismiss,
             text = {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    remember(validatedFilePath) {
-                        if (validatedFilePath.endsWith(".pdf", ignoreCase = true)) {
-                            getImageBitmapFromPDFFile(validatedFilePath)
-                        } else {
-                            getImageBitmapFromFile(validatedFilePath)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(400.dp)
+                            .padding(bottom = 16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        when {
+                            isLoading -> {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(48.dp)
+                                )
+                            }
+                            bitmap != null -> {
+                                Image(
+                                    bitmap = bitmap!!,
+                                    contentDescription = stringResource(Res.string.invoice_content_description),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(400.dp)
+                                )
+                            }
                         }
-                    }?.let { bitmap ->
-                        Image(
-                            bitmap = bitmap,
-                            contentDescription = stringResource(Res.string.invoice_content_description),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(400.dp)
-                                .padding(bottom = 16.dp)
-                        )
+                    }
 
-                        // Action buttons
+                    // Only show action buttons when image is loaded
+                    if (!isLoading && bitmap != null) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceEvenly
@@ -150,9 +193,6 @@ fun InvoiceDisplayModal(
                                 )
                             }
                         }
-                    } ?: run {
-                        // If image can't be loaded, show the not loadable message
-                        onError()
                     }
                 }
             },

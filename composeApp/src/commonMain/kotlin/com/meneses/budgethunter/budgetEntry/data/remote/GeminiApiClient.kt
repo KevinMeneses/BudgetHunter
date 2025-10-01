@@ -50,11 +50,11 @@ class GeminiApiClient(
             // Call Gemini API
             val response = httpClient.post("https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=$apiKey") {
                 contentType(ContentType.Application.Json)
-                setBody(json.encodeToString(GeminiRequest.serializer(), requestBody))
+                setBody(requestBody)
             }
 
             // Parse response
-            val geminiResponse = json.decodeFromString<GeminiResponse>(response.body())
+            val geminiResponse = response.body<GeminiResponse>()
             val responseText = geminiResponse.candidates?.firstOrNull()?.content?.parts
                 ?.firstOrNull { it.text != null }?.text
                 ?: return null

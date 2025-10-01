@@ -109,6 +109,9 @@ class BudgetEntryViewModel(
                     isProcessingInvoice = false
                 )
             }
+
+            // Validate the newly attached invoice file
+            validateInvoiceFile(invoicePath)
         } catch (_: Exception) {
             _uiState.update { it.copy(isProcessingInvoice = false) }
             updateInvoiceError("Something went wrong loading file, please try again")
@@ -217,8 +220,15 @@ class BudgetEntryViewModel(
         }
     }
 
-    private fun shareFile(filePath: String) {
-        shareManager.shareFile(filePath)
+    private fun shareFile(filePath: String) = viewModelScope.launch {
+        _uiState.update { it.copy(isSharingFile = true) }
+        try {
+            shareManager.shareFile(filePath)
+        } finally {
+            // Small delay to ensure share sheet is presented before hiding loading
+            delay(500)
+            _uiState.update { it.copy(isSharingFile = false) }
+        }
     }
 
     private fun showNotification(message: String, isError: Boolean) {

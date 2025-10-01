@@ -4,10 +4,12 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import com.meneses.budgethunter.budgetEntry.data.ImageProcessor
+import com.meneses.budgethunter.budgetEntry.data.remote.GeminiApiClient
 import com.meneses.budgethunter.budgetEntry.domain.AIImageProcessor
 import com.meneses.budgethunter.budgetEntry.domain.IosAIImageProcessor
 import com.meneses.budgethunter.commons.data.DatabaseFactory
 import com.meneses.budgethunter.commons.data.FileManager
+import com.meneses.budgethunter.commons.data.createDatabase
 import com.meneses.budgethunter.commons.platform.AppUpdateManager
 import com.meneses.budgethunter.commons.platform.CameraManager
 import com.meneses.budgethunter.commons.platform.FilePickerManager
@@ -17,6 +19,8 @@ import com.meneses.budgethunter.commons.platform.ShareManager
 import com.meneses.budgethunter.db.Database
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.darwin.Darwin
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.serialization.kotlinx.json.json
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.serialization.json.Json
@@ -35,7 +39,6 @@ val iosPlatformModule = module {
         DatabaseFactory().createDatabase()
     }
     
-    // DataStore for preferences using KMP support
     single<DataStore<Preferences>> {
         @OptIn(ExperimentalForeignApi::class)
         PreferenceDataStoreFactory.createWithPath(
@@ -63,14 +66,16 @@ val iosPlatformModule = module {
     single<NotificationManager> { IOSBridge.notificationManager }
     single<ShareManager> { IOSBridge.shareManager }
     
-    // AI and Image Processing - iOS implementations
     single<ImageProcessor> {
         ImageProcessor()
     }
 
-    // HTTP Client for AI API calls (using Darwin engine for iOS)
     single<HttpClient> {
-        HttpClient(Darwin)
+        HttpClient(Darwin) {
+            install(ContentNegotiation) {
+                json(get<Json>())
+            }
+        }
     }
 
     // Get API key - for iOS, this should be set via build configuration
@@ -88,9 +93,8 @@ val iosPlatformModule = module {
         }
     }
 
-    // Shared Gemini API client (from commonMain data layer)
-    single<com.meneses.budgethunter.budgetEntry.data.remote.GeminiApiClient> {
-        com.meneses.budgethunter.budgetEntry.data.remote.GeminiApiClient(
+    single<GeminiApiClient> {
+        GeminiApiClient(
             httpClient = get<HttpClient>(),
             apiKey = get(named("GEMINI_API_KEY")),
             json = get<Json>()
@@ -99,7 +103,7 @@ val iosPlatformModule = module {
 
     single<AIImageProcessor> {
         IosAIImageProcessor(
-            geminiApiClient = get<com.meneses.budgethunter.budgetEntry.data.remote.GeminiApiClient>(),
+            geminiApiClient = get<GeminiApiClient>(),
             imageProcessor = get<ImageProcessor>(),
             ioDispatcher = get<CoroutineDispatcher>(named("IO"))
         )
