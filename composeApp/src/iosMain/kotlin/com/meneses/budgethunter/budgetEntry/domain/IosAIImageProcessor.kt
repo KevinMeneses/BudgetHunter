@@ -1,34 +1,42 @@
 package com.meneses.budgethunter.budgetEntry.domain
 
 import com.meneses.budgethunter.budgetEntry.data.ImageProcessor
+import com.meneses.budgethunter.budgetEntry.data.remote.GeminiApiClient
+import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
+import platform.Foundation.NSData
+import platform.Foundation.base64EncodedStringWithOptions
+import platform.UIKit.UIImage
+import platform.UIKit.UIImageJPEGRepresentation
 
 /**
  * iOS-specific implementation of AIImageProcessor.
- * Currently provides placeholder implementations for future iOS AI development.
- * When iOS AI capabilities are added, this will integrate with iOS ML frameworks
- * such as CoreML, Vision, or third-party AI services.
+ * Converts UIImage to base64 and delegates to shared GeminiApiClient.
  */
 class IosAIImageProcessor(
+    private val geminiApiClient: GeminiApiClient,
     private val imageProcessor: ImageProcessor,
     private val ioDispatcher: CoroutineDispatcher
 ) : AIImageProcessor {
 
+    @OptIn(ExperimentalForeignApi::class)
     override suspend fun processImage(imageData: ImageData, prompt: String): BudgetEntry? = withContext(ioDispatcher) {
-        // TODO: Implement iOS AI image processing
-        // Future implementation options:
-        // 1. CoreML with custom trained model
-        // 2. Vision framework for text recognition + custom parsing
-        // 3. Third-party AI services (OpenAI, Anthropic, etc.)
-        // 4. On-device OCR + rule-based extraction
-        
-        println("iOS AI Image Processing: Not yet implemented")
-        println("Image URI: ${imageData.uri}")
-        println("Prompt: $prompt")
-        
-        // Return null to indicate processing is not available
-        // The common use case will fall back to returning the original budget entry
-        null
+        try {
+            // Get UIImage from the image URI
+            val uiImage = imageProcessor.getImageFromUri(imageData) as? UIImage
+                ?: return@withContext null
+
+            // Convert UIImage to base64-encoded JPEG
+            val imageData = UIImageJPEGRepresentation(uiImage, 0.8) as NSData
+            val base64Image = imageData.base64EncodedStringWithOptions(0u)
+
+            // Use shared Gemini API client
+            geminiApiClient.extractBudgetEntryFromImage(base64Image, prompt)
+        } catch (e: Exception) {
+            println("iOS AI Image Processing Error: ${e.message}")
+            e.printStackTrace()
+            null
+        }
     }
 }

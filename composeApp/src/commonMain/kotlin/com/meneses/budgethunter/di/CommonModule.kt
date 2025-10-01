@@ -34,7 +34,12 @@ val commonModule = module {
 
     single<CoroutineDispatcher>(named("Default")) { Dispatchers.Default }
 
-    single<Json> { Json { coerceInputValues = true } }
+    single<Json> {
+        Json {
+            coerceInputValues = true
+            ignoreUnknownKeys = true
+        }
+    }
 
     single<PreferencesManager> { PreferencesManager(get()) }
 

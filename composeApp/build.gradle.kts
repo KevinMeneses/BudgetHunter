@@ -81,21 +81,21 @@ kotlin {
             implementation(libs.androidx.core.ktx)
             implementation(libs.androidx.activity.compose)
             implementation(libs.bundles.koin.android)
-            
+
             // Navigation Compose (Android only for now)
             implementation(libs.androidx.navigation.compose)
-            
+
             // Lifecycle (Android only for now)
             implementation(libs.bundles.androidx.lifecycle)
-            
+
             // SqlDelight Android driver
             implementation(libs.sqldelight.android.driver)
-            
+
             // Google Play services
             implementation(libs.bundles.play.update)
-            
-            // Google AI
-            implementation(libs.google.ai.generativeai)
+
+            // Ktor Android engine for HTTP calls
+            implementation(libs.ktor.client.android)
         }
         
         iosMain.dependencies {

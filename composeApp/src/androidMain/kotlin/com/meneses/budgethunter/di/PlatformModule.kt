@@ -4,9 +4,9 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
-import com.google.ai.client.generativeai.GenerativeModel
 import com.meneses.budgethunter.BuildConfig
 import com.meneses.budgethunter.budgetEntry.data.ImageProcessor
+import com.meneses.budgethunter.budgetEntry.data.remote.GeminiApiClient
 import com.meneses.budgethunter.budgetEntry.domain.AIImageProcessor
 import com.meneses.budgethunter.budgetEntry.domain.AndroidAIImageProcessor
 import com.meneses.budgethunter.commons.data.DatabaseFactory
@@ -22,6 +22,8 @@ import com.meneses.budgethunter.commons.platform.NotificationManager
 import com.meneses.budgethunter.commons.platform.PermissionsManager
 import com.meneses.budgethunter.commons.platform.ShareManager
 import com.meneses.budgethunter.db.Database
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.android.Android
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.serialization.json.Json
 import org.koin.core.qualifier.named
@@ -52,24 +54,35 @@ val androidPlatformModule = module {
     // Keep concrete types available if needed elsewhere - use the same instance as the interface
     single<AndroidCameraManager> { get<CameraManager>() as AndroidCameraManager }
     single<AndroidFilePickerManager> { get<FilePickerManager>() as AndroidFilePickerManager }
-    
+
     // AI and Image Processing - Android specific
-    single<GenerativeModel> {
-        GenerativeModel(
-            modelName = "gemini-1.5-flash",
-            apiKey = BuildConfig.GEMINI_API_KEY
-        )
-    }
-    
     single<ImageProcessor> {
         ImageProcessor(get<Context>().contentResolver)
     }
-    
+
+    // HTTP Client for AI API calls (using Android engine)
+    single<HttpClient> {
+        HttpClient(Android)
+    }
+
+    // API key from BuildConfig
+    single(named("GEMINI_API_KEY")) {
+        BuildConfig.GEMINI_API_KEY
+    }
+
+    // Shared Gemini API client (from commonMain data layer)
+    single<GeminiApiClient> {
+        GeminiApiClient(
+            httpClient = get<HttpClient>(),
+            apiKey = get(named("GEMINI_API_KEY")),
+            json = get<Json>()
+        )
+    }
+
     single<AIImageProcessor> {
         AndroidAIImageProcessor(
-            generativeModel = get<GenerativeModel>(),
+            geminiApiClient = get<GeminiApiClient>(),
             imageProcessor = get<ImageProcessor>(),
-            json = get<Json>(),
             ioDispatcher = get<CoroutineDispatcher>(named("IO"))
         )
     }
