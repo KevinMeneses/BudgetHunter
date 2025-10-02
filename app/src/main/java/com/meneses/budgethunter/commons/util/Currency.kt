@@ -10,6 +10,7 @@ import java.util.Locale
 /**
  * Formats a Double as currency with proper decimal handling
  */
+// create expect/actual function for KMP and add iOS implementation on migration
 fun Double.toCurrency(): String {
     return BigDecimal(this.toString())
         .setScale(2, RoundingMode.HALF_UP)
@@ -19,6 +20,7 @@ fun Double.toCurrency(): String {
 /**
  * Formats a String as currency with validation and proper decimal handling
  */
+// create expect/actual function for KMP and add iOS implementation on migration
 fun String.toCurrency(): String {
     if (this.isBlank()) return EMPTY
 
@@ -31,6 +33,7 @@ fun String.toCurrency(): String {
 /**
  * Formats a BigDecimal as currency
  */
+// create expect/actual function for KMP and add iOS implementation on migration
 private fun BigDecimal.toCurrency(): String {
     val formatter = NumberFormat.getCurrencyInstance(Locale.US) as DecimalFormat
 

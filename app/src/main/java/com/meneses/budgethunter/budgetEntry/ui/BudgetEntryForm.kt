@@ -15,8 +15,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.AttachFile
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -26,7 +26,10 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -34,16 +37,12 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import com.meneses.budgethunter.R
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
-import com.meneses.budgethunter.commons.EMPTY
 import com.meneses.budgethunter.commons.ui.OutlinedDropdown
+import com.meneses.budgethunter.commons.ui.SimpleDatePickerDialog
 import com.meneses.budgethunter.commons.ui.ThousandSeparatorTransformation
 import com.meneses.budgethunter.commons.ui.dashedBorder
-import com.meneses.budgethunter.commons.ui.SimpleDatePickerDialog
 import com.meneses.budgethunter.commons.ui.formatDateForDisplay
 import com.meneses.budgethunter.theme.AppColors
 import com.meneses.budgethunter.theme.green_success
@@ -273,7 +272,7 @@ fun CategorySelector(
 ) {
     val categories = remember { BudgetEntry.getCategories() }
     OutlinedDropdown(
-        value = category?.toStringResource() ?: EMPTY,
+        value = category?.toStringResource().orEmpty(),
         label = stringResource(id = R.string.category),
         dropdownOptions = categories.map { it.toStringResource() },
         onSelectOption = { onCategorySelected(categories[it]) }

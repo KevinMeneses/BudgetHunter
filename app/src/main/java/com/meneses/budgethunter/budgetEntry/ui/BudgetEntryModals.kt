@@ -1,6 +1,5 @@
 package com.meneses.budgethunter.budgetEntry.ui
 
-import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -27,7 +26,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -36,7 +34,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import com.meneses.budgethunter.R
 import com.meneses.budgethunter.commons.ui.dashedBorder
-import com.meneses.budgethunter.commons.util.getBitmapFromPDFFile
+import com.meneses.budgethunter.commons.util.getImageBitmapFromFile
+import com.meneses.budgethunter.commons.util.getImageBitmapFromPDFFile
 import com.meneses.budgethunter.theme.AppColors
 
 @Composable
@@ -182,19 +181,9 @@ fun ShowInvoiceModal(
                 ) {
                     remember(invoice) {
                         if (invoice?.endsWith(".pdf", ignoreCase = true) == true) {
-                            try {
-                                val bitmap = getBitmapFromPDFFile(invoice)
-                                bitmap.asImageBitmap()
-                            } catch (e: Exception) {
-                                // If PDF processing fails, try to decode as image
-                                BitmapFactory
-                                    .decodeFile(invoice)
-                                    ?.asImageBitmap()
-                            }
+                            getImageBitmapFromPDFFile(invoice)
                         } else {
-                            BitmapFactory
-                                .decodeFile(invoice)
-                                ?.asImageBitmap()
+                            getImageBitmapFromFile(invoice.orEmpty())
                         }
                     }?.let {
                         Image(

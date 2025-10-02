@@ -47,8 +47,9 @@ import androidx.compose.ui.unit.dp
 import com.meneses.budgethunter.R
 import com.meneses.budgethunter.budgetList.application.BudgetListEvent
 import com.meneses.budgethunter.budgetList.domain.Budget
-import com.meneses.budgethunter.commons.ui.LoadingScreen
 import com.meneses.budgethunter.commons.ui.CompottiePlaceholder
+import com.meneses.budgethunter.commons.ui.LoadingScreen
+import com.meneses.budgethunter.commons.util.loadRawResourceAsString
 import com.meneses.budgethunter.commons.util.toCurrency
 import com.meneses.budgethunter.theme.AppColors
 import com.meneses.budgethunter.theme.BudgetHunterTheme
@@ -61,8 +62,18 @@ private fun Preview() {
     BudgetHunterTheme {
         BudgetListContent(
             list = listOf(
-                Budget(name = "Noviembre", amount = 1500.0, totalExpenses = 450.0, date = "2024-11-01"),
-                Budget(name = "Diciembre", amount = 2000.0, totalExpenses = 1200.0, date = "2024-12-01"),
+                Budget(
+                    name = "Noviembre",
+                    amount = 1500.0,
+                    totalExpenses = 450.0,
+                    date = "2024-11-01"
+                ),
+                Budget(
+                    name = "Diciembre",
+                    amount = 2000.0,
+                    totalExpenses = 1200.0,
+                    date = "2024-12-01"
+                ),
                 Budget(name = "Enero", amount = 1800.0, totalExpenses = 300.0, date = "2025-01-01")
             ),
             isLoading = false,
@@ -93,10 +104,12 @@ fun BudgetListContent(
         ) {
             if (list.isEmpty()) {
                 item {
-                    CompottiePlaceholder(
-                        resId = R.raw.empty_state,
-                        modifier = Modifier.fillMaxSize()
-                    )
+                    loadRawResourceAsString(R.raw.empty_state)?.let {
+                        CompottiePlaceholder(
+                            jsonContent = it,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
                 }
             } else {
                 items(list.size) {

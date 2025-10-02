@@ -1,0 +1,31 @@
+CREATE TABLE budget (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  amount REAL NOT NULL,
+  name TEXT NOT NULL,
+  date TEXT NOT NULL
+);
+
+selectAll:
+SELECT 
+  b.*,
+  COALESCE(SUM(CASE WHEN be.type = 'OUTCOME' THEN be.amount ELSE 0 END), 0) AS total_expenses
+FROM budget b
+LEFT JOIN budget_entry be ON b.id = be.budget_id
+GROUP BY b.id, b.amount, b.name, b.date
+ORDER BY b.id DESC;
+
+insert:
+INSERT INTO budget (amount, name, date)
+VALUES (:amount, :name, :date);
+
+selectLastId:
+SELECT last_insert_rowid();
+
+update:
+UPDATE budget
+SET amount = :amount, name = :name, date = :date
+WHERE id = :id;
+
+delete:
+DELETE FROM budget
+WHERE id = :id;

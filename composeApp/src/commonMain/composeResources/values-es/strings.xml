@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App Info -->
+    <string name="app_name">Cazador de Presupuestos</string>
+    <string name="budget_hunter">Cazador de presupuesto</string>
+    <string name="app_version">Cazador de Presupuestos v1.0.0</string>
+    <string name="app_description">Una aplicación para gestionar tus presupuestos de manera inteligente</string>
+    
+    <!-- Basic Actions -->
+    <string name="save">Guardar</string>
+    <string name="clean">Limpiar</string>
+    <string name="apply">Aplicar</string>
+    <string name="create">Crear</string>
+    <string name="cancel">Cancelar</string>
+    <string name="update">Actualizar</string>
+    <string name="delete">Eliminar</string>
+    <string name="discard">Descartar</string>
+    <string name="come_back">Volver</string>
+    <string name="ok">OK</string>
+    <string name="send">Enviar</string>
+    <string name="back">Atrás</string>
+    <string name="search">Buscar</string>
+    <string name="close">Cerrar</string>
+    
+    <!-- Navigation & Screens -->
+    <string name="budgets">Presupuestos</string>
+    <string name="settings">Configuración</string>
+    <string name="metrics">Metricas</string>
+    <string name="user_guide">Guia de usuario</string>
+    <string name="about">Acerca de</string>
+    
+    <!-- Budget Management -->
+    <string name="add_budget">Agregar un presupuesto</string>
+    <string name="budget">Presupuesto</string>
+    <string name="new_budget">Nuevo presupuesto</string>
+    <string name="budget_amount">Presupuesto\n%1$s</string>
+    <string name="delete_budget">Eliminar presupuesto</string>
+    <string name="delete_budget_confirmation_message">¿Está seguro que desea eliminar este presupuesto?</string>
+    <string name="update_budget">Actualizar presupuesto</string>
+    <string name="set_budget_amount">Establece el monto del presupuesto:</string>
+    <string name="change_name">Cambiar nombre</string>
+    <string name="duplicate">Duplicar</string>
+    <string name="no_budgets_yet">No hay presupuestos aún</string>
+    <string name="create_first_budget">Crea tu primer presupuesto para comenzar</string>
+    <string name="enter_budget_name">Ingresa el nombre para tu nuevo presupuesto:</string>
+    <string name="modify_budget_name">Modifica el nombre del presupuesto:</string>
+    <string name="no_budgets_available">No hay presupuestos disponibles para seleccionar.</string>
+    
+    <!-- Budget Entry Management -->
+    <string name="new_registry">Nuevo registro</string>
+    <string name="update_registry">Modificar registro</string>
+    <string name="create_budget_entry">Crear entrada de presupuesto</string>
+    <string name="save_entry">Guardar entrada</string>
+    <string name="selected_entries">%1$s Seleccionados</string>
+    <string name="delete_entries_confirmation_message">¿Está seguro que desea eliminar estos registros?</string>
+    <string name="close_entries_selection_mode">Cerrar modo selección de entradas</string>
+    <string name="unsaved_changes_confirmation_message">Hay cambios sin guardar ¿desea descartar estos cambios?</string>
+    
+    <!-- Budget Fields -->
+    <string name="name">Nombre</string>
+    <string name="amount">Monto</string>
+    <string name="description">Descripcion</string>
+    <string name="no_description">Sin descripcion</string>
+    <string name="date">Fecha</string>
+    <string name="category">Categoría</string>
+    <string name="frequency">Frecuencia</string>
+    <string name="start_date">Fecha de inicio</string>
+    <string name="end_date">Fecha limite</string>
+    <string name="amount_mandatory">Debes ingresar un monto para este registro</string>
+    
+    <!-- Categories -->
+    <string name="food">Comida</string>
+    <string name="groceries">Mercado</string>
+    <string name="self_care">Cuidado personal</string>
+    <string name="transportation">Transporte</string>
+    <string name="household_items">Articulos para el hogar</string>
+    <string name="services">Servicios</string>
+    <string name="education">Educación</string>
+    <string name="health">Salud</string>
+    <string name="leisure">Ocio</string>
+    <string name="taxes">Impuestos</string>
+    <string name="other">Otros</string>
+    
+    <!-- Financial Terms -->
+    <string name="total_outcomes">Total gastos:</string>
+    <string name="expenses">%1$s gastados</string>
+    <string name="available">de %1$s</string>
+    <string name="balance">Balance:</string>
+    <string name="income">INGRESO</string>
+    <string name="outcome">GASTO</string>
+    
+    <!-- Search -->
+    <string name="search_budgets">Buscar presupuestos…</string>
+    <string name="clear_search">Limpiar búsqueda</string>
+    <string name="filter">Filtrar</string>
+    <string name="filter_entries_criteria">Filtra las entradas por los siguientes criterios:</string>
+    
+    <!-- Collaboration -->
+    <string name="collaborate">Colaborar</string>
+    <string name="collaborate_confirmation_message">¿Desea empezar a colaborar?</string>
+    <string name="collaboration_code">Código de Colaboración</string>
+    <string name="share_code_with_collaborators">Comparte este código con tus colaboradores:</string>
+    <string name="join_collaboration_title">Unirse a Colaboración</string>
+    <string name="enter_collaboration_code">Ingresa el código de colaboración:</string>
+    <string name="code">Código</string>
+    
+    <!-- Invoices & Attachments -->
+    <string name="attach_invoice">Adjuntar comprobante</string>
+    <string name="attach_invoice_title">Adjuntar Factura</string>
+    <string name="select_invoice_option">Selecciona una opción para adjuntar tu factura:</string>
+    <string name="invoice">Comprobante: %s</string>
+    <string name="receipt">Comprobante</string>
+    <string name="select_from_files">Seleccionar un archivo</string>
+    <string name="take_a_picture">Tomar una foto</string>
+    
+    <!-- SMS Processing -->
+    <string name="sms_reading">Lectura de SMS</string>
+    <string name="sms_reading_description">Leer mensajes de bancos para crear entradas automáticamente</string>
+    <string name="enable_sms_reading">Habilitar lectura de SMS</string>
+    <string name="sms_permission_required">Se requiere permiso para leer SMS</string>
+    <string name="sms_permission_explanation">Esta función lee mensajes de bancos para crear entradas de presupuesto automáticamente</string>
+    <string name="transaction_detected">Transacción detectada</string>
+    <string name="transaction_detected_message">Se detectó una transacción por %1$s</string>
+    <string name="add_transaction">Agregar transacción</string>
+    <string name="ignore_transaction">Ignorar</string>
+    <string name="transaction_added">Transacción agregada exitosamente</string>
+    <string name="transaction_failed">Error al agregar transacción</string>
+    
+    <!-- Bank Settings -->
+    <string name="default_budget">Presupuesto por defecto</string>
+    <string name="select_default_budget">Seleccionar presupuesto</string>
+    <string name="no_default_budget">No hay presupuesto por defecto configurado</string>
+    <string name="save_default_budget">Guardar</string>
+    <string name="select_default_budget_description">Selecciona un presupuesto por defecto para las transacciones automáticas:</string>
+    <string name="bank_for_sms_notifications">Bancos para notificaciones SMS</string>
+    <string name="select_a_bank">Selecciona un banco</string>
+    <string name="no_banks_configured">No hay bancos configurados</string>
+    <string name="select_banks">Selecciona los bancos</string>
+    <string name="select_banks_description">Selecciona los bancos para procesar transacciones automáticas:</string>
+    <string name="banks_selected">%1$d bancos seleccionados</string>
+    <string name="no_banks_selected">Ningún banco seleccionado</string>
+    
+    <!-- AI Processing -->
+    <string name="ai_processing">Procesamiento con IA</string>
+    <string name="enable_ai_processing">Habilitar procesamiento con IA</string>
+    <string name="ai_processing_description">Procesa automáticamente las facturas y comprobantes usando inteligencia artificial para completar el formulario de entrada</string>
+    <string name="activated">Activado</string>
+    <string name="deactivated">Desactivado</string>
+    
+    <!-- App Updates -->
+    <string name="wait_for_update">Espere mientras se actualiza la aplicación…</string>
+    
+    <!-- Dates & Time -->
+    <string name="created">Creado: %1$s</string>
+    <string name="page_">Pagina %1$d</string>
+    
+    <!-- Suffixes -->
+    <string name="copy_suffix"> (copia)</string>
+    
+    <!-- Content Descriptions -->
+    <string name="open_menu">Botón para abrir el menú</string>
+    <string name="open_menu_button">Botón para abrir el menú</string>
+    <string name="entry_date">Fecha de la entrada</string>
+    <string name="create_new_budget">Crear nuevo presupuesto</string>
+    <string name="budget_options">Opciones del presupuesto</string>
+    <string name="edit_budget">Editar presupuesto</string>
+    <string name="duplicate_budget">Duplicar presupuesto</string>
+    <string name="update_budget_modal">Actualizar presupuesto</string>
+    <string name="invoice_content_description">Factura</string>
+    <string name="edit_content_description">Editar</string>
+    <string name="share_content_description">Compartir</string>
+    <string name="delete_content_description">Eliminar</string>
+    <string name="back_content_description">Atrás</string>
+    <string name="collaborate_icon_description">Icono de colaboración</string>
+    <string name="collaboration_code_icon_description">Icono de código de colaboración</string>
+    <string name="change_name_icon_description">Icono de cambiar nombre</string>
+    <string name="duplicate_icon_description">Icono de duplicar</string>
+    <string name="delete_icon_description">Icono de eliminar</string>
+    <string name="sms_reading_icon_description">Icono de lectura de SMS</string>
+    <string name="default_budget_icon_description">Icono de presupuesto por defecto</string>
+    <string name="bank_selection_icon_description">Icono de selección de bancos</string>
+    <string name="about_icon_description">Icono de acerca de</string>
+    <string name="ai_processing_icon_description">Icono de procesamiento con IA</string>
+    <string name="update_budget_icon_description">Icono de actualizar presupuesto</string>
+    <string name="select_from_files_icon_description">Icono de seleccionar archivos</string>
+    <string name="take_picture_icon_description">Icono de tomar foto</string>
+    <string name="budget_list_icon_description">Icono de lista de presupuestos</string>
+    <string name="invoice_image_description">Imagen de factura</string>
+    
+    <!-- Notification Channels -->
+    <string name="channel_name_sms_transactions">Transacciones por SMS</string>
+    <string name="channel_description_sms_transactions">Notificaciones para transacciones detectadas automáticamente desde mensajes SMS.</string>
+
+    <!-- File Validation Messages -->
+    <string name="file_no_longer_available">Archivo no disponible</string>
+    <string name="file_no_longer_accessible">Por alguna razón, el archivo que adjuntaste ya no es accesible.</string>
+    <string name="attach_new_file">Adjuntar Nuevo Archivo</string>
+    <string name="unable_to_display_file">No se puede mostrar el archivo</string>
+    <string name="file_exists_cannot_load">El archivo existe pero no se puede cargar.</string>
+    <string name="replace_file">Reemplazar Archivo</string>
+    <string name="file_missing">Archivo faltante - %1$s</string>
+</resources>

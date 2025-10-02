@@ -2,9 +2,10 @@
 # Kotlin and Compose
 kotlin = "2.1.0"
 ksp = "2.1.0-1.0.29"
-compose-ui = "1.9.0"
+compose-ui = "1.9.1"
 compose-material3 = "1.3.2"
 compose-material-icons = "1.7.8"
+compose-multiplatform = "1.8.2"
 
 # Android
 android-gradle-plugin = "8.10.1"
@@ -12,8 +13,10 @@ android-gradle-plugin = "8.10.1"
 # AndroidX
 androidx-core = "1.17.0"
 androidx-lifecycle = "2.9.3"
-androidx-activity-compose = "1.10.1"
-androidx-navigation-compose = "2.9.3"
+androidx-activity-compose = "1.11.0"
+androidx-navigation-compose = "2.9.4"
+jetbrains-navigation-compose = "2.9.0-rc02"
+jetbrains-lifecycle-viewmodel = "2.9.3"
 androidx-datastore = "1.1.7"
 androidx-arch-core = "2.2.0"
 
@@ -30,17 +33,16 @@ ktor-cio = "2.3.11"
 
 # Other libraries
 kotlinx-serialization = "1.7.3"
-kotlinx-coroutines = "1.8.1"
+kotlinx-coroutines = "1.9.0"
+kotlinx-datetime = "0.6.1"
 compottie = "2.0.0-rc04"
 play-app-update = "2.1.0"
 google-ai = "0.9.0"
-
-# Testing
 junit = "4.13.2"
 junit-ext = "1.3.0"
 mockk = "1.13.5"
 espresso = "3.7.0"
-ui-test-manifest = "1.9.0"
+ui-test-manifest = "1.9.1"
 
 [libraries]
 # AndroidX Core
@@ -60,9 +62,14 @@ compose-material-icons-extended = { group = "androidx.compose.material", name = 
 
 # Navigation
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "androidx-navigation-compose" }
+jetbrains-navigation-compose = { group = "org.jetbrains.androidx.navigation", name = "navigation-compose", version.ref = "jetbrains-navigation-compose" }
+
+# Lifecycle (Multiplatform)
+jetbrains-lifecycle-viewmodel = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-viewmodel", version.ref = "jetbrains-lifecycle-viewmodel" }
 
 # Database
 sqldelight-android-driver = { group = "app.cash.sqldelight", name = "android-driver", version.ref = "sqldelight" }
+sqldelight-ios-driver = { group = "app.cash.sqldelight", name = "native-driver", version.ref = "sqldelight" }
 sqldelight-coroutines-extensions = { group = "app.cash.sqldelight", name = "coroutines-extensions", version.ref = "sqldelight" }
 
 # DataStore
@@ -70,6 +77,8 @@ androidx-datastore-preferences = { group = "androidx.datastore", name = "datasto
 androidx-datastore-preferences-core = { group = "androidx.datastore", name = "datastore-preferences-core", version.ref = "androidx-datastore" }
 
 # Koin
+koin-core = { group = "io.insert-koin", name = "koin-core", version.ref = "koin" }
+koin-compose = { group = "io.insert-koin", name = "koin-compose", version.ref = "koin" }
 koin-android = { group = "io.insert-koin", name = "koin-android", version.ref = "koin" }
 koin-androidx-compose = { group = "io.insert-koin", name = "koin-androidx-compose", version.ref = "koin" }
 koin-annotations = { group = "io.insert-koin", name = "koin-annotations", version.ref = "koin-annotations" }
@@ -78,11 +87,17 @@ koin-ksp-compiler = { group = "io.insert-koin", name = "koin-ksp-compiler", vers
 # Network
 ktor-client-core = { group = "io.ktor", name = "ktor-client-core", version.ref = "ktor" }
 ktor-client-cio = { group = "io.ktor", name = "ktor-client-cio", version.ref = "ktor-cio" }
+ktor-client-android = { group = "io.ktor", name = "ktor-client-android", version.ref = "ktor" }
+ktor-client-darwin = { group = "io.ktor", name = "ktor-client-darwin", version.ref = "ktor" }
 ktor-client-websockets = { group = "io.ktor", name = "ktor-client-websockets", version.ref = "ktor" }
 ktor-client-logging = { group = "io.ktor", name = "ktor-client-logging", version.ref = "ktor" }
+ktor-client-mock = { group = "io.ktor", name = "ktor-client-mock", version.ref = "ktor" }
+ktor-client-content-negotiation = { group = "io.ktor", name = "ktor-client-content-negotiation", version.ref = "ktor" }
+ktor-serialization-kotlinx-json = { group = "io.ktor", name = "ktor-serialization-kotlinx-json", version.ref = "ktor" }
 
 # Serialization
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
+kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version.ref = "kotlinx-datetime" }
 
 # UI Libraries
 compottie = { group = "io.github.alexzhirkevich", name = "compottie", version.ref = "compottie" }
@@ -94,8 +109,6 @@ play-app-update-ktx = { group = "com.google.android.play", name = "app-update-kt
 
 # AI
 google-ai-generativeai = { group = "com.google.ai.client.generativeai", name = "generativeai", version.ref = "google-ai" }
-
-# Testing
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 junit-ext = { group = "androidx.test.ext", name = "junit", version.ref = "junit-ext" }
 mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
@@ -106,11 +119,20 @@ compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4
 compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest", version.ref = "ui-test-manifest" }
 
 [plugins]
+# Android plugins
 android-application = { id = "com.android.application", version.ref = "android-gradle-plugin" }
 android-library = { id = "com.android.library", version.ref = "android-gradle-plugin" }
+
+# Kotlin plugins
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+
+# Compose Multiplatform
+compose-multiplatform = { id = "org.jetbrains.compose", version.ref = "compose-multiplatform" }
+
+# Other plugins
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 sqldelight = { id = "app.cash.sqldelight", version.ref = "sqldelight" }
 
@@ -130,6 +152,12 @@ androidx-lifecycle = [
 ]
 
 koin = [
+    "koin-core",
+    "koin-compose",
+    "koin-annotations"
+]
+
+koin-android = [
     "koin-android",
     "koin-androidx-compose",
     "koin-annotations"
@@ -142,7 +170,7 @@ ktor = [
     "ktor-client-logging"
 ]
 
-sqldelight = [
+sqldelight-android = [
     "sqldelight-android-driver",
     "sqldelight-coroutines-extensions"
 ]
