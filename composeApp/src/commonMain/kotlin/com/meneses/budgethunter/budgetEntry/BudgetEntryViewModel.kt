@@ -213,7 +213,9 @@ class BudgetEntryViewModel(
     }
 
     private fun pickFile() {
+        _uiState.update { it.copy(isOpeningFilePicker = true) }
         filePickerManager.pickFile { fileData ->
+            _uiState.update { it.copy(isOpeningFilePicker = false) }
             fileData?.let {
                 sendEvent(BudgetEntryEvent.AttachInvoice(it))
             }

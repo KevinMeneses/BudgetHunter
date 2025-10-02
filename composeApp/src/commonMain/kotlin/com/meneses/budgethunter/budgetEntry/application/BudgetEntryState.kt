@@ -13,7 +13,8 @@ data class BudgetEntryState(
     val isProcessingInvoice: Boolean = false,
     val isFileValid: Boolean = true,
     val validatedFilePath: String? = null,
-    val isSharingFile: Boolean = false
+    val isSharingFile: Boolean = false,
+    val isOpeningFilePicker: Boolean = false
 ) {
     fun shouldShowFileNotFoundModal() =
         isShowInvoiceModalVisible && budgetEntry?.invoice != null && !isFileValid

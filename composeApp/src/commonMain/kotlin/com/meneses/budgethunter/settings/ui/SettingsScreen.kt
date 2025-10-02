@@ -208,8 +208,7 @@ object SettingsScreen {
                         subtitle = if (uiState.isSmsReadingEnabled) stringResource(Res.string.activated) else stringResource(Res.string.deactivated),
                         showSwitch = true,
                         switchChecked = uiState.isSmsReadingEnabled,
-                        onSwitchChange = onToggleSmsReading,
-                        enabled = uiState.hasSmsPermission || !uiState.isSmsReadingEnabled
+                        onSwitchChange = onToggleSmsReading
                     )
 
                     Spacer(modifier = Modifier.height(12.dp))
