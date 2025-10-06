@@ -56,6 +56,8 @@ kotlin {
             implementation(libs.bundles.ktor)
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.kotlinx.json)
+            implementation(libs.ktor.client.auth)
+            implementation(libs.ktor.client.sse)
             
             // Database (common parts only)
             implementation(libs.sqldelight.coroutines.extensions)
@@ -98,6 +100,9 @@ kotlin {
 
             // Ktor Android engine for HTTP calls
             implementation(libs.ktor.client.android)
+
+            // Security (Android only)
+            implementation(libs.androidx.security.crypto)
         }
         
         iosMain.dependencies {
