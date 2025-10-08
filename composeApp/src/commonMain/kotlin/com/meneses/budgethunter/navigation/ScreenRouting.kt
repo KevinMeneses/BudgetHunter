@@ -11,6 +11,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navOptions
 import androidx.navigation.toRoute
+import com.meneses.budgethunter.auth.SignInViewModel
+import com.meneses.budgethunter.auth.SignUpViewModel
+import com.meneses.budgethunter.auth.ui.SignInScreen
+import com.meneses.budgethunter.auth.ui.SignUpScreen
 import com.meneses.budgethunter.budgetDetail.BudgetDetailViewModel
 import com.meneses.budgethunter.budgetDetail.ui.BudgetDetailScreen
 import com.meneses.budgethunter.budgetEntry.BudgetEntryViewModel
@@ -45,17 +49,59 @@ fun BudgetHunterNavigation() {
             composable<SplashScreen> {
                 val splashScreenViewModel: SplashScreenViewModel = koinInject()
                 val uiState by splashScreenViewModel.uiState.collectAsStateWithLifecycle()
-                
+
                 SplashScreen.Show(
                     uiState = uiState,
                     onEvent = splashScreenViewModel::sendEvent,
-                    showBudgetList = {
+                    navigateToSignIn = {
+                        navController.navigate(
+                            route = SignInScreen,
+                            navOptions = navOptions {
+                                popUpTo<SplashScreen> { inclusive = true }
+                            }
+                        )
+                    },
+                    navigateToBudgetList = {
                         navController.navigate(
                             route = BudgetListScreen,
                             navOptions = navOptions {
                                 popUpTo<SplashScreen> { inclusive = true }
                             }
                         )
+                    }
+                )
+            }
+
+            composable<SignInScreen> {
+                val signInViewModel: SignInViewModel = koinInject()
+                val uiState by signInViewModel.uiState.collectAsStateWithLifecycle()
+
+                SignInScreen.Show(
+                    uiState = uiState,
+                    onEvent = signInViewModel::sendEvent,
+                    navigateToSignUp = {
+                        navController.navigate(SignUpScreen)
+                    },
+                    navigateToBudgetList = {
+                        navController.navigate(
+                            route = BudgetListScreen,
+                            navOptions = navOptions {
+                                popUpTo<SignInScreen> { inclusive = true }
+                            }
+                        )
+                    }
+                )
+            }
+
+            composable<SignUpScreen> {
+                val signUpViewModel: SignUpViewModel = koinInject()
+                val uiState by signUpViewModel.uiState.collectAsStateWithLifecycle()
+
+                SignUpScreen.Show(
+                    uiState = uiState,
+                    onEvent = signUpViewModel::sendEvent,
+                    navigateToSignIn = {
+                        navController.popBackStack()
                     }
                 )
             }

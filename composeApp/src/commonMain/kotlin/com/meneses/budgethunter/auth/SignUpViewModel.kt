@@ -2,6 +2,14 @@ package com.meneses.budgethunter.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import budgethunter.composeapp.generated.resources.Res
+import budgethunter.composeapp.generated.resources.error_confirm_password_required
+import budgethunter.composeapp.generated.resources.error_email_required
+import budgethunter.composeapp.generated.resources.error_name_required
+import budgethunter.composeapp.generated.resources.error_password_required
+import budgethunter.composeapp.generated.resources.error_password_too_short
+import budgethunter.composeapp.generated.resources.error_passwords_do_not_match
+import budgethunter.composeapp.generated.resources.error_sign_up_failed
 import com.meneses.budgethunter.auth.application.SignUpEvent
 import com.meneses.budgethunter.auth.application.SignUpState
 import com.meneses.budgethunter.auth.data.AuthRepository
@@ -24,9 +32,6 @@ class SignUpViewModel(
             is SignUpEvent.PasswordChanged -> updatePassword(event.password)
             is SignUpEvent.ConfirmPasswordChanged -> updateConfirmPassword(event.confirmPassword)
             is SignUpEvent.SignUpClicked -> signUp()
-            is SignUpEvent.NavigateToSignIn -> {
-                // Navigation handled by UI
-            }
             is SignUpEvent.DismissError -> dismissError()
         }
     }
@@ -53,27 +58,27 @@ class SignUpViewModel(
         // Validation
         when {
             currentState.email.isBlank() -> {
-                _uiState.update { it.copy(error = "Email is required") }
+                _uiState.update { it.copy(error = Res.string.error_email_required) }
                 return
             }
             currentState.name.isBlank() -> {
-                _uiState.update { it.copy(error = "Name is required") }
+                _uiState.update { it.copy(error = Res.string.error_name_required) }
                 return
             }
             currentState.password.isBlank() -> {
-                _uiState.update { it.copy(error = "Password is required") }
+                _uiState.update { it.copy(error = Res.string.error_password_required) }
                 return
             }
             currentState.confirmPassword.isBlank() -> {
-                _uiState.update { it.copy(error = "Please confirm your password") }
+                _uiState.update { it.copy(error = Res.string.error_confirm_password_required) }
                 return
             }
             currentState.password != currentState.confirmPassword -> {
-                _uiState.update { it.copy(error = "Passwords do not match") }
+                _uiState.update { it.copy(error = Res.string.error_passwords_do_not_match) }
                 return
             }
             currentState.password.length < 6 -> {
-                _uiState.update { it.copy(error = "Password must be at least 6 characters") }
+                _uiState.update { it.copy(error = Res.string.error_password_too_short) }
                 return
             }
         }
@@ -98,7 +103,7 @@ class SignUpViewModel(
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            error = exception.message ?: "Sign up failed"
+                            error = Res.string.error_sign_up_failed
                         )
                     }
                 }

@@ -2,6 +2,8 @@ package com.meneses.budgethunter.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import budgethunter.composeapp.generated.resources.Res
+import budgethunter.composeapp.generated.resources.error_sign_in_failed
 import com.meneses.budgethunter.auth.application.SignInEvent
 import com.meneses.budgethunter.auth.application.SignInState
 import com.meneses.budgethunter.auth.data.AuthRepository
@@ -22,9 +24,6 @@ class SignInViewModel(
             is SignInEvent.EmailChanged -> updateEmail(event.email)
             is SignInEvent.PasswordChanged -> updatePassword(event.password)
             is SignInEvent.SignInClicked -> signIn()
-            is SignInEvent.NavigateToSignUp -> {
-                // Navigation handled by UI
-            }
             is SignInEvent.DismissError -> dismissError()
         }
     }
@@ -41,7 +40,7 @@ class SignInViewModel(
         val currentState = _uiState.value
 
         if (currentState.email.isBlank() || currentState.password.isBlank()) {
-            _uiState.update { it.copy(error = "Email and password are required") }
+            _uiState.update { it.copy(error = Res.string.error_sign_in_failed) }
             return
         }
 
@@ -64,7 +63,7 @@ class SignInViewModel(
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            error = exception.message ?: "Sign in failed"
+                            error = Res.string.error_sign_in_failed
                         )
                     }
                 }

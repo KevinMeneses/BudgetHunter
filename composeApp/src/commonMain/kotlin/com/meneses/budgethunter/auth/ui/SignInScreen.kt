@@ -3,24 +3,28 @@ package com.meneses.budgethunter.auth.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -36,11 +40,19 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import budgethunter.composeapp.generated.resources.Res
+import budgethunter.composeapp.generated.resources.dismiss
+import budgethunter.composeapp.generated.resources.dont_have_account
+import budgethunter.composeapp.generated.resources.email
+import budgethunter.composeapp.generated.resources.hide_password
+import budgethunter.composeapp.generated.resources.password
+import budgethunter.composeapp.generated.resources.show_password
+import budgethunter.composeapp.generated.resources.sign_in
 import com.meneses.budgethunter.auth.application.SignInEvent
 import com.meneses.budgethunter.auth.application.SignInState
-import com.meneses.budgethunter.commons.ui.AppBar
 import com.meneses.budgethunter.commons.ui.LoadingOverlay
 import kotlinx.serialization.Serializable
+import org.jetbrains.compose.resources.stringResource
 
 @Serializable
 object SignInScreen {
@@ -51,27 +63,13 @@ object SignInScreen {
         navigateToSignUp: () -> Unit,
         navigateToBudgetList: () -> Unit
     ) {
-        val snackbarHostState = remember { SnackbarHostState() }
-
         LaunchedEffect(uiState.isSignedIn) {
             if (uiState.isSignedIn) {
                 navigateToBudgetList()
             }
         }
 
-        LaunchedEffect(uiState.error) {
-            uiState.error?.let {
-                snackbarHostState.showSnackbar(it)
-                onEvent(SignInEvent.DismissError)
-            }
-        }
-
-        Scaffold(
-            topBar = {
-                AppBar(title = "Sign In")
-            },
-            snackbarHost = { SnackbarHost(snackbarHostState) }
-        ) { paddingValues ->
+        Scaffold { paddingValues ->
             Box(modifier = Modifier.fillMaxSize()) {
                 Column(
                     modifier = Modifier
@@ -82,16 +80,58 @@ object SignInScreen {
                     verticalArrangement = Arrangement.Center
                 ) {
                     Text(
-                        text = "Welcome to BudgetHunter",
+                        text = stringResource(Res.string.sign_in),
                         style = MaterialTheme.typography.headlineMedium
                     )
 
                     Spacer(modifier = Modifier.height(32.dp))
 
+                    // Error Alert
+                    uiState.error?.let { errorResource ->
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 16.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.errorContainer
+                            ),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Error,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.error,
+                                    modifier = Modifier.padding(end = 12.dp)
+                                )
+                                Text(
+                                    text = stringResource(errorResource),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onErrorContainer,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                IconButton(
+                                    onClick = { onEvent(SignInEvent.DismissError) }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = stringResource(Res.string.dismiss),
+                                        tint = MaterialTheme.colorScheme.onErrorContainer
+                                    )
+                                }
+                            }
+                        }
+                    }
+
                     OutlinedTextField(
                         value = uiState.email,
                         onValueChange = { onEvent(SignInEvent.EmailChanged(it)) },
-                        label = { Text("Email") },
+                        label = { Text(stringResource(Res.string.email)) },
                         modifier = Modifier.fillMaxWidth(),
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Email,
@@ -106,7 +146,7 @@ object SignInScreen {
                     OutlinedTextField(
                         value = uiState.password,
                         onValueChange = { onEvent(SignInEvent.PasswordChanged(it)) },
-                        label = { Text("Password") },
+                        label = { Text(stringResource(Res.string.password)) },
                         modifier = Modifier.fillMaxWidth(),
                         visualTransformation = if (passwordVisible)
                             VisualTransformation.None
@@ -127,9 +167,9 @@ object SignInScreen {
                                     else
                                         Icons.Default.VisibilityOff,
                                     contentDescription = if (passwordVisible)
-                                        "Hide password"
+                                        stringResource(Res.string.hide_password)
                                     else
-                                        "Show password"
+                                        stringResource(Res.string.show_password)
                                 )
                             }
                         },
@@ -143,15 +183,15 @@ object SignInScreen {
                         modifier = Modifier.fillMaxWidth(),
                         enabled = uiState.email.isNotBlank() && uiState.password.isNotBlank()
                     ) {
-                        Text("Sign In")
+                        Text(stringResource(Res.string.sign_in))
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
 
                     TextButton(
-                        onClick = { onEvent(SignInEvent.NavigateToSignUp) }
+                        onClick = { navigateToSignUp() }
                     ) {
-                        Text("Don't have an account? Sign Up")
+                        Text(stringResource(Res.string.dont_have_account))
                     }
                 }
 

@@ -29,7 +29,8 @@ object SplashScreen {
     fun Show(
         uiState: SplashState,
         onEvent: (SplashEvent) -> Unit,
-        showBudgetList: () -> Unit
+        navigateToSignIn: () -> Unit,
+        navigateToBudgetList: () -> Unit
     ) {
         Box(
             modifier = Modifier.fillMaxSize()
@@ -54,12 +55,16 @@ object SplashScreen {
             }
         }
 
-        LaunchedEffect(uiState.navigate) {
+        LaunchedEffect(uiState.navigate, uiState.isAuthenticated) {
             if (!uiState.navigate) {
                 onEvent(SplashEvent.VerifyUpdate)
             } else {
                 delay(200)
-                showBudgetList()
+                if (uiState.isAuthenticated) {
+                    navigateToBudgetList()
+                } else {
+                    navigateToSignIn()
+                }
             }
         }
     }

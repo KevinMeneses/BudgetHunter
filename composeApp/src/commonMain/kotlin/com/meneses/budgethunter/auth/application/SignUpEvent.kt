@@ -6,6 +6,5 @@ sealed interface SignUpEvent {
     data class PasswordChanged(val password: String) : SignUpEvent
     data class ConfirmPasswordChanged(val confirmPassword: String) : SignUpEvent
     data object SignUpClicked : SignUpEvent
-    data object NavigateToSignIn : SignUpEvent
     data object DismissError : SignUpEvent
 }
