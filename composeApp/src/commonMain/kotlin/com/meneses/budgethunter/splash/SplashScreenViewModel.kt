@@ -3,6 +3,7 @@ package com.meneses.budgethunter.splash
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.meneses.budgethunter.auth.data.AuthRepository
+import com.meneses.budgethunter.commons.data.PreferencesManager
 import com.meneses.budgethunter.commons.platform.AppUpdateManager
 import com.meneses.budgethunter.commons.platform.AppUpdateResult
 import com.meneses.budgethunter.splash.application.SplashEvent
@@ -14,7 +15,8 @@ import kotlinx.coroutines.launch
 
 class SplashScreenViewModel(
     private val appUpdateManager: AppUpdateManager,
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val preferencesManager: PreferencesManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SplashState())
@@ -28,8 +30,13 @@ class SplashScreenViewModel(
 
     private fun verifyUpdate() {
         viewModelScope.launch {
+            val isOfflineModeEnabled = preferencesManager.isOfflineModeEnabled()
             val isAuthenticated = authRepository.isAuthenticated()
-            _uiState.update { it.copy(isAuthenticated = isAuthenticated) }
+
+            // If offline mode is enabled, skip authentication check
+            _uiState.update {
+                it.copy(isAuthenticated = isOfflineModeEnabled || isAuthenticated)
+            }
 
             appUpdateManager.checkForUpdates { result ->
                 when (result) {

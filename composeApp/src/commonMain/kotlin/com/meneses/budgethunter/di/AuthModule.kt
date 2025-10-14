@@ -36,7 +36,10 @@ val authModule = module {
     }
 
     factory<SignInViewModel> {
-        SignInViewModel(get<AuthRepository>())
+        SignInViewModel(
+            authRepository = get<AuthRepository>(),
+            preferencesManager = get()
+        )
     }
 
     factory<SignUpViewModel> {

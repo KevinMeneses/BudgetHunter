@@ -3,6 +3,7 @@ package com.meneses.budgethunter.navigation
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -22,6 +23,7 @@ import com.meneses.budgethunter.budgetEntry.BudgetEntryViewModel
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.budgetEntry.ui.BudgetEntryScreen
 import com.meneses.budgethunter.budgetList.BudgetListViewModel
+import com.meneses.budgethunter.budgetList.application.BudgetListEvent
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.budgetList.ui.BudgetListScreen
 import com.meneses.budgethunter.budgetMetrics.BudgetMetricsViewModel
@@ -123,7 +125,20 @@ fun BudgetHunterNavigation() {
             composable<BudgetListScreen> {
                 val budgetListViewModel: BudgetListViewModel = koinInject()
                 val uiState by budgetListViewModel.uiState.collectAsStateWithLifecycle()
-                
+
+                // Handle navigation to sign in
+                LaunchedEffect(uiState.navigateToSignIn) {
+                    if (uiState.navigateToSignIn) {
+                        navController.navigate(
+                            route = SignInScreen,
+                            navOptions = navOptions {
+                                popUpTo<BudgetListScreen> { inclusive = true }
+                            }
+                        )
+                        budgetListViewModel.sendEvent(BudgetListEvent.ClearSignInNavigation)
+                    }
+                }
+
                 BudgetListScreen.Show(
                     uiState = uiState,
                     onEvent = budgetListViewModel::sendEvent,

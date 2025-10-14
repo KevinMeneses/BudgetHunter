@@ -40,9 +40,11 @@ val budgetListModule = module {
 
     factory<BudgetListViewModel> {
         BudgetListViewModel(
-            get<BudgetRepository>(),
-            get<DuplicateBudgetUseCase>(),
-            get<DeleteBudgetUseCase>()
+            budgetRepository = get<BudgetRepository>(),
+            duplicateBudgetUseCase = get<DuplicateBudgetUseCase>(),
+            deleteBudgetUseCase = get<DeleteBudgetUseCase>(),
+            authRepository = get(),
+            preferencesManager = get()
         )
     }
 }

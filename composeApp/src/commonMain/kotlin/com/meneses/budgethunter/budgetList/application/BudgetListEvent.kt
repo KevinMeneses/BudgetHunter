@@ -14,4 +14,7 @@ sealed interface BudgetListEvent {
     data class UpdateSearchQuery(val query: String) : BudgetListEvent
     data object ClearFilter : BudgetListEvent
     data object ClearNavigation : BudgetListEvent
+    data object SignOut : BudgetListEvent
+    data object SignIn : BudgetListEvent
+    data object ClearSignInNavigation : BudgetListEvent
 }

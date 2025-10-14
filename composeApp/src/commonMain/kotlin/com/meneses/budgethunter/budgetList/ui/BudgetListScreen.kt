@@ -85,7 +85,10 @@ object BudgetListScreen {
                                         BudgetListMenu(
                                             expanded = dropdownExpanded,
                                             onDismiss = { dropdownExpanded = false },
-                                            onSettingsClick = showSettings
+                                            onSettingsClick = showSettings,
+                                            isAuthenticated = uiState.isAuthenticated,
+                                            onSignOutClick = { BudgetListEvent.SignOut.run(onEvent) },
+                                            onSignInClick = { BudgetListEvent.SignIn.run(onEvent) }
                                         )
                                     }
                                 )

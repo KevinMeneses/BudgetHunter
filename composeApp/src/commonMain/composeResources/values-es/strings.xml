@@ -227,4 +227,8 @@
     <!-- Offline Mode -->
     <string name="continue_offline">Continuar Sin Conexión</string>
     <string name="offline_mode_description">Usa la aplicación sin una cuenta. Tus datos se guardarán localmente solo en este dispositivo.</string>
+
+    <!-- Sign Out -->
+    <string name="sign_out">Cerrar Sesión</string>
+    <string name="sign_out_confirmation">¿Estás seguro de que quieres cerrar sesión?</string>
 </resources>

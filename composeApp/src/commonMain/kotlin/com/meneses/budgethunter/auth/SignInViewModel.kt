@@ -7,13 +7,15 @@ import budgethunter.composeapp.generated.resources.error_sign_in_failed
 import com.meneses.budgethunter.auth.application.SignInEvent
 import com.meneses.budgethunter.auth.application.SignInState
 import com.meneses.budgethunter.auth.data.AuthRepository
+import com.meneses.budgethunter.commons.data.PreferencesManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class SignInViewModel(
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val preferencesManager: PreferencesManager
 ) : ViewModel() {
 
     val uiState get() = _uiState.asStateFlow()
@@ -77,6 +79,10 @@ class SignInViewModel(
     }
 
     private fun continueOffline() {
-        _uiState.update { it.copy(continueOffline = true) }
+        viewModelScope.launch {
+            // Save offline mode preference
+            preferencesManager.setOfflineModeEnabled(true)
+            _uiState.update { it.copy(continueOffline = true) }
+        }
     }
 }

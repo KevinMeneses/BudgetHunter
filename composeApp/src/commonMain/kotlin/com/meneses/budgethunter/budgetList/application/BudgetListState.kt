@@ -11,5 +11,7 @@ data class BudgetListState(
     val filter: BudgetFilter? = null,
     val navigateToBudget: Budget? = null,
     val isSearchMode: Boolean = false,
-    val searchQuery: String = ""
+    val searchQuery: String = "",
+    val isAuthenticated: Boolean = false,
+    val navigateToSignIn: Boolean = false
 )

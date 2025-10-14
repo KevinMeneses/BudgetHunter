@@ -227,4 +227,8 @@
     <!-- Offline Mode -->
     <string name="continue_offline">Continue Offline</string>
     <string name="offline_mode_description">Use the app without an account. Your data will be stored locally on this device only.</string>
+
+    <!-- Sign Out -->
+    <string name="sign_out">Sign Out</string>
+    <string name="sign_out_confirmation">Are you sure you want to sign out?</string>
 </resources>

@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -24,6 +26,8 @@ import budgethunter.composeapp.generated.resources.duplicate
 import budgethunter.composeapp.generated.resources.duplicate_budget
 import budgethunter.composeapp.generated.resources.edit_budget
 import budgethunter.composeapp.generated.resources.settings
+import budgethunter.composeapp.generated.resources.sign_in
+import budgethunter.composeapp.generated.resources.sign_out
 import com.meneses.budgethunter.theme.AppColors
 import org.jetbrains.compose.resources.stringResource
 
@@ -31,7 +35,10 @@ import org.jetbrains.compose.resources.stringResource
 fun BudgetListMenu(
     expanded: Boolean,
     onDismiss: () -> Unit,
-    onSettingsClick: () -> Unit
+    onSettingsClick: () -> Unit,
+    isAuthenticated: Boolean = false,
+    onSignOutClick: () -> Unit = {},
+    onSignInClick: () -> Unit = {}
 ) {
     DropdownMenu(
         expanded = expanded,
@@ -60,6 +67,53 @@ fun BudgetListMenu(
                 )
             }
         )
+
+        // Sign In/Out option
+        if (isAuthenticated) {
+            DropdownMenuItem(
+                text = {
+                    Text(
+                        modifier = Modifier.padding(end = 10.dp),
+                        text = stringResource(Res.string.sign_out),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                },
+                onClick = {
+                    onDismiss()
+                    onSignOutClick()
+                },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.Logout,
+                        contentDescription = stringResource(Res.string.sign_out),
+                        modifier = Modifier.size(18.dp),
+                        tint = AppColors.error
+                    )
+                }
+            )
+        } else {
+            DropdownMenuItem(
+                text = {
+                    Text(
+                        modifier = Modifier.padding(end = 10.dp),
+                        text = stringResource(Res.string.sign_in),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                },
+                onClick = {
+                    onDismiss()
+                    onSignInClick()
+                },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.Login,
+                        contentDescription = stringResource(Res.string.sign_in),
+                        modifier = Modifier.size(18.dp),
+                        tint = AppColors.secondary
+                    )
+                }
+            )
+        }
     }
 }
 
