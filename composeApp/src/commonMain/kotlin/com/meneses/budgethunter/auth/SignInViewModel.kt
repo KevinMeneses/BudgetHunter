@@ -25,6 +25,7 @@ class SignInViewModel(
             is SignInEvent.PasswordChanged -> updatePassword(event.password)
             is SignInEvent.SignInClicked -> signIn()
             is SignInEvent.DismissError -> dismissError()
+            is SignInEvent.ContinueOfflineClicked -> continueOffline()
         }
     }
 
@@ -73,5 +74,9 @@ class SignInViewModel(
 
     private fun dismissError() {
         _uiState.update { it.copy(error = null) }
+    }
+
+    private fun continueOffline() {
+        _uiState.update { it.copy(continueOffline = true) }
     }
 }

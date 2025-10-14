@@ -5,6 +5,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -76,6 +77,12 @@ fun BudgetHunterNavigation() {
                 val signInViewModel: SignInViewModel = koinInject()
                 val uiState by signInViewModel.uiState.collectAsStateWithLifecycle()
 
+                // Track if we came directly from splash (initial entry = false)
+                // This will be saved across recompositions but reset when the screen is recreated
+                val cameFromSignUp = rememberSaveable {
+                    navController.previousBackStackEntry != null
+                }
+
                 SignInScreen.Show(
                     uiState = uiState,
                     onEvent = signInViewModel::sendEvent,
@@ -89,6 +96,10 @@ fun BudgetHunterNavigation() {
                                 popUpTo<SignInScreen> { inclusive = true }
                             }
                         )
+                    },
+                    canNavigateBack = cameFromSignUp,
+                    onNavigateBack = {
+                        navController.popBackStack()
                     }
                 )
             }
@@ -101,6 +112,9 @@ fun BudgetHunterNavigation() {
                     uiState = uiState,
                     onEvent = signUpViewModel::sendEvent,
                     navigateToSignIn = {
+                        navController.popBackStack()
+                    },
+                    onNavigateBack = {
                         navController.popBackStack()
                     }
                 )

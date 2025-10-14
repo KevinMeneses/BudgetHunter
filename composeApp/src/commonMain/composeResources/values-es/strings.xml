@@ -223,4 +223,8 @@
     <string name="error_password_too_short">La contraseña debe tener al menos 6 caracteres</string>
     <string name="error_sign_in_failed">Error al iniciar sesión. Por favor verifica tus credenciales e intenta nuevamente.</string>
     <string name="error_sign_up_failed">Error al registrarse. Por favor intenta más tarde.</string>
+
+    <!-- Offline Mode -->
+    <string name="continue_offline">Continuar Sin Conexión</string>
+    <string name="offline_mode_description">Usa la aplicación sin una cuenta. Tus datos se guardarán localmente solo en este dispositivo.</string>
 </resources>

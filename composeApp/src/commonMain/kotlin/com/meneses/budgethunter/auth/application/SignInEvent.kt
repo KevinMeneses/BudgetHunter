@@ -5,4 +5,5 @@ sealed interface SignInEvent {
     data class PasswordChanged(val password: String) : SignInEvent
     data object SignInClicked : SignInEvent
     data object DismissError : SignInEvent
+    data object ContinueOfflineClicked : SignInEvent
 }

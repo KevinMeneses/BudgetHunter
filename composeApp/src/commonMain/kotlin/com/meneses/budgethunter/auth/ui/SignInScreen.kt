@@ -13,6 +13,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Visibility
@@ -20,6 +21,7 @@ import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -27,6 +29,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -41,10 +44,12 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import budgethunter.composeapp.generated.resources.Res
+import budgethunter.composeapp.generated.resources.continue_offline
 import budgethunter.composeapp.generated.resources.dismiss
 import budgethunter.composeapp.generated.resources.dont_have_account
 import budgethunter.composeapp.generated.resources.email
 import budgethunter.composeapp.generated.resources.hide_password
+import budgethunter.composeapp.generated.resources.offline_mode_description
 import budgethunter.composeapp.generated.resources.password
 import budgethunter.composeapp.generated.resources.show_password
 import budgethunter.composeapp.generated.resources.sign_in
@@ -56,20 +61,39 @@ import org.jetbrains.compose.resources.stringResource
 
 @Serializable
 object SignInScreen {
+    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun Show(
         uiState: SignInState,
         onEvent: (SignInEvent) -> Unit,
         navigateToSignUp: () -> Unit,
-        navigateToBudgetList: () -> Unit
+        navigateToBudgetList: () -> Unit,
+        canNavigateBack: Boolean = false,
+        onNavigateBack: () -> Unit = {}
     ) {
-        LaunchedEffect(uiState.isSignedIn) {
-            if (uiState.isSignedIn) {
+        LaunchedEffect(uiState.isSignedIn, uiState.continueOffline) {
+            if (uiState.isSignedIn || uiState.continueOffline) {
                 navigateToBudgetList()
             }
         }
 
-        Scaffold { paddingValues ->
+        Scaffold(
+            topBar = {
+                if (canNavigateBack) {
+                    TopAppBar(
+                        title = { },
+                        navigationIcon = {
+                            IconButton(onClick = onNavigateBack) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                    contentDescription = "Back"
+                                )
+                            }
+                        }
+                    )
+                }
+            }
+        ) { paddingValues ->
             Box(modifier = Modifier.fillMaxSize()) {
                 Column(
                     modifier = Modifier
@@ -192,6 +216,39 @@ object SignInScreen {
                         onClick = { navigateToSignUp() }
                     ) {
                         Text(stringResource(Res.string.dont_have_account))
+                    }
+
+                    Spacer(modifier = Modifier.height(32.dp))
+
+                    // Divider or separator
+                    Text(
+                        text = "or",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Offline mode section
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = stringResource(Res.string.offline_mode_description),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                            modifier = Modifier.padding(horizontal = 32.dp)
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        TextButton(
+                            onClick = { onEvent(SignInEvent.ContinueOfflineClicked) }
+                        ) {
+                            Text(stringResource(Res.string.continue_offline))
+                        }
                     }
                 }
 
