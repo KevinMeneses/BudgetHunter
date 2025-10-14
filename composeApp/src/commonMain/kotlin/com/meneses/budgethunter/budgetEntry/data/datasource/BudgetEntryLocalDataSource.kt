@@ -63,7 +63,13 @@ class BudgetEntryLocalDataSource(
         type = budgetEntry.type,
         category = budgetEntry.category,
         date = budgetEntry.date,
-        invoice = budgetEntry.invoice
+        invoice = budgetEntry.invoice,
+        server_id = budgetEntry.serverId,
+        is_synced = if (budgetEntry.isSynced) 1L else 0L,
+        created_by_email = budgetEntry.createdByEmail,
+        updated_by_email = budgetEntry.updatedByEmail,
+        creation_date = budgetEntry.creationDate,
+        modification_date = budgetEntry.modificationDate
     )
 
     fun update(budgetEntry: BudgetEntry) = queries.update(
@@ -74,7 +80,13 @@ class BudgetEntryLocalDataSource(
         type = budgetEntry.type,
         category = budgetEntry.category,
         date = budgetEntry.date,
-        invoice = budgetEntry.invoice
+        invoice = budgetEntry.invoice,
+        server_id = budgetEntry.serverId,
+        is_synced = if (budgetEntry.isSynced) 1L else 0L,
+        created_by_email = budgetEntry.createdByEmail,
+        updated_by_email = budgetEntry.updatedByEmail,
+        creation_date = budgetEntry.creationDate,
+        modification_date = budgetEntry.modificationDate
     )
 
     fun deleteByIds(list: List<Long>) =

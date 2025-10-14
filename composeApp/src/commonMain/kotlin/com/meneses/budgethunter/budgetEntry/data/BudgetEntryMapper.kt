@@ -13,7 +13,13 @@ fun Budget_entry.toDomain() =
         type = type,
         date = date,
         invoice = invoice,
-        category = category
+        category = category,
+        serverId = server_id,
+        isSynced = is_synced == 1L,
+        createdByEmail = created_by_email,
+        updatedByEmail = updated_by_email,
+        creationDate = creation_date,
+        modificationDate = modification_date
     )
 
 fun List<Budget_entry>.toDomain() = map { it.toDomain() }

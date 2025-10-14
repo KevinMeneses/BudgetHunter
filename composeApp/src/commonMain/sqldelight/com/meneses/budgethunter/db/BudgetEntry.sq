@@ -10,6 +10,12 @@ CREATE TABLE budget_entry (
   date TEXT NOT NULL,
   invoice TEXT,
   category TEXT AS Category NOT NULL,
+  server_id INTEGER,
+  is_synced INTEGER NOT NULL DEFAULT 0,
+  created_by_email TEXT,
+  updated_by_email TEXT,
+  creation_date TEXT,
+  modification_date TEXT,
   FOREIGN KEY (budget_id) REFERENCES budget(id) ON DELETE CASCADE
 );
 
@@ -19,12 +25,12 @@ WHERE budget_id = :budgetId
 ORDER BY id DESC;
 
 insert:
-INSERT INTO budget_entry
-VALUES (:id, :budgetId, :amount, :description, :type, :date, :invoice, :category);
+INSERT INTO budget_entry (id, budget_id, amount, description, type, date, invoice, category, server_id, is_synced, created_by_email, updated_by_email, creation_date, modification_date)
+VALUES (:id, :budgetId, :amount, :description, :type, :date, :invoice, :category, :server_id, :is_synced, :created_by_email, :updated_by_email, :creation_date, :modification_date);
 
 update:
 UPDATE budget_entry
-SET budget_id = :budgetId, amount = :amount, description = :description, type = :type, date = :date, invoice = :invoice, category = :category
+SET budget_id = :budgetId, amount = :amount, description = :description, type = :type, date = :date, invoice = :invoice, category = :category, server_id = :server_id, is_synced = :is_synced, created_by_email = :created_by_email, updated_by_email = :updated_by_email, creation_date = :creation_date, modification_date = :modification_date
 WHERE id = :id;
 
 deleteByIds:
@@ -34,3 +40,17 @@ WHERE id IN ?;
 deleteAllByBudgetId:
 DELETE FROM budget_entry
 WHERE budget_id = ?;
+
+selectUnsynced:
+SELECT * FROM budget_entry WHERE is_synced = 0;
+
+selectUnsyncedByBudgetId:
+SELECT * FROM budget_entry WHERE budget_id = :budgetId AND is_synced = 0;
+
+markAsSynced:
+UPDATE budget_entry
+SET is_synced = 1, server_id = :server_id, created_by_email = :created_by_email, updated_by_email = :updated_by_email, creation_date = :creation_date, modification_date = :modification_date
+WHERE id = :id;
+
+selectByServerId:
+SELECT * FROM budget_entry WHERE server_id = ?;

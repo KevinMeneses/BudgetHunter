@@ -16,7 +16,13 @@ data class BudgetEntry(
     val category: Category = Category.OTHER,
     val date: String = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date.toString(),
     val invoice: String? = null,
-    val isSelected: Boolean = false
+    val isSelected: Boolean = false,
+    val serverId: Long? = null,
+    val isSynced: Boolean = false,
+    val createdByEmail: String? = null,
+    val updatedByEmail: String? = null,
+    val creationDate: String? = null,
+    val modificationDate: String? = null
 ) {
     @Serializable
     enum class Type {
