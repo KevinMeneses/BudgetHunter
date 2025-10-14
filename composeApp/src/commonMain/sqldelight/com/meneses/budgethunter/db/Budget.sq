@@ -2,30 +2,57 @@ CREATE TABLE budget (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   amount REAL NOT NULL,
   name TEXT NOT NULL,
-  date TEXT NOT NULL
+  date TEXT NOT NULL,
+  server_id INTEGER,
+  is_synced INTEGER NOT NULL DEFAULT 0,
+  last_synced_at TEXT
 );
 
 selectAll:
-SELECT 
+SELECT
   b.*,
   COALESCE(SUM(CASE WHEN be.type = 'OUTCOME' THEN be.amount ELSE 0 END), 0) AS total_expenses
 FROM budget b
 LEFT JOIN budget_entry be ON b.id = be.budget_id
-GROUP BY b.id, b.amount, b.name, b.date
+GROUP BY b.id, b.amount, b.name, b.date, b.server_id, b.is_synced, b.last_synced_at
 ORDER BY b.id DESC;
 
 insert:
-INSERT INTO budget (amount, name, date)
-VALUES (:amount, :name, :date);
+INSERT INTO budget (amount, name, date, server_id, is_synced, last_synced_at)
+VALUES (:amount, :name, :date, :server_id, :is_synced, :last_synced_at);
 
 selectLastId:
 SELECT last_insert_rowid();
 
 update:
 UPDATE budget
-SET amount = :amount, name = :name, date = :date
+SET amount = :amount, name = :name, date = :date, server_id = :server_id, is_synced = :is_synced, last_synced_at = :last_synced_at
 WHERE id = :id;
 
 delete:
 DELETE FROM budget
 WHERE id = :id;
+
+selectUnsynced:
+SELECT
+  b.*,
+  COALESCE(SUM(CASE WHEN be.type = 'OUTCOME' THEN be.amount ELSE 0 END), 0) AS total_expenses
+FROM budget b
+LEFT JOIN budget_entry be ON b.id = be.budget_id
+WHERE b.is_synced = 0
+GROUP BY b.id, b.amount, b.name, b.date, b.server_id, b.is_synced, b.last_synced_at
+ORDER BY b.id DESC;
+
+markAsSynced:
+UPDATE budget
+SET is_synced = 1, server_id = ?, last_synced_at = ?
+WHERE id = ?;
+
+selectByServerId:
+SELECT
+  b.*,
+  COALESCE(SUM(CASE WHEN be.type = 'OUTCOME' THEN be.amount ELSE 0 END), 0) AS total_expenses
+FROM budget b
+LEFT JOIN budget_entry be ON b.id = be.budget_id
+WHERE b.server_id = ?
+GROUP BY b.id, b.amount, b.name, b.date, b.server_id, b.is_synced, b.last_synced_at;

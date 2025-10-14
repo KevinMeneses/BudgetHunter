@@ -51,7 +51,10 @@ class BudgetLocalDataSource(
             queries.insert(
                 name = budget.name,
                 amount = budget.amount,
-                date = budget.date
+                date = budget.date,
+                server_id = budget.serverId,
+                is_synced = if (budget.isSynced) 1L else 0L,
+                last_synced_at = budget.lastSyncedAt
             )
 
             savedId = queries
@@ -67,7 +70,10 @@ class BudgetLocalDataSource(
         id = budget.id.toLong(),
         amount = budget.amount,
         name = budget.name,
-        date = budget.date
+        date = budget.date,
+        server_id = budget.serverId,
+        is_synced = if (budget.isSynced) 1L else 0L,
+        last_synced_at = budget.lastSyncedAt
     )
 
     fun delete(id: Long) = queries.delete(id)

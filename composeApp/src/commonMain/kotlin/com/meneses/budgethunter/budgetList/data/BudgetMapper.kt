@@ -7,11 +7,17 @@ fun mapSelectAllToBudget(
     amount: Double,
     name: String,
     date: String,
+    serverId: Long?,
+    isSynced: Long,
+    lastSyncedAt: String?,
     totalExpenses: Double
 ) = Budget(
     id = id.toInt(),
     amount = amount,
     name = name,
     totalExpenses = totalExpenses,
-    date = date
+    date = date,
+    serverId = serverId,
+    isSynced = isSynced == 1L,
+    lastSyncedAt = lastSyncedAt
 )

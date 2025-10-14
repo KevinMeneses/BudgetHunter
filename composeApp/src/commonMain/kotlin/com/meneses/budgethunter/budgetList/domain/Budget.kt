@@ -12,5 +12,8 @@ data class Budget(
     val amount: Double = 0.0,
     val name: String = EMPTY,
     val totalExpenses: Double = 0.0,
-    val date: String = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date.toString()
+    val date: String = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date.toString(),
+    val serverId: Long? = null,
+    val isSynced: Boolean = false,
+    val lastSyncedAt: String? = null
 )
