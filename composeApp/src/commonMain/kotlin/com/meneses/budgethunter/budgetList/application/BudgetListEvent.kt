@@ -17,4 +17,5 @@ sealed interface BudgetListEvent {
     data object SignOut : BudgetListEvent
     data object SignIn : BudgetListEvent
     data object ClearSignInNavigation : BudgetListEvent
+    data object SyncBudgets : BudgetListEvent
 }

@@ -16,10 +16,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -45,40 +47,49 @@ import com.meneses.budgethunter.theme.AppColors
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BudgetListContent(
     list: List<Budget>,
     isLoading: Boolean,
+    isSyncing: Boolean,
     paddingValues: PaddingValues,
     onEvent: (BudgetListEvent) -> Unit
 ) {
     if (isLoading) {
         LoadingScreen()
     } else {
-        LazyColumn(
+        PullToRefreshBox(
+            isRefreshing = isSyncing,
+            onRefresh = { BudgetListEvent.SyncBudgets.run(onEvent) },
             modifier = Modifier
                 .padding(paddingValues)
                 .fillMaxSize()
-                .padding(horizontal = 20.dp)
-                .padding(top = 5.dp)
-                .padding(bottom = 90.dp),
-            verticalArrangement = if (list.isEmpty()) Arrangement.Center else Arrangement.Top
         ) {
-            if (list.isEmpty()) {
-                item {
-                    CompottiePlaceholder(
-                        fileName = "empty_state.json",
-                        modifier = Modifier.fillMaxSize()
-                    )
-                }
-            } else {
-                items(list.size) {
-                    Spacer(Modifier.size(10.dp))
-                    BudgetItem(
-                        budget = list[it],
-                        onEvent = onEvent
-                    )
-                    Spacer(modifier = Modifier.size(10.dp))
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 20.dp)
+                    .padding(top = 5.dp)
+                    .padding(bottom = 90.dp),
+                verticalArrangement = if (list.isEmpty()) Arrangement.Center else Arrangement.Top
+            ) {
+                if (list.isEmpty()) {
+                    item {
+                        CompottiePlaceholder(
+                            fileName = "empty_state.json",
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+                } else {
+                    items(list.size) {
+                        Spacer(Modifier.size(10.dp))
+                        BudgetItem(
+                            budget = list[it],
+                            onEvent = onEvent
+                        )
+                        Spacer(modifier = Modifier.size(10.dp))
+                    }
                 }
             }
         }

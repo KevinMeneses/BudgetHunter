@@ -71,7 +71,14 @@ class BudgetListViewModel(
             is BudgetListEvent.SignOut -> signOut()
             is BudgetListEvent.SignIn -> signIn()
             is BudgetListEvent.ClearSignInNavigation -> clearSignInNavigation()
+            is BudgetListEvent.SyncBudgets -> syncBudgets()
         }
+    }
+
+    private fun syncBudgets() = viewModelScope.launch {
+        _uiState.update { it.copy(isSyncing = true) }
+        budgetRepository.sync()
+        _uiState.update { it.copy(isSyncing = false) }
     }
 
     private fun duplicateBudget(budget: Budget) = viewModelScope.launch {

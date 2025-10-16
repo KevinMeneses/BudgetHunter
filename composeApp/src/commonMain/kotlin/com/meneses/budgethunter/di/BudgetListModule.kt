@@ -7,8 +7,12 @@ import com.meneses.budgethunter.budgetList.application.DeleteBudgetUseCase
 import com.meneses.budgethunter.budgetList.application.DuplicateBudgetUseCase
 import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.budgetList.data.datasource.BudgetLocalDataSource
+import com.meneses.budgethunter.budgetList.data.network.BudgetApiService
+import com.meneses.budgethunter.budgetList.data.sync.BudgetSyncManager
 import com.meneses.budgethunter.db.BudgetQueries
+import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
@@ -18,8 +22,31 @@ val budgetListModule = module {
         BudgetLocalDataSource(get<BudgetQueries>(), get<CoroutineDispatcher>(named("IO")))
     }
 
+    single<BudgetApiService> {
+        BudgetApiService(
+            httpClient = get<HttpClient>(named("AuthHttpClient")),
+            ioDispatcher = get<CoroutineDispatcher>(named("IO"))
+        )
+    }
+
+    single<BudgetSyncManager> {
+        BudgetSyncManager(
+            localDataSource = get<BudgetLocalDataSource>(),
+            budgetApiService = get<BudgetApiService>(),
+            authRepository = get(),
+            budgetQueries = get<BudgetQueries>(),
+            ioDispatcher = get<CoroutineDispatcher>(named("IO"))
+        )
+    }
+
     single<BudgetRepository> {
-        BudgetRepository(get<BudgetLocalDataSource>(), get<CoroutineDispatcher>(named("IO")))
+        BudgetRepository(
+            localDataSource = get<BudgetLocalDataSource>(),
+            budgetSyncManager = get<BudgetSyncManager>(),
+            authRepository = get(),
+            ioDispatcher = get<CoroutineDispatcher>(named("IO")),
+            scope = get<CoroutineScope>(named("ApplicationScope"))
+        )
     }
 
     single<DuplicateBudgetUseCase> {

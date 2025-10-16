@@ -32,6 +32,10 @@ val commonModule = module {
         CoroutineScope(get<CoroutineDispatcher>(named("IO")))
     }
 
+    single<CoroutineScope>(named("ApplicationScope")) {
+        CoroutineScope(get<CoroutineDispatcher>(named("IO")))
+    }
+
     single<CoroutineDispatcher>(named("Default")) { Dispatchers.Default }
 
     single<Json> {
