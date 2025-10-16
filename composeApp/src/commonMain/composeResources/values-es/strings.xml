@@ -231,4 +231,8 @@
     <!-- Sign Out -->
     <string name="sign_out">Cerrar Sesión</string>
     <string name="sign_out_confirmation">¿Estás seguro de que quieres cerrar sesión?</string>
+
+    <!-- Sync Status -->
+    <string name="synced">Sincronizado</string>
+    <string name="pending_sync">Sincronización pendiente</string>
 </resources>

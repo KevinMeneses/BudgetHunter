@@ -10,6 +10,7 @@ import com.meneses.budgethunter.budgetList.application.DuplicateBudgetUseCase
 import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.commons.data.PreferencesManager
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -77,8 +78,16 @@ class BudgetListViewModel(
 
     private fun syncBudgets() = viewModelScope.launch {
         _uiState.update { it.copy(isSyncing = true) }
-        budgetRepository.sync()
-        _uiState.update { it.copy(isSyncing = false) }
+        try {
+            budgetRepository.sync()
+        } catch (e: Exception) {
+            // Log sync errors silently - user is likely not authenticated
+            println("BudgetListViewModel: Sync failed - ${e.message}")
+        } finally {
+            // Small delay to ensure PullToRefreshBox can process the state change
+            delay(100)
+            _uiState.update { it.copy(isSyncing = false) }
+        }
     }
 
     private fun duplicateBudget(budget: Budget) = viewModelScope.launch {

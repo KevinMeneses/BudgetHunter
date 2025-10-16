@@ -231,4 +231,8 @@
     <!-- Sign Out -->
     <string name="sign_out">Sign Out</string>
     <string name="sign_out_confirmation">Are you sure you want to sign out?</string>
+
+    <!-- Sync Status -->
+    <string name="synced">Synced</string>
+    <string name="pending_sync">Pending sync</string>
 </resources>

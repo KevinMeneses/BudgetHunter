@@ -42,6 +42,7 @@ import com.meneses.budgethunter.budgetList.application.BudgetListEvent
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.commons.ui.CompottiePlaceholder
 import com.meneses.budgethunter.commons.ui.LoadingScreen
+import com.meneses.budgethunter.commons.ui.SyncStatusIndicator
 import com.meneses.budgethunter.commons.util.toCurrency
 import com.meneses.budgethunter.theme.AppColors
 import kotlinx.datetime.LocalDate
@@ -159,6 +160,13 @@ private fun BudgetItem(
                     )
                 }
             }
+
+            SyncStatusIndicator(
+                isSynced = budget.isSynced,
+                modifier = Modifier
+                    .padding(end = 8.dp)
+                    .size(20.dp)
+            )
 
             var dropdownExpanded by remember {
                 mutableStateOf(false)
