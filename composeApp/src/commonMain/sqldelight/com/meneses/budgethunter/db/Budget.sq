@@ -33,6 +33,9 @@ delete:
 DELETE FROM budget
 WHERE id = :id;
 
+deleteAll:
+DELETE FROM budget;
+
 selectUnsynced:
 SELECT
   b.*,

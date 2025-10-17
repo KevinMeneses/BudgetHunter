@@ -1,5 +1,7 @@
 package com.meneses.budgethunter.auth.data
 
+import com.meneses.budgethunter.budgetEntry.data.BudgetEntryRepository
+import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.commons.data.network.models.AuthResponse
 import com.meneses.budgethunter.commons.data.network.models.RefreshTokenRequest
 import com.meneses.budgethunter.commons.data.network.models.SignInRequest
@@ -15,7 +17,9 @@ import kotlinx.coroutines.withContext
 class AuthRepository(
     private val httpClient: HttpClient,
     private val tokenStorage: TokenStorage,
-    private val ioDispatcher: CoroutineDispatcher
+    private val ioDispatcher: CoroutineDispatcher,
+    private val budgetRepository: Lazy<BudgetRepository>,
+    private val budgetEntryRepository: Lazy<BudgetEntryRepository>
 ) {
 
     suspend fun signUp(
@@ -78,6 +82,11 @@ class AuthRepository(
     }
 
     suspend fun signOut() = withContext(ioDispatcher) {
+        // Clear all local data first to prevent data leaking between users
+        budgetRepository.value.clearAllData()
+        budgetEntryRepository.value.clearAllData()
+
+        // Then clear tokens
         tokenStorage.clearTokens()
     }
 

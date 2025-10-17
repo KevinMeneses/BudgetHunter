@@ -94,4 +94,6 @@ class BudgetEntryLocalDataSource(
 
     fun deleteAllByBudgetId(budgetId: Long) =
         queries.deleteAllByBudgetId(budgetId)
+
+    fun clearAllData() = queries.deleteAll()
 }

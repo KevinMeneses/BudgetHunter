@@ -63,4 +63,12 @@ class BudgetRepository(
     suspend fun sync(): Result<Unit> = withContext(ioDispatcher) {
         budgetSyncManager.performFullSync()
     }
+
+    /**
+     * Clear all budgets from local database.
+     * Used when signing out to prevent data leaking between users.
+     */
+    suspend fun clearAllData() = withContext(ioDispatcher) {
+        localDataSource.clearAllData()
+    }
 }

@@ -31,7 +31,9 @@ val authModule = module {
         AuthRepository(
             httpClient = get<HttpClient>(named("AuthHttpClient")),
             tokenStorage = get<TokenStorage>(),
-            ioDispatcher = get<CoroutineDispatcher>(named("IO"))
+            ioDispatcher = get<CoroutineDispatcher>(named("IO")),
+            budgetRepository = inject(),
+            budgetEntryRepository = inject()
         )
     }
 

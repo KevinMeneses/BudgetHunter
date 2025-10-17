@@ -41,6 +41,9 @@ deleteAllByBudgetId:
 DELETE FROM budget_entry
 WHERE budget_id = ?;
 
+deleteAll:
+DELETE FROM budget_entry;
+
 selectUnsynced:
 SELECT * FROM budget_entry WHERE is_synced = 0;
 

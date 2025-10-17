@@ -77,4 +77,6 @@ class BudgetLocalDataSource(
     )
 
     fun delete(id: Long) = queries.delete(id)
+
+    fun clearAllData() = queries.deleteAll()
 }
