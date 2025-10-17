@@ -8,6 +8,7 @@ import com.meneses.budgethunter.auth.application.SignOutUseCase
 import com.meneses.budgethunter.auth.data.AuthRepository
 import com.meneses.budgethunter.auth.data.TokenStorage
 import com.meneses.budgethunter.commons.data.network.createHttpClient
+import com.meneses.budgethunter.commons.data.network.getBaseUrl
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.serialization.json.Json
@@ -22,7 +23,7 @@ val authModule = module {
 
     single<HttpClient>(named("AuthHttpClient")) {
         createHttpClient(
-            baseUrl = "http://10.0.2.2:8080", // Android emulator host machine
+            baseUrl = getBaseUrl(),
             tokenStorage = get<TokenStorage>(),
             json = get<Json>()
         )
