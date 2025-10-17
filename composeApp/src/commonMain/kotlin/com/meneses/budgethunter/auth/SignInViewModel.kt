@@ -7,6 +7,7 @@ import budgethunter.composeapp.generated.resources.error_sign_in_failed
 import com.meneses.budgethunter.auth.application.SignInEvent
 import com.meneses.budgethunter.auth.application.SignInState
 import com.meneses.budgethunter.auth.data.AuthRepository
+import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.commons.data.PreferencesManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,7 +16,8 @@ import kotlinx.coroutines.launch
 
 class SignInViewModel(
     private val authRepository: AuthRepository,
-    private val preferencesManager: PreferencesManager
+    private val preferencesManager: PreferencesManager,
+    private val budgetRepository: BudgetRepository
 ) : ViewModel() {
 
     val uiState get() = _uiState.asStateFlow()
@@ -55,6 +57,11 @@ class SignInViewModel(
                 password = currentState.password
             ).fold(
                 onSuccess = {
+                    // Trigger background sync to fetch user's budgets from server
+                    launch {
+                        budgetRepository.sync()
+                    }
+
                     _uiState.update {
                         it.copy(
                             isLoading = false,

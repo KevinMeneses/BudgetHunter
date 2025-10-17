@@ -2,6 +2,7 @@ package com.meneses.budgethunter.budgetList
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.meneses.budgethunter.auth.application.SignOutUseCase
 import com.meneses.budgethunter.auth.data.AuthRepository
 import com.meneses.budgethunter.budgetList.application.BudgetListEvent
 import com.meneses.budgethunter.budgetList.application.BudgetListState
@@ -9,7 +10,6 @@ import com.meneses.budgethunter.budgetList.application.DeleteBudgetUseCase
 import com.meneses.budgethunter.budgetList.application.DuplicateBudgetUseCase
 import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.budgetList.domain.Budget
-import com.meneses.budgethunter.commons.data.PreferencesManager
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -21,7 +21,7 @@ class BudgetListViewModel(
     private val duplicateBudgetUseCase: DuplicateBudgetUseCase,
     private val deleteBudgetUseCase: DeleteBudgetUseCase,
     private val authRepository: AuthRepository,
-    private val preferencesManager: PreferencesManager
+    private val signOutUseCase: SignOutUseCase
 ) : ViewModel() {
     val uiState get() = _uiState.asStateFlow()
     private val _uiState = MutableStateFlow(BudgetListState())
@@ -169,8 +169,7 @@ class BudgetListViewModel(
 
     private fun signOut() {
         viewModelScope.launch {
-            authRepository.signOut()
-            preferencesManager.setOfflineModeEnabled(false)
+            signOutUseCase.execute()
             _uiState.update { it.copy(navigateToSignIn = true, isAuthenticated = false) }
         }
     }

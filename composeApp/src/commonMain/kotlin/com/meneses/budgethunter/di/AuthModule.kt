@@ -4,6 +4,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import com.meneses.budgethunter.auth.SignInViewModel
 import com.meneses.budgethunter.auth.SignUpViewModel
+import com.meneses.budgethunter.auth.application.SignOutUseCase
 import com.meneses.budgethunter.auth.data.AuthRepository
 import com.meneses.budgethunter.auth.data.TokenStorage
 import com.meneses.budgethunter.commons.data.network.createHttpClient
@@ -31,16 +32,25 @@ val authModule = module {
         AuthRepository(
             httpClient = get<HttpClient>(named("AuthHttpClient")),
             tokenStorage = get<TokenStorage>(),
-            ioDispatcher = get<CoroutineDispatcher>(named("IO")),
-            budgetRepository = inject(),
-            budgetEntryRepository = inject()
+            ioDispatcher = get<CoroutineDispatcher>(named("IO"))
+        )
+    }
+
+    single<SignOutUseCase> {
+        SignOutUseCase(
+            authRepository = get<AuthRepository>(),
+            budgetRepository = get(),
+            budgetEntryRepository = get(),
+            preferencesManager = get(),
+            ioDispatcher = get<CoroutineDispatcher>(named("IO"))
         )
     }
 
     factory<SignInViewModel> {
         SignInViewModel(
             authRepository = get<AuthRepository>(),
-            preferencesManager = get()
+            preferencesManager = get(),
+            budgetRepository = get()
         )
     }
 
