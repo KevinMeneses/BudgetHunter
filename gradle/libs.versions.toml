@@ -135,6 +135,7 @@ compose-multiplatform = { id = "org.jetbrains.compose", version.ref = "compose-m
 # Other plugins
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 sqldelight = { id = "app.cash.sqldelight", version.ref = "sqldelight" }
+jacoco = { id = "jacoco" }
 
 [bundles]
 compose = [
