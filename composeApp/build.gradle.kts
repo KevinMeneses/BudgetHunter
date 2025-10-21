@@ -11,6 +11,7 @@ plugins {
     alias(libs.plugins.sqldelight)
     alias(libs.plugins.ksp)
     id("kotlin-parcelize")
+    alias(libs.plugins.jacoco)
 }
 
 kotlin {
@@ -193,4 +194,41 @@ sqldelight {
 dependencies {
     add("kspCommonMainMetadata", libs.koin.ksp.compiler)
     debugImplementation(libs.bundles.test.debug)
+}
+
+// Jacoco configuration for code coverage
+jacoco {
+    toolVersion = "0.8.11"
+}
+
+tasks.register<JacocoReport>("testDebugUnitTestCoverage") {
+    dependsOn("testDebugUnitTest")
+
+    val buildDir = layout.buildDirectory.asFile.get()
+    val coverageSourceDirs = listOf(
+        "src/androidMain/kotlin",
+        "src/commonMain/kotlin"
+    )
+
+    val classFilesTree = fileTree(mapOf(
+        "dir" to "$buildDir/intermediates/javac/debug",
+        "includes" to listOf("**/*.class"),
+        "excludes" to listOf(
+            "**/R.class",
+            "**/R${'$'}.class",
+            "**/BuildConfig.*",
+            "**/Manifest*.*",
+            "**/*Test*.*",
+            "android/**/*.*"
+        )
+    ))
+
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+    }
+
+    sourceDirectories.setFrom(files(coverageSourceDirs))
+    classDirectories.setFrom(classFilesTree)
+    executionData.setFrom(file("$buildDir/jacoco/testDebugUnitTest.exec"))
 }
