@@ -30,7 +30,7 @@ class AndroidPermissionsManager(private val context: Context) : PermissionsManag
     override fun hasSmsPermission(): Boolean {
         return ContextCompat
             .checkSelfPermission(context, Manifest.permission.RECEIVE_SMS) ==
-                PackageManager.PERMISSION_GRANTED
+            PackageManager.PERMISSION_GRANTED
     }
 
     override fun requestSmsPermissions(callback: (granted: Boolean) -> Unit) {
