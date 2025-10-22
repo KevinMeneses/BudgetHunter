@@ -13,22 +13,19 @@ import kotlin.test.assertNotNull
 
 class BudgetEntryRepositoryTest {
 
-    private lateinit var repository: BudgetEntryRepository
-    private lateinit var dataSource: BudgetEntryLocalDataSource
-    private lateinit var dispatcher: CoroutineDispatcher
-
     private var lastInsertArgs: Array<out Any?>? = null
     private var lastUpdateArgs: Array<out Any?>? = null
 
     @BeforeTest
     fun setUp() {
-        dispatcher = StandardTestDispatcher()
-        dataSource = createDataSource()
-        repository = BudgetEntryRepository(dataSource, dispatcher)
+        lastInsertArgs = null
+        lastUpdateArgs = null
     }
 
     @Test
-    fun `create delegates to local data source with normalized payload`() = runTest(dispatcher) {
+    fun `create delegates to local data source with normalized payload`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val repository = createRepository(dispatcher)
         val entry = BudgetEntry(
             id = 0,
             budgetId = 7,
@@ -48,7 +45,9 @@ class BudgetEntryRepositoryTest {
     }
 
     @Test
-    fun `update forwards entry data to local source`() = runTest(dispatcher) {
+    fun `update forwards entry data to local source`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val repository = createRepository(dispatcher)
         val entry = BudgetEntry(
             id = 9,
             budgetId = 3,
@@ -67,7 +66,12 @@ class BudgetEntryRepositoryTest {
         assertEquals(listOf(9L, 3L, 12.0, "Coffee", BudgetEntry.Type.OUTCOME, "2024-04-15", null, BudgetEntry.Category.LEISURE), args.toList())
     }
 
-    private fun createDataSource(): BudgetEntryLocalDataSource {
+    private fun createRepository(dispatcher: CoroutineDispatcher): BudgetEntryRepository {
+        val dataSource = createDataSource(dispatcher)
+        return BudgetEntryRepository(dataSource, dispatcher)
+    }
+
+    private fun createDataSource(dispatcher: CoroutineDispatcher): BudgetEntryLocalDataSource {
         val queriesClass = Class.forName("com.meneses.budgethunter.db.BudgetEntryQueries")
         val constructor = BudgetEntryLocalDataSource::class.java.getConstructor(queriesClass, CoroutineDispatcher::class.java)
         val queries = Proxy.newProxyInstance(

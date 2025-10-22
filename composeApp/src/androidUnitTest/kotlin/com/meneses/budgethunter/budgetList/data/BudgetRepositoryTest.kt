@@ -14,28 +14,27 @@ import kotlin.test.assertNotNull
 
 class BudgetRepositoryTest {
 
-    private lateinit var repository: BudgetRepository
-    private lateinit var localDataSource: BudgetLocalDataSource
-    private lateinit var dispatcher: CoroutineDispatcher
-
     private var lastInsertArgs: Array<out Any?>? = null
     private var lastUpdateArgs: Array<out Any?>? = null
     private var lastInsertId: Long = 17L
 
     @BeforeTest
     fun setUp() {
-        dispatcher = StandardTestDispatcher()
-        localDataSource = createDataSource()
-        repository = BudgetRepository(localDataSource, dispatcher)
+        lastInsertArgs = null
+        lastUpdateArgs = null
+        lastInsertId = 17L
     }
 
     @Test
     fun `getById reads cached budgets`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val localDataSource = createDataSource(dispatcher)
+        val repository = BudgetRepository(localDataSource, dispatcher)
         val cached = listOf(
             Budget(id = 1, amount = 100.0, name = "Home", date = "2024-01-01"),
             Budget(id = 2, amount = 50.0, name = "Groceries", date = "2024-02-02")
         )
-        setCachedBudgets(cached)
+        setCachedBudgets(localDataSource, cached)
 
         val result = repository.getById(2)
 
@@ -44,12 +43,15 @@ class BudgetRepositoryTest {
 
     @Test
     fun `getAllFilteredBy applies name filter ignoring case`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val localDataSource = createDataSource(dispatcher)
+        val repository = BudgetRepository(localDataSource, dispatcher)
         val cached = listOf(
             Budget(id = 1, amount = 100.0, name = "Vacation", date = "2024-03-03"),
             Budget(id = 2, amount = 80.0, name = "Vacation Plans", date = "2024-03-10"),
             Budget(id = 3, amount = 40.0, name = "Groceries", date = "2024-03-05")
         )
-        setCachedBudgets(cached)
+        setCachedBudgets(localDataSource, cached)
 
         val result = repository.getAllFilteredBy(BudgetFilter(name = "vacation"))
 
@@ -57,7 +59,10 @@ class BudgetRepositoryTest {
     }
 
     @Test
-    fun `create returns budget with generated identifier`() = runTest(dispatcher) {
+    fun `create returns budget with generated identifier`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val localDataSource = createDataSource(dispatcher)
+        val repository = BudgetRepository(localDataSource, dispatcher)
         val budget = Budget(
             id = -1,
             amount = 245.0,
@@ -74,7 +79,10 @@ class BudgetRepositoryTest {
     }
 
     @Test
-    fun `update forwards values to local data source`() = runTest(dispatcher) {
+    fun `update forwards values to local data source`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val localDataSource = createDataSource(dispatcher)
+        val repository = BudgetRepository(localDataSource, dispatcher)
         val budget = Budget(
             id = 9,
             amount = 510.0,
@@ -89,7 +97,7 @@ class BudgetRepositoryTest {
         assertEquals(listOf(9L, 510.0, "Savings", "2024-05-20"), args.toList())
     }
 
-    private fun createDataSource(): BudgetLocalDataSource {
+    private fun createDataSource(dispatcher: CoroutineDispatcher): BudgetLocalDataSource {
         val queriesClass = Class.forName("com.meneses.budgethunter.db.BudgetQueries")
         val constructor = BudgetLocalDataSource::class.java.getConstructor(queriesClass, CoroutineDispatcher::class.java)
         val queries = Proxy.newProxyInstance(
@@ -122,10 +130,10 @@ class BudgetRepositoryTest {
         return constructor.newInstance(queries, dispatcher)
     }
 
-    private fun setCachedBudgets(budgets: List<Budget>) {
+    private fun setCachedBudgets(dataSource: BudgetLocalDataSource, budgets: List<Budget>) {
         val field = BudgetLocalDataSource::class.java.getDeclaredField("cachedList")
         field.isAccessible = true
-        field.set(localDataSource, budgets)
+        field.set(dataSource, budgets)
     }
 
     private fun createQueryProxy(value: Long): Any {

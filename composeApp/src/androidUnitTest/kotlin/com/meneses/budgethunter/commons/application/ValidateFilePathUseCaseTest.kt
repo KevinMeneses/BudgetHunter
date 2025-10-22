@@ -14,7 +14,6 @@ import kotlin.test.assertNull
 class ValidateFilePathUseCaseTest {
 
     private lateinit var tempDir: File
-    private val dispatcher = StandardTestDispatcher()
 
     @BeforeTest
     fun setUp() {
@@ -27,7 +26,8 @@ class ValidateFilePathUseCaseTest {
     }
 
     @Test
-    fun `returns same path when file exists`() = runTest(dispatcher) {
+    fun `returns same path when file exists`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
         val file = File(tempDir, "invoice.png").apply { writeText("stub") }
         val useCase = ValidateFilePathUseCase(FileManager(), dispatcher)
 
@@ -37,7 +37,8 @@ class ValidateFilePathUseCaseTest {
     }
 
     @Test
-    fun `returns null when file does not exist or path is blank`() = runTest(dispatcher) {
+    fun `returns null when file does not exist or path is blank`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
         val useCase = ValidateFilePathUseCase(FileManager(), dispatcher)
 
         val missingResult = useCase.execute(File(tempDir, "missing.pdf").absolutePath)

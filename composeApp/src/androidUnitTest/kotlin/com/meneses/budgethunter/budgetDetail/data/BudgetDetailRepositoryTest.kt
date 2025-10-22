@@ -14,44 +14,47 @@ import kotlin.test.assertEquals
 
 class BudgetDetailRepositoryTest {
 
-    private lateinit var dispatcher: CoroutineDispatcher
-    private lateinit var budgetLocalDataSource: BudgetLocalDataSource
-    private lateinit var entryLocalDataSource: BudgetEntryLocalDataSource
-    private lateinit var deleteBudgetUseCase: DeleteBudgetUseCase
-    private lateinit var repository: BudgetDetailRepository
-
     private var deletedBudgetId: Long? = null
     private var deletedEntryIds: List<Long>? = null
     private val clearedBudgetIds = mutableListOf<Long>()
 
     @BeforeTest
     fun setUp() {
-        dispatcher = StandardTestDispatcher()
-        budgetLocalDataSource = createBudgetLocalDataSource()
-        entryLocalDataSource = createEntryLocalDataSource()
-        deleteBudgetUseCase = DeleteBudgetUseCase(budgetLocalDataSource, entryLocalDataSource, dispatcher)
-        repository = BudgetDetailRepository(
-            budgetLocalDataSource = budgetLocalDataSource,
-            entriesLocalDataSource = entryLocalDataSource,
-            ioDispatcher = dispatcher,
-            deleteBudgetUseCase = deleteBudgetUseCase
-        )
         seedCachedDetail()
+        deletedBudgetId = null
+        deletedEntryIds = null
+        clearedBudgetIds.clear()
     }
 
     @Test
-    fun `deleteEntriesByIds converts to database identifiers`() = runTest(dispatcher) {
+    fun `deleteEntriesByIds converts to database identifiers`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val repository = createRepository(dispatcher)
         repository.deleteEntriesByIds(listOf(3, 5, 9))
 
         assertEquals(listOf(3L, 5L, 9L), deletedEntryIds)
     }
 
     @Test
-    fun `deleteBudget invokes cascading cleanup`() = runTest(dispatcher) {
+    fun `deleteBudget invokes cascading cleanup`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val repository = createRepository(dispatcher)
         repository.deleteBudget(11)
 
         assertEquals(11L, deletedBudgetId)
         assertEquals(listOf(11L), clearedBudgetIds)
+    }
+
+    private fun createRepository(dispatcher: CoroutineDispatcher): BudgetDetailRepository {
+        val budgetLocalDataSource = createBudgetLocalDataSource(dispatcher)
+        val entryLocalDataSource = createEntryLocalDataSource(dispatcher)
+        val deleteBudgetUseCase = DeleteBudgetUseCase(budgetLocalDataSource, entryLocalDataSource, dispatcher)
+        return BudgetDetailRepository(
+            budgetLocalDataSource = budgetLocalDataSource,
+            entriesLocalDataSource = entryLocalDataSource,
+            ioDispatcher = dispatcher,
+            deleteBudgetUseCase = deleteBudgetUseCase
+        )
     }
 
     private fun seedCachedDetail() {
@@ -60,7 +63,7 @@ class BudgetDetailRepositoryTest {
         field.set(null, BudgetDetail())
     }
 
-    private fun createBudgetLocalDataSource(): BudgetLocalDataSource {
+    private fun createBudgetLocalDataSource(dispatcher: CoroutineDispatcher): BudgetLocalDataSource {
         val queriesClass = Class.forName("com.meneses.budgethunter.db.BudgetQueries")
         val constructor = BudgetLocalDataSource::class.java.getConstructor(queriesClass, CoroutineDispatcher::class.java)
         val queries = Proxy.newProxyInstance(
@@ -82,7 +85,7 @@ class BudgetDetailRepositoryTest {
         return constructor.newInstance(queries, dispatcher)
     }
 
-    private fun createEntryLocalDataSource(): BudgetEntryLocalDataSource {
+    private fun createEntryLocalDataSource(dispatcher: CoroutineDispatcher): BudgetEntryLocalDataSource {
         val queriesClass = Class.forName("com.meneses.budgethunter.db.BudgetEntryQueries")
         val constructor = BudgetEntryLocalDataSource::class.java.getConstructor(queriesClass, CoroutineDispatcher::class.java)
         val queries = Proxy.newProxyInstance(
