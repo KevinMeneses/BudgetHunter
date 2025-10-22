@@ -28,11 +28,11 @@ fun BudgetDatePickerDialog(
     val datePickerState = rememberDatePickerState(
         initialSelectedDateMillis = initialDate?.atStartOfDay(ZoneId.systemDefault())?.toInstant()?.toEpochMilli()
     )
-    
+
     val confirmEnabled = remember {
         derivedStateOf { datePickerState.selectedDateMillis != null }
     }
-    
+
     DatePickerDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
@@ -83,7 +83,7 @@ fun SimpleDatePickerDialog(
                 null
             }
         }
-        
+
         BudgetDatePickerDialog(
             onDateSelected = onDateSelected,
             onDismiss = onDismiss,

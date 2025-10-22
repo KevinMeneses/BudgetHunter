@@ -108,27 +108,27 @@ class AppModule {
     fun provideFileManager(): FileManager = AndroidFileManager()
 
     @Single
-    fun provideNotificationManager(context: Context): NotificationManager = 
+    fun provideNotificationManager(context: Context): NotificationManager =
         AndroidNotificationManager(context)
 
     @Single
-    fun provideShareManager(context: Context): ShareManager = 
+    fun provideShareManager(context: Context): ShareManager =
         AndroidShareManager(context)
 
     @Single
-    fun provideCameraManager(context: Context): CameraManager = 
+    fun provideCameraManager(context: Context): CameraManager =
         AndroidCameraManager(context)
 
     @Single
-    fun provideFilePickerManager(context: Context): FilePickerManager = 
+    fun provideFilePickerManager(context: Context): FilePickerManager =
         AndroidFilePickerManager(context)
 
     @Single
-    fun providePermissionsManager(context: Context): PermissionsManager = 
+    fun providePermissionsManager(context: Context): PermissionsManager =
         AndroidPermissionsManager(context)
 
     @Single
-    fun provideAppUpdateManager(context: Context): AppUpdateManager = 
+    fun provideAppUpdateManager(context: Context): AppUpdateManager =
         AndroidAppUpdateManager(context)
 
     @Single

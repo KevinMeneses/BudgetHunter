@@ -12,7 +12,7 @@ fun Uri.toFileData(
         .openInputStream(this)
         ?.use { it.readBytes() }
         ?: byteArrayOf()
-    
+
     val mimeType = contentResolver.getType(this)
     val fileFormat = when {
         mimeType?.startsWith("image/") == true -> {
@@ -27,7 +27,7 @@ fun Uri.toFileData(
         else -> ".jpg" // Default fallback
     }
     val filename = System.currentTimeMillis().toString() + fileFormat
-    
+
     return FileData(
         data = data,
         filename = filename,

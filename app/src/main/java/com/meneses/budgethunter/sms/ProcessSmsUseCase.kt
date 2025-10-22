@@ -10,7 +10,7 @@ class ProcessSmsUseCase(
     private val context: Context,
     private val smsMapper: SmsMapper,
     private val budgetEntryRepository: BudgetEntryRepository,
-    private val notificationService: NotificationService,
+    private val notificationService: NotificationService
 ) : SmsService {
     override suspend fun processSms(messageBody: String, bankConfigs: Set<BankSmsConfig>) {
         try {

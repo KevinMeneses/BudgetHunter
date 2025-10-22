@@ -168,7 +168,7 @@ fun DateField(
     onDateSelected: (String) -> Unit
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
-    
+
     SimpleDatePickerDialog(
         showDialog = showDatePicker,
         onDateSelected = onDateSelected,

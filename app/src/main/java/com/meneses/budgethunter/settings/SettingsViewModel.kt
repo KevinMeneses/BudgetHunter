@@ -136,7 +136,6 @@ class SettingsViewModel(
         }
     }
 
-
     private fun showDefaultBudgetSelector() {
         _uiState.update { it.copy(isDefaultBudgetSelectorVisible = true) }
     }

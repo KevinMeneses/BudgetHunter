@@ -34,6 +34,6 @@ class SmsModule {
         context = context,
         smsMapper = smsMapper,
         budgetEntryRepository = budgetEntryRepository,
-        notificationService = notificationService,
+        notificationService = notificationService
     )
 }
