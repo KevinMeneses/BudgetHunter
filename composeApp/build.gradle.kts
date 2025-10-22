@@ -190,6 +190,7 @@ sqldelight {
 dependencies {
     add("kspCommonMainMetadata", libs.koin.ksp.compiler)
     debugImplementation(libs.bundles.test.debug)
+    runtimeOnly(libs.slf4j.simple)
 }
 
 // Jacoco configuration for code coverage
