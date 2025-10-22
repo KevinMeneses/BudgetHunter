@@ -1,6 +1,6 @@
 package com.meneses.budgethunter.commons.platform
 
-class AndroidLifecycleManager: LifecycleManager {
+class AndroidLifecycleManager : LifecycleManager {
 
     private var lifecycleDelegate: LifecycleDelegate? = null
 

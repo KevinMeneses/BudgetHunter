@@ -4,7 +4,7 @@ on:
     branches:
       - release/*
 jobs:
-  build-project:
+  lint:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -18,10 +18,89 @@ jobs:
         uses: gradle/gradle-build-action@v2
       - name: Execute Ktlint Check
         run: ./gradlew ktlint
+      - name: Execute Lint Check
+        run: ./gradlew lint
+      - name: Upload Lint Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-report
+          path: app/build/reports/lint-results*.xml
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+      - name: Upload Trivy results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
       - name: Execute Gradle build
         run: ./gradlew build
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
       - name: Execute Unit Tests
-        run: ./gradlew testDebugUnitTest
+        run: ./gradlew :composeApp:testDebugUnitTest
+      - name: Generate Code Coverage Report
+        run: ./gradlew :composeApp:testDebugUnitTestCoverage
+      - name: Upload Test Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report
+          path: composeApp/build/test-results/
+      - name: Upload Coverage Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: composeApp/build/reports/jacoco/testDebugUnitTestCoverage/
+
+  release:
+    runs-on: ubuntu-latest
+    needs: [lint, security, build, test]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
       - name: Build Release AAB
         run: ./gradlew bundleRelease
       - name: Sign AAB
