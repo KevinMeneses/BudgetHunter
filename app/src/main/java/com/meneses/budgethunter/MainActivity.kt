@@ -29,12 +29,12 @@ import org.koin.core.component.inject
 import com.google.android.play.core.appupdate.AppUpdateManager as GoogleAppUpdateManager
 
 class MainActivity : ComponentActivity(), KoinComponent, CameraLauncherDelegate, FilePickerLauncherDelegate, PermissionsLauncherDelegate, AppUpdateLauncherDelegate {
-    
+
     // Activity result launchers
     private lateinit var takePhotoLauncher: ActivityResultLauncher<Uri>
     private lateinit var selectFileLauncher: ActivityResultLauncher<Array<String>>
     private lateinit var permissionsLauncher: ActivityResultLauncher<Array<String>>
-    
+
     // Platform managers from Koin
     private val cameraManager: CameraManager by inject()
     private val filePickerManager: FilePickerManager by inject()
@@ -44,27 +44,27 @@ class MainActivity : ComponentActivity(), KoinComponent, CameraLauncherDelegate,
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
+
         // Setup activity result launchers
         takePhotoLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
             (cameraManager as AndroidCameraManager).handlePhotoResult(success)
         }
-        
+
         selectFileLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
             (filePickerManager as AndroidFilePickerManager).handleFileResult(uri)
         }
-        
+
         permissionsLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
             val smsGranted = permissions["android.permission.RECEIVE_SMS"] ?: false
             (permissionsManager as AndroidPermissionsManager).handlePermissionResult(smsGranted)
         }
-        
+
         // Set this activity as the launcher delegate
         (cameraManager as AndroidCameraManager).setLauncherDelegate(this)
         (filePickerManager as AndroidFilePickerManager).setLauncherDelegate(this)
         (permissionsManager as AndroidPermissionsManager).setLauncherDelegate(this)
         (appUpdateManager as AndroidAppUpdateManager).setLauncherDelegate(this)
-        
+
         setContent { App() }
     }
 
@@ -72,12 +72,12 @@ class MainActivity : ComponentActivity(), KoinComponent, CameraLauncherDelegate,
         lifecycleManager.onStart()
         super.onStart()
     }
-    
+
     // Implement CameraLauncherDelegate
     override fun launchCamera(uri: Uri) {
         takePhotoLauncher.launch(uri)
     }
-    
+
     // Implement FilePickerLauncherDelegate
     override fun launchFilePicker(mimeTypes: Array<String>) {
         selectFileLauncher.launch(mimeTypes)

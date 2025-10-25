@@ -5,7 +5,7 @@ import java.io.File
 import java.io.IOException
 
 class AndroidFileManager : FileManager {
-    
+
     override fun saveFile(fileData: FileData): String {
         return saveFile(fileData.data, fileData.directory, fileData.filename)
     }
@@ -15,7 +15,7 @@ class AndroidFileManager : FileManager {
         file.outputStream().use { it.write(data) }
         return file.absolutePath
     }
-    
+
     override fun deleteFile(path: String): Boolean {
         return try {
             File(path).delete()
@@ -23,7 +23,7 @@ class AndroidFileManager : FileManager {
             false
         }
     }
-    
+
     override fun createUri(filePath: String): String {
         return File(filePath).toUri().toString()
     }

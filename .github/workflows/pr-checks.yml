@@ -24,7 +24,7 @@ jobs:
         run: ./gradlew lint
       - name: Upload Lint Report
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: lint-report
           path: app/build/reports/lint-results*.xml
@@ -42,7 +42,7 @@ jobs:
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
       - name: Execute Gradle build
-        run: ./gradlew build
+        run: ./gradlew assembleDebug
 
   test:
     runs-on: ubuntu-latest
@@ -62,13 +62,13 @@ jobs:
         run: ./gradlew :composeApp:testDebugUnitTestCoverage
       - name: Upload Test Report
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: test-report
           path: composeApp/build/test-results/
       - name: Upload Coverage Report
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: coverage-report
           path: composeApp/build/reports/jacoco/testDebugUnitTestCoverage/

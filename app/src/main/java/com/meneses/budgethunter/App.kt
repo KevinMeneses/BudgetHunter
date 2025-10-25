@@ -76,7 +76,7 @@ fun App() {
                     SettingsScreen.Show(
                         uiState = settingsViewModel.uiState.collectAsStateWithLifecycle().value,
                         onEvent = settingsViewModel::sendEvent,
-                        goBack = navController::popBackStack,
+                        goBack = navController::popBackStack
                     )
                 }
 
