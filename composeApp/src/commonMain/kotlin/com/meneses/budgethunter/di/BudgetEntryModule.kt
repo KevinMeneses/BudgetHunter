@@ -4,8 +4,10 @@ import com.meneses.budgethunter.budgetEntry.BudgetEntryViewModel
 import com.meneses.budgethunter.budgetEntry.application.CreateBudgetEntryFromImageUseCase
 import com.meneses.budgethunter.budgetEntry.data.BudgetEntryRepository
 import com.meneses.budgethunter.budgetEntry.data.datasource.BudgetEntryLocalDataSource
+import com.meneses.budgethunter.budgetEntry.data.network.BudgetEntryApiService
 import com.meneses.budgethunter.budgetEntry.domain.AIImageProcessor
 import com.meneses.budgethunter.db.BudgetEntryQueries
+import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineDispatcher
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
@@ -14,6 +16,13 @@ val budgetEntryModule = module {
 
     single<BudgetEntryLocalDataSource> {
         BudgetEntryLocalDataSource(get<BudgetEntryQueries>(), get<CoroutineDispatcher>(named("IO")))
+    }
+
+    single<BudgetEntryApiService> {
+        BudgetEntryApiService(
+            httpClient = get<HttpClient>(named("AuthHttpClient")),
+            ioDispatcher = get<CoroutineDispatcher>(named("IO"))
+        )
     }
 
     single<BudgetEntryRepository> {
