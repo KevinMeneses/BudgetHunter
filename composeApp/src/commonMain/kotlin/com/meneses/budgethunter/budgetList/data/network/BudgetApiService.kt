@@ -30,7 +30,7 @@ class BudgetApiService(
         withContext(ioDispatcher) {
             try {
                 println("BudgetApiService: Creating budget with request: $request")
-                val response: BudgetResponse = httpClient.post("/api/budgets/create_budget") {
+                val response: BudgetResponse = httpClient.post("/api/budgets") {
                     contentType(ContentType.Application.Json)
                     setBody(request)
                 }.body()
@@ -53,7 +53,7 @@ class BudgetApiService(
         withContext(ioDispatcher) {
             try {
                 println("BudgetApiService: Fetching budgets from server")
-                val response = httpClient.get("/api/budgets/get_budgets")
+                val response = httpClient.get("/api/budgets")
                 val budgets = response.body<List<BudgetResponse>>()
                 println("BudgetApiService: Successfully fetched ${budgets.size} budgets")
                 Result.success(budgets)
