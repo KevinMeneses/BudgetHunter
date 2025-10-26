@@ -3,9 +3,11 @@ package com.meneses.budgethunter.di
 import com.meneses.budgethunter.budgetEntry.BudgetEntryViewModel
 import com.meneses.budgethunter.budgetEntry.application.CreateBudgetEntryFromImageUseCase
 import com.meneses.budgethunter.budgetEntry.data.BudgetEntryRepository
+import com.meneses.budgethunter.budgetEntry.data.BudgetEntrySyncManager
 import com.meneses.budgethunter.budgetEntry.data.datasource.BudgetEntryLocalDataSource
 import com.meneses.budgethunter.budgetEntry.data.network.BudgetEntryApiService
 import com.meneses.budgethunter.budgetEntry.domain.AIImageProcessor
+import com.meneses.budgethunter.budgetList.data.datasource.BudgetLocalDataSource
 import com.meneses.budgethunter.db.BudgetEntryQueries
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineDispatcher
@@ -25,8 +27,24 @@ val budgetEntryModule = module {
         )
     }
 
+    single<BudgetEntrySyncManager> {
+        BudgetEntrySyncManager(
+            localDataSource = get<BudgetEntryLocalDataSource>(),
+            budgetEntryApiService = get<BudgetEntryApiService>(),
+            authRepository = get(),
+            budgetEntryQueries = get<BudgetEntryQueries>(),
+            budgetLocalDataSource = get<BudgetLocalDataSource>(),
+            ioDispatcher = get<CoroutineDispatcher>(named("IO"))
+        )
+    }
+
     single<BudgetEntryRepository> {
-        BudgetEntryRepository(get<BudgetEntryLocalDataSource>(), get<CoroutineDispatcher>(named("IO")))
+        BudgetEntryRepository(
+            localDataSource = get<BudgetEntryLocalDataSource>(),
+            syncManager = get(),
+            authRepository = get(),
+            ioDispatcher = get<CoroutineDispatcher>(named("IO"))
+        )
     }
 
     // AI image processing use case

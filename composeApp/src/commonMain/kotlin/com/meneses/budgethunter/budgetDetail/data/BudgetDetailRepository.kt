@@ -1,6 +1,7 @@
 package com.meneses.budgethunter.budgetDetail.data
 
 import com.meneses.budgethunter.budgetDetail.domain.BudgetDetail
+import com.meneses.budgethunter.budgetEntry.data.BudgetEntryRepository
 import com.meneses.budgethunter.budgetEntry.data.datasource.BudgetEntryLocalDataSource
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntryFilter
 import com.meneses.budgethunter.budgetList.application.DeleteBudgetUseCase
@@ -17,6 +18,7 @@ import kotlinx.coroutines.withContext
 class BudgetDetailRepository(
     private val budgetLocalDataSource: BudgetLocalDataSource,
     private val entriesLocalDataSource: BudgetEntryLocalDataSource,
+    private val budgetEntryRepository: BudgetEntryRepository,
     private val ioDispatcher: CoroutineDispatcher,
     private val deleteBudgetUseCase: DeleteBudgetUseCase
 ) {
@@ -63,6 +65,17 @@ class BudgetDetailRepository(
     suspend fun deleteEntriesByIds(ids: List<Int>) = withContext(ioDispatcher) {
         val dbIds = ids.map { it.toLong() }
         entriesLocalDataSource.deleteByIds(dbIds)
+    }
+
+    suspend fun syncEntries(): Result<Unit> {
+        val cached = getCachedDetail()
+        val budget = cached.budget
+        val serverId = budget.serverId
+        return if (serverId != null) {
+            budgetEntryRepository.sync(budget.id, serverId)
+        } else {
+            Result.failure(Exception("Budget must sync before syncing entries"))
+        }
     }
 
     companion object {

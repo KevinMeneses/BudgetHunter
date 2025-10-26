@@ -2,6 +2,7 @@ package com.meneses.budgethunter.di
 
 import com.meneses.budgethunter.budgetDetail.BudgetDetailViewModel
 import com.meneses.budgethunter.budgetDetail.data.BudgetDetailRepository
+import com.meneses.budgethunter.budgetEntry.data.BudgetEntryRepository
 import com.meneses.budgethunter.budgetEntry.data.datasource.BudgetEntryLocalDataSource
 import com.meneses.budgethunter.budgetList.application.DeleteBudgetUseCase
 import com.meneses.budgethunter.budgetList.data.datasource.BudgetLocalDataSource
@@ -15,6 +16,7 @@ val budgetDetailModule = module {
         BudgetDetailRepository(
             get<BudgetLocalDataSource>(),
             get<BudgetEntryLocalDataSource>(),
+            get<BudgetEntryRepository>(),
             get<CoroutineDispatcher>(named("IO")),
             get<DeleteBudgetUseCase>()
         )

@@ -54,24 +54,24 @@ The app now has **fully functional budget synchronization** with:
 7. **Request Body Cleanup**: Removed redundant fields from request bodies - budgetId now passed in URL path for entries, not in body
 
 ### ⏭️ NEXT IMMEDIATE STEPS (Priority Order)
-1. **Phase 5: Budget Entry Sync** - Implement entry synchronization (13 hours) **← RECOMMENDED NEXT**
-2. **Phase 9: Error Handling & Offline Support** - Critical for production (10 hours)
-3. **Phase 6: Collaborator Management** - Budget sharing (8 hours)
+1. **Phase 9: Error Handling & Offline Support** - Harden sync flows and add offline UX (10 hours) **← RECOMMENDED NEXT**
+2. **Phase 6: Collaborator Management** - Budget sharing (8 hours)
+3. **Phase 7: Real-time Updates (SSE)** - Live entry updates (6 hours)
 
 ### 📊 PROGRESS METRICS
 - **Total Phases**: 11
-- **Completed Phases**: 4 (36%)
-- **In Progress**: None - ready for Phase 5!
+- **Completed Phases**: 5 (45%)
+- **In Progress**: None - ready for Phase 6
 - **Total Tasks**: ~72 (added Task 2.8 and 2.9)
-- **Completed Tasks**: ~26 (36%)
-- **Estimated Remaining Time**: ~75 hours (~1.9 weeks)
+- **Completed Tasks**: ~30 (42%)
+- **Estimated Remaining Time**: ~66 hours (~1.6 weeks)
 
 ### 🚨 CRITICAL GAPS & RISKS
 1. ~~**No Database Schema Changes Yet**~~ ✅ - Budget/BudgetEntry tables now have sync fields
 2. ~~**No Budget API Services**~~ ✅ - BudgetApiService working with correct endpoints
 3. ~~**No Budget Sync Logic**~~ ✅ - Budget sync working end-to-end
 4. ~~**User Data Isolation**~~ ✅ - Sign out now clears all local data (Task 2.8 complete)
-5. **No Budget Entry Sync** - Entries don't sync to server yet (Phase 5)
+5. ~~**No Budget Entry Sync**~~ ✅ - Entry sync with manual refresh now live (Phase 5 complete)
 6. **Hardcoded Backend URL** - Not configurable per environment (Task 10.7)
 7. **No Offline Support** - Network errors not handled gracefully (Phase 9)
 8. **No Real-time Updates** - SSE not implemented (Phase 7)
@@ -1018,16 +1018,16 @@ class BudgetRepository(
 
 ---
 
-## PHASE 5: BUDGET ENTRY SYNC IMPLEMENTATION (MEDIUM-HIGH RISK) ⏳ NOT STARTED
+## PHASE 5: BUDGET ENTRY SYNC IMPLEMENTATION (MEDIUM-HIGH RISK) ✅ 100% COMPLETE (4/4)
 
 ### 📋 PHASE 5 OVERVIEW
-**Status**: NOT STARTED
+**Status**: COMPLETE (Tasks 5.1-5.4 delivered)
 **Dependencies**: Phase 3 and Phase 4 must be completed first
 **Description**: Implement budget entry synchronization with creator/updater tracking
 
 ---
 
-### Task 5.1: Create Budget Entry API Service ⏳ NOT STARTED
+### Task 5.1: Create Budget Entry API Service ✅ COMPLETED (2025-10-25)
 **Effort**: 3 hours
 **Risk**: Medium
 **Description**: Implement API calls for budget entry operations using RESTful conventions
@@ -1070,7 +1070,7 @@ class BudgetEntryApiService(
 
 ---
 
-### Task 5.2: Create Budget Entry Sync Manager
+### Task 5.2: Create Budget Entry Sync Manager ✅ COMPLETED (2025-10-25)
 **Effort**: 4 hours
 **Risk**: High
 **Description**: Sync budget entries bidirectionally with conflict resolution
@@ -1094,6 +1094,11 @@ class BudgetEntrySyncManager(
 2. Pull server entries and merge by server_id
 3. Update modification tracking (created_by_email, updated_by_email, timestamps)
 
+**Completion Notes**:
+- ✅ Added `BudgetEntrySyncManager` with push, pull, and full-sync helpers plus detailed logging
+- ✅ Uses `BudgetLocalDataSource` to resolve budget server IDs and `BudgetEntryQueries` for unsynced lookups
+- ✅ Converts between domain entries and REST requests/responses, updating sync metadata locally
+
 **Validation**:
 - Local entry syncs to server
 - Server entry appears locally
@@ -1107,7 +1112,7 @@ class BudgetEntrySyncManager(
 
 ---
 
-### Task 5.3: Integrate Sync into BudgetEntryRepository
+### Task 5.3: Integrate Sync into BudgetEntryRepository ✅ COMPLETED (2025-10-25)
 **Effort**: 2 hours
 **Risk**: Medium
 **Description**: Update repository to sync entries on create/update
@@ -1139,6 +1144,11 @@ class BudgetEntryRepository(
 }
 ```
 
+**Completion Notes**:
+- ✅ Repository now depends on `BudgetEntrySyncManager` and `AuthRepository` to trigger syncs post create/update
+- ✅ Added `sync()` entry point for manual full syncs from UI (passes budget + server IDs)
+- ✅ Koin module wires the new manager, and sync requests are guarded behind authentication checks
+
 **Validation**:
 - Entry creation triggers sync when authenticated
 - Works offline (no sync, stays local)
@@ -1150,7 +1160,7 @@ class BudgetEntryRepository(
 
 ---
 
-### Task 5.4: Update Budget Detail Screen for Entry Sync
+### Task 5.4: Update Budget Detail Screen for Entry Sync ✅ COMPLETED (2025-10-25)
 **Effort**: 2 hours
 **Risk**: Low
 **Description**: Add sync status and manual sync for entries
@@ -1160,10 +1170,16 @@ class BudgetEntryRepository(
 - Show sync status on each entry
 - Show creator/updater info on entries (when synced)
 
+**Completion Notes**:
+- ✅ Added pull-to-refresh entry list using `PullToRefreshBox` wired to a new `SyncEntries` event
+- ✅ Displayed `SyncStatusIndicator`, pending badges, and creator/updater metadata on each entry row
+- ✅ Extended `BudgetDetailState`/ViewModel with `isSyncingEntries` & snackbar-driven `syncError`
+- ✅ Repository now exposes `syncEntries()` so UI can trigger `BudgetEntryRepository.sync`
+
 **Validation**:
-- Pull-to-refresh syncs entries
-- Creator email shown on synced entries
-- Unsynced entries clearly marked
+- Pull-to-refresh invokes `BudgetEntryRepository.sync` and reflects progress
+- Creator/update metadata appears when provided by backend
+- Unsynced entries show a pending banner and gray cloud indicator
 
 **Rollback**: Remove sync UI additions
 

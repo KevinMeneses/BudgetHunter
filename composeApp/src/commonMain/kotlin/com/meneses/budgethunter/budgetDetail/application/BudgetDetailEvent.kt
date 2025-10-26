@@ -22,4 +22,6 @@ sealed interface BudgetDetailEvent {
     data class ToggleSelectionState(val isActivated: Boolean) : BudgetDetailEvent
     data object ClearNavigation : BudgetDetailEvent
     data object SortList : BudgetDetailEvent
+    data object SyncEntries : BudgetDetailEvent
+    data object ClearSyncError : BudgetDetailEvent
 }

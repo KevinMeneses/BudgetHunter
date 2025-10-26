@@ -141,5 +141,12 @@ data class BudgetDetailScreen(val budget: Budget) {
         LaunchedEffect(key1 = uiState.showEntry) {
             uiState.showEntry?.let { showBudgetEntry(it) }
         }
+
+        LaunchedEffect(key1 = uiState.syncError) {
+            uiState.syncError?.let { message ->
+                snackBarHostState.showSnackbar(message)
+                BudgetDetailEvent.ClearSyncError.run(onEvent)
+            }
+        }
     }
 }

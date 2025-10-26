@@ -8,6 +8,7 @@ import com.meneses.budgethunter.budgetDetail.data.BudgetDetailRepository
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntryFilter
 import com.meneses.budgethunter.budgetList.domain.Budget
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -19,6 +20,7 @@ class BudgetDetailViewModel(
 
     private val _uiState = MutableStateFlow(BudgetDetailState())
     val uiState = _uiState.asStateFlow()
+    private var hasTriggeredInitialSync = false
 
     fun sendEvent(event: BudgetDetailEvent) {
         when (event) {
@@ -39,6 +41,8 @@ class BudgetDetailViewModel(
             is BudgetDetailEvent.ToggleSelectEntry -> toggleEntrySelection(event)
             is BudgetDetailEvent.ClearNavigation -> clearNavigation()
             is BudgetDetailEvent.SortList -> orderList()
+            is BudgetDetailEvent.SyncEntries -> syncEntries(showErrors = true)
+            is BudgetDetailEvent.ClearSyncError -> clearSyncError()
         }
     }
 
@@ -79,6 +83,9 @@ class BudgetDetailViewModel(
 
     private fun setBudget(budget: Budget) =
         _uiState.update {
+            if (it.budgetDetail.budget.id != budget.id) {
+                hasTriggeredInitialSync = false
+            }
             it.copy(
                 budgetDetail = it.budgetDetail
                     .copy(budget = budget)
@@ -95,6 +102,11 @@ class BudgetDetailViewModel(
                 else budgetDetailRepository.getAllFilteredBy(currentFilter)
                 _uiState.update {
                     it.copy(budgetDetail = updatedDetail, isLoading = false)
+                }
+
+                if (!hasTriggeredInitialSync && updatedDetail.budget.serverId != null) {
+                    hasTriggeredInitialSync = true
+                    syncEntries(showErrors = false)
                 }
             }
     }
@@ -179,4 +191,40 @@ class BudgetDetailViewModel(
                     .copy(entries = updatedEntries)
             )
         }
+
+    private fun syncEntries(showErrors: Boolean) = viewModelScope.launch {
+        hasTriggeredInitialSync = true
+        _uiState.update {
+            it.copy(
+                isSyncingEntries = showErrors,
+                isLoading = if (showErrors) it.isLoading else true,
+                syncError = if (showErrors) null else it.syncError
+            )
+        }
+        try {
+            val result = budgetDetailRepository.syncEntries()
+            if (result.isFailure && showErrors) {
+                val error = result.exceptionOrNull()
+                val message = error?.message ?: "Failed to sync entries"
+                _uiState.update { it.copy(syncError = message) }
+            }
+        } catch (e: Exception) {
+            if (showErrors) {
+                val message = e.message ?: "Failed to sync entries"
+                _uiState.update { it.copy(syncError = message) }
+            }
+        } finally {
+            delay(100)
+            _uiState.update {
+                it.copy(
+                    isSyncingEntries = false,
+                    isLoading = if (showErrors) it.isLoading else false
+                )
+            }
+        }
+    }
+
+    private fun clearSyncError() {
+        _uiState.update { it.copy(syncError = null) }
+    }
 }

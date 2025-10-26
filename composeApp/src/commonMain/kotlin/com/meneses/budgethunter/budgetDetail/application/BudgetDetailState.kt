@@ -7,6 +7,8 @@ import com.meneses.budgethunter.budgetEntry.domain.BudgetEntryFilter
 data class BudgetDetailState(
     val budgetDetail: BudgetDetail = BudgetDetail(),
     val isLoading: Boolean = true,
+    val isSyncingEntries: Boolean = false,
+    val syncError: String? = null,
     val isBudgetModalVisible: Boolean = false,
     val isFilterModalVisible: Boolean = false,
     val isCollaborateModalVisible: Boolean = false,
