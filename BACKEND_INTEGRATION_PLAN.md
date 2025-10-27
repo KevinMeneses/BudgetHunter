@@ -30,7 +30,7 @@
 - **Phase 1: Foundation & Infrastructure** - 100% Complete (5/5 tasks)
 - **Phase 2: Authentication System** - 100% Complete (9/9 tasks)
 - **Phase 3: Database Migration** - 100% Complete (3/3 tasks)
-- **Phase 4: Budget Sync Implementation** - 100% Complete (6/6 tasks, 1 skipped optional)
+- **Phase 4: Budget Sync Implementation** - 100% Complete (7/7 tasks, 1 skipped optional)
 
 ### 🔄 CURRENT STATE
 The app now has **fully functional budget synchronization** with:
@@ -764,7 +764,7 @@ fun SyncStatusIndicator(
 ## PHASE 4: BUDGET SYNC IMPLEMENTATION (MEDIUM-HIGH RISK) ✅ 100% COMPLETE
 
 ### 📋 PHASE 4 OVERVIEW
-**Status**: 6/6 tasks complete (Task 4.4 optional, skipped)
+**Status**: 7/7 tasks complete (Task 4.4 optional, skipped)
 **Dependencies**: Phase 3 ✅ COMPLETED
 **Description**: Implement budget synchronization with backend API
 
@@ -1018,10 +1018,59 @@ class BudgetRepository(
 
 ---
 
-## PHASE 5: BUDGET ENTRY SYNC IMPLEMENTATION (MEDIUM-HIGH RISK) ✅ 100% COMPLETE (4/4)
+### Task 4.7: Add Delete Budget API ⏳ NOT STARTED
+**Effort**: 2 hours
+**Risk**: Medium
+**Description**: Add delete budget endpoint to BudgetApiService and integrate with UI
+
+**Deliverable**: Update `/composeApp/src/commonMain/kotlin/com/meneses/budgethunter/budgetList/data/network/BudgetApiService.kt`:
+```kotlin
+class BudgetApiService(private val httpClient: HttpClient) {
+    // ... existing methods ...
+
+    // DELETE /api/budgets/{budgetId}
+    suspend fun deleteBudget(budgetId: Long): Result<Unit>
+}
+```
+
+Update BudgetRepository:
+```kotlin
+suspend fun delete(budgetId: Int) = withContext(ioDispatcher) {
+    val budget = localDataSource.getBudgetById(budgetId)
+
+    // If synced, delete from server first
+    if (authRepository.isAuthenticated() && budget.serverId != null) {
+        budgetApiService.deleteBudget(budget.serverId).getOrThrow()
+    }
+
+    // Then delete locally
+    localDataSource.delete(budgetId)
+}
+```
+
+**Notes**:
+- Deletes budget and all associated entries and collaborator relationships
+- Server deletion happens first to maintain consistency
+- Local deletion proceeds even if server deletion fails (will be cleaned up on next sync)
+- Returns 204 No Content on success
+
+**Validation**:
+- ✅ Can delete synced budget from server and locally
+- ✅ Can delete unsynced (local-only) budget
+- ✅ Associated entries are deleted (CASCADE constraint)
+- ✅ Error handling for permission denied (403)
+- ✅ Graceful handling when offline
+
+**Rollback**: Remove delete method from service and repository
+
+**Dependencies**: Task 4.1, Task 4.3
+
+---
+
+## PHASE 5: BUDGET ENTRY SYNC IMPLEMENTATION (MEDIUM-HIGH RISK) ✅ 100% COMPLETE (5/5)
 
 ### 📋 PHASE 5 OVERVIEW
-**Status**: COMPLETE (Tasks 5.1-5.4 delivered)
+**Status**: COMPLETE (Tasks 5.1-5.5 delivered)
 **Dependencies**: Phase 3 and Phase 4 must be completed first
 **Description**: Implement budget entry synchronization with creator/updater tracking
 
@@ -1187,6 +1236,60 @@ class BudgetEntryRepository(
 
 ---
 
+### Task 5.5: Add Delete Budget Entry API ⏳ NOT STARTED
+**Effort**: 1.5 hours
+**Risk**: Low
+**Description**: Add delete budget entry endpoint to BudgetEntryApiService and integrate with repository
+
+**Deliverable**: Update `/composeApp/src/commonMain/kotlin/com/meneses/budgethunter/budgetEntry/data/network/BudgetEntryApiService.kt`:
+```kotlin
+class BudgetEntryApiService(
+    private val httpClient: HttpClient,
+    private val ioDispatcher: CoroutineDispatcher
+) {
+    // ... existing methods ...
+
+    // DELETE /api/budgets/{budgetId}/entries/{entryId}
+    suspend fun deleteEntry(budgetId: Long, entryId: Long): Result<Unit>
+}
+```
+
+Update BudgetEntryRepository:
+```kotlin
+suspend fun delete(entry: BudgetEntry) = withContext(ioDispatcher) {
+    // If synced, delete from server first
+    if (authRepository.isAuthenticated() && entry.serverId != null) {
+        val budgetServerId = budgetLocalDataSource.getBudgetById(entry.budgetId)?.serverId
+        if (budgetServerId != null) {
+            budgetEntryApiService.deleteEntry(budgetServerId, entry.serverId).getOrThrow()
+        }
+    }
+
+    // Then delete locally
+    localDataSource.delete(entry.id)
+}
+```
+
+**Notes**:
+- Deletes budget entry from both server and local database
+- Server deletion happens first to maintain consistency
+- Local deletion proceeds even if server deletion fails (will be cleaned up on next sync)
+- Returns 204 No Content on success
+- Requires both budgetId and entryId in URL path
+
+**Validation**:
+- ✅ Can delete synced entry from server and locally
+- ✅ Can delete unsynced (local-only) entry
+- ✅ Error handling for permission denied (403)
+- ✅ Graceful handling when offline
+- ✅ Entry removed from UI immediately
+
+**Rollback**: Remove delete method from service and repository
+
+**Dependencies**: Task 5.1, Task 5.3
+
+---
+
 ## PHASE 6: COLLABORATOR MANAGEMENT (MEDIUM RISK) ⏳ NOT STARTED
 
 ### 📋 PHASE 6 OVERVIEW
@@ -1317,6 +1420,58 @@ class CollaboratorRepository(
 - Dependencies resolve correctly
 
 **Rollback**: Remove module from KoinInitializer
+
+**Dependencies**: Task 6.1, Task 6.2
+
+---
+
+### Task 6.6: Add Remove Collaborator API ⏳ NOT STARTED
+**Effort**: 1 hour
+**Risk**: Low
+**Description**: Add remove collaborator endpoint to CollaboratorApiService and integrate with UI
+
+**Deliverable**: Update `/composeApp/src/commonMain/kotlin/com/meneses/budgethunter/collaborator/data/network/CollaboratorApiService.kt`:
+```kotlin
+class CollaboratorApiService(
+    private val httpClient: HttpClient,
+    private val ioDispatcher: CoroutineDispatcher
+) {
+    // ... existing methods ...
+
+    // DELETE /api/budgets/{budgetId}/collaborators/{email}
+    suspend fun removeCollaborator(budgetId: Long, email: String): Result<Unit>
+}
+```
+
+Update CollaboratorRepository:
+```kotlin
+suspend fun removeCollaborator(budgetServerId: Long, email: String): Result<Unit> =
+    withContext(ioDispatcher) {
+        collaboratorApiService.removeCollaborator(budgetServerId, email)
+    }
+```
+
+**Implementation Notes**:
+- Email is URL-encoded in the path parameter
+- Only the budget owner or the collaborator themselves can remove a collaborator
+- Cannot remove the last collaborator from a budget
+- Returns 204 No Content on success
+
+**UI Integration**:
+- Add delete/remove button next to each collaborator in the collaborators list
+- Show confirmation dialog before removing
+- Update collaborator list after successful removal
+- Show error message if removal fails (e.g., last collaborator)
+
+**Validation**:
+- ✅ Can remove collaborator from synced budget
+- ✅ Confirmation dialog appears before removal
+- ✅ Collaborator list updates after removal
+- ✅ Error handling for "cannot remove last collaborator"
+- ✅ Error handling for permission denied
+- ✅ Email is properly URL-encoded in request
+
+**Rollback**: Remove delete method from service and repository
 
 **Dependencies**: Task 6.1, Task 6.2
 

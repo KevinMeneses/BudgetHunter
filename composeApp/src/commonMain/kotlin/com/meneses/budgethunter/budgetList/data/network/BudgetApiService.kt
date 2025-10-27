@@ -4,6 +4,7 @@ import com.meneses.budgethunter.commons.data.network.models.BudgetResponse
 import com.meneses.budgethunter.commons.data.network.models.CreateBudgetRequest
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
@@ -61,6 +62,28 @@ class BudgetApiService(
                 println("BudgetApiService: Error fetching budgets - ${e.message}")
                 e.printStackTrace()
                 Result.failure(e)
+            }
+        }
+
+    /**
+     * Deletes a budget from the server.
+     * Deletes the budget and all associated entries and collaborator relationships.
+     * Returns 204 No Content on success.
+     *
+     * @param budgetId Server-side budget ID
+     * @return Result containing Unit on success or error
+     */
+    suspend fun deleteBudget(budgetId: Long): Result<Unit> =
+        withContext(ioDispatcher) {
+            try {
+                println("BudgetApiService: Deleting budget with ID: $budgetId")
+                httpClient.delete("/api/budgets/$budgetId")
+                println("BudgetApiService: Successfully deleted budget with ID: $budgetId")
+                Result.success(Unit)
+            } catch (e: Exception) {
+                println("BudgetApiService: Error deleting budget - ${e.message}")
+                e.printStackTrace()
+                Result.failure(Exception("Failed to delete budget from server: ${e.message}", e))
             }
         }
 }
