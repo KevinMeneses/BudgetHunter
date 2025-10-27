@@ -5,6 +5,7 @@ import com.meneses.budgethunter.commons.data.network.models.CreateBudgetEntryReq
 import com.meneses.budgethunter.commons.data.network.models.UpdateBudgetEntryRequest
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.put
@@ -104,4 +105,29 @@ class BudgetEntryApiService(
                 Result.failure(e)
             }
         }
+
+    /**
+     * Deletes a budget entry on the server.
+     *
+     * RESTful endpoint: DELETE /api/budgets/{budgetId}/entries/{entryId}
+     *
+     * @param budgetId Server-side budget ID (passed in URL path)
+     * @param entryId Server-side entry ID (passed in URL path)
+     * @return Result containing Unit on success or error
+     */
+    suspend fun deleteEntry(
+        budgetId: Long,
+        entryId: Long
+    ): Result<Unit> = withContext(ioDispatcher) {
+        try {
+            println("BudgetEntryApiService: Deleting entry $entryId for budget $budgetId")
+            httpClient.delete("/api/budgets/$budgetId/entries/$entryId")
+            println("BudgetEntryApiService: Successfully deleted entry $entryId for budget $budgetId")
+            Result.success(Unit)
+        } catch (e: Exception) {
+            println("BudgetEntryApiService: Error deleting entry - ${e.message}")
+            e.printStackTrace()
+            Result.failure(Exception("Failed to delete entry on server: ${e.message}", e))
+        }
+    }
 }

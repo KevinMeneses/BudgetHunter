@@ -43,6 +43,8 @@ val budgetEntryModule = module {
             localDataSource = get<BudgetEntryLocalDataSource>(),
             syncManager = get(),
             authRepository = get(),
+            budgetEntryApiService = get(),
+            budgetLocalDataSource = get<BudgetLocalDataSource>(),
             ioDispatcher = get<CoroutineDispatcher>(named("IO"))
         )
     }

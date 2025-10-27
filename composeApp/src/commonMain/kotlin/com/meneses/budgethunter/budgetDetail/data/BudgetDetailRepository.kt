@@ -63,8 +63,27 @@ class BudgetDetailRepository(
     }
 
     suspend fun deleteEntriesByIds(ids: List<Int>) = withContext(ioDispatcher) {
-        val dbIds = ids.map { it.toLong() }
-        entriesLocalDataSource.deleteByIds(dbIds)
+        if (ids.isEmpty()) {
+            return@withContext
+        }
+
+        // Resolve the current entry models so each deletion can run through the repository
+        // (which handles authenticated server deletes before removing the local row).
+        val cachedEntries = getCachedDetail().entries
+        val idsSet = ids.toSet()
+        val entriesToDelete = cachedEntries.filter { it.id in idsSet }
+
+        entriesToDelete.forEach { entry ->
+            budgetEntryRepository.delete(entry)
+        }
+
+        // If any IDs were missing from the cached snapshot (e.g., stale selection),
+        // fall back to direct DAO deletion to keep the database consistent.
+        val deletedIds = entriesToDelete.map { it.id }.toSet()
+        val missingIds = idsSet.minus(deletedIds)
+        if (missingIds.isNotEmpty()) {
+            entriesLocalDataSource.deleteByIds(missingIds.map { it.toLong() })
+        }
     }
 
     suspend fun syncEntries(): Result<Unit> {

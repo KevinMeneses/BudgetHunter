@@ -92,6 +92,9 @@ class BudgetEntryLocalDataSource(
     fun deleteByIds(list: List<Long>) =
         queries.deleteByIds(list)
 
+    fun delete(id: Long) =
+        queries.deleteByIds(listOf(id))
+
     fun deleteAllByBudgetId(budgetId: Long) =
         queries.deleteAllByBudgetId(budgetId)
 

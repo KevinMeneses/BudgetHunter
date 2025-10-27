@@ -1018,7 +1018,7 @@ class BudgetRepository(
 
 ---
 
-### Task 4.7: Add Delete Budget API ⏳ NOT STARTED
+### Task 4.7: Add Delete Budget API ✅ COMPLETED
 **Effort**: 2 hours
 **Risk**: Medium
 **Description**: Add delete budget endpoint to BudgetApiService and integrate with UI
@@ -1053,6 +1053,12 @@ suspend fun delete(budgetId: Int) = withContext(ioDispatcher) {
 - Server deletion happens first to maintain consistency
 - Local deletion proceeds even if server deletion fails (will be cleaned up on next sync)
 - Returns 204 No Content on success
+
+**Completion Notes**:
+- ✅ Added `deleteBudget` call in BudgetApiService to invoke `DELETE /api/budgets/{budgetId}` with error wrapping for diagnostics
+- ✅ BudgetRepository now removes the remote record first when authenticated and always cleans up the local row
+- ✅ DeleteBudgetUseCase and view model flow trigger the repository path and cascade local entry cleanup
+- ✅ Manual verification confirms deleting synced and local budgets removes UI items without crashes
 
 **Validation**:
 - ✅ Can delete synced budget from server and locally
@@ -1236,7 +1242,7 @@ class BudgetEntryRepository(
 
 ---
 
-### Task 5.5: Add Delete Budget Entry API ⏳ NOT STARTED
+### Task 5.5: Add Delete Budget Entry API ✅ COMPLETED
 **Effort**: 1.5 hours
 **Risk**: Low
 **Description**: Add delete budget entry endpoint to BudgetEntryApiService and integrate with repository
@@ -1276,6 +1282,13 @@ suspend fun delete(entry: BudgetEntry) = withContext(ioDispatcher) {
 - Local deletion proceeds even if server deletion fails (will be cleaned up on next sync)
 - Returns 204 No Content on success
 - Requires both budgetId and entryId in URL path
+
+**Completion Notes**:
+- ✅ Added `deleteEntry` request in BudgetEntryApiService with RESTful DELETE call and defensive error handling
+- ✅ BudgetEntryRepository now removes remote entries when authenticated and always cleans up the local row
+- ✅ Injected BudgetLocalDataSource and API service into repository to resolve server IDs at deletion time
+- ✅ BudgetDetailRepository routes bulk deletions through the repository so UI selection removal hits the server
+- ✅ BudgetEntryLocalDataSource exposes `delete` helper while preserving existing batch delete API
 
 **Validation**:
 - ✅ Can delete synced entry from server and locally
