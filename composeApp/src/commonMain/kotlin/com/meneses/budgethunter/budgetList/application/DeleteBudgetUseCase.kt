@@ -1,17 +1,17 @@
 package com.meneses.budgethunter.budgetList.application
 
 import com.meneses.budgethunter.budgetEntry.data.datasource.BudgetEntryLocalDataSource
-import com.meneses.budgethunter.budgetList.data.datasource.BudgetLocalDataSource
+import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 
 class DeleteBudgetUseCase(
-    private val budgetLocalDataSource: BudgetLocalDataSource,
+    private val budgetRepository: BudgetRepository,
     private val entriesLocalDataSource: BudgetEntryLocalDataSource,
     private val ioDispatcher: CoroutineDispatcher
 ) {
     suspend fun execute(budgetId: Long) = withContext(ioDispatcher) {
-        budgetLocalDataSource.delete(budgetId)
+        budgetRepository.delete(budgetId.toInt())
         entriesLocalDataSource.deleteAllByBudgetId(budgetId)
     }
 }

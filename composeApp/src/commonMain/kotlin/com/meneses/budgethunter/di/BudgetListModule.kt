@@ -60,7 +60,7 @@ val budgetListModule = module {
 
     single<DeleteBudgetUseCase> {
         DeleteBudgetUseCase(
-            get<BudgetLocalDataSource>(), 
+            get<BudgetRepository>(), 
             get<BudgetEntryLocalDataSource>(), 
             get<CoroutineDispatcher>(named("IO"))
         )
