@@ -104,6 +104,7 @@
     <string name="join_collaboration_title">Unirse a Colaboración</string>
     <string name="enter_collaboration_code">Ingresa el código de colaboración:</string>
     <string name="code">Código</string>
+    <string name="manage_collaborators">Colaborar</string>
     
     <!-- Invoices & Attachments -->
     <string name="attach_invoice">Adjuntar comprobante</string>

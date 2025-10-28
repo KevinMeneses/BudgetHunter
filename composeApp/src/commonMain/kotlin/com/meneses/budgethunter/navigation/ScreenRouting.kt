@@ -31,12 +31,15 @@ import com.meneses.budgethunter.budgetList.ui.BudgetListScreen
 import com.meneses.budgethunter.budgetMetrics.BudgetMetricsViewModel
 import com.meneses.budgethunter.budgetMetrics.ui.BudgetMetricsScreen
 import com.meneses.budgethunter.commons.util.serializableType
+import com.meneses.budgethunter.collaborator.CollaboratorsViewModel
+import com.meneses.budgethunter.collaborator.ui.CollaboratorsScreen
 import com.meneses.budgethunter.settings.SettingsViewModel
 import com.meneses.budgethunter.settings.ui.SettingsScreen
 import com.meneses.budgethunter.splash.SplashScreenViewModel
 import com.meneses.budgethunter.splash.ui.SplashScreen
 import androidx.compose.material3.MaterialTheme
 import org.koin.compose.koinInject
+import org.koin.core.parameter.parametersOf
 import kotlin.reflect.typeOf
 
 @Composable
@@ -207,6 +210,9 @@ fun BudgetHunterNavigation() {
                     },
                     showSettings = {
                         navController.navigate(SettingsScreen)
+                    },
+                    showCollaborators = { serverId, budgetName ->
+                        navController.navigate(CollaboratorsScreen(serverId, budgetName))
                     }
                 )
             }
@@ -234,6 +240,20 @@ fun BudgetHunterNavigation() {
                 
                 budgetMetricsRoute.Show(
                     uiState = uiState,
+                    goBack = { navController.popBackStack() }
+                )
+            }
+
+            composable<CollaboratorsScreen> { backStackEntry ->
+                val collaboratorsRoute = backStackEntry.toRoute<CollaboratorsScreen>()
+                val collaboratorsViewModel: CollaboratorsViewModel = koinInject(
+                    parameters = { parametersOf(collaboratorsRoute.budgetServerId) }
+                )
+                val uiState by collaboratorsViewModel.uiState.collectAsStateWithLifecycle()
+
+                collaboratorsRoute.Show(
+                    uiState = uiState,
+                    onEvent = collaboratorsViewModel::sendEvent,
                     goBack = { navController.popBackStack() }
                 )
             }

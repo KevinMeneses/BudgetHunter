@@ -1312,7 +1312,7 @@ suspend fun delete(entry: BudgetEntry) = withContext(ioDispatcher) {
 
 ---
 
-### Task 6.1: Create Collaborator API Service ⏳ NOT STARTED
+### Task 6.1: Create Collaborator API Service ✅ COMPLETED
 **Effort**: 2 hours
 **Risk**: Low
 **Description**: Implement collaborator endpoints using RESTful conventions
@@ -1345,13 +1345,18 @@ class CollaboratorApiService(
 - Can fetch collaborators list for a budget
 - Proper error handling (user not found, etc.)
 
+**Completion Notes**:
+- ✅ Added `CollaboratorApiService` with RESTful POST/GET endpoints in `composeApp/src/commonMain/kotlin/com/meneses/budgethunter/collaborator/data/network/CollaboratorApiService.kt`
+- ✅ Wrapped requests in `Result` with detailed logging and error propagation for diagnostics
+- ✅ Service uses `AuthHttpClient` and IO dispatcher via dependency injection
+
 **Rollback**: Delete service file
 
 **Dependencies**: Task 1.4
 
 ---
 
-### Task 6.2: Create Collaborator Repository
+### Task 6.2: Create Collaborator Repository ✅ COMPLETED
 **Effort**: 1.5 hours
 **Risk**: Low
 **Description**: Repository layer for collaborator operations
@@ -1371,13 +1376,18 @@ class CollaboratorRepository(
 - Repository methods work correctly
 - Errors propagated properly
 
+**Completion Notes**:
+- ✅ Implemented `CollaboratorRepository` in `composeApp/src/commonMain/kotlin/com/meneses/budgethunter/collaborator/data/CollaboratorRepository.kt`
+- ✅ Repository maps simple add/get calls to the API service and wraps request construction for the add flow
+- ✅ Uses IO dispatcher and returns results unchanged so failures surface to the ViewModel
+
 **Rollback**: Delete repository
 
 **Dependencies**: Task 6.1
 
 ---
 
-### Task 6.3: Create Collaborators Screen
+### Task 6.3: Create Collaborators Screen ✅ COMPLETED
 **Effort**: 3 hours
 **Risk**: Low
 **Description**: New screen to view and add collaborators for a budget
@@ -1395,13 +1405,19 @@ class CollaboratorRepository(
 - Collaborator list updates
 - Error shown for invalid email
 
+**Completion Notes**:
+- ✅ Added `CollaboratorsScreen` composable with list/empty/loading states and add-collaborator FAB in `composeApp/src/commonMain/kotlin/com/meneses/budgethunter/collaborator/ui/CollaboratorsScreen.kt`
+- ✅ Created MVI scaffolding (`CollaboratorsState`, events, and `CollaboratorsViewModel`) to drive the screen and handle network interactions
+- ✅ ViewModel reloads collaborators after successful additions and surfaces success/error messages via Snackbar
+- ✅ Route uses serialized args so navigation can supply budget name and server ID
+
 **Rollback**: Delete screen file
 
 **Dependencies**: Task 6.2
 
 ---
 
-### Task 6.4: Add Navigation to Collaborators Screen
+### Task 6.4: Add Navigation to Collaborators Screen ✅ COMPLETED
 **Effort**: 1 hour
 **Risk**: Low
 **Description**: Add navigation from budget detail to collaborators screen
@@ -1415,13 +1431,19 @@ class CollaboratorRepository(
 - Navigation works correctly
 - Can navigate back
 
+**Completion Notes**:
+- ✅ Added "Manage Collaborators" action button and menu entry on BudgetDetail screen gated by `serverId`
+- ✅ Wired new navigation route `CollaboratorsScreen` from budget detail via top-right menu and inline CTA
+- ✅ Injected `CollaboratorsViewModel` with budgetId parameter and hooked into existing NavHost (common + Android)
+- ✅ UI uses Snackbar feedback from collaborators flow and returns via back stack
+
 **Rollback**: Remove button and route
 
 **Dependencies**: Task 6.3
 
 ---
 
-### Task 6.5: Create Collaborator Koin Module
+### Task 6.5: Create Collaborator Koin Module ✅ COMPLETED
 **Effort**: 0.5 hours
 **Risk**: Low
 **Description**: Wire up collaborator dependencies
@@ -1431,6 +1453,11 @@ class CollaboratorRepository(
 **Validation**:
 - Module loads without errors
 - Dependencies resolve correctly
+
+**Completion Notes**:
+- ✅ Added dedicated `collaboratorModule` with API service, repository, and parameterized viewmodel factory
+- ✅ Registered module in `KoinInitializer` so collaborator flows resolve on startup
+- ✅ Android navigation updated to request the viewmodel with parameters via Koin
 
 **Rollback**: Remove module from KoinInitializer
 

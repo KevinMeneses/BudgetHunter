@@ -37,10 +37,13 @@ data class BudgetDetailScreen(val budget: Budget) {
         goBack: () -> Unit,
         showBudgetEntry: (BudgetEntry) -> Unit,
         showBudgetMetrics: (Budget) -> Unit,
-        showSettings: () -> Unit
+        showSettings: () -> Unit,
+        showCollaborators: (Long, String) -> Unit
     ) {
         val snackBarHostState = remember { SnackbarHostState() }
         var dropdownExpanded by remember { mutableStateOf(false) }
+        val currentBudget = uiState.budgetDetail.budget
+        val isBudgetSynced = currentBudget.serverId != null
 
         DisposableEffect(Unit) {
             if (uiState.budgetDetail.budget.id != budget.id) {
@@ -63,7 +66,7 @@ data class BudgetDetailScreen(val budget: Budget) {
         Scaffold(
             topBar = {
                 AppBar(
-                    title = uiState.budgetDetail.budget.name,
+                    title = currentBudget.name,
                     leftButtonIcon = Icons.AutoMirrored.Filled.ArrowBack,
                     leftButtonDescription = stringResource(Res.string.back_content_description),
                     secondRightButtonIcon = Icons.Default.Add,
@@ -72,7 +75,7 @@ data class BudgetDetailScreen(val budget: Budget) {
                     rightButtonDescription = stringResource(Res.string.open_menu),
                     onLeftButtonClick = goBack,
                     onSecondRightButtonClick = {
-                        val budgetEntry = BudgetEntry(budgetId = uiState.budgetDetail.budget.id)
+                        val budgetEntry = BudgetEntry(budgetId = currentBudget.id)
                         BudgetDetailEvent
                             .ShowEntry(budgetEntry)
                             .run(onEvent)
@@ -90,13 +93,19 @@ data class BudgetDetailScreen(val budget: Budget) {
                                     .ToggleFilterModal(true)
                                     .run(onEvent)
                             },
-                            onMetricsClick = { showBudgetMetrics(budget) },
+                            onMetricsClick = { showBudgetMetrics(currentBudget) },
                             onDeleteClick = {
                                 BudgetDetailEvent
                                     .ToggleDeleteBudgetModal(true)
                                     .run(onEvent)
                             },
-                            onSettingsClick = showSettings
+                            onSettingsClick = showSettings,
+                            showCollaboratorsOption = isBudgetSynced,
+                            onCollaboratorsClick = {
+                                currentBudget.serverId?.let { serverId ->
+                                    showCollaborators(serverId, currentBudget.name)
+                                }
+                            }
                         )
                     }
                 )
@@ -114,7 +123,7 @@ data class BudgetDetailScreen(val budget: Budget) {
 
         BudgetModal(
             show = uiState.isBudgetModalVisible,
-            budgetAmount = uiState.budgetDetail.budget.amount,
+            budgetAmount = currentBudget.amount,
             onEvent = onEvent
         )
 

@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
@@ -18,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import budgethunter.composeapp.generated.resources.Res
 import budgethunter.composeapp.generated.resources.delete_budget
 import budgethunter.composeapp.generated.resources.filter
+import budgethunter.composeapp.generated.resources.manage_collaborators
 import budgethunter.composeapp.generated.resources.metrics
 import budgethunter.composeapp.generated.resources.settings
 import com.meneses.budgethunter.theme.AppColors
@@ -30,7 +32,9 @@ fun BudgetDetailMenu(
     onFilterClick: () -> Unit,
     onMetricsClick: () -> Unit,
     onDeleteClick: () -> Unit,
-    onSettingsClick: () -> Unit
+    onSettingsClick: () -> Unit,
+    showCollaboratorsOption: Boolean,
+    onCollaboratorsClick: () -> Unit
 ) {
     DropdownMenu(
         expanded = expanded,
@@ -58,6 +62,29 @@ fun BudgetDetailMenu(
                 )
             }
         )
+        if (showCollaboratorsOption) {
+            DropdownMenuItem(
+                text = {
+                    Text(
+                        text = stringResource(Res.string.manage_collaborators),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                },
+                onClick = {
+                    onDismiss()
+                    onCollaboratorsClick()
+                },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Group,
+                        contentDescription = stringResource(Res.string.manage_collaborators),
+                        modifier = Modifier.size(18.dp),
+                        tint = AppColors.secondary
+                    )
+                }
+            )
+        }
+
         DropdownMenuItem(
             text = {
                 Text(
