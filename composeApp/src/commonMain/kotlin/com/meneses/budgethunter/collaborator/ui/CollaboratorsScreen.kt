@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -22,6 +23,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -118,7 +120,8 @@ data class CollaboratorsScreen(
         ) { paddingValues ->
             CollaboratorsContent(
                 paddingValues = paddingValues,
-                uiState = uiState
+                uiState = uiState,
+                onEvent = onEvent
             )
         }
 
@@ -132,6 +135,18 @@ data class CollaboratorsScreen(
                 }
             )
         }
+
+        // Remove Collaborator Confirmation Dialog
+        uiState.removeConfirmationEmail?.let { emailToRemove ->
+            RemoveCollaboratorConfirmationDialog(
+                email = emailToRemove,
+                isLoading = uiState.isRemovingCollaborator,
+                onDismiss = { CollaboratorsEvent.ToggleRemoveConfirmationDialog(null).run(onEvent) },
+                onConfirm = {
+                    CollaboratorsEvent.RemoveCollaborator(emailToRemove).run(onEvent)
+                }
+            )
+        }
     }
 }
 
@@ -141,7 +156,8 @@ data class CollaboratorsScreen(
 @Composable
 private fun CollaboratorsContent(
     paddingValues: PaddingValues,
-    uiState: CollaboratorsState
+    uiState: CollaboratorsState,
+    onEvent: (CollaboratorsEvent) -> Unit
 ) {
     Box(
         modifier = Modifier
@@ -187,7 +203,12 @@ private fun CollaboratorsContent(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(uiState.collaborators) { collaborator ->
-                        CollaboratorCard(collaborator)
+                        CollaboratorCard(
+                            collaborator = collaborator,
+                            onRemoveClick = {
+                                CollaboratorsEvent.ToggleRemoveConfirmationDialog(collaborator.email).run(onEvent)
+                            }
+                        )
                     }
                 }
             }
@@ -199,7 +220,10 @@ private fun CollaboratorsContent(
  * Card displaying a single collaborator's information.
  */
 @Composable
-private fun CollaboratorCard(collaborator: UserInfo) {
+private fun CollaboratorCard(
+    collaborator: UserInfo,
+    onRemoveClick: () -> Unit
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -226,6 +250,16 @@ private fun CollaboratorCard(collaborator: UserInfo) {
                     text = collaborator.email,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            IconButton(
+                onClick = onRemoveClick,
+                modifier = Modifier.padding(end = 0.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = "Remove collaborator",
+                    tint = MaterialTheme.colorScheme.error
                 )
             }
         }
@@ -274,6 +308,53 @@ private fun AddCollaboratorDialog(
                     )
                 }
                 Text(if (isLoading) "Adding..." else "Add")
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                enabled = !isLoading
+            ) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+/**
+ * Confirmation dialog for removing a collaborator.
+ */
+@Composable
+private fun RemoveCollaboratorConfirmationDialog(
+    email: String,
+    isLoading: Boolean,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = { if (!isLoading) onDismiss() },
+        title = { Text("Remove Collaborator") },
+        text = {
+            Text(
+                text = "Are you sure you want to remove $email from the collaborators? They will no longer have access to this budget.",
+                style = MaterialTheme.typography.bodyMedium
+            )
+        },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                enabled = !isLoading,
+                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.error
+                )
+            ) {
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.padding(end = 8.dp),
+                        color = MaterialTheme.colorScheme.onError
+                    )
+                }
+                Text(if (isLoading) "Removing..." else "Remove")
             }
         },
         dismissButton = {

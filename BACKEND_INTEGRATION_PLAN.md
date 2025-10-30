@@ -31,18 +31,23 @@
 - **Phase 2: Authentication System** - 100% Complete (9/9 tasks)
 - **Phase 3: Database Migration** - 100% Complete (3/3 tasks)
 - **Phase 4: Budget Sync Implementation** - 100% Complete (7/7 tasks, 1 skipped optional)
+- **Phase 5: Budget Entry Sync Implementation** - 100% Complete (5/5 tasks)
+- **Phase 6: Collaborator Management** - 100% Complete (6/6 tasks)
 
 ### 🔄 CURRENT STATE
-The app now has **fully functional budget synchronization** with:
+The app now has **fully functional budget synchronization and collaborator management** with:
 - ✅ User authentication (sign-up, sign-in, token storage)
 - ✅ Auto-sync after sign-in (budgets appear automatically)
 - ✅ Budget CRUD API service with **RESTful endpoints** (POST/GET `/api/budgets`)
 - ✅ Budget sync manager (push/pull/full sync)
 - ✅ Automatic background sync on budget create/update
 - ✅ Pull-to-refresh manual sync UI
+- ✅ Budget entry sync with creator/updater tracking
 - ✅ Database schema with sync fields (server_id, is_synced, timestamps)
 - ✅ Working end-to-end budget sync (local ↔ server)
-- ✅ **UPDATED 2025-10-25**: Migrated to RESTful API conventions following backend refactoring
+- ✅ Budget entry sync with manual refresh and auto-sync on create/update
+- ✅ Collaborator management: add, view, and remove collaborators
+- ✅ **UPDATED 2025-10-28**: Completed Phase 6 with full collaborator removal functionality
 
 ### ⚠️ IMPORTANT ARCHITECTURAL DECISIONS MADE
 1. **Use Cases Skipped**: ViewModels call repositories directly (matches existing app pattern)
@@ -55,16 +60,16 @@ The app now has **fully functional budget synchronization** with:
 
 ### ⏭️ NEXT IMMEDIATE STEPS (Priority Order)
 1. **Phase 9: Error Handling & Offline Support** - Harden sync flows and add offline UX (10 hours) **← RECOMMENDED NEXT**
-2. **Phase 6: Collaborator Management** - Budget sharing (8 hours)
-3. **Phase 7: Real-time Updates (SSE)** - Live entry updates (6 hours)
+2. **Phase 7: Real-time Updates (SSE)** - Live entry updates from collaborators (9.5 hours)
+3. **Phase 8: Authentication Enforcement & Migration** - Data migration for existing users (10 hours, optional)
 
 ### 📊 PROGRESS METRICS
 - **Total Phases**: 11
-- **Completed Phases**: 5 (45%)
-- **In Progress**: None - ready for Phase 6
+- **Completed Phases**: 6 (55%)
+- **In Progress**: None - ready for Phase 7
 - **Total Tasks**: ~72 (added Task 2.8 and 2.9)
-- **Completed Tasks**: ~30 (42%)
-- **Estimated Remaining Time**: ~66 hours (~1.6 weeks)
+- **Completed Tasks**: 41 (57%)
+- **Estimated Remaining Time**: ~50 hours (~1.25 weeks)
 
 ### 🚨 CRITICAL GAPS & RISKS
 1. ~~**No Database Schema Changes Yet**~~ ✅ - Budget/BudgetEntry tables now have sync fields
@@ -72,10 +77,10 @@ The app now has **fully functional budget synchronization** with:
 3. ~~**No Budget Sync Logic**~~ ✅ - Budget sync working end-to-end
 4. ~~**User Data Isolation**~~ ✅ - Sign out now clears all local data (Task 2.8 complete)
 5. ~~**No Budget Entry Sync**~~ ✅ - Entry sync with manual refresh now live (Phase 5 complete)
-6. **Hardcoded Backend URL** - Not configurable per environment (Task 10.7)
-7. **No Offline Support** - Network errors not handled gracefully (Phase 9)
-8. **No Real-time Updates** - SSE not implemented (Phase 7)
-9. **No Collaborator Management** - Can't share budgets yet (Phase 6)
+6. ~~**No Collaborator Management**~~ ✅ - Full collaborator add/remove functionality complete (Phase 6)
+7. **Hardcoded Backend URL** - Not configurable per environment (Task 10.7)
+8. **No Offline Support** - Network errors not handled gracefully (Phase 9) **← HIGHEST PRIORITY**
+9. **No Real-time Updates** - SSE not implemented (Phase 7)
 10. **Token Refresh Not Automatic** - Auth plugin refresh logic incomplete (Task 9.5)
 
 ---
@@ -1303,12 +1308,23 @@ suspend fun delete(entry: BudgetEntry) = withContext(ioDispatcher) {
 
 ---
 
-## PHASE 6: COLLABORATOR MANAGEMENT (MEDIUM RISK) ⏳ NOT STARTED
+## PHASE 6: COLLABORATOR MANAGEMENT (MEDIUM RISK) ✅ 100% COMPLETE (6/6)
 
 ### 📋 PHASE 6 OVERVIEW
-**Status**: NOT STARTED
-**Dependencies**: Phase 4 and Phase 5 must be completed first
+**Status**: COMPLETE (Tasks 6.1-6.6 delivered)
+**Dependencies**: Phase 4 and Phase 5 completed ✅
 **Description**: Add ability to share budgets and collaborate with other users
+
+**What This Phase Delivers**:
+- ✅ CollaboratorApiService for add/get/remove operations (with correct endpoints)
+- ✅ CollaboratorRepository for data coordination
+- ✅ Collaborators screen with MVI architecture
+- ✅ Add collaborator functionality with email input dialog
+- ✅ View all collaborators for a budget
+- ✅ Remove collaborator with confirmation dialog
+- ✅ Complete UI integration with Material3 design
+
+**Current Status**: Collaborator management is **fully complete and functional**. Users can now add and remove collaborators from synced budgets with proper error handling and UX feedback.
 
 ---
 
@@ -1465,55 +1481,38 @@ class CollaboratorRepository(
 
 ---
 
-### Task 6.6: Add Remove Collaborator API ⏳ NOT STARTED
+### Task 6.6: Add Remove Collaborator API ✅ COMPLETED
 **Effort**: 1 hour
 **Risk**: Low
 **Description**: Add remove collaborator endpoint to CollaboratorApiService and integrate with UI
 
-**Deliverable**: Update `/composeApp/src/commonMain/kotlin/com/meneses/budgethunter/collaborator/data/network/CollaboratorApiService.kt`:
-```kotlin
-class CollaboratorApiService(
-    private val httpClient: HttpClient,
-    private val ioDispatcher: CoroutineDispatcher
-) {
-    // ... existing methods ...
+**Completion Notes**:
+- ✅ Added `removeCollaborator()` to CollaboratorApiService with RESTful DELETE endpoint
+- ✅ Implemented email URL encoding using `encodeURLPath()` for special characters
+- ✅ Updated CollaboratorRepository with `removeCollaborator()` method
+- ✅ Added `RemoveCollaborator` and `ToggleRemoveConfirmationDialog` events to CollaboratorsEvent
+- ✅ Extended CollaboratorsState with `isRemovingCollaborator` and `removeConfirmationEmail` fields
+- ✅ Implemented removal handlers in CollaboratorsViewModel with proper state management
+- ✅ Added red delete button (IconButton with Delete icon) to each CollaboratorCard
+- ✅ Created `RemoveCollaboratorConfirmationDialog` composable for user confirmation
+- ✅ Integrated removal dialog and delete buttons into CollaboratorsScreen
+- ✅ Auto-reload collaborators list after successful removal
+- ✅ Proper error handling and success messages via snackbar
+- ✅ Loading states during removal operation
+- ✅ Follows Material3 design with error colors for delete action
+- ✅ Build verification passed with no syntax errors
 
-    // DELETE /api/budgets/{budgetId}/collaborators/{email}
-    suspend fun removeCollaborator(budgetId: Long, email: String): Result<Unit>
-}
-```
+**RESTful Endpoint**: `DELETE /api/budgets/{budgetId}/collaborators/{email}`
 
-Update CollaboratorRepository:
-```kotlin
-suspend fun removeCollaborator(budgetServerId: Long, email: String): Result<Unit> =
-    withContext(ioDispatcher) {
-        collaboratorApiService.removeCollaborator(budgetServerId, email)
-    }
-```
+**UI Flow**:
+1. User clicks red delete button on collaborator card
+2. Confirmation dialog appears asking for confirmation
+3. User clicks "Remove" button in dialog
+4. API request sent with URL-encoded email
+5. Collaborator list refreshes on success
+6. Error message shown if removal fails
 
-**Implementation Notes**:
-- Email is URL-encoded in the path parameter
-- Only the budget owner or the collaborator themselves can remove a collaborator
-- Cannot remove the last collaborator from a budget
-- Returns 204 No Content on success
-
-**UI Integration**:
-- Add delete/remove button next to each collaborator in the collaborators list
-- Show confirmation dialog before removing
-- Update collaborator list after successful removal
-- Show error message if removal fails (e.g., last collaborator)
-
-**Validation**:
-- ✅ Can remove collaborator from synced budget
-- ✅ Confirmation dialog appears before removal
-- ✅ Collaborator list updates after removal
-- ✅ Error handling for "cannot remove last collaborator"
-- ✅ Error handling for permission denied
-- ✅ Email is properly URL-encoded in request
-
-**Rollback**: Remove delete method from service and repository
-
-**Dependencies**: Task 6.1, Task 6.2
+**Dependencies**: Task 6.1 ✅, Task 6.2 ✅
 
 ---
 
@@ -2273,28 +2272,30 @@ Advanced features and polish:
 **Completed:**
 - Phase 1: 10.5 hours ✅ (100% complete)
 - Phase 2: 16 hours ✅ (skipped 2.5 hours for use cases)
+- Phase 3: 5.5 hours ✅ (100% complete)
+- Phase 4: 15.5 hours ✅ (100% complete, 1 task skipped - optional)
+- Phase 5: 13 hours ✅ (100% complete)
+- Phase 6: 8 hours ✅ (100% complete)
+**TOTAL COMPLETED**: ~68.5 hours (55%)
 
 **Remaining:**
-- Phase 3: 5.5 hours ⏳
-- Phase 4: 15.5 hours ⏳
-- Phase 5: 13 hours ⏳
-- Phase 6: 8 hours ⏳
 - Phase 7: 9.5 hours ⏳
 - Phase 8: 10 hours ⚠️ (partially addressed, migration tasks remaining)
 - Phase 9: 10 hours ⏳ (critical for production)
 - Phase 10: 18 hours ⏳
 - Phase 11: 6 hours ⏳
+**TOTAL REMAINING**: ~53.5 hours (45%)
 
 **TOTAL ORIGINAL ESTIMATE**: ~125 hours (~3 weeks for one developer)
-**COMPLETED SO FAR**: ~26.5 hours (21%)
-**REMAINING WORK**: ~98.5 hours (~2.5 weeks)
+**COMPLETED SO FAR**: ~68.5 hours (55%)
+**REMAINING WORK**: ~53.5 hours (~1.3 weeks)
 
-**REALISTIC MVP ESTIMATE** (excluding optional features):
-- Core sync functionality: ~53 hours (Phases 3, 4, 5)
+**PRODUCTION-READY MVP ESTIMATE** (excluding optional SSE real-time updates):
+- Core sync functionality: ✅ Complete (Phases 3, 4, 5, 6)
 - Error handling & offline support: ~10 hours (Phase 9)
 - Basic testing: ~10 hours (Phase 10 subset)
 - Configuration: ~1 hour (Task 10.7)
-**MVP TOTAL**: ~74 hours from current state (~2 weeks with focus)
+**MVP REMAINING**: ~21 hours (~0.5 weeks with focus) **← Next target**
 
 ### Success Metrics & Current Status
 

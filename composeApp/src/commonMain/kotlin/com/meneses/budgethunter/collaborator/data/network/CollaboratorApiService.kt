@@ -5,11 +5,13 @@ import com.meneses.budgethunter.commons.data.network.models.CollaboratorResponse
 import com.meneses.budgethunter.commons.data.network.models.UserInfo
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
+import io.ktor.http.encodeURLPath
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 
@@ -72,4 +74,31 @@ class CollaboratorApiService(
                 Result.failure(Exception("Failed to fetch collaborators: ${e.message}", e))
             }
         }
+
+    /**
+     * Removes a collaborator from a budget.
+     *
+     * RESTful endpoint: DELETE /api/budgets/{budgetId}/collaborators/{email}
+     *
+     * @param budgetId Server-side budget ID (passed in URL path)
+     * @param email Email address of the collaborator to remove (URL-encoded in path)
+     * @return Result containing success or error
+     */
+    suspend fun removeCollaborator(
+        budgetId: Long,
+        email: String
+    ): Result<Unit> = withContext(ioDispatcher) {
+        try {
+            println("CollaboratorApiService: Removing collaborator $email from budget $budgetId")
+            val encodedEmail = email.encodeURLPath()
+            httpClient.delete("/api/budgets/$budgetId/collaborators/$encodedEmail")
+            println("CollaboratorApiService: Successfully removed collaborator: $email")
+            Result.success(Unit)
+        } catch (e: Exception) {
+            println("CollaboratorApiService: Error removing collaborator - ${e.message}")
+            println("CollaboratorApiService: Error type: ${e::class.simpleName}")
+            e.printStackTrace()
+            Result.failure(Exception("Failed to remove collaborator from budget: ${e.message}", e))
+        }
+    }
 }

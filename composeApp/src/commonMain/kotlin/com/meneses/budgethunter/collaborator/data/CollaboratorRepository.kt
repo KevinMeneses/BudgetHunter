@@ -43,4 +43,18 @@ class CollaboratorRepository(
         withContext(ioDispatcher) {
             collaboratorApiService.getCollaborators(budgetServerId)
         }
+
+    /**
+     * Removes a collaborator from a budget by their email address.
+     *
+     * @param budgetServerId Server-side budget ID
+     * @param email Email address of the collaborator to remove
+     * @return Result containing success or error
+     */
+    suspend fun removeCollaborator(
+        budgetServerId: Long,
+        email: String
+    ): Result<Unit> = withContext(ioDispatcher) {
+        collaboratorApiService.removeCollaborator(budgetServerId, email)
+    }
 }

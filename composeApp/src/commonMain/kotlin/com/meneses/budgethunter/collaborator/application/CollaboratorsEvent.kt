@@ -24,6 +24,20 @@ sealed interface CollaboratorsEvent {
     data class AddCollaborator(val email: String) : CollaboratorsEvent
 
     /**
+     * Request removal of a collaborator from the budget.
+     *
+     * @property email Email address of the collaborator to remove
+     */
+    data class RemoveCollaborator(val email: String) : CollaboratorsEvent
+
+    /**
+     * Show or hide the remove collaborator confirmation dialog.
+     *
+     * @property email Email address of the collaborator to potentially remove (null to hide dialog)
+     */
+    data class ToggleRemoveConfirmationDialog(val email: String?) : CollaboratorsEvent
+
+    /**
      * Clear any error or success messages.
      */
     data object ClearMessages : CollaboratorsEvent

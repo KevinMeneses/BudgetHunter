@@ -35,6 +35,8 @@ class CollaboratorsViewModel(
             is CollaboratorsEvent.LoadCollaborators -> loadCollaborators()
             is CollaboratorsEvent.ToggleAddCollaboratorDialog -> toggleAddCollaboratorDialog(event.show)
             is CollaboratorsEvent.AddCollaborator -> addCollaborator(event.email)
+            is CollaboratorsEvent.RemoveCollaborator -> removeCollaborator(event.email)
+            is CollaboratorsEvent.ToggleRemoveConfirmationDialog -> toggleRemoveConfirmationDialog(event.email)
             is CollaboratorsEvent.ClearMessages -> clearMessages()
         }
     }
@@ -112,6 +114,47 @@ class CollaboratorsViewModel(
                         it.copy(
                             isAddingCollaborator = false,
                             errorMessage = error.message ?: "Failed to add collaborator"
+                        )
+                    }
+                }
+        }
+    }
+
+    /**
+     * Shows or hides the remove collaborator confirmation dialog.
+     *
+     * @param email Email of the collaborator to potentially remove (null to hide dialog)
+     */
+    private fun toggleRemoveConfirmationDialog(email: String?) {
+        _uiState.update { it.copy(removeConfirmationEmail = email) }
+    }
+
+    /**
+     * Removes a collaborator from the budget.
+     *
+     * @param email Email address of the collaborator to remove
+     */
+    private fun removeCollaborator(email: String) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isRemovingCollaborator = true, errorMessage = null) }
+
+            collaboratorRepository.removeCollaborator(budgetServerId, email)
+                .onSuccess {
+                    _uiState.update {
+                        it.copy(
+                            isRemovingCollaborator = false,
+                            removeConfirmationEmail = null,
+                            successMessage = "Successfully removed $email from collaborators"
+                        )
+                    }
+                    // Reload collaborators to reflect the removal
+                    loadCollaborators()
+                }
+                .onFailure { error ->
+                    _uiState.update {
+                        it.copy(
+                            isRemovingCollaborator = false,
+                            errorMessage = error.message ?: "Failed to remove collaborator"
                         )
                     }
                 }
