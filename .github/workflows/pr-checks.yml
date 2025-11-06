@@ -56,17 +56,3 @@ jobs:
         uses: gradle/gradle-build-action@v2
       - name: Execute Unit Tests
         run: ./gradlew :app:testDebugUnitTest
-      - name: Generate Code Coverage Report
-        run: ./gradlew :app:testDebugUnitTestCoverage
-      - name: Upload Test Report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-report
-          path: composeApp/build/test-results/
-      - name: Upload Coverage Report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: composeApp/build/reports/jacoco/testDebugUnitTestCoverage/
