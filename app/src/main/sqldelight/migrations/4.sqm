@@ -1,1 +1,0 @@
-UPDATE budget SET date = date(date) WHERE date IS NOT NULL;
