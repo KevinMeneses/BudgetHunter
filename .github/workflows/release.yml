@@ -17,7 +17,7 @@ jobs:
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
       - name: Execute Ktlint Check
-        run: ./gradlew ktlint
+        run: ./gradlew ktlintCheck
       - name: Execute Lint Check
         run: ./gradlew lint
       - name: Upload Lint Report
