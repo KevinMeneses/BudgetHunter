@@ -15,6 +15,5 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "BudgetHunter"
-include ':app'
 include ':composeApp'
 // Note: iosApp is managed by Xcode, not Gradle

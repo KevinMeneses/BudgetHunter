@@ -1,3 +1,0 @@
-ALTER TABLE budget ADD COLUMN date TEXT;
-
-UPDATE budget SET date = datetime('now') WHERE date IS NULL;

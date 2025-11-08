@@ -12,6 +12,7 @@ plugins {
     alias(libs.plugins.ksp)
     id("kotlin-parcelize")
     alias(libs.plugins.jacoco)
+    alias(libs.plugins.ktlint)
 }
 
 kotlin {
@@ -232,4 +233,13 @@ tasks.register<JacocoReport>("testDebugUnitTestCoverage") {
     sourceDirectories.setFrom(files(coverageSourceDirs))
     classDirectories.setFrom(classFilesTree)
     executionData.setFrom(file("$buildDir/jacoco/testDebugUnitTest.exec"))
+}
+
+// Ktlint configuration
+configure<org.jlleitschuh.gradle.ktlint.KtlintExtension> {
+    version.set("0.49.1")
+    filter {
+        exclude("**/generated/**")
+        exclude("**/build/**")
+    }
 }

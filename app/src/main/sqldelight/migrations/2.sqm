@@ -1,4 +1,0 @@
-ALTER TABLE budget_entry ADD COLUMN category TEXT;
-
-UPDATE budget_entry
-SET category = 'OTHER';
