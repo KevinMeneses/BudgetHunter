@@ -21,7 +21,7 @@ class AndroidNotificationManager(
     override fun showToast(message: String) {
         Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
     }
-    
+
     override fun showNotification(title: String, message: String) {
         // Check if we have notification permission (Android 13+)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -64,7 +64,7 @@ class AndroidNotificationManager(
             showToast("$title: $message")
         }
     }
-    
+
     private fun createNotificationChannel() {
         val channel = NotificationChannel(
             CHANNEL_ID,
@@ -76,7 +76,7 @@ class AndroidNotificationManager(
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as AndroidNotificationManager
         notificationManager.createNotificationChannel(channel)
     }
-    
+
     companion object {
         private const val CHANNEL_ID = "sms_transactions"
         private const val INFO_NOTIFICATION_ID = 1002

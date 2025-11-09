@@ -12,7 +12,7 @@ import platform.UIKit.UIViewController
 fun MainViewController(): UIViewController {
     // Initialize Koin for iOS
     initKoin(iosPlatformModule)
-    
+
     return ComposeUIViewController {
         BudgetHunterApp()
     }

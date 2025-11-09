@@ -35,10 +35,10 @@ import platform.Foundation.NSUserDomainMask
 
 val iosPlatformModule = module {
     // Provide the database using iOS-specific factory
-    single<Database> { 
+    single<Database> {
         DatabaseFactory().createDatabase()
     }
-    
+
     single<DataStore<Preferences>> {
         @OptIn(ExperimentalForeignApi::class)
         PreferenceDataStoreFactory.createWithPath(
@@ -56,7 +56,7 @@ val iosPlatformModule = module {
             }
         )
     }
-    
+
     // Platform-specific managers
     single<FileManager> { FileManager() }
     single<CameraManager> { IOSBridge.cameraManager }
@@ -65,7 +65,7 @@ val iosPlatformModule = module {
     single<AppUpdateManager> { AppUpdateManager() }
     single<NotificationManager> { IOSBridge.notificationManager }
     single<ShareManager> { IOSBridge.shareManager }
-    
+
     single<ImageProcessor> {
         ImageProcessor()
     }

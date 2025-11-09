@@ -39,18 +39,18 @@ fun EmptyStatePlaceholder(
             modifier = Modifier.size(80.dp),
             tint = AppColors.onSurfaceVariant.copy(alpha = 0.6f)
         )
-        
+
         Spacer(modifier = Modifier.height(16.dp))
-        
+
         Text(
             text = title,
             style = MaterialTheme.typography.titleMedium,
             color = AppColors.onSurfaceVariant,
             textAlign = TextAlign.Center
         )
-        
+
         Spacer(modifier = Modifier.height(8.dp))
-        
+
         Text(
             text = subtitle,
             style = MaterialTheme.typography.bodyMedium,

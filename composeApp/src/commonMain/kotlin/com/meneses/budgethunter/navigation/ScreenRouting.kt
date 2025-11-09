@@ -37,7 +37,7 @@ fun BudgetHunterNavigation() {
         color = MaterialTheme.colorScheme.background
     ) {
         val navController = rememberNavController()
-        
+
         NavHost(
             navController = navController,
             startDestination = SplashScreen
@@ -45,7 +45,7 @@ fun BudgetHunterNavigation() {
             composable<SplashScreen> {
                 val splashScreenViewModel: SplashScreenViewModel = koinInject()
                 val uiState by splashScreenViewModel.uiState.collectAsStateWithLifecycle()
-                
+
                 SplashScreen.Show(
                     uiState = uiState,
                     onEvent = splashScreenViewModel::sendEvent,

@@ -1,9 +1,9 @@
 package com.meneses.budgethunter.commons.platform
 
-import io.ktor.client.*
-import io.ktor.client.engine.darwin.*
-import io.ktor.client.request.*
-import io.ktor.client.statement.*
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.darwin.Darwin
+import io.ktor.client.request.get
+import io.ktor.client.statement.bodyAsText
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

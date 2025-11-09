@@ -20,11 +20,11 @@ interface AppUpdateLauncherDelegate {
 actual class AppUpdateManager(
     private val context: Context
 ) {
-    
+
     private var googleAppUpdateManager: GoogleAppUpdateManager? = null
     private var launcherDelegate: AppUpdateLauncherDelegate? = null
     private var currentCallback: ((AppUpdateResult) -> Unit)? = null
-    
+
     private val installStatusListener = InstallStateUpdatedListener { installState ->
         when (installState.installStatus()) {
             InstallStatus.DOWNLOADED -> googleAppUpdateManager?.completeUpdate()
@@ -34,18 +34,18 @@ actual class AppUpdateManager(
             else -> Unit
         }
     }
-    
+
     fun setLauncherDelegate(delegate: AppUpdateLauncherDelegate) {
         this.launcherDelegate = delegate
     }
-    
+
     actual fun checkForUpdates(onResult: (AppUpdateResult) -> Unit) {
         currentCallback = onResult
         googleAppUpdateManager = AppUpdateManagerFactory.create(context)
         val updateInfoTask = googleAppUpdateManager!!.appUpdateInfo
         updateInfoTask.handleUpdateInfo()
     }
-    
+
     private fun Task<AppUpdateInfo>.handleUpdateInfo() {
         addOnSuccessListener { updateInfo ->
             when (updateInfo.updateAvailability()) {
@@ -63,12 +63,12 @@ actual class AppUpdateManager(
                 }
             }
         }
-        
+
         addOnFailureListener {
             currentCallback?.invoke(AppUpdateResult.UpdateFailed)
         }
     }
-    
+
     private fun startUpdate(updateInfo: AppUpdateInfo) {
         val manager = googleAppUpdateManager ?: return
         manager.registerListener(installStatusListener)
@@ -78,12 +78,12 @@ actual class AppUpdateManager(
             REQUEST_CODE_UPDATE_APP
         )
     }
-    
+
     private fun finishUpdate() {
         googleAppUpdateManager?.unregisterListener(installStatusListener)
         currentCallback?.invoke(AppUpdateResult.NoUpdateAvailable)
     }
-    
+
     companion object {
         const val REQUEST_CODE_UPDATE_APP = 10
     }

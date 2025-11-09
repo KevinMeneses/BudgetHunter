@@ -19,7 +19,7 @@ import com.meneses.budgethunter.budgetEntry.domain.ImageData
 actual class ImageProcessor(
     private val contentResolver: ContentResolver
 ) {
-    
+
     actual fun getImageFromUri(imageData: ImageData): Any? {
         return try {
             if (imageData.isPdfFile()) {
@@ -38,7 +38,7 @@ actual class ImageProcessor(
             val uri = imageData.uri.toUri()
             val descriptor = contentResolver.openFileDescriptor(uri, "r")
                 ?: return null
-            
+
             getBitmapFromPDFFileDescriptor(descriptor)
         } catch (e: Exception) {
             println("Android PDF Processing Error: ${e.message}")
