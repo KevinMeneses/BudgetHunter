@@ -25,8 +25,9 @@ class AndroidNotificationManager(
     override fun showNotification(title: String, message: String) {
         // Check if we have notification permission (Android 13+)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
-                != PackageManager.PERMISSION_GRANTED) {
+            if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
+                PackageManager.PERMISSION_GRANTED
+            ) {
                 // Fall back to Toast if no permission
                 showToast("$title: $message")
                 return

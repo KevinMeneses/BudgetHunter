@@ -11,7 +11,7 @@ interface FilePickerLauncherDelegate {
 
 class AndroidFilePickerManager(
     private val context: Context
-): FilePickerManager {
+) : FilePickerManager {
 
     private var currentCallback: ((FileData?) -> Unit)? = null
     private var launcherDelegate: FilePickerLauncherDelegate? = null
