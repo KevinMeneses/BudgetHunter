@@ -132,11 +132,13 @@ android {
 
         val instrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         testInstrumentationRunner = instrumentationRunner
-        
+
+
         vectorDrawables {
             useSupportLibrary = true
         }
-        
+
+
         // Load API key from local.properties
         val props = Properties()
         val propsFile = rootProject.file("local.properties")
@@ -155,23 +157,27 @@ android {
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
-    
+
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    
+
+
     buildFeatures {
         compose = true
         buildConfig = true
     }
-    
+
+
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
-    
+
+
     testOptions {
         unitTests {
             isIncludeAndroidResources = true
@@ -207,18 +213,20 @@ tasks.register<JacocoReport>("testDebugUnitTestCoverage") {
         "src/commonMain/kotlin"
     )
 
-    val classFilesTree = fileTree(mapOf(
-        "dir" to "$buildDir/intermediates/javac/debug",
-        "includes" to listOf("**/*.class"),
-        "excludes" to listOf(
-            "**/R.class",
-            "**/R${'$'}.class",
-            "**/BuildConfig.*",
-            "**/Manifest*.*",
-            "**/*Test*.*",
-            "android/**/*.*"
+    val classFilesTree = fileTree(
+        mapOf(
+            "dir" to "$buildDir/intermediates/javac/debug",
+            "includes" to listOf("**/*.class"),
+            "excludes" to listOf(
+                "**/R.class",
+                "**/R${'$'}.class",
+                "**/BuildConfig.*",
+                "**/Manifest*.*",
+                "**/*Test*.*",
+                "android/**/*.*"
+            )
         )
-    ))
+    )
 
     reports {
         xml.required.set(true)
