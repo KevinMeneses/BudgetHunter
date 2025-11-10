@@ -17,14 +17,14 @@ class AndroidShareManager(
                 "${context.packageName}.provider",
                 file
             )
-            
+
             val shareIntent = Intent(Intent.ACTION_SEND).apply {
                 type = "*/*"
                 putExtra(Intent.EXTRA_STREAM, uri)
                 putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes)
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
-            
+
             val chooserIntent = Intent.createChooser(shareIntent, "Share File")
             chooserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             context.startActivity(chooserIntent)

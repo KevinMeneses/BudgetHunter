@@ -36,4 +36,3 @@ fun Uri.toFileData(contentResolver: ContentResolver, defaultDirectory: File): Fi
         directory = defaultDirectory.absolutePath
     )
 }
-

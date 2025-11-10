@@ -14,7 +14,7 @@ val budgetMetricsModule = module {
             defaultDispatcher = get<CoroutineDispatcher>(named("Default"))
         )
     }
-    
+
     factory {
         BudgetMetricsViewModel(
             getTotalsPerCategoryUseCase = get<GetTotalsPerCategoryUseCase>()

@@ -22,10 +22,10 @@ class BudgetLocalDataSource(
         .selectAll(::mapSelectAllToBudget)
         .asFlow()
         .mapToList(dispatcher)
-        .onEach { 
-            cacheMutex.withLock { 
-                cachedList = it 
-            } 
+        .onEach {
+            cacheMutex.withLock {
+                cachedList = it
+            }
         }
 
     suspend fun getAllCached(): List<Budget> = cacheMutex.withLock {

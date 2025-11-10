@@ -24,16 +24,16 @@ val budgetListModule = module {
 
     single<DuplicateBudgetUseCase> {
         DuplicateBudgetUseCase(
-            get<BudgetRepository>(), 
-            get<BudgetEntryRepository>(), 
+            get<BudgetRepository>(),
+            get<BudgetEntryRepository>(),
             get<CoroutineDispatcher>(named("Default"))
         )
     }
 
     single<DeleteBudgetUseCase> {
         DeleteBudgetUseCase(
-            get<BudgetLocalDataSource>(), 
-            get<BudgetEntryLocalDataSource>(), 
+            get<BudgetLocalDataSource>(),
+            get<BudgetEntryLocalDataSource>(),
             get<CoroutineDispatcher>(named("IO"))
         )
     }

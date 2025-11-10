@@ -50,86 +50,86 @@ object BudgetListScreen {
         var dropdownExpanded by remember { mutableStateOf(false) }
 
         Scaffold(
-                        topBar = {
-                            if (uiState.isSearchMode) {
-                                SearchAppBar(
-                                    searchQuery = uiState.searchQuery,
-                                    onSearchQueryChange = { query ->
-                                        BudgetListEvent
-                                            .UpdateSearchQuery(query)
-                                            .run(onEvent)
-                                    },
-                                    onBackClick = {
-                                        BudgetListEvent
-                                            .ToggleSearchMode(false)
-                                            .run(onEvent)
-                                    }
-                                )
-                            } else {
-                                AppBar(
-                                    title = stringResource(Res.string.budgets),
-                                    leftButtonIcon = Icons.Default.Search,
-                                    rightButtonIcon = Icons.Default.MoreVert,
-                                    leftButtonDescription = stringResource(Res.string.search),
-                                    rightButtonDescription = stringResource(Res.string.open_menu),
-                                    onLeftButtonClick = {
-                                        BudgetListEvent
-                                            .ToggleSearchMode(true)
-                                            .run(onEvent)
-                                    },
-                                    onRightButtonClick = {
-                                        dropdownExpanded = true
-                                    },
-                                    animateRightButton = uiState.filter != null,
-                                    rightButtonDropdownContent = {
-                                        BudgetListMenu(
-                                            expanded = dropdownExpanded,
-                                            onDismiss = { dropdownExpanded = false },
-                                            onSettingsClick = showSettings
-                                        )
-                                    }
-                                )
-                            }
+            topBar = {
+                if (uiState.isSearchMode) {
+                    SearchAppBar(
+                        searchQuery = uiState.searchQuery,
+                        onSearchQueryChange = { query ->
+                            BudgetListEvent
+                                .UpdateSearchQuery(query)
+                                .run(onEvent)
                         },
-                        snackbarHost = {
-                            SnackbarHost(hostState = snackBarHostState)
+                        onBackClick = {
+                            BudgetListEvent
+                                .ToggleSearchMode(false)
+                                .run(onEvent)
+                        }
+                    )
+                } else {
+                    AppBar(
+                        title = stringResource(Res.string.budgets),
+                        leftButtonIcon = Icons.Default.Search,
+                        rightButtonIcon = Icons.Default.MoreVert,
+                        leftButtonDescription = stringResource(Res.string.search),
+                        rightButtonDescription = stringResource(Res.string.open_menu),
+                        onLeftButtonClick = {
+                            BudgetListEvent
+                                .ToggleSearchMode(true)
+                                .run(onEvent)
                         },
-                        floatingActionButton = {
-                            FloatingActionButton(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 20.dp)
-                                    .dashedBorder(
-                                        width = 1.dp,
-                                        color = AppColors.onSecondaryContainer,
-                                        shape = AbsoluteRoundedCornerShape(10.dp),
-                                        on = 10.dp,
-                                        off = 8.dp
-                                    ),
-                                shape = AbsoluteRoundedCornerShape(10.dp),
-                                elevation = FloatingActionButtonDefaults.elevation(5.dp),
-                                onClick = {
-                                    BudgetListEvent
-                                        .ToggleAddModal(true)
-                                        .run(onEvent)
-                                }
-                            ) {
-                                Icon(
-                                    modifier = Modifier.padding(20.dp),
-                                    imageVector = Icons.Default.Add,
-                                    contentDescription = stringResource(Res.string.create_new_budget)
-                                )
-                            }
+                        onRightButtonClick = {
+                            dropdownExpanded = true
                         },
-                        floatingActionButtonPosition = FabPosition.Center
-                    ) { paddingValues ->
-                        BudgetListContent(
-                            list = uiState.budgetList,
-                            isLoading = uiState.isLoading,
-                            paddingValues = paddingValues,
-                            onEvent = onEvent
-                        )
+                        animateRightButton = uiState.filter != null,
+                        rightButtonDropdownContent = {
+                            BudgetListMenu(
+                                expanded = dropdownExpanded,
+                                onDismiss = { dropdownExpanded = false },
+                                onSettingsClick = showSettings
+                            )
+                        }
+                    )
+                }
+            },
+            snackbarHost = {
+                SnackbarHost(hostState = snackBarHostState)
+            },
+            floatingActionButton = {
+                FloatingActionButton(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp)
+                        .dashedBorder(
+                            width = 1.dp,
+                            color = AppColors.onSecondaryContainer,
+                            shape = AbsoluteRoundedCornerShape(10.dp),
+                            on = 10.dp,
+                            off = 8.dp
+                        ),
+                    shape = AbsoluteRoundedCornerShape(10.dp),
+                    elevation = FloatingActionButtonDefaults.elevation(5.dp),
+                    onClick = {
+                        BudgetListEvent
+                            .ToggleAddModal(true)
+                            .run(onEvent)
                     }
+                ) {
+                    Icon(
+                        modifier = Modifier.padding(20.dp),
+                        imageVector = Icons.Default.Add,
+                        contentDescription = stringResource(Res.string.create_new_budget)
+                    )
+                }
+            },
+            floatingActionButtonPosition = FabPosition.Center
+        ) { paddingValues ->
+            BudgetListContent(
+                list = uiState.budgetList,
+                isLoading = uiState.isLoading,
+                paddingValues = paddingValues,
+                onEvent = onEvent
+            )
+        }
 
         NewBudgetModal(
             show = uiState.addModalVisibility,
@@ -154,4 +154,3 @@ object BudgetListScreen {
         }
     }
 }
-

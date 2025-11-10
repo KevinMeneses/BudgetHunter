@@ -51,6 +51,6 @@ fun Modal(
             )
         }
     }
-    
+
     PlatformBackHandler(enabled = true, onBack = onDismiss)
 }

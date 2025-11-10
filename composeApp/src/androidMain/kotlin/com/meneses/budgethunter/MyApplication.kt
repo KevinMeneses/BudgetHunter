@@ -9,7 +9,7 @@ import org.koin.dsl.module
 class MyApplication : Application() {
     override fun onCreate() {
         super.onCreate()
-        
+
         // Initialize Koin with Android-specific modules
         initKoin(
             platformModule = module {

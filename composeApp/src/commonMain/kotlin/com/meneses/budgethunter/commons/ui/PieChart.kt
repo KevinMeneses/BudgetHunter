@@ -81,7 +81,7 @@ fun PieChart(
 
                     val percentage = percentages[index]
                     val formattedPercentage = (percentage * 10).roundToInt() / 10.0
-                    
+
                     Text(
                         text = "$formattedPercentage%",
                         style = textStyle,

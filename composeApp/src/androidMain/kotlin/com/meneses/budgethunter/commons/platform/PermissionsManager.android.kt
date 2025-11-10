@@ -30,11 +30,11 @@ actual class PermissionsManager(private val context: Context) {
     actual fun hasSmsPermission(): Boolean {
         val receiveSmsGranted = ContextCompat
             .checkSelfPermission(context, Manifest.permission.RECEIVE_SMS) ==
-                PackageManager.PERMISSION_GRANTED
+            PackageManager.PERMISSION_GRANTED
 
         val readSmsGranted = ContextCompat
             .checkSelfPermission(context, Manifest.permission.READ_SMS) ==
-                PackageManager.PERMISSION_GRANTED
+            PackageManager.PERMISSION_GRANTED
 
         return receiveSmsGranted && readSmsGranted
     }
