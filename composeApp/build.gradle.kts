@@ -58,28 +58,27 @@ kotlin {
             implementation(libs.bundles.ktor)
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.kotlinx.json)
-            
+
             // Database (common parts only)
             implementation(libs.sqldelight.coroutines.extensions)
-            
+
             // Koin
             implementation(libs.bundles.koin)
-            
+
             // Lifecycle ViewModels
             implementation(libs.jetbrains.lifecycle.viewmodel)
-            
+
             // DataStore (KMP support)
             implementation(libs.bundles.datastore)
-            
+
             // Lottie animations
             implementation(libs.compottie)
             implementation(libs.compottie.resources)
-            
+
             // Navigation Compose (multiplatform support)
             implementation(libs.jetbrains.navigation.compose)
-            
         }
-        
+
         androidMain.dependencies {
             // Android-specific dependencies
             implementation(libs.androidx.core.ktx)
@@ -101,7 +100,7 @@ kotlin {
             // Ktor Android engine for HTTP calls
             implementation(libs.ktor.client.android)
         }
-        
+
         iosMain.dependencies {
             // SqlDelight iOS driver
             implementation(libs.sqldelight.ios.driver)
@@ -109,7 +108,7 @@ kotlin {
             // Ktor Darwin engine for iOS
             implementation(libs.ktor.client.darwin)
         }
-        
+
         commonTest.dependencies {
             implementation(kotlin("test"))
             implementation(libs.kotlinx.coroutines.test)
