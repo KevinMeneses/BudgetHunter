@@ -269,4 +269,3 @@ private fun cgImageToImageBitmap(cgImage: CGImageRef, width: Int, height: Int): 
         null
     }
 }
-

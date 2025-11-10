@@ -54,7 +54,7 @@ val iosPlatformModule = module {
                     requireNotNull(documentDirectory) {
                         "iOS Documents directory is unavailable - check app permissions"
                     }.path + "/budget_hunter_preferences.preferences_pb"
-                ).toPath()
+                    ).toPath()
             }
         )
     }
@@ -111,4 +111,3 @@ val iosPlatformModule = module {
         )
     }
 }
-
