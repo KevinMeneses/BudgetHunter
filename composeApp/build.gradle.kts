@@ -133,11 +133,9 @@ android {
         val instrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         testInstrumentationRunner = instrumentationRunner
 
-
         vectorDrawables {
             useSupportLibrary = true
         }
-
 
         // Load API key from local.properties
         val props = Properties()
@@ -158,25 +156,21 @@ android {
         }
     }
 
-
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-
 
     buildFeatures {
         compose = true
         buildConfig = true
     }
 
-
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
-
 
     testOptions {
         unitTests {
