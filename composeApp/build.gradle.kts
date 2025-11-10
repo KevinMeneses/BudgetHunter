@@ -238,5 +238,7 @@ configure<org.jlleitschuh.gradle.ktlint.KtlintExtension> {
     filter {
         exclude("**/generated/**")
         exclude("**/build/**")
+        exclude("**/build/generated/**")
+        exclude { it.file.absolutePath.contains("/build/generated/") }
     }
 }
