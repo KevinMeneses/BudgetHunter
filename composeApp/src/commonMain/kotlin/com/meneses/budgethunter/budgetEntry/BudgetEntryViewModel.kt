@@ -246,7 +246,7 @@ class BudgetEntryViewModel(
             _uiState.update {
                 it.copy(
                     isFileValid = true,
-                    validatedFilePath = null,
+                    validatedFilePath = null
                 )
             }
             return@launch
@@ -257,7 +257,7 @@ class BudgetEntryViewModel(
         _uiState.update {
             it.copy(
                 isFileValid = validatedPath != null,
-                validatedFilePath = validatedPath,
+                validatedFilePath = validatedPath
             )
         }
     }

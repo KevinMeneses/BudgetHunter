@@ -7,7 +7,7 @@ package com.meneses.budgethunter.budgetEntry.domain
 interface AIImageProcessor {
     /**
      * Processes an image and returns an AI-extracted budget entry.
-     * 
+     *
      * @param imageData The image data to process
      * @param prompt The AI prompt to use for extraction
      * @return A BudgetEntry with AI-extracted information, or null if processing fails

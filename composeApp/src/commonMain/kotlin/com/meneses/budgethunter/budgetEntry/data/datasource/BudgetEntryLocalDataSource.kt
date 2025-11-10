@@ -19,8 +19,8 @@ class BudgetEntryLocalDataSource(
     private val cacheMutex = Mutex()
     private var cachedEntries: List<BudgetEntry> = emptyList()
 
-    suspend fun getAllCached(): List<BudgetEntry> = cacheMutex.withLock { 
-        cachedEntries 
+    suspend fun getAllCached(): List<BudgetEntry> = cacheMutex.withLock {
+        cachedEntries
     }
 
     fun selectAllByBudgetId(budgetId: Long) = queries
@@ -28,10 +28,10 @@ class BudgetEntryLocalDataSource(
         .asFlow()
         .mapToList(dispatcher)
         .map { it.toDomain() }
-        .onEach { 
-            cacheMutex.withLock { 
-                cachedEntries = it 
-            } 
+        .onEach {
+            cacheMutex.withLock {
+                cachedEntries = it
+            }
         }
 
     suspend fun getAllFilteredBy(filter: BudgetEntryFilter): List<BudgetEntry> =
