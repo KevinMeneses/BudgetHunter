@@ -63,7 +63,7 @@ fun BudgetHunterNavigation() {
             composable<BudgetListScreen> {
                 val budgetListViewModel: BudgetListViewModel = koinInject()
                 val uiState by budgetListViewModel.uiState.collectAsStateWithLifecycle()
-                
+
                 BudgetListScreen.Show(
                     uiState = uiState,
                     onEvent = budgetListViewModel::sendEvent,
@@ -79,7 +79,7 @@ fun BudgetHunterNavigation() {
             composable<SettingsScreen> {
                 val settingsViewModel: SettingsViewModel = koinInject()
                 val uiState by settingsViewModel.uiState.collectAsStateWithLifecycle()
-                
+
                 SettingsScreen.Show(
                     uiState = uiState,
                     onEvent = settingsViewModel::sendEvent,
@@ -93,7 +93,7 @@ fun BudgetHunterNavigation() {
                 val budgetDetailRoute = backStackEntry.toRoute<BudgetDetailScreen>()
                 val budgetDetailViewModel: BudgetDetailViewModel = koinInject()
                 val uiState by budgetDetailViewModel.uiState.collectAsStateWithLifecycle()
-                
+
                 budgetDetailRoute.Show(
                     uiState = uiState,
                     onEvent = budgetDetailViewModel::sendEvent,
@@ -116,7 +116,7 @@ fun BudgetHunterNavigation() {
                 val budgetEntryRoute = backStackEntry.toRoute<BudgetEntryScreen>()
                 val budgetEntryViewModel: BudgetEntryViewModel = koinInject()
                 val uiState by budgetEntryViewModel.uiState.collectAsStateWithLifecycle()
-                
+
                 budgetEntryRoute.Show(
                     uiState = uiState,
                     onEvent = budgetEntryViewModel::sendEvent,
@@ -130,7 +130,7 @@ fun BudgetHunterNavigation() {
                 val budgetMetricsRoute = backStackEntry.toRoute<BudgetMetricsScreen>()
                 val budgetMetricsViewModel: BudgetMetricsViewModel = koinInject()
                 val uiState by budgetMetricsViewModel.uiState.collectAsStateWithLifecycle()
-                
+
                 budgetMetricsRoute.Show(
                     uiState = uiState,
                     goBack = { navController.popBackStack() }
