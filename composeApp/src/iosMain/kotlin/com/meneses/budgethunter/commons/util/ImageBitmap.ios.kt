@@ -101,7 +101,7 @@ actual fun getImageBitmapFromPDFFile(filePath: String): ImageBitmap? {
         val height = pageRect.useContents { size.height.toInt() }
 
         if (width <= 0 || height <= 0) {
-            println("Invalid PDF page dimensions: ${width}x${height}")
+            println("Invalid PDF page dimensions: $width x $height")
             return null
         }
 
@@ -202,7 +202,7 @@ actual fun getImageBitmapFromFile(filePath: String): ImageBitmap? {
         val height = CGImageGetHeight(cgImage).toInt()
 
         if (width <= 0 || height <= 0) {
-            println("Invalid image dimensions: ${width}x${height}")
+            println("Invalid image dimensions: $width x $height")
             return null
         }
 
@@ -269,3 +269,4 @@ private fun cgImageToImageBitmap(cgImage: CGImageRef, width: Int, height: Int): 
         null
     }
 }
+

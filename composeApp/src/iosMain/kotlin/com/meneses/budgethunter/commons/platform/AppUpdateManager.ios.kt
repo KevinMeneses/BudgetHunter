@@ -89,9 +89,11 @@ actual class AppUpdateManager {
 
                 if (isNewerVersion(currentVersion, latestVersion)) {
                     println("AppUpdateManager: Update available - $currentVersion -> $latestVersion")
-                    onResult(AppUpdateResult.UpdateAvailable {
-                        openAppStore(trackId)
-                    })
+                    onResult(
+                        AppUpdateResult.UpdateAvailable {
+                            openAppStore(trackId)
+                        }
+                    )
                 } else {
                     println("AppUpdateManager: No update available - current version is up to date")
                     onResult(AppUpdateResult.NoUpdateAvailable)

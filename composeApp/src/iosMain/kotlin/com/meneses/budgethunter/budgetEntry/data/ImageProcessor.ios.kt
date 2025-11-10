@@ -107,7 +107,7 @@ actual class ImageProcessor {
             val height = pageRect.useContents { size.height.toInt() }
 
             if (width <= 0 || height <= 0) {
-                println("iOS PDF Processing: Invalid page dimensions: ${width}x${height}")
+                println("iOS PDF Processing: Invalid page dimensions: $width x $height")
                 return null
             }
 
