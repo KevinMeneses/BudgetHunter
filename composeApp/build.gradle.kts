@@ -27,7 +27,7 @@ kotlin {
             }
         }
     }
-    
+
     listOf(
         iosX64(),
         iosArm64(),
@@ -39,7 +39,7 @@ kotlin {
             binaryOptions["bundleId"] = "com.meneses.budgethunter.ComposeApp"
         }
     }
-    
+
     sourceSets {
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -49,7 +49,7 @@ kotlin {
             implementation(compose.ui)
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
-            
+
             // Serialization
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.kotlinx.datetime)
