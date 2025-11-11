@@ -33,7 +33,7 @@ class ThousandSeparatorTransformation : VisualTransformation {
             override fun originalToTransformed(offset: Int): Int {
                 if (offset == 0) return 0
                 if (offset > originalText.length) return formattedText.length
-                
+
                 if (originalText.contains(".")) {
                     val decimalIndex = originalText.indexOf(".")
                     if (offset > decimalIndex) {
@@ -41,7 +41,7 @@ class ThousandSeparatorTransformation : VisualTransformation {
                         return offset + integerCommas
                     }
                 }
-                
+
                 val commasBeforeOffset = maxOf(0, (offset - 1) / 3)
                 return offset + commasBeforeOffset
             }
@@ -49,13 +49,13 @@ class ThousandSeparatorTransformation : VisualTransformation {
             override fun transformedToOriginal(offset: Int): Int {
                 var originalOffset = offset
                 var commaCount = 0
-                
+
                 for (i in 0 until minOf(offset, formattedText.length)) {
                     if (formattedText[i] == ',') {
                         commaCount++
                     }
                 }
-                
+
                 originalOffset -= commaCount
                 return maxOf(0, minOf(originalOffset, originalText.length))
             }

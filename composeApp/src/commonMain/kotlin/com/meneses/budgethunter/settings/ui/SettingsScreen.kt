@@ -66,7 +66,7 @@ object SettingsScreen {
     fun Show(
         uiState: SettingsState,
         onEvent: (SettingsEvent) -> Unit,
-        goBack: () -> Unit,
+        goBack: () -> Unit
     ) {
         Scaffold(
             topBar = {

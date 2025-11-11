@@ -62,6 +62,7 @@ data class BudgetEntry(
         )
     }
 }
+
 // TODO: get the real string resources not just hardcoded strings
 fun BudgetEntry.Type.toStringResource(): String {
     return when (this) {

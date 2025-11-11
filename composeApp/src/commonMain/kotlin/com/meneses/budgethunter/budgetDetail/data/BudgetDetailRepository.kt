@@ -38,7 +38,7 @@ class BudgetDetailRepository(
             ) { budget, entries ->
                 BudgetDetail(budget, entries)
             }.onEach {
-                cacheMutex.withLock { 
+                cacheMutex.withLock {
                     if (it != cachedBudgetDetail) {
                         cachedBudgetDetail = it
                     }

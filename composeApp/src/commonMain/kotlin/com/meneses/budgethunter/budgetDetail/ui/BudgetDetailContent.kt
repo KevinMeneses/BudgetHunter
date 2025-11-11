@@ -139,7 +139,6 @@ fun BudgetDetailContent(
     }
 }
 
-
 @Composable
 fun BudgetSection(
     amount: Double,

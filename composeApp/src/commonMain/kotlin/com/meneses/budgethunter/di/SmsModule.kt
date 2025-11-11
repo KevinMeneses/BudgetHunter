@@ -6,9 +6,9 @@ import com.meneses.budgethunter.sms.domain.SmsService
 import org.koin.dsl.module
 
 val smsModule = module {
-    
+
     single { SmsMapper(preferencesManager = get()) }
-    
+
     single<SmsService> {
         ProcessSmsUseCase(
             smsMapper = get(),

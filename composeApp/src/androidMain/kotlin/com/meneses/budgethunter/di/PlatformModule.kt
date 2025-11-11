@@ -36,15 +36,15 @@ private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(na
 
 val androidPlatformModule = module {
     // Provide the database using Android-specific factory
-    single<Database> { 
+    single<Database> {
         DatabaseFactory(get<Context>()).createDatabase()
     }
-    
+
     // DataStore for preferences
-    single<DataStore<Preferences>> { 
-        get<Context>().dataStore 
+    single<DataStore<Preferences>> {
+        get<Context>().dataStore
     }
-    
+
     // Platform-specific managers
     single<FileManager> { FileManager() }
     single<CameraManager> { AndroidCameraManager(get<Context>()) }

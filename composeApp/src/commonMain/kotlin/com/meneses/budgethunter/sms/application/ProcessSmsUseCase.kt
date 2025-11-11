@@ -9,7 +9,7 @@ import com.meneses.budgethunter.sms.domain.SmsService
 class ProcessSmsUseCase(
     private val smsMapper: SmsMapper,
     private val budgetEntryRepository: BudgetEntryRepository,
-    private val notificationManager: NotificationManager,
+    private val notificationManager: NotificationManager
 ) : SmsService {
     override suspend fun processSms(messageBody: String, bankConfigs: Set<BankSmsConfig>) {
         try {

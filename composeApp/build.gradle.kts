@@ -27,7 +27,7 @@ kotlin {
             }
         }
     }
-    
+
     listOf(
         iosX64(),
         iosArm64(),
@@ -39,7 +39,7 @@ kotlin {
             binaryOptions["bundleId"] = "com.meneses.budgethunter.ComposeApp"
         }
     }
-    
+
     sourceSets {
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -49,7 +49,7 @@ kotlin {
             implementation(compose.ui)
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
-            
+
             // Serialization
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.kotlinx.datetime)
@@ -59,28 +59,27 @@ kotlin {
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.kotlinx.json)
             implementation(libs.ktor.client.auth)
-            
+
             // Database (common parts only)
             implementation(libs.sqldelight.coroutines.extensions)
-            
+
             // Koin
             implementation(libs.bundles.koin)
-            
+
             // Lifecycle ViewModels
             implementation(libs.jetbrains.lifecycle.viewmodel)
-            
+
             // DataStore (KMP support)
             implementation(libs.bundles.datastore)
-            
+
             // Lottie animations
             implementation(libs.compottie)
             implementation(libs.compottie.resources)
-            
+
             // Navigation Compose (multiplatform support)
             implementation(libs.jetbrains.navigation.compose)
-            
         }
-        
+
         androidMain.dependencies {
             // Android-specific dependencies
             implementation(libs.androidx.core.ktx)
@@ -105,7 +104,7 @@ kotlin {
             // Security (Android only)
             implementation(libs.androidx.security.crypto)
         }
-        
+
         iosMain.dependencies {
             // SqlDelight iOS driver
             implementation(libs.sqldelight.ios.driver)
@@ -113,7 +112,7 @@ kotlin {
             // Ktor Darwin engine for iOS
             implementation(libs.ktor.client.darwin)
         }
-        
+
         commonTest.dependencies {
             implementation(kotlin("test"))
             implementation(libs.kotlinx.coroutines.test)
@@ -137,11 +136,11 @@ android {
 
         val instrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         testInstrumentationRunner = instrumentationRunner
-        
+
         vectorDrawables {
             useSupportLibrary = true
         }
-        
+
         // Load API key from local.properties
         val props = Properties()
         val propsFile = rootProject.file("local.properties")
@@ -160,23 +159,23 @@ android {
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
-    
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    
+
     buildFeatures {
         compose = true
         buildConfig = true
     }
-    
+
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
-    
+
     testOptions {
         unitTests {
             isIncludeAndroidResources = true
@@ -212,18 +211,20 @@ tasks.register<JacocoReport>("testDebugUnitTestCoverage") {
         "src/commonMain/kotlin"
     )
 
-    val classFilesTree = fileTree(mapOf(
-        "dir" to "$buildDir/intermediates/javac/debug",
-        "includes" to listOf("**/*.class"),
-        "excludes" to listOf(
-            "**/R.class",
-            "**/R${'$'}.class",
-            "**/BuildConfig.*",
-            "**/Manifest*.*",
-            "**/*Test*.*",
-            "android/**/*.*"
+    val classFilesTree = fileTree(
+        mapOf(
+            "dir" to "$buildDir/intermediates/javac/debug",
+            "includes" to listOf("**/*.class"),
+            "excludes" to listOf(
+                "**/R.class",
+                "**/R${'$'}.class",
+                "**/BuildConfig.*",
+                "**/Manifest*.*",
+                "**/*Test*.*",
+                "android/**/*.*"
+            )
         )
-    ))
+    )
 
     reports {
         xml.required.set(true)
@@ -241,5 +242,7 @@ configure<org.jlleitschuh.gradle.ktlint.KtlintExtension> {
     filter {
         exclude("**/generated/**")
         exclude("**/build/**")
+        exclude("**/build/generated/**")
+        exclude { it.file.absolutePath.contains("/build/generated/") }
     }
 }

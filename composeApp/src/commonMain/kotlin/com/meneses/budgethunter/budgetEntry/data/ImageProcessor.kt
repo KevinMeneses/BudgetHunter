@@ -9,9 +9,9 @@ import com.meneses.budgethunter.budgetEntry.domain.ImageData
 expect class ImageProcessor {
     /**
      * Converts image URI to platform-specific image representation.
-     * 
+     *
      * @param imageData The image data containing URI and metadata
      * @return Platform-specific image object (e.g., Android Bitmap, iOS UIImage)
      */
-     fun getImageFromUri(imageData: ImageData): Any?
+    fun getImageFromUri(imageData: ImageData): Any?
 }
