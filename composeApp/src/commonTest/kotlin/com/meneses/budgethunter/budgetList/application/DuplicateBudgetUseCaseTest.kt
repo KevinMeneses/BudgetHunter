@@ -97,32 +97,28 @@ class DuplicateBudgetUseCaseTest {
 
     @Test
     fun `execute handles budget with no entries`() = runTest {
-        val budgetRepository = FakeBudgetRepository()
-        val entryRepository = FakeBudgetEntryRepository()
-
+        val tracker = DuplicationTracker()
         val originalBudget = Budget(id = 1, name = "Empty Budget", amount = 100.0)
 
         // No entries for this budget
-        entryRepository.setEntries(1L, emptyList())
+        tracker.entriesByBudgetId[1] = emptyList()
 
-        val useCase = DuplicateBudgetUseCase(budgetRepository, entryRepository, Dispatchers.Default)
+        val useCase = TestableDuplicateBudgetUseCase(tracker, Dispatchers.Default)
         useCase.execute(originalBudget)
 
         // Budget should still be created
-        val createdBudgets = budgetRepository.getCreatedBudgets()
+        val createdBudgets = tracker.createdBudgets
         assertEquals(1, createdBudgets.size)
         assertEquals("Empty Budget (copy)", createdBudgets[0].name)
 
         // No entries should be created
-        val createdEntries = entryRepository.getCreatedEntries()
+        val createdEntries = tracker.createdEntries
         assertEquals(0, createdEntries.size)
     }
 
     @Test
     fun `execute preserves all entry properties`() = runTest {
-        val budgetRepository = FakeBudgetRepository()
-        val entryRepository = FakeBudgetEntryRepository()
-
+        val tracker = DuplicationTracker()
         val originalBudget = Budget(id = 1, name = "Test", amount = 100.0)
 
         val originalEntry = BudgetEntry(
@@ -137,12 +133,12 @@ class DuplicateBudgetUseCaseTest {
             isSelected = false
         )
 
-        entryRepository.setEntries(1L, listOf(originalEntry))
+        tracker.entriesByBudgetId[1] = listOf(originalEntry)
 
-        val useCase = DuplicateBudgetUseCase(budgetRepository, entryRepository, Dispatchers.Default)
+        val useCase = TestableDuplicateBudgetUseCase(tracker, Dispatchers.Default)
         useCase.execute(originalBudget)
 
-        val createdEntries = entryRepository.getCreatedEntries()
+        val createdEntries = tracker.createdEntries
         assertEquals(1, createdEntries.size)
 
         val copied = createdEntries[0]
@@ -159,23 +155,19 @@ class DuplicateBudgetUseCaseTest {
 
     @Test
     fun `execute handles budget name that already has (copy) suffix`() = runTest {
-        val budgetRepository = FakeBudgetRepository()
-        val entryRepository = FakeBudgetEntryRepository()
-
+        val tracker = DuplicationTracker()
         val originalBudget = Budget(id = 1, name = "Budget (copy)", amount = 100.0)
 
-        val useCase = DuplicateBudgetUseCase(budgetRepository, entryRepository, Dispatchers.Default)
+        val useCase = TestableDuplicateBudgetUseCase(tracker, Dispatchers.Default)
         useCase.execute(originalBudget)
 
-        val created = budgetRepository.getCreatedBudgets()
+        val created = tracker.createdBudgets
         assertEquals("Budget (copy) (copy)", created[0].name)
     }
 
     @Test
     fun `execute handles large number of entries`() = runTest {
-        val budgetRepository = FakeBudgetRepository()
-        val entryRepository = FakeBudgetEntryRepository()
-
+        val tracker = DuplicationTracker()
         val originalBudget = Budget(id = 1, name = "Large Budget", amount = 10000.0)
 
         val largeEntryList = (1..100).map { index ->
@@ -187,12 +179,12 @@ class DuplicateBudgetUseCaseTest {
             )
         }
 
-        entryRepository.setEntries(1L, largeEntryList)
+        tracker.entriesByBudgetId[1] = largeEntryList
 
-        val useCase = DuplicateBudgetUseCase(budgetRepository, entryRepository, Dispatchers.Default)
+        val useCase = TestableDuplicateBudgetUseCase(tracker, Dispatchers.Default)
         useCase.execute(originalBudget)
 
-        val createdEntries = entryRepository.getCreatedEntries()
+        val createdEntries = tracker.createdEntries
         assertEquals(100, createdEntries.size)
 
         // Verify all entries were copied with correct data
@@ -206,66 +198,58 @@ class DuplicateBudgetUseCaseTest {
 
     @Test
     fun `execute handles budget with zero amount`() = runTest {
-        val budgetRepository = FakeBudgetRepository()
-        val entryRepository = FakeBudgetEntryRepository()
-
+        val tracker = DuplicationTracker()
         val originalBudget = Budget(id = 1, name = "Zero Budget", amount = 0.0)
 
-        val useCase = DuplicateBudgetUseCase(budgetRepository, entryRepository, Dispatchers.Default)
+        val useCase = TestableDuplicateBudgetUseCase(tracker, Dispatchers.Default)
         useCase.execute(originalBudget)
 
-        val created = budgetRepository.getCreatedBudgets()
+        val created = tracker.createdBudgets
         assertEquals(0.0, created[0].amount)
     }
 
     @Test
     fun `execute handles budget with empty name`() = runTest {
-        val budgetRepository = FakeBudgetRepository()
-        val entryRepository = FakeBudgetEntryRepository()
-
+        val tracker = DuplicationTracker()
         val originalBudget = Budget(id = 1, name = "", amount = 100.0)
 
-        val useCase = DuplicateBudgetUseCase(budgetRepository, entryRepository, Dispatchers.Default)
+        val useCase = TestableDuplicateBudgetUseCase(tracker, Dispatchers.Default)
         useCase.execute(originalBudget)
 
-        val created = budgetRepository.getCreatedBudgets()
+        val created = tracker.createdBudgets
         assertEquals(" (copy)", created[0].name)
     }
 
     @Test
     fun `execute can duplicate multiple budgets sequentially`() = runTest {
-        val budgetRepository = FakeBudgetRepository()
-        val entryRepository = FakeBudgetEntryRepository()
-
+        val tracker = DuplicationTracker()
         val budget1 = Budget(id = 1, name = "Budget 1", amount = 100.0)
         val budget2 = Budget(id = 2, name = "Budget 2", amount = 200.0)
 
-        entryRepository.setEntries(1L, listOf(
+        tracker.entriesByBudgetId[1] = listOf(
             BudgetEntry(id = 1, budgetId = 1, amount = "10")
-        ))
-        entryRepository.setEntries(2L, listOf(
+        )
+        tracker.entriesByBudgetId[2] = listOf(
             BudgetEntry(id = 2, budgetId = 2, amount = "20")
-        ))
+        )
 
-        val useCase = DuplicateBudgetUseCase(budgetRepository, entryRepository, Dispatchers.Default)
+        val useCase = TestableDuplicateBudgetUseCase(tracker, Dispatchers.Default)
 
         useCase.execute(budget1)
         useCase.execute(budget2)
 
-        val createdBudgets = budgetRepository.getCreatedBudgets()
+        val createdBudgets = tracker.createdBudgets
         assertEquals(2, createdBudgets.size)
         assertEquals("Budget 1 (copy)", createdBudgets[0].name)
         assertEquals("Budget 2 (copy)", createdBudgets[1].name)
 
-        val createdEntries = entryRepository.getCreatedEntries()
+        val createdEntries = tracker.createdEntries
         assertEquals(2, createdEntries.size)
     }
 
     @Test
     fun `execute preserves totalExpenses from original budget`() = runTest {
-        val budgetRepository = FakeBudgetRepository()
-        val entryRepository = FakeBudgetEntryRepository()
-
+        val tracker = DuplicationTracker()
         val originalBudget = Budget(
             id = 1,
             name = "Test",
@@ -274,18 +258,16 @@ class DuplicateBudgetUseCaseTest {
             date = "2024-01-01"
         )
 
-        val useCase = DuplicateBudgetUseCase(budgetRepository, entryRepository, Dispatchers.Default)
+        val useCase = TestableDuplicateBudgetUseCase(tracker, Dispatchers.Default)
         useCase.execute(originalBudget)
 
-        val created = budgetRepository.getCreatedBudgets()
+        val created = tracker.createdBudgets
         assertEquals(456.78, created[0].totalExpenses)
     }
 
     @Test
     fun `execute converts budget id to Long for entry lookup`() = runTest {
-        val budgetRepository = FakeBudgetRepository()
-        val entryRepository = FakeBudgetEntryRepository()
-
+        val tracker = DuplicationTracker()
         // Budget with Int ID
         val originalBudget = Budget(id = 999, name = "Test", amount = 100.0)
 
@@ -293,14 +275,14 @@ class DuplicateBudgetUseCaseTest {
             BudgetEntry(id = 1, budgetId = 999, amount = "50")
         )
 
-        // Set entries with Long key
-        entryRepository.setEntries(999L, entries)
+        // Set entries with Int key
+        tracker.entriesByBudgetId[999] = entries
 
-        val useCase = DuplicateBudgetUseCase(budgetRepository, entryRepository, Dispatchers.Default)
+        val useCase = TestableDuplicateBudgetUseCase(tracker, Dispatchers.Default)
         useCase.execute(originalBudget)
 
         // Entry should be found and copied
-        val createdEntries = entryRepository.getCreatedEntries()
+        val createdEntries = tracker.createdEntries
         assertEquals(1, createdEntries.size)
     }
 }

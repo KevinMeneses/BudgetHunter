@@ -13,7 +13,7 @@ class GetTotalsPerCategoryUseCaseTest {
     // This avoids having to mock SqlDelight queries
     private class TestableGetTotalsPerCategoryUseCase(
         private val entries: List<BudgetEntry>,
-        dispatcher: kotlinx.coroutines.CoroutineDispatcher
+        private val dispatcher: kotlinx.coroutines.CoroutineDispatcher
     ) {
         suspend fun execute(): Map<BudgetEntry.Category, Double> = kotlinx.coroutines.withContext(dispatcher) {
             val categories = BudgetEntry

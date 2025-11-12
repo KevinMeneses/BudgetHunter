@@ -98,12 +98,12 @@ class BudgetMapperTest {
         val budget = mapSelectAllToBudget(
             id = 1L,
             amount = 100.0,
-            name = "Budget with $pecial Ch@racters & Symbols!",
+            name = "Budget with \$pecial Ch@racters & Symbols!",
             date = "2024-01-01",
             totalExpenses = 0.0
         )
 
-        assertEquals("Budget with $pecial Ch@racters & Symbols!", budget.name)
+        assertEquals("Budget with \$pecial Ch@racters & Symbols!", budget.name)
     }
 
     @Test
