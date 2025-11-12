@@ -1,5 +1,6 @@
 package com.meneses.budgethunter.budgetEntry.data
 
+import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.db.Budget_entry
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -13,10 +14,10 @@ class BudgetEntryMapperTest {
             budget_id = 10L,
             amount = 100.50,
             description = "Test Entry",
-            type = "OUTCOME",
+            type = BudgetEntry.Type.OUTCOME,
             date = "2024-01-15",
             invoice = "invoice.pdf",
-            category = "FOOD"
+            category = BudgetEntry.Category.FOOD
         )
 
         val domainEntry = dbEntry.toDomain()
@@ -25,10 +26,10 @@ class BudgetEntryMapperTest {
         assertEquals(10, domainEntry.budgetId)
         assertEquals("100.5", domainEntry.amount)
         assertEquals("Test Entry", domainEntry.description)
-        assertEquals("OUTCOME", domainEntry.type)
+        assertEquals(BudgetEntry.Type.OUTCOME, domainEntry.type)
         assertEquals("2024-01-15", domainEntry.date)
         assertEquals("invoice.pdf", domainEntry.invoice)
-        assertEquals("FOOD", domainEntry.category)
+        assertEquals(BudgetEntry.Category.FOOD, domainEntry.category)
     }
 
     @Test
@@ -38,10 +39,10 @@ class BudgetEntryMapperTest {
             budget_id = 888L,
             amount = 0.0,
             description = "",
-            type = "INCOME",
+            type = BudgetEntry.Type.INCOME,
             date = "",
             invoice = null,
-            category = "OTHER"
+            category = BudgetEntry.Category.OTHER
         )
 
         val domainEntry = dbEntry.toDomain()
@@ -57,10 +58,10 @@ class BudgetEntryMapperTest {
             budget_id = 1L,
             amount = 100.0,
             description = "",
-            type = "OUTCOME",
+            type = BudgetEntry.Type.OUTCOME,
             date = "",
             invoice = null,
-            category = "OTHER"
+            category = BudgetEntry.Category.OTHER
         )
 
         val domainEntry = dbEntry.toDomain()
@@ -76,10 +77,10 @@ class BudgetEntryMapperTest {
             budget_id = 1L,
             amount = 123.45,
             description = "",
-            type = "OUTCOME",
+            type = BudgetEntry.Type.OUTCOME,
             date = "",
             invoice = null,
-            category = "OTHER"
+            category = BudgetEntry.Category.OTHER
         )
 
         val domainEntry = dbEntry.toDomain()
@@ -94,10 +95,10 @@ class BudgetEntryMapperTest {
             budget_id = 1L,
             amount = 50.0,
             description = "No invoice",
-            type = "OUTCOME",
+            type = BudgetEntry.Type.OUTCOME,
             date = "2024-01-01",
             invoice = null,
-            category = "GROCERIES"
+            category = BudgetEntry.Category.GROCERIES
         )
 
         val domainEntry = dbEntry.toDomain()
@@ -112,17 +113,17 @@ class BudgetEntryMapperTest {
             budget_id = 1L,
             amount = 0.0,
             description = "",
-            type = "OUTCOME",
+            type = BudgetEntry.Type.OUTCOME,
             date = "",
             invoice = null,
-            category = ""
+            category = BudgetEntry.Category.OTHER
         )
 
         val domainEntry = dbEntry.toDomain()
 
         assertEquals("", domainEntry.description)
         assertEquals("", domainEntry.date)
-        assertEquals("", domainEntry.category)
+        assertEquals(BudgetEntry.Category.OTHER, domainEntry.category)
     }
 
     @Test
@@ -141,30 +142,30 @@ class BudgetEntryMapperTest {
                 budget_id = 1L,
                 amount = 100.0,
                 description = "Entry 1",
-                type = "OUTCOME",
+                type = BudgetEntry.Type.OUTCOME,
                 date = "2024-01-01",
                 invoice = null,
-                category = "FOOD"
+                category = BudgetEntry.Category.FOOD
             ),
             Budget_entry(
                 id = 2L,
                 budget_id = 1L,
                 amount = 50.50,
                 description = "Entry 2",
-                type = "INCOME",
+                type = BudgetEntry.Type.INCOME,
                 date = "2024-01-02",
                 invoice = "invoice2.pdf",
-                category = "OTHER"
+                category = BudgetEntry.Category.OTHER
             ),
             Budget_entry(
                 id = 3L,
                 budget_id = 1L,
                 amount = 75.25,
                 description = "Entry 3",
-                type = "OUTCOME",
+                type = BudgetEntry.Type.OUTCOME,
                 date = "2024-01-03",
                 invoice = null,
-                category = "TRANSPORTATION"
+                category = BudgetEntry.Category.TRANSPORTATION
             )
         )
 
@@ -181,7 +182,7 @@ class BudgetEntryMapperTest {
 
         assertEquals(3, domainEntries[2].id)
         assertEquals("75.25", domainEntries[2].amount)
-        assertEquals("TRANSPORTATION", domainEntries[2].category)
+        assertEquals(BudgetEntry.Category.TRANSPORTATION, domainEntries[2].category)
     }
 
     @Test
@@ -191,10 +192,10 @@ class BudgetEntryMapperTest {
             budget_id = 1L,
             amount = 100.0,
             description = "Expense",
-            type = "OUTCOME",
+            type = BudgetEntry.Type.OUTCOME,
             date = "2024-01-01",
             invoice = null,
-            category = "FOOD"
+            category = BudgetEntry.Category.FOOD
         )
 
         val incomeEntry = Budget_entry(
@@ -202,23 +203,19 @@ class BudgetEntryMapperTest {
             budget_id = 1L,
             amount = 200.0,
             description = "Income",
-            type = "INCOME",
+            type = BudgetEntry.Type.INCOME,
             date = "2024-01-01",
             invoice = null,
-            category = "OTHER"
+            category = BudgetEntry.Category.OTHER
         )
 
-        assertEquals("OUTCOME", outcomeEntry.toDomain().type)
-        assertEquals("INCOME", incomeEntry.toDomain().type)
+        assertEquals(BudgetEntry.Type.OUTCOME, outcomeEntry.toDomain().type)
+        assertEquals(BudgetEntry.Type.INCOME, incomeEntry.toDomain().type)
     }
 
     @Test
     fun `toDomain handles all category types`() {
-        val categories = listOf(
-            "FOOD", "GROCERIES", "SELF_CARE", "TRANSPORTATION",
-            "HOUSEHOLD_ITEMS", "SERVICES", "EDUCATION", "HEALTH",
-            "LEISURE", "TAXES", "OTHER"
-        )
+        val categories = BudgetEntry.getCategories()
 
         categories.forEach { category ->
             val dbEntry = Budget_entry(
@@ -226,7 +223,7 @@ class BudgetEntryMapperTest {
                 budget_id = 1L,
                 amount = 100.0,
                 description = "Test",
-                type = "OUTCOME",
+                type = BudgetEntry.Type.OUTCOME,
                 date = "2024-01-01",
                 invoice = null,
                 category = category
@@ -244,10 +241,10 @@ class BudgetEntryMapperTest {
             budget_id = 1L,
             amount = 999999.99,
             description = "Large amount",
-            type = "OUTCOME",
+            type = BudgetEntry.Type.OUTCOME,
             date = "2024-01-01",
             invoice = null,
-            category = "OTHER"
+            category = BudgetEntry.Category.OTHER
         )
 
         val domainEntry = dbEntry.toDomain()
@@ -262,10 +259,10 @@ class BudgetEntryMapperTest {
             budget_id = 1L,
             amount = 0.0,
             description = "Zero",
-            type = "OUTCOME",
+            type = BudgetEntry.Type.OUTCOME,
             date = "2024-01-01",
             invoice = null,
-            category = "OTHER"
+            category = BudgetEntry.Category.OTHER
         )
 
         val domainEntry = dbEntry.toDomain()
@@ -280,10 +277,10 @@ class BudgetEntryMapperTest {
             budget_id = 1L,
             amount = 123.456789,
             description = "Precise",
-            type = "OUTCOME",
+            type = BudgetEntry.Type.OUTCOME,
             date = "2024-01-01",
             invoice = null,
-            category = "OTHER"
+            category = BudgetEntry.Category.OTHER
         )
 
         val domainEntry = dbEntry.toDomain()
