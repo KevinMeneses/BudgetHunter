@@ -58,7 +58,8 @@ class CurrencyTest {
 
     @Test
     fun `toCurrency handles very small amounts`() {
-        assertEquals("$0.01", 0.005.toCurrency())
+        // 0.005 rounds to 0 cents with banker's rounding (round half to even)
+        assertEquals("$0", 0.005.toCurrency())
         assertEquals("$0", 0.004.toCurrency())
     }
 

@@ -24,7 +24,7 @@ class BudgetEntryMapperTest {
 
         assertEquals(1, domainEntry.id)
         assertEquals(10, domainEntry.budgetId)
-        assertEquals("100.5", domainEntry.amount)
+        assertEquals("100.50", domainEntry.amount)
         assertEquals("Test Entry", domainEntry.description)
         assertEquals(BudgetEntry.Type.OUTCOME, domainEntry.type)
         assertEquals("2024-01-15", domainEntry.date)
@@ -177,7 +177,7 @@ class BudgetEntryMapperTest {
         assertEquals("Entry 1", domainEntries[0].description)
 
         assertEquals(2, domainEntries[1].id)
-        assertEquals("50.5", domainEntries[1].amount)
+        assertEquals("50.50", domainEntries[1].amount)
         assertEquals("invoice2.pdf", domainEntries[1].invoice)
 
         assertEquals(3, domainEntries[2].id)
