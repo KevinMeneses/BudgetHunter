@@ -29,15 +29,17 @@ class BudgetLocalDataSourceTest {
 
         fun selectAll(mapper: (Long, Double, String, String, Double) -> Budget): MockQuery<Budget> {
             selectAllCalled = true
-            return MockQuery(budgets.map {
-                mapper(
-                    it.id.toLong(),
-                    it.amount,
-                    it.name,
-                    it.date,
-                    it.totalExpenses
-                )
-            })
+            return MockQuery(
+                budgets.map {
+                    mapper(
+                        it.id.toLong(),
+                        it.amount,
+                        it.name,
+                        it.date,
+                        it.totalExpenses
+                    )
+                }
+            )
         }
 
         fun transaction(body: () -> Unit) {
