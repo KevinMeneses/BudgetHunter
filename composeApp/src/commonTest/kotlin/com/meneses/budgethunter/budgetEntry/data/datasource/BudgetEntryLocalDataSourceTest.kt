@@ -1,7 +1,6 @@
 package com.meneses.budgethunter.budgetEntry.data.datasource
 
 import app.cash.sqldelight.coroutines.asFlow
-import app.cash.sqldelight.coroutines.mapToList
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntryFilter
 import kotlinx.coroutines.Dispatchers
