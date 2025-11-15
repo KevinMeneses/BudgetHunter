@@ -105,11 +105,7 @@ class BudgetEntryLocalDataSourceTest {
     }
 
     private class MockQuery<T>(private val data: List<T>) {
-        fun asFlow() = kotlinx.coroutines.flow.flow {
-            emit(this@MockQuery)
-        }
-        fun mapToList(dispatcher: kotlinx.coroutines.CoroutineDispatcher) =
-            kotlinx.coroutines.flow.flowOf(data)
+        fun asFlow() = kotlinx.coroutines.flow.flowOf(data)
     }
 
     // Testable version of BudgetEntryLocalDataSource
@@ -127,7 +123,6 @@ class BudgetEntryLocalDataSourceTest {
         fun selectAllByBudgetId(budgetId: Long) = mockQueries
             .selectAllByBudgetId(budgetId)
             .asFlow()
-            .mapToList(dispatcher)
             .onEach {
                 cacheMutex.withLock {
                     cachedEntries = it
