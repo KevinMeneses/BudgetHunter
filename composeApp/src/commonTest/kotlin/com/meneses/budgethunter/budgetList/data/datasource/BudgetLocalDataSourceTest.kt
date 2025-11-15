@@ -390,7 +390,8 @@ class BudgetLocalDataSourceTest {
         mockQueries.addBudget(Budget(id = 0, name = "Zero Budget", amount = 0.0))
         val dataSource = TestableBudgetLocalDataSource(mockQueries, Dispatchers.Default)
 
-        val _ = dataSource.budgets.first()
+        @Suppress("UNUSED_VARIABLE")
+        val triggerCache = dataSource.budgets.first()
         val result = dataSource.getById(0)
 
         assertNotNull(result)
@@ -404,7 +405,8 @@ class BudgetLocalDataSourceTest {
         mockQueries.addBudget(Budget(id = 2, name = "Budget_Test", amount = 2000.0))
         val dataSource = TestableBudgetLocalDataSource(mockQueries, Dispatchers.Default)
 
-        val _ = dataSource.budgets.first()
+        @Suppress("UNUSED_VARIABLE")
+        val triggerCache = dataSource.budgets.first()
         val result = dataSource.getAllFilteredBy(BudgetFilter(name = "budget-"))
 
         assertEquals(1, result.size)
