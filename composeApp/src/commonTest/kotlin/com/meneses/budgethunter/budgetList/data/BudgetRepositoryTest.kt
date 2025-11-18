@@ -3,10 +3,10 @@ package com.meneses.budgethunter.budgetList.data
 import com.meneses.budgethunter.budgetList.data.datasource.BudgetLocalDataSource
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.budgetList.domain.BudgetFilter
-import dev.mokkery.answering.returns
-import dev.mokkery.everySuspend
-import dev.mokkery.mock
-import dev.mokkery.verifySuspend
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.every
+import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
@@ -23,8 +23,8 @@ class BudgetRepositoryTest {
             Budget(id = 1, name = "Budget 1", amount = 100.0),
             Budget(id = 2, name = "Budget 2", amount = 200.0)
         )
-        val dataSource = mock<BudgetLocalDataSource> {
-            everySuspend { budgets } returns flowOf(budgetList)
+        val dataSource = mockk<BudgetLocalDataSource> {
+            every { budgets } returns flowOf(budgetList)
         }
         val repository = BudgetRepository(dataSource, Dispatchers.Default)
 
@@ -36,28 +36,28 @@ class BudgetRepositoryTest {
     @Test
     fun `getById returns budget when found`() = runTest {
         val budget = Budget(id = 42, name = "Test Budget", amount = 500.0)
-        val dataSource = mock<BudgetLocalDataSource> {
-            everySuspend { getById(42) } returns budget
+        val dataSource = mockk<BudgetLocalDataSource> {
+            coEvery { getById(42) } returns budget
         }
         val repository = BudgetRepository(dataSource, Dispatchers.Default)
 
         val result = repository.getById(42)
 
         assertEquals(budget, result)
-        verifySuspend { dataSource.getById(42) }
+        coVerify { dataSource.getById(42) }
     }
 
     @Test
     fun `getById returns null when budget not found`() = runTest {
-        val dataSource = mock<BudgetLocalDataSource> {
-            everySuspend { getById(999) } returns null
+        val dataSource = mockk<BudgetLocalDataSource> {
+            coEvery { getById(999) } returns null
         }
         val repository = BudgetRepository(dataSource, Dispatchers.Default)
 
         val result = repository.getById(999)
 
         assertNull(result)
-        verifySuspend { dataSource.getById(999) }
+        coVerify { dataSource.getById(999) }
     }
 
     @Test
@@ -66,28 +66,28 @@ class BudgetRepositoryTest {
             Budget(id = 1, name = "Cached 1", amount = 100.0),
             Budget(id = 2, name = "Cached 2", amount = 200.0)
         )
-        val dataSource = mock<BudgetLocalDataSource> {
-            everySuspend { getAllCached() } returns cachedBudgets
+        val dataSource = mockk<BudgetLocalDataSource> {
+            coEvery { getAllCached() } returns cachedBudgets
         }
         val repository = BudgetRepository(dataSource, Dispatchers.Default)
 
         val result = repository.getAllCached()
 
         assertEquals(cachedBudgets, result)
-        verifySuspend { dataSource.getAllCached() }
+        coVerify { dataSource.getAllCached() }
     }
 
     @Test
     fun `getAllCached returns empty list when no cached budgets`() = runTest {
-        val dataSource = mock<BudgetLocalDataSource> {
-            everySuspend { getAllCached() } returns emptyList()
+        val dataSource = mockk<BudgetLocalDataSource> {
+            coEvery { getAllCached() } returns emptyList()
         }
         val repository = BudgetRepository(dataSource, Dispatchers.Default)
 
         val result = repository.getAllCached()
 
         assertEquals(emptyList(), result)
-        verifySuspend { dataSource.getAllCached() }
+        coVerify { dataSource.getAllCached() }
     }
 
     @Test
@@ -96,8 +96,8 @@ class BudgetRepositoryTest {
         val filteredBudgets = listOf(
             Budget(id = 2, name = "February Budget", amount = 200.0, date = "2024-02-15")
         )
-        val dataSource = mock<BudgetLocalDataSource> {
-            everySuspend { getAllFilteredBy(filter) } returns filteredBudgets
+        val dataSource = mockk<BudgetLocalDataSource> {
+            coEvery { getAllFilteredBy(filter) } returns filteredBudgets
         }
         val repository = BudgetRepository(dataSource, Dispatchers.Default)
 
@@ -105,7 +105,7 @@ class BudgetRepositoryTest {
 
         assertEquals(1, result.size)
         assertEquals("February Budget", result[0].name)
-        verifySuspend { dataSource.getAllFilteredBy(filter) }
+        coVerify { dataSource.getAllFilteredBy(filter) }
     }
 
     @Test
@@ -115,67 +115,67 @@ class BudgetRepositoryTest {
             Budget(id = 2, name = "Budget 2", amount = 200.0)
         )
         val filter = BudgetFilter()
-        val dataSource = mock<BudgetLocalDataSource> {
-            everySuspend { getAllFilteredBy(filter) } returns allBudgets
+        val dataSource = mockk<BudgetLocalDataSource> {
+            coEvery { getAllFilteredBy(filter) } returns allBudgets
         }
         val repository = BudgetRepository(dataSource, Dispatchers.Default)
 
         val result = repository.getAllFilteredBy(filter)
 
         assertEquals(allBudgets.size, result.size)
-        verifySuspend { dataSource.getAllFilteredBy(filter) }
+        coVerify { dataSource.getAllFilteredBy(filter) }
     }
 
     @Test
     fun `create delegates to data source with IO dispatcher`() = runTest {
         val budget = Budget(id = -1, name = "New Budget", amount = 1000.0)
-        val dataSource = mock<BudgetLocalDataSource> {
-            everySuspend { create(budget) } returns budget.copy(id = 1)
+        val dataSource = mockk<BudgetLocalDataSource> {
+            coEvery { create(budget) } returns budget.copy(id = 1)
         }
         val repository = BudgetRepository(dataSource, Dispatchers.Default)
 
         repository.create(budget)
 
-        verifySuspend { dataSource.create(budget) }
+        coVerify { dataSource.create(budget) }
     }
 
     @Test
     fun `create handles budget with zero amount`() = runTest {
         val budget = Budget(id = -1, name = "Zero Budget", amount = 0.0)
-        val dataSource = mock<BudgetLocalDataSource> {
-            everySuspend { create(budget) } returns budget.copy(id = 1)
+        val dataSource = mockk<BudgetLocalDataSource> {
+            coEvery { create(budget) } returns budget.copy(id = 1)
         }
         val repository = BudgetRepository(dataSource, Dispatchers.Default)
 
         repository.create(budget)
 
-        verifySuspend { dataSource.create(budget) }
+        coVerify { dataSource.create(budget) }
     }
 
     @Test
     fun `create handles budget with empty name`() = runTest {
         val budget = Budget(id = -1, name = "", amount = 100.0)
-        val dataSource = mock<BudgetLocalDataSource> {
-            everySuspend { create(budget) } returns budget.copy(id = 1)
+        val dataSource = mockk<BudgetLocalDataSource> {
+            coEvery { create(budget) } returns budget.copy(id = 1)
         }
         val repository = BudgetRepository(dataSource, Dispatchers.Default)
 
         repository.create(budget)
 
-        verifySuspend { dataSource.create(budget) }
+        coVerify { dataSource.create(budget) }
     }
 
     @Test
     fun `update delegates to data source with IO dispatcher`() = runTest {
         val budget = Budget(id = 1, name = "Updated Budget", amount = 1500.0)
-        val dataSource = mock<BudgetLocalDataSource> {
-            everySuspend { update(budget) } returns Unit
+        val dataSource = mockk<BudgetLocalDataSource> {
+            coEvery { update(budget) } returns Unit
         }
         val repository = BudgetRepository(dataSource, Dispatchers.Default)
 
         repository.update(budget)
 
-        verifySuspend { dataSource.update(budget) }
+        coVerify { dataSource.update(budget) }
     }
 
     @Test
@@ -183,10 +183,10 @@ class BudgetRepositoryTest {
         val budget1 = Budget(id = 1, name = "Budget 1", amount = 100.0)
         val budget2 = Budget(id = 2, name = "Budget 2", amount = 200.0)
         val budget3 = Budget(id = 3, name = "Budget 3", amount = 300.0)
-        val dataSource = mock<BudgetLocalDataSource> {
-            everySuspend { update(budget1) } returns Unit
-            everySuspend { update(budget2) } returns Unit
-            everySuspend { update(budget3) } returns Unit
+        val dataSource = mockk<BudgetLocalDataSource> {
+            coEvery { update(budget1) } returns Unit
+            coEvery { update(budget2) } returns Unit
+            coEvery { update(budget3) } returns Unit
         }
         val repository = BudgetRepository(dataSource, Dispatchers.Default)
 
@@ -210,23 +210,23 @@ class BudgetRepositoryTest {
             totalExpenses = 567.89,
             date = "2024-06-15"
         )
-        val dataSource = mock<BudgetLocalDataSource> {
-            everySuspend { update(budget) } returns Unit
+        val dataSource = mockk<BudgetLocalDataSource> {
+            coEvery { update(budget) } returns Unit
         }
         val repository = BudgetRepository(dataSource, Dispatchers.Default)
 
         repository.update(budget)
 
-        verifySuspend { dataSource.update(budget) }
+        coVerify { dataSource.update(budget) }
     }
 
     @Test
     fun `create and update can be called sequentially`() = runTest {
         val newBudget = Budget(id = -1, name = "New", amount = 100.0)
         val updatedBudget = Budget(id = 1, name = "Updated", amount = 200.0)
-        val dataSource = mock<BudgetLocalDataSource> {
-            everySuspend { create(newBudget) } returns newBudget.copy(id = 1)
-            everySuspend { update(updatedBudget) } returns Unit
+        val dataSource = mockk<BudgetLocalDataSource> {
+            coEvery { create(newBudget) } returns newBudget.copy(id = 1)
+            coEvery { update(updatedBudget) } returns Unit
         }
         val repository = BudgetRepository(dataSource, Dispatchers.Default)
 
@@ -243,15 +243,15 @@ class BudgetRepositoryTest {
     fun `getById handles large ID values`() = runTest {
         val largeId = Int.MAX_VALUE
         val budget = Budget(id = largeId, name = "Large ID Budget", amount = 100.0)
-        val dataSource = mock<BudgetLocalDataSource> {
-            everySuspend { getById(largeId) } returns budget
+        val dataSource = mockk<BudgetLocalDataSource> {
+            coEvery { getById(largeId) } returns budget
         }
         val repository = BudgetRepository(dataSource, Dispatchers.Default)
 
         val result = repository.getById(largeId)
 
         assertEquals(budget, result)
-        verifySuspend { dataSource.getById(largeId) }
+        coVerify { dataSource.getById(largeId) }
     }
 
     @Test
@@ -260,8 +260,8 @@ class BudgetRepositoryTest {
         val filteredBudgets = listOf(
             Budget(id = 2, name = "February Budget", amount = 200.0, date = "2024-02-01")
         )
-        val dataSource = mock<BudgetLocalDataSource> {
-            everySuspend { getAllFilteredBy(filter) } returns filteredBudgets
+        val dataSource = mockk<BudgetLocalDataSource> {
+            coEvery { getAllFilteredBy(filter) } returns filteredBudgets
         }
         val repository = BudgetRepository(dataSource, Dispatchers.Default)
 
@@ -269,6 +269,6 @@ class BudgetRepositoryTest {
 
         assertEquals(1, result.size)
         assertEquals("February Budget", result[0].name)
-        verifySuspend { dataSource.getAllFilteredBy(filter) }
+        coVerify { dataSource.getAllFilteredBy(filter) }
     }
 }
