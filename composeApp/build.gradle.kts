@@ -13,6 +13,7 @@ plugins {
     id("kotlin-parcelize")
     alias(libs.plugins.jacoco)
     alias(libs.plugins.ktlint)
+    alias(libs.plugins.mokkery)
 }
 
 kotlin {
@@ -115,6 +116,7 @@ kotlin {
             implementation(libs.ktor.client.mock)
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.kotlinx.json)
+            implementation(libs.mokkery.runtime)
         }
     }
 }
