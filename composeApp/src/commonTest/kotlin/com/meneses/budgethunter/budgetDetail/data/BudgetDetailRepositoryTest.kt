@@ -78,7 +78,7 @@ class BudgetDetailRepositoryTest {
             BudgetEntry(id = 1, budgetId = 1, amount = "100.0", description = "Entry 1")
         )
         val budgetDataSource = mockk<BudgetLocalDataSource> {
-            coEvery { budgets} returns flowOf(listOf(budget1))
+            coEvery { budgets } returns flowOf(listOf(budget1))
         }
         val entryDataSource = mockk<BudgetEntryLocalDataSource> {
             every { selectAllByBudgetId(1L) } returns flowOf(entries)
