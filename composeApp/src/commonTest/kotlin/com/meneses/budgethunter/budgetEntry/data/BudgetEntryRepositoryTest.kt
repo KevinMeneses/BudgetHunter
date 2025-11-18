@@ -159,7 +159,7 @@ class BudgetEntryRepositoryTest {
             budgetId = 1,
             amount = "1234.56",
             description = "Complex Entry",
-            type = BudgetEntry.Type.EXPENSE,
+            type = BudgetEntry.Type.OUTCOME,
             category = BudgetEntry.Category.FOOD,
             date = "2024-06-15",
             invoice = "INV-001"
@@ -197,7 +197,7 @@ class BudgetEntryRepositoryTest {
     fun `getAllByBudgetId handles large budget ID`() = runTest {
         val largeBudgetId = Long.MAX_VALUE
         val entries = listOf(
-            BudgetEntry(id = 1, budgetId = largeBudgetId, amount = "100.0", description = "Entry")
+            BudgetEntry(id = 1, budgetId = Int.MAX_VALUE, amount = "100.0", description = "Entry")
         )
         val dataSource = mockk<BudgetEntryLocalDataSource> {
             every { selectAllByBudgetId(largeBudgetId) } returns flowOf(entries)
@@ -213,7 +213,7 @@ class BudgetEntryRepositoryTest {
     fun `getAllByBudgetId returns entries with different types`() = runTest {
         val entries = listOf(
             BudgetEntry(id = 1, budgetId = 1, amount = "100.0", description = "Income", type = BudgetEntry.Type.INCOME),
-            BudgetEntry(id = 2, budgetId = 1, amount = "50.0", description = "Expense", type = BudgetEntry.Type.EXPENSE)
+            BudgetEntry(id = 2, budgetId = 1, amount = "50.0", description = "Expense", type = BudgetEntry.Type.OUTCOME)
         )
         val dataSource = mockk<BudgetEntryLocalDataSource> {
             every { selectAllByBudgetId(1L) } returns flowOf(entries)
@@ -224,7 +224,7 @@ class BudgetEntryRepositoryTest {
 
         assertEquals(2, result.size)
         assertEquals(BudgetEntry.Type.INCOME, result[0].type)
-        assertEquals(BudgetEntry.Type.EXPENSE, result[1].type)
+        assertEquals(BudgetEntry.Type.OUTCOME, result[1].type)
     }
 
     @Test
@@ -284,8 +284,8 @@ class BudgetEntryRepositoryTest {
             budgetId = 1,
             amount = "250.75",
             description = "Complete Entry",
-            type = BudgetEntry.Type.EXPENSE,
-            category = BudgetEntry.Category.ENTERTAINMENT,
+            type = BudgetEntry.Type.OUTCOME,
+            category = BudgetEntry.Category.LEISURE,
             date = "2024-07-20",
             invoice = "INV-999"
         )
