@@ -1,13 +1,21 @@
 package com.meneses.budgethunter.budgetList.data.datasource
 
-import app.cash.sqldelight.coroutines.asFlow
+import app.cash.sqldelight.Query
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.budgetList.domain.BudgetFilter
+import com.meneses.budgethunter.db.BudgetQueries
+import dev.mokkery.answering.returns
+import dev.mokkery.answering.sequentiallyReturns
+import dev.mokkery.every
+import dev.mokkery.everySuspend
+import dev.mokkery.matcher.any
+import dev.mokkery.mock
+import dev.mokkery.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -20,203 +28,73 @@ import kotlin.test.assertTrue
  */
 class BudgetLocalDataSourceTest {
 
-    // Mock implementation of BudgetQueries for testing
-    private class MockBudgetQueries {
-        private val budgets = mutableListOf<Budget>()
-        private var nextId = 1L
-        var selectAllCalled = false
-        var transactionCalled = false
-        var insertCalled = false
-        var updateCalled = false
-        var deleteCalled = false
+    private lateinit var mockQueries: BudgetQueries
+    private lateinit var dataSource: BudgetLocalDataSource
 
-        fun selectAll(mapper: (Long, Double, String, String, Double) -> Budget): MockQuery<Budget> {
-            selectAllCalled = true
-            return MockQuery(
-                budgets.map {
-                    mapper(
-                        it.id.toLong(),
-                        it.amount,
-                        it.name,
-                        it.date,
-                        it.totalExpenses
-                    )
-                }
-            )
-        }
-
-        fun transaction(body: () -> Unit) {
-            transactionCalled = true
-            body()
-        }
-
-        fun insert(name: String, amount: Double, date: String) {
-            insertCalled = true
-            budgets.add(
-                Budget(
-                    id = nextId.toInt(),
-                    name = name,
-                    amount = amount,
-                    date = date,
-                    totalExpenses = 0.0
-                )
-            )
-        }
-
-        fun selectLastId(): MockExecuteAsOne<Long> {
-            return MockExecuteAsOne(nextId++)
-        }
-
-        fun update(id: Long, amount: Double, name: String, date: String) {
-            updateCalled = true
-            val index = budgets.indexOfFirst { it.id == id.toInt() }
-            if (index >= 0) {
-                budgets[index] = budgets[index].copy(
-                    amount = amount,
-                    name = name,
-                    date = date
-                )
-            }
-        }
-
-        fun delete(id: Long) {
-            deleteCalled = true
-            budgets.removeIf { it.id == id.toInt() }
-        }
-
-        fun addBudget(budget: Budget) {
-            budgets.add(budget)
-        }
-
-        fun clearBudgets() {
-            budgets.clear()
-        }
-    }
-
-    private class MockQuery<T>(private val data: List<T>) {
-        fun asFlow() = kotlinx.coroutines.flow.flowOf(data)
-    }
-
-    private class MockExecuteAsOne<T>(private val value: T) {
-        fun executeAsOne() = value
-    }
-
-    // Testable version of BudgetLocalDataSource
-    private class TestableBudgetLocalDataSource(
-        private val mockQueries: MockBudgetQueries,
-        dispatcher: kotlinx.coroutines.CoroutineDispatcher
-    ) {
-        private val cacheMutex = kotlinx.coroutines.sync.Mutex()
-        private var cachedList: List<Budget> = emptyList()
-
-        val budgets = mockQueries
-            .selectAll { id, amount, name, date, totalExpenses ->
-                Budget(
-                    id = id.toInt(),
-                    amount = amount,
-                    name = name,
-                    totalExpenses = totalExpenses,
-                    date = date
-                )
-            }
-            .asFlow()
-            .onEach {
-                cacheMutex.withLock {
-                    cachedList = it
-                }
-            }
-
-        suspend fun getAllCached(): List<Budget> = cacheMutex.withLock {
-            cachedList
-        }
-
-        suspend fun getById(id: Int): Budget? = cacheMutex.withLock {
-            cachedList.firstOrNull { it.id == id }
-        }
-
-        suspend fun getAllFilteredBy(filter: BudgetFilter): List<Budget> = cacheMutex.withLock {
-            cachedList.filter {
-                if (filter.name.isNullOrBlank()) true
-                else it.name.lowercase()
-                    .contains(filter.name.lowercase())
-            }
-        }
-
-        fun create(budget: Budget): Budget {
-            var savedId = 0
-
-            mockQueries.transaction {
-                mockQueries.insert(
-                    name = budget.name,
-                    amount = budget.amount,
-                    date = budget.date
-                )
-
-                savedId = mockQueries
-                    .selectLastId()
-                    .executeAsOne()
-                    .toInt()
-            }
-
-            return budget.copy(id = savedId)
-        }
-
-        fun update(budget: Budget) = mockQueries.update(
-            id = budget.id.toLong(),
-            amount = budget.amount,
-            name = budget.name,
-            date = budget.date
-        )
-
-        fun delete(id: Long) = mockQueries.delete(id)
+    @BeforeTest
+    fun setup() {
+        mockQueries = mock()
+        dataSource = BudgetLocalDataSource(mockQueries, Dispatchers.Unconfined)
     }
 
     @Test
     fun `getAllCached returns empty list initially`() = runTest {
-        val mockQueries = MockBudgetQueries()
-        val dataSource = TestableBudgetLocalDataSource(mockQueries, Dispatchers.Default)
+        // Given - empty query result
+        val mockQuery = createMockQuery(emptyList())
+        every { mockQueries.selectAll(any()) } returns mockQuery
 
+        // When - trigger cache population
+        dataSource.budgets.first()
         val result = dataSource.getAllCached()
 
+        // Then
         assertEquals(emptyList(), result)
     }
 
     @Test
     fun `getAllCached returns cached budgets after flow emission`() = runTest {
-        val mockQueries = MockBudgetQueries()
-        mockQueries.addBudget(Budget(id = 1, name = "Test Budget", amount = 1000.0))
-        val dataSource = TestableBudgetLocalDataSource(mockQueries, Dispatchers.Default)
+        // Given
+        val budget = Budget(id = 1, name = "Test Budget", amount = 1000.0)
+        val mockQuery = createMockQuery(listOf(budget))
+        every { mockQueries.selectAll(any()) } returns mockQuery
 
-        // Trigger flow to populate cache
+        // When
         dataSource.budgets.first()
         val result = dataSource.getAllCached()
 
+        // Then
         assertEquals(1, result.size)
         assertEquals("Test Budget", result[0].name)
     }
 
     @Test
     fun `getById returns null when budget not found`() = runTest {
-        val mockQueries = MockBudgetQueries()
-        mockQueries.addBudget(Budget(id = 1, name = "Test Budget", amount = 1000.0))
-        val dataSource = TestableBudgetLocalDataSource(mockQueries, Dispatchers.Default)
+        // Given
+        val budget = Budget(id = 1, name = "Test Budget", amount = 1000.0)
+        val mockQuery = createMockQuery(listOf(budget))
+        every { mockQueries.selectAll(any()) } returns mockQuery
 
+        // When
         dataSource.budgets.first()
         val result = dataSource.getById(999)
 
+        // Then
         assertNull(result)
     }
 
     @Test
     fun `getById returns budget when found`() = runTest {
-        val mockQueries = MockBudgetQueries()
-        mockQueries.addBudget(Budget(id = 1, name = "Test Budget", amount = 1000.0))
-        mockQueries.addBudget(Budget(id = 2, name = "Another Budget", amount = 2000.0))
-        val dataSource = TestableBudgetLocalDataSource(mockQueries, Dispatchers.Default)
+        // Given
+        val budget1 = Budget(id = 1, name = "Test Budget", amount = 1000.0)
+        val budget2 = Budget(id = 2, name = "Another Budget", amount = 2000.0)
+        val mockQuery = createMockQuery(listOf(budget1, budget2))
+        every { mockQueries.selectAll(any()) } returns mockQuery
 
+        // When
         dataSource.budgets.first()
         val result = dataSource.getById(2)
 
+        // Then
         assertNotNull(result)
         assertEquals("Another Budget", result.name)
         assertEquals(2000.0, result.amount)
@@ -224,41 +102,50 @@ class BudgetLocalDataSourceTest {
 
     @Test
     fun `getAllFilteredBy returns all budgets when filter name is null`() = runTest {
-        val mockQueries = MockBudgetQueries()
-        mockQueries.addBudget(Budget(id = 1, name = "Test Budget", amount = 1000.0))
-        mockQueries.addBudget(Budget(id = 2, name = "Another Budget", amount = 2000.0))
-        val dataSource = TestableBudgetLocalDataSource(mockQueries, Dispatchers.Default)
+        // Given
+        val budget1 = Budget(id = 1, name = "Test Budget", amount = 1000.0)
+        val budget2 = Budget(id = 2, name = "Another Budget", amount = 2000.0)
+        val mockQuery = createMockQuery(listOf(budget1, budget2))
+        every { mockQueries.selectAll(any()) } returns mockQuery
 
+        // When
         dataSource.budgets.first()
         val result = dataSource.getAllFilteredBy(BudgetFilter(name = null))
 
+        // Then
         assertEquals(2, result.size)
     }
 
     @Test
     fun `getAllFilteredBy returns all budgets when filter name is blank`() = runTest {
-        val mockQueries = MockBudgetQueries()
-        mockQueries.addBudget(Budget(id = 1, name = "Test Budget", amount = 1000.0))
-        mockQueries.addBudget(Budget(id = 2, name = "Another Budget", amount = 2000.0))
-        val dataSource = TestableBudgetLocalDataSource(mockQueries, Dispatchers.Default)
+        // Given
+        val budget1 = Budget(id = 1, name = "Test Budget", amount = 1000.0)
+        val budget2 = Budget(id = 2, name = "Another Budget", amount = 2000.0)
+        val mockQuery = createMockQuery(listOf(budget1, budget2))
+        every { mockQueries.selectAll(any()) } returns mockQuery
 
+        // When
         dataSource.budgets.first()
         val result = dataSource.getAllFilteredBy(BudgetFilter(name = ""))
 
+        // Then
         assertEquals(2, result.size)
     }
 
     @Test
     fun `getAllFilteredBy filters budgets by name case-insensitive`() = runTest {
-        val mockQueries = MockBudgetQueries()
-        mockQueries.addBudget(Budget(id = 1, name = "Groceries Budget", amount = 1000.0))
-        mockQueries.addBudget(Budget(id = 2, name = "Entertainment Budget", amount = 2000.0))
-        mockQueries.addBudget(Budget(id = 3, name = "Grocery Shopping", amount = 500.0))
-        val dataSource = TestableBudgetLocalDataSource(mockQueries, Dispatchers.Default)
+        // Given
+        val budget1 = Budget(id = 1, name = "Groceries Budget", amount = 1000.0)
+        val budget2 = Budget(id = 2, name = "Entertainment Budget", amount = 2000.0)
+        val budget3 = Budget(id = 3, name = "Grocery Shopping", amount = 500.0)
+        val mockQuery = createMockQuery(listOf(budget1, budget2, budget3))
+        every { mockQueries.selectAll(any()) } returns mockQuery
 
+        // When
         dataSource.budgets.first()
         val result = dataSource.getAllFilteredBy(BudgetFilter(name = "GROCER"))
 
+        // Then
         assertEquals(2, result.size)
         assertTrue(result.any { it.name == "Groceries Budget" })
         assertTrue(result.any { it.name == "Grocery Shopping" })
@@ -266,26 +153,37 @@ class BudgetLocalDataSourceTest {
 
     @Test
     fun `getAllFilteredBy returns empty list when no matches found`() = runTest {
-        val mockQueries = MockBudgetQueries()
-        mockQueries.addBudget(Budget(id = 1, name = "Test Budget", amount = 1000.0))
-        val dataSource = TestableBudgetLocalDataSource(mockQueries, Dispatchers.Default)
+        // Given
+        val budget = Budget(id = 1, name = "Test Budget", amount = 1000.0)
+        val mockQuery = createMockQuery(listOf(budget))
+        every { mockQueries.selectAll(any()) } returns mockQuery
 
+        // When
         dataSource.budgets.first()
         val result = dataSource.getAllFilteredBy(BudgetFilter(name = "NonExistent"))
 
+        // Then
         assertEquals(emptyList(), result)
     }
 
     @Test
     fun `create inserts budget and returns budget with generated id`() = runTest {
-        val mockQueries = MockBudgetQueries()
-        val dataSource = TestableBudgetLocalDataSource(mockQueries, Dispatchers.Default)
+        // Given
         val budget = Budget(name = "New Budget", amount = 1500.0, date = "2025-01-15")
+        val mockLastIdQuery = mock<Query<Long>>()
+        every { mockLastIdQuery.executeAsOne() } returns 1L
+        every { mockQueries.selectLastId() } returns mockLastIdQuery
+        every { mockQueries.insert(any(), any(), any()) } returns Unit
+        every { mockQueries.transaction(any()) } answers { call ->
+            val block = call.arg<() -> Unit>(0)
+            block()
+        }
 
+        // When
         val result = dataSource.create(budget)
 
-        assertTrue(mockQueries.transactionCalled)
-        assertTrue(mockQueries.insertCalled)
+        // Then
+        verify { mockQueries.insert("New Budget", 1500.0, "2025-01-15") }
         assertEquals(1, result.id)
         assertEquals("New Budget", result.name)
         assertEquals(1500.0, result.amount)
@@ -293,13 +191,22 @@ class BudgetLocalDataSourceTest {
 
     @Test
     fun `create generates sequential ids for multiple budgets`() = runTest {
-        val mockQueries = MockBudgetQueries()
-        val dataSource = TestableBudgetLocalDataSource(mockQueries, Dispatchers.Default)
+        // Given
+        val mockLastIdQuery = mock<Query<Long>>()
+        every { mockLastIdQuery.executeAsOne() } sequentiallyReturns listOf(1L, 2L, 3L)
+        every { mockQueries.selectLastId() } returns mockLastIdQuery
+        every { mockQueries.insert(any(), any(), any()) } returns Unit
+        every { mockQueries.transaction(any()) } answers { call ->
+            val block = call.arg<() -> Unit>(0)
+            block()
+        }
 
+        // When
         val budget1 = dataSource.create(Budget(name = "Budget 1", amount = 100.0))
         val budget2 = dataSource.create(Budget(name = "Budget 2", amount = 200.0))
         val budget3 = dataSource.create(Budget(name = "Budget 3", amount = 300.0))
 
+        // Then
         assertEquals(1, budget1.id)
         assertEquals(2, budget2.id)
         assertEquals(3, budget3.id)
@@ -307,34 +214,41 @@ class BudgetLocalDataSourceTest {
 
     @Test
     fun `update calls query update with correct parameters`() = runTest {
-        val mockQueries = MockBudgetQueries()
-        val dataSource = TestableBudgetLocalDataSource(mockQueries, Dispatchers.Default)
+        // Given
         val budget = Budget(id = 5, name = "Updated Budget", amount = 2500.0, date = "2025-02-20")
+        every { mockQueries.update(any(), any(), any(), any()) } returns Unit
 
+        // When
         dataSource.update(budget)
 
-        assertTrue(mockQueries.updateCalled)
+        // Then
+        verify { mockQueries.update(5L, 2500.0, "Updated Budget", "2025-02-20") }
     }
 
     @Test
     fun `delete calls query delete with correct id`() = runTest {
-        val mockQueries = MockBudgetQueries()
-        val dataSource = TestableBudgetLocalDataSource(mockQueries, Dispatchers.Default)
+        // Given
+        every { mockQueries.delete(any()) } returns Unit
 
+        // When
         dataSource.delete(10L)
 
-        assertTrue(mockQueries.deleteCalled)
+        // Then
+        verify { mockQueries.delete(10L) }
     }
 
     @Test
     fun `budgets flow emits data from queries`() = runTest {
-        val mockQueries = MockBudgetQueries()
-        mockQueries.addBudget(Budget(id = 1, name = "Budget 1", amount = 1000.0))
-        mockQueries.addBudget(Budget(id = 2, name = "Budget 2", amount = 2000.0))
-        val dataSource = TestableBudgetLocalDataSource(mockQueries, Dispatchers.Default)
+        // Given
+        val budget1 = Budget(id = 1, name = "Budget 1", amount = 1000.0)
+        val budget2 = Budget(id = 2, name = "Budget 2", amount = 2000.0)
+        val mockQuery = createMockQuery(listOf(budget1, budget2))
+        every { mockQueries.selectAll(any()) } returns mockQuery
 
+        // When
         val result = dataSource.budgets.first()
 
+        // Then
         assertEquals(2, result.size)
         assertEquals("Budget 1", result[0].name)
         assertEquals("Budget 2", result[1].name)
@@ -342,74 +256,103 @@ class BudgetLocalDataSourceTest {
 
     @Test
     fun `cache is populated when budgets flow is collected`() = runTest {
-        val mockQueries = MockBudgetQueries()
-        mockQueries.addBudget(Budget(id = 1, name = "Test", amount = 100.0))
-        val dataSource = TestableBudgetLocalDataSource(mockQueries, Dispatchers.Default)
+        // Given
+        val budget = Budget(id = 1, name = "Test", amount = 100.0)
+        val mockQuery = createMockQuery(listOf(budget))
+        every { mockQueries.selectAll(any()) } returns mockQuery
 
-        // Before collecting, cache should be empty
+        // When - before collecting, cache should be empty
         assertEquals(emptyList(), dataSource.getAllCached())
 
         // After collecting, cache should be populated
         dataSource.budgets.first()
+
+        // Then
         assertEquals(1, dataSource.getAllCached().size)
     }
 
     @Test
     fun `getAllFilteredBy handles partial name matches`() = runTest {
-        val mockQueries = MockBudgetQueries()
-        mockQueries.addBudget(Budget(id = 1, name = "Monthly Budget 2025", amount = 1000.0))
-        mockQueries.addBudget(Budget(id = 2, name = "Vacation Fund", amount = 2000.0))
-        val dataSource = TestableBudgetLocalDataSource(mockQueries, Dispatchers.Default)
+        // Given
+        val budget1 = Budget(id = 1, name = "Monthly Budget 2025", amount = 1000.0)
+        val budget2 = Budget(id = 2, name = "Vacation Fund", amount = 2000.0)
+        val mockQuery = createMockQuery(listOf(budget1, budget2))
+        every { mockQueries.selectAll(any()) } returns mockQuery
 
+        // When
         dataSource.budgets.first()
         val result = dataSource.getAllFilteredBy(BudgetFilter(name = "month"))
 
+        // Then
         assertEquals(1, result.size)
         assertEquals("Monthly Budget 2025", result[0].name)
     }
 
     @Test
     fun `create preserves budget amount and date`() = runTest {
-        val mockQueries = MockBudgetQueries()
-        val dataSource = TestableBudgetLocalDataSource(mockQueries, Dispatchers.Default)
+        // Given
         val budget = Budget(
             name = "Precise Budget",
             amount = 1234.56,
             date = "2025-03-15"
         )
+        val mockLastIdQuery = mock<Query<Long>>()
+        every { mockLastIdQuery.executeAsOne() } returns 1L
+        every { mockQueries.selectLastId() } returns mockLastIdQuery
+        every { mockQueries.insert(any(), any(), any()) } returns Unit
+        every { mockQueries.transaction(any()) } answers { call ->
+            val block = call.arg<() -> Unit>(0)
+            block()
+        }
 
+        // When
         val result = dataSource.create(budget)
 
+        // Then
         assertEquals(1234.56, result.amount)
         assertEquals("2025-03-15", result.date)
+        verify { mockQueries.insert("Precise Budget", 1234.56, "2025-03-15") }
     }
 
     @Test
     fun `getById handles id 0`() = runTest {
-        val mockQueries = MockBudgetQueries()
-        mockQueries.addBudget(Budget(id = 0, name = "Zero Budget", amount = 0.0))
-        val dataSource = TestableBudgetLocalDataSource(mockQueries, Dispatchers.Default)
+        // Given
+        val budget = Budget(id = 0, name = "Zero Budget", amount = 0.0)
+        val mockQuery = createMockQuery(listOf(budget))
+        every { mockQueries.selectAll(any()) } returns mockQuery
 
-        @Suppress("UNUSED_VARIABLE")
-        val triggerCache = dataSource.budgets.first()
+        // When
+        dataSource.budgets.first()
         val result = dataSource.getById(0)
 
+        // Then
         assertNotNull(result)
         assertEquals("Zero Budget", result.name)
     }
 
     @Test
     fun `getAllFilteredBy handles special characters in filter`() = runTest {
-        val mockQueries = MockBudgetQueries()
-        mockQueries.addBudget(Budget(id = 1, name = "Budget-2025", amount = 1000.0))
-        mockQueries.addBudget(Budget(id = 2, name = "Budget_Test", amount = 2000.0))
-        val dataSource = TestableBudgetLocalDataSource(mockQueries, Dispatchers.Default)
+        // Given
+        val budget1 = Budget(id = 1, name = "Budget-2025", amount = 1000.0)
+        val budget2 = Budget(id = 2, name = "Budget_Test", amount = 2000.0)
+        val mockQuery = createMockQuery(listOf(budget1, budget2))
+        every { mockQueries.selectAll(any()) } returns mockQuery
 
-        @Suppress("UNUSED_VARIABLE")
-        val triggerCache = dataSource.budgets.first()
+        // When
+        dataSource.budgets.first()
         val result = dataSource.getAllFilteredBy(BudgetFilter(name = "budget-"))
 
+        // Then
         assertEquals(1, result.size)
         assertEquals("Budget-2025", result[0].name)
+    }
+
+    /**
+     * Helper function to create a mock Query that returns the given data as a flow
+     */
+    private fun createMockQuery(data: List<Budget>): Query<Budget> {
+        val mockQuery = mock<Query<Budget>>()
+        every { mockQuery.asFlow() } returns flowOf(data)
+        return mockQuery
     }
 }
