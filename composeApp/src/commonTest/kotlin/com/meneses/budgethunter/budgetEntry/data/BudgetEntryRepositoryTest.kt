@@ -145,7 +145,7 @@ class BudgetEntryRepositoryTest {
         repository.update(entry2)
         repository.update(entry3)
 
-        verifySuspend {
+        coVerify {
             dataSource.update(entry1)
             dataSource.update(entry2)
             dataSource.update(entry3)
@@ -187,7 +187,7 @@ class BudgetEntryRepositoryTest {
         repository.create(newEntry)
         repository.update(updatedEntry)
 
-        verifySuspend {
+        coVerify {
             dataSource.create(newEntry)
             dataSource.update(updatedEntry)
         }
