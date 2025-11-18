@@ -1,6 +1,7 @@
 package com.meneses.budgethunter.budgetEntry.data.datasource
 
 import app.cash.sqldelight.Query
+import app.cash.sqldelight.db.QueryResult
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntryFilter
 import com.meneses.budgethunter.db.BudgetEntryQueries
