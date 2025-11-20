@@ -311,7 +311,10 @@ class BudgetDetailRepositoryTest {
     }
 
     @Test
-    fun `aaa_getCachedDetail returns default when no data collected`() = runTest {
+    fun `getCachedDetail returns default when no data collected`() = runTest {
+        // Clear the cache before testing to ensure clean state
+        BudgetDetailRepository.clearCache()
+
         val budgetDataSource = mockk<BudgetLocalDataSource>(relaxed = true)
         val entryDataSource = mockk<BudgetEntryLocalDataSource>(relaxed = true)
         val deleteUseCase = mockk<DeleteBudgetUseCase>(relaxed = true)
