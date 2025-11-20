@@ -28,6 +28,7 @@ import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.serialization.json.Json
 import okio.Path.Companion.toPath
+import org.koin.core.module.dsl.bind
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import platform.Foundation.NSBundle

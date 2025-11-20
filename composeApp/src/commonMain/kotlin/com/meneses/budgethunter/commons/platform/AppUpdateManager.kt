@@ -7,4 +7,5 @@ sealed class AppUpdateResult {
     data object UpdateFailed : AppUpdateResult()
 }
 
-expect class AppUpdateManager() : IAppUpdateManager
+// Platform-specific implementations are provided in androidMain and iosMain
+// They implement IAppUpdateManager interface

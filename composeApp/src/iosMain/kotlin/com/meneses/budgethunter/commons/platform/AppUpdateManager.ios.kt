@@ -27,7 +27,7 @@ private data class AppStoreResult(
     val releaseNotes: String? = null
 )
 
-actual class AppUpdateManager : IAppUpdateManager {
+class AppUpdateManager : IAppUpdateManager {
 
     private val scope = CoroutineScope(Dispatchers.Default)
     private val httpClient = HttpClient(Darwin)

@@ -5,6 +5,7 @@ import com.meneses.budgethunter.budgetMetrics.BudgetMetricsViewModel
 import com.meneses.budgethunter.budgetMetrics.application.GetTotalsPerCategoryUseCase
 import com.meneses.budgethunter.budgetMetrics.application.IGetTotalsPerCategoryUseCase
 import kotlinx.coroutines.CoroutineDispatcher
+import org.koin.core.module.dsl.bind
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 

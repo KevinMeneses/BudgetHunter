@@ -12,6 +12,7 @@ import com.meneses.budgethunter.budgetList.data.IBudgetRepository
 import com.meneses.budgethunter.budgetList.data.datasource.BudgetLocalDataSource
 import com.meneses.budgethunter.db.BudgetQueries
 import kotlinx.coroutines.CoroutineDispatcher
+import org.koin.core.module.dsl.bind
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 

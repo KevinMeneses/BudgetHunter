@@ -9,6 +9,7 @@ import com.meneses.budgethunter.budgetEntry.data.datasource.BudgetEntryLocalData
 import com.meneses.budgethunter.budgetEntry.domain.AIImageProcessor
 import com.meneses.budgethunter.db.BudgetEntryQueries
 import kotlinx.coroutines.CoroutineDispatcher
+import org.koin.core.module.dsl.bind
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
