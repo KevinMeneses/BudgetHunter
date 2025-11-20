@@ -1,11 +1,13 @@
 package com.meneses.budgethunter.budgetEntry.data.datasource
 
 import app.cash.sqldelight.Query
-import app.cash.sqldelight.db.QueryResult
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntryFilter
 import com.meneses.budgethunter.db.BudgetEntryQueries
 import com.meneses.budgethunter.db.Budget_entry
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
@@ -19,17 +21,17 @@ import kotlin.test.assertTrue
  * Comprehensive unit tests for BudgetEntryLocalDataSource.
  * Tests caching, filtering, CRUD operations, and thread safety.
  *
- * Uses test fakes for BudgetEntryQueries to test actual BudgetEntryLocalDataSource implementation.
+ * Uses MockK to mock BudgetEntryQueries (final class from SQLDelight).
  */
 class BudgetEntryLocalDataSourceTest {
 
-    private lateinit var fakeQueries: FakeBudgetEntryQueries
+    private lateinit var mockQueries: BudgetEntryQueries
     private lateinit var dataSource: BudgetEntryLocalDataSource
 
     @BeforeTest
     fun setup() {
-        fakeQueries = FakeBudgetEntryQueries()
-        dataSource = BudgetEntryLocalDataSource(fakeQueries, Dispatchers.Unconfined)
+        mockQueries = mockk(relaxed = true)
+        dataSource = BudgetEntryLocalDataSource(mockQueries, Dispatchers.Unconfined)
     }
 
     @Test
@@ -40,12 +42,11 @@ class BudgetEntryLocalDataSourceTest {
     @Test
     fun `getAllCached returns cached entries after flow emission`() = runTest {
         // Given
-        fakeQueries.addEntry(
-            id = 1L,
-            budgetId = 1L,
-            amount = 100.0,
-            description = "Test Entry"
-        )
+        val dbEntry = createDbEntry(id = 1, budgetId = 1, description = "Test Entry")
+        val mockQuery = mockk<Query<Budget_entry>>()
+
+        every { mockQueries.selectAllByBudgetId(1L) } returns mockQuery
+        every { mockQuery.asFlow() } returns flowOf(listOf(dbEntry))
 
         // When
         dataSource.selectAllByBudgetId(1L).first()
@@ -59,9 +60,14 @@ class BudgetEntryLocalDataSourceTest {
     @Test
     fun `selectAllByBudgetId filters entries by budget id`() = runTest {
         // Given
-        fakeQueries.addEntry(id = 1L, budgetId = 1L, description = "Entry 1")
-        fakeQueries.addEntry(id = 2L, budgetId = 2L, description = "Entry 2")
-        fakeQueries.addEntry(id = 3L, budgetId = 1L, description = "Entry 3")
+        val entries = listOf(
+            createDbEntry(id = 1, budgetId = 1, description = "Entry 1"),
+            createDbEntry(id = 2, budgetId = 1, description = "Entry 2")
+        )
+        val mockQuery = mockk<Query<Budget_entry>>()
+
+        every { mockQueries.selectAllByBudgetId(1L) } returns mockQuery
+        every { mockQuery.asFlow() } returns flowOf(entries)
 
         // When
         val result = dataSource.selectAllByBudgetId(1L).first()
@@ -74,8 +80,11 @@ class BudgetEntryLocalDataSourceTest {
     @Test
     fun `getAllFilteredBy returns all entries when all filters are null or blank`() = runTest {
         // Given
-        fakeQueries.addEntry(id = 1L, budgetId = 1L, description = "Entry 1")
-        fakeQueries.addEntry(id = 2L, budgetId = 1L, description = "Entry 2")
+        val entries = listOf(
+            createDbEntry(id = 1, budgetId = 1, description = "Entry 1"),
+            createDbEntry(id = 2, budgetId = 1, description = "Entry 2")
+        )
+        setupSelectAllByBudgetId(1L, entries)
 
         // When
         dataSource.selectAllByBudgetId(1L).first()
@@ -88,9 +97,12 @@ class BudgetEntryLocalDataSourceTest {
     @Test
     fun `getAllFilteredBy filters by description case-insensitive`() = runTest {
         // Given
-        fakeQueries.addEntry(id = 1L, budgetId = 1L, description = "Groceries Shopping")
-        fakeQueries.addEntry(id = 2L, budgetId = 1L, description = "Restaurant Meal")
-        fakeQueries.addEntry(id = 3L, budgetId = 1L, description = "Grocery Store")
+        val entries = listOf(
+            createDbEntry(id = 1, budgetId = 1, description = "Groceries Shopping"),
+            createDbEntry(id = 2, budgetId = 1, description = "Restaurant Meal"),
+            createDbEntry(id = 3, budgetId = 1, description = "Grocery Store")
+        )
+        setupSelectAllByBudgetId(1L, entries)
 
         // When
         dataSource.selectAllByBudgetId(1L).first()
@@ -105,18 +117,21 @@ class BudgetEntryLocalDataSourceTest {
     @Test
     fun `getAllFilteredBy filters by type`() = runTest {
         // Given
-        fakeQueries.addEntry(
-            id = 1L,
-            budgetId = 1L,
-            description = "Salary",
-            type = BudgetEntry.Type.INCOME
+        val entries = listOf(
+            createDbEntry(
+                id = 1,
+                budgetId = 1,
+                description = "Salary",
+                type = BudgetEntry.Type.INCOME
+            ),
+            createDbEntry(
+                id = 2,
+                budgetId = 1,
+                description = "Groceries",
+                type = BudgetEntry.Type.OUTCOME
+            )
         )
-        fakeQueries.addEntry(
-            id = 2L,
-            budgetId = 1L,
-            description = "Groceries",
-            type = BudgetEntry.Type.OUTCOME
-        )
+        setupSelectAllByBudgetId(1L, entries)
 
         // When
         dataSource.selectAllByBudgetId(1L).first()
@@ -130,18 +145,21 @@ class BudgetEntryLocalDataSourceTest {
     @Test
     fun `getAllFilteredBy filters by category`() = runTest {
         // Given
-        fakeQueries.addEntry(
-            id = 1L,
-            budgetId = 1L,
-            description = "Supermarket",
-            category = BudgetEntry.Category.GROCERIES
+        val entries = listOf(
+            createDbEntry(
+                id = 1,
+                budgetId = 1,
+                description = "Supermarket",
+                category = BudgetEntry.Category.GROCERIES
+            ),
+            createDbEntry(
+                id = 2,
+                budgetId = 1,
+                description = "Restaurant",
+                category = BudgetEntry.Category.FOOD
+            )
         )
-        fakeQueries.addEntry(
-            id = 2L,
-            budgetId = 1L,
-            description = "Restaurant",
-            category = BudgetEntry.Category.FOOD
-        )
+        setupSelectAllByBudgetId(1L, entries)
 
         // When
         dataSource.selectAllByBudgetId(1L).first()
@@ -157,8 +175,11 @@ class BudgetEntryLocalDataSourceTest {
     @Test
     fun `getAllFilteredBy filters by start date`() = runTest {
         // Given
-        fakeQueries.addEntry(id = 1L, budgetId = 1L, description = "Old", date = "2025-01-01")
-        fakeQueries.addEntry(id = 2L, budgetId = 1L, description = "Recent", date = "2025-01-15")
+        val entries = listOf(
+            createDbEntry(id = 1, budgetId = 1, description = "Old", date = "2025-01-01"),
+            createDbEntry(id = 2, budgetId = 1, description = "Recent", date = "2025-01-15")
+        )
+        setupSelectAllByBudgetId(1L, entries)
 
         // When
         dataSource.selectAllByBudgetId(1L).first()
@@ -172,8 +193,11 @@ class BudgetEntryLocalDataSourceTest {
     @Test
     fun `getAllFilteredBy filters by end date`() = runTest {
         // Given
-        fakeQueries.addEntry(id = 1L, budgetId = 1L, description = "Old", date = "2025-01-01")
-        fakeQueries.addEntry(id = 2L, budgetId = 1L, description = "Recent", date = "2025-01-31")
+        val entries = listOf(
+            createDbEntry(id = 1, budgetId = 1, description = "Old", date = "2025-01-01"),
+            createDbEntry(id = 2, budgetId = 1, description = "Recent", date = "2025-01-31")
+        )
+        setupSelectAllByBudgetId(1L, entries)
 
         // When
         dataSource.selectAllByBudgetId(1L).first()
@@ -187,30 +211,33 @@ class BudgetEntryLocalDataSourceTest {
     @Test
     fun `getAllFilteredBy applies multiple filters together`() = runTest {
         // Given
-        fakeQueries.addEntry(
-            id = 1L,
-            budgetId = 1L,
-            description = "Groceries",
-            type = BudgetEntry.Type.OUTCOME,
-            category = BudgetEntry.Category.GROCERIES,
-            date = "2025-01-15"
+        val entries = listOf(
+            createDbEntry(
+                id = 1,
+                budgetId = 1,
+                description = "Groceries",
+                type = BudgetEntry.Type.OUTCOME,
+                category = BudgetEntry.Category.GROCERIES,
+                date = "2025-01-15"
+            ),
+            createDbEntry(
+                id = 2,
+                budgetId = 1,
+                description = "Grocery Store",
+                type = BudgetEntry.Type.INCOME,
+                category = BudgetEntry.Category.GROCERIES,
+                date = "2025-01-15"
+            ),
+            createDbEntry(
+                id = 3,
+                budgetId = 1,
+                description = "Groceries",
+                type = BudgetEntry.Type.OUTCOME,
+                category = BudgetEntry.Category.FOOD,
+                date = "2025-01-15"
+            )
         )
-        fakeQueries.addEntry(
-            id = 2L,
-            budgetId = 1L,
-            description = "Grocery Store",
-            type = BudgetEntry.Type.INCOME,
-            category = BudgetEntry.Category.GROCERIES,
-            date = "2025-01-15"
-        )
-        fakeQueries.addEntry(
-            id = 3L,
-            budgetId = 1L,
-            description = "Groceries",
-            type = BudgetEntry.Type.OUTCOME,
-            category = BudgetEntry.Category.FOOD,
-            date = "2025-01-15"
-        )
+        setupSelectAllByBudgetId(1L, entries)
 
         // When
         dataSource.selectAllByBudgetId(1L).first()
@@ -244,9 +271,18 @@ class BudgetEntryLocalDataSourceTest {
         dataSource.create(entry)
 
         // Then
-        assertTrue(fakeQueries.insertCalled)
-        assertEquals(150.50, fakeQueries.lastInsertAmount)
-        assertEquals("New Entry", fakeQueries.lastInsertDescription)
+        verify {
+            mockQueries.insert(
+                id = null,
+                budgetId = 1L,
+                amount = 150.50,
+                description = "New Entry",
+                type = BudgetEntry.Type.OUTCOME,
+                category = BudgetEntry.Category.FOOD,
+                date = "2025-01-20",
+                invoice = "INV-001"
+            )
+        }
     }
 
     @Test
@@ -262,8 +298,18 @@ class BudgetEntryLocalDataSourceTest {
         dataSource.create(entry)
 
         // Then
-        assertTrue(fakeQueries.insertCalled)
-        assertEquals(0.0, fakeQueries.lastInsertAmount) // Should default to 0.0
+        verify {
+            mockQueries.insert(
+                id = null,
+                budgetId = 1L,
+                amount = 0.0, // Should default to 0.0
+                description = "Test",
+                type = BudgetEntry.Type.OUTCOME,
+                category = BudgetEntry.Category.OTHER,
+                date = "",
+                invoice = null
+            )
+        }
     }
 
     @Test
@@ -283,9 +329,18 @@ class BudgetEntryLocalDataSourceTest {
         dataSource.update(entry)
 
         // Then
-        assertTrue(fakeQueries.updateCalled)
-        assertEquals(5L, fakeQueries.lastUpdateId)
-        assertEquals(200.0, fakeQueries.lastUpdateAmount)
+        verify {
+            mockQueries.update(
+                id = 5L,
+                budgetId = 1L,
+                amount = 200.0,
+                description = "Updated Entry",
+                type = BudgetEntry.Type.INCOME,
+                category = BudgetEntry.Category.OTHER,
+                date = "2025-02-01",
+                invoice = null
+            )
+        }
     }
 
     @Test
@@ -294,8 +349,7 @@ class BudgetEntryLocalDataSourceTest {
         dataSource.deleteByIds(listOf(1L, 2L, 3L))
 
         // Then
-        assertTrue(fakeQueries.deleteByIdsCalled)
-        assertEquals(listOf(1L, 2L, 3L), fakeQueries.lastDeleteIds)
+        verify { mockQueries.deleteByIds(listOf(1L, 2L, 3L)) }
     }
 
     @Test
@@ -304,14 +358,14 @@ class BudgetEntryLocalDataSourceTest {
         dataSource.deleteAllByBudgetId(1L)
 
         // Then
-        assertTrue(fakeQueries.deleteAllByBudgetIdCalled)
-        assertEquals(1L, fakeQueries.lastDeleteBudgetId)
+        verify { mockQueries.deleteAllByBudgetId(1L) }
     }
 
     @Test
     fun `cache is populated when flow is collected`() = runTest {
         // Given
-        fakeQueries.addEntry(id = 1L, budgetId = 1L, description = "Test")
+        val entries = listOf(createDbEntry(id = 1, budgetId = 1, description = "Test"))
+        setupSelectAllByBudgetId(1L, entries)
 
         // When - before collecting, cache should be empty
         assertEquals(emptyList(), dataSource.getAllCached())
@@ -326,7 +380,8 @@ class BudgetEntryLocalDataSourceTest {
     @Test
     fun `getAllFilteredBy returns empty list when no matches`() = runTest {
         // Given
-        fakeQueries.addEntry(id = 1L, budgetId = 1L, description = "Test")
+        val entries = listOf(createDbEntry(id = 1, budgetId = 1, description = "Test"))
+        setupSelectAllByBudgetId(1L, entries)
 
         // When
         dataSource.selectAllByBudgetId(1L).first()
@@ -339,9 +394,12 @@ class BudgetEntryLocalDataSourceTest {
     @Test
     fun `getAllFilteredBy filters by date range`() = runTest {
         // Given
-        fakeQueries.addEntry(id = 1L, budgetId = 1L, description = "Jan 1", date = "2025-01-01")
-        fakeQueries.addEntry(id = 2L, budgetId = 1L, description = "Jan 15", date = "2025-01-15")
-        fakeQueries.addEntry(id = 3L, budgetId = 1L, description = "Jan 31", date = "2025-01-31")
+        val entries = listOf(
+            createDbEntry(id = 1, budgetId = 1, description = "Jan 1", date = "2025-01-01"),
+            createDbEntry(id = 2, budgetId = 1, description = "Jan 15", date = "2025-01-15"),
+            createDbEntry(id = 3, budgetId = 1, description = "Jan 31", date = "2025-01-31")
+        )
+        setupSelectAllByBudgetId(1L, entries)
 
         // When
         dataSource.selectAllByBudgetId(1L).first()
@@ -371,8 +429,18 @@ class BudgetEntryLocalDataSourceTest {
         dataSource.create(entry)
 
         // Then
-        assertTrue(fakeQueries.insertCalled)
-        assertEquals(null, fakeQueries.lastInsertInvoice)
+        verify {
+            mockQueries.insert(
+                id = null,
+                budgetId = 1L,
+                amount = 100.0,
+                description = "No Invoice",
+                type = BudgetEntry.Type.OUTCOME,
+                category = BudgetEntry.Category.OTHER,
+                date = "",
+                invoice = null
+            )
+        }
     }
 
     @Test
@@ -389,8 +457,18 @@ class BudgetEntryLocalDataSourceTest {
         dataSource.update(entry)
 
         // Then
-        assertTrue(fakeQueries.updateCalled)
-        assertEquals(999.99, fakeQueries.lastUpdateAmount)
+        verify {
+            mockQueries.update(
+                id = 1L,
+                budgetId = 1L,
+                amount = 999.99,
+                description = "Test",
+                type = BudgetEntry.Type.OUTCOME,
+                category = BudgetEntry.Category.OTHER,
+                date = "",
+                invoice = null
+            )
+        }
     }
 
     @Test
@@ -399,14 +477,13 @@ class BudgetEntryLocalDataSourceTest {
         dataSource.deleteByIds(emptyList())
 
         // Then
-        assertTrue(fakeQueries.deleteByIdsCalled)
-        assertEquals(emptyList<Long>(), fakeQueries.lastDeleteIds)
+        verify { mockQueries.deleteByIds(emptyList()) }
     }
 
     @Test
     fun `selectAllByBudgetId returns empty list when no entries for budget`() = runTest {
         // Given
-        fakeQueries.addEntry(id = 1L, budgetId = 1L, description = "Budget 1 Entry")
+        setupSelectAllByBudgetId(999L, emptyList())
 
         // When
         val result = dataSource.selectAllByBudgetId(999L).first()
@@ -418,8 +495,11 @@ class BudgetEntryLocalDataSourceTest {
     @Test
     fun `getAllFilteredBy handles blank description filter`() = runTest {
         // Given
-        fakeQueries.addEntry(id = 1L, budgetId = 1L, description = "Entry 1")
-        fakeQueries.addEntry(id = 2L, budgetId = 1L, description = "Entry 2")
+        val entries = listOf(
+            createDbEntry(id = 1, budgetId = 1, description = "Entry 1"),
+            createDbEntry(id = 2, budgetId = 1, description = "Entry 2")
+        )
+        setupSelectAllByBudgetId(1L, entries)
 
         // When
         dataSource.selectAllByBudgetId(1L).first()
@@ -429,109 +509,30 @@ class BudgetEntryLocalDataSourceTest {
         assertEquals(2, result.size)
     }
 
-    /**
-     * Fake implementation of BudgetEntryQueries for testing
-     */
-    private class FakeBudgetEntryQueries : BudgetEntryQueries {
-        private val entries = mutableListOf<Budget_entry>()
+    // Helper functions
+    private fun createDbEntry(
+        id: Long,
+        budgetId: Long,
+        description: String,
+        amount: Double = 0.0,
+        type: BudgetEntry.Type = BudgetEntry.Type.OUTCOME,
+        category: BudgetEntry.Category = BudgetEntry.Category.OTHER,
+        date: String = "",
+        invoice: String? = null
+    ) = Budget_entry(
+        id = id,
+        budget_id = budgetId,
+        amount = amount,
+        description = description,
+        type = type,
+        category = category,
+        date = date,
+        invoice = invoice
+    )
 
-        var insertCalled = false
-        var updateCalled = false
-        var deleteByIdsCalled = false
-        var deleteAllByBudgetIdCalled = false
-
-        var lastInsertAmount: Double? = null
-        var lastInsertDescription: String? = null
-        var lastInsertInvoice: String? = null
-
-        var lastUpdateId: Long? = null
-        var lastUpdateAmount: Double? = null
-
-        var lastDeleteIds: List<Long>? = null
-        var lastDeleteBudgetId: Long? = null
-
-        fun addEntry(
-            id: Long,
-            budgetId: Long,
-            description: String,
-            amount: Double = 0.0,
-            type: BudgetEntry.Type = BudgetEntry.Type.OUTCOME,
-            category: BudgetEntry.Category = BudgetEntry.Category.OTHER,
-            date: String = "",
-            invoice: String? = null
-        ) {
-            entries.add(
-                Budget_entry(
-                    id = id,
-                    budget_id = budgetId,
-                    amount = amount,
-                    description = description,
-                    type = type,
-                    category = category,
-                    date = date,
-                    invoice = invoice
-                )
-            )
-        }
-
-        override fun selectAllByBudgetId(budgetId: Long): Query<Budget_entry> {
-            val filtered = entries.filter { it.budget_id == budgetId }
-            return FakeQuery(filtered)
-        }
-
-        override fun insert(
-            id: Long?,
-            budgetId: Long,
-            amount: Double,
-            description: String,
-            type: BudgetEntry.Type,
-            category: BudgetEntry.Category,
-            date: String,
-            invoice: String?
-        ) {
-            insertCalled = true
-            lastInsertAmount = amount
-            lastInsertDescription = description
-            lastInsertInvoice = invoice
-        }
-
-        override fun update(
-            id: Long,
-            budgetId: Long,
-            amount: Double,
-            description: String,
-            type: BudgetEntry.Type,
-            category: BudgetEntry.Category,
-            date: String,
-            invoice: String?
-        ) {
-            updateCalled = true
-            lastUpdateId = id
-            lastUpdateAmount = amount
-        }
-
-        override fun deleteByIds(ids: List<Long>) {
-            deleteByIdsCalled = true
-            lastDeleteIds = ids
-        }
-
-        override fun deleteAllByBudgetId(budgetId: Long) {
-            deleteAllByBudgetIdCalled = true
-            lastDeleteBudgetId = budgetId
-        }
-    }
-
-    /**
-     * Fake implementation of Query for testing
-     */
-    private class FakeQuery<T>(private val data: List<T>) : Query<T>(data) {
-        override fun <R> execute(mapper: (app.cash.sqldelight.db.SqlCursor) -> QueryResult<R>): QueryResult<R> {
-            throw UnsupportedOperationException("Not needed for these tests")
-        }
-
-        override fun addListener(listener: Query.Listener) {}
-        override fun removeListener(listener: Query.Listener) {}
-
-        fun asFlow() = flowOf(data)
+    private fun setupSelectAllByBudgetId(budgetId: Long, entries: List<Budget_entry>) {
+        val mockQuery = mockk<Query<Budget_entry>>()
+        every { mockQueries.selectAllByBudgetId(budgetId) } returns mockQuery
+        every { mockQuery.asFlow() } returns flowOf(entries)
     }
 }
