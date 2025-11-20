@@ -1,35 +1,15 @@
 package com.meneses.budgethunter.splash
 
-import com.meneses.budgethunter.commons.platform.AppUpdateManager
 import com.meneses.budgethunter.commons.platform.AppUpdateResult
+import com.meneses.budgethunter.fakes.manager.FakeAppUpdateManager
+import com.meneses.budgethunter.fakes.manager.FakeAppUpdateResult
 import com.meneses.budgethunter.splash.application.SplashEvent
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
-import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class SplashScreenViewModelTest {
-
-    private class FakeAppUpdateManager(
-        private val updateResult: AppUpdateResult
-    ) : AppUpdateManager {
-        var checkForUpdatesCalled = false
-        var startUpdateCalled = false
-
-        override fun checkForUpdates(callback: (AppUpdateResult) -> Unit) {
-            checkForUpdatesCalled = true
-            callback(updateResult)
-        }
-    }
-
-    private class FakeAppUpdateResult(
-        private val onStart: () -> Unit = {}
-    ) : AppUpdateResult.UpdateAvailable {
-        override fun startUpdate() {
-            onStart()
-        }
-    }
 
     @Test
     fun `initial state has navigate and updatingApp false`() = runTest {

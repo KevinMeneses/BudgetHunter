@@ -1,12 +1,10 @@
 package com.meneses.budgethunter.budgetList
 
 import com.meneses.budgethunter.budgetList.application.BudgetListEvent
-import com.meneses.budgethunter.budgetList.application.DeleteBudgetUseCase
-import com.meneses.budgethunter.budgetList.application.DuplicateBudgetUseCase
-import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.budgetList.domain.Budget
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import com.meneses.budgethunter.fakes.repository.FakeBudgetRepository
+import com.meneses.budgethunter.fakes.usecase.FakeDeleteBudgetUseCase
+import com.meneses.budgethunter.fakes.usecase.FakeDuplicateBudgetUseCase
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -15,62 +13,6 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class BudgetListViewModelTest {
-
-    private class FakeBudgetRepository : BudgetRepository {
-        private val _budgets = MutableStateFlow<List<Budget>>(emptyList())
-        override val budgets: StateFlow<List<Budget>> = _budgets
-
-        val createdBudgets = mutableListOf<Budget>()
-        val updatedBudgets = mutableListOf<Budget>()
-        private val budgetCache = mutableListOf<Budget>()
-
-        fun emitBudgets(budgetList: List<Budget>) {
-            budgetCache.clear()
-            budgetCache.addAll(budgetList)
-            _budgets.value = budgetList
-        }
-
-        override suspend fun create(budget: Budget): Budget {
-            val newBudget = budget.copy(id = (budgetCache.maxOfOrNull { it.id } ?: 0) + 1)
-            createdBudgets.add(newBudget)
-            budgetCache.add(newBudget)
-            _budgets.value = budgetCache.toList()
-            return newBudget
-        }
-
-        override suspend fun update(budget: Budget) {
-            updatedBudgets.add(budget)
-            val index = budgetCache.indexOfFirst { it.id == budget.id }
-            if (index >= 0) {
-                budgetCache[index] = budget
-                _budgets.value = budgetCache.toList()
-            }
-        }
-
-        override suspend fun getById(id: Int): Budget? {
-            return budgetCache.find { it.id == id }
-        }
-
-        override suspend fun getAllCached(): List<Budget> = budgetCache.toList()
-
-        override suspend fun getAllFilteredBy(filter: Any?): List<Budget> = budgetCache.toList()
-    }
-
-    private class FakeDuplicateBudgetUseCase : DuplicateBudgetUseCase(null!!, null!!, null!!) {
-        val duplicatedBudgets = mutableListOf<Budget>()
-
-        override suspend fun execute(budget: Budget) {
-            duplicatedBudgets.add(budget)
-        }
-    }
-
-    private class FakeDeleteBudgetUseCase : DeleteBudgetUseCase(null!!, null!!, null!!) {
-        val deletedBudgetIds = mutableListOf<Long>()
-
-        override suspend fun execute(budgetId: Long) {
-            deletedBudgetIds.add(budgetId)
-        }
-    }
 
     @Test
     fun `initial state is loading with empty budget list`() = runTest {

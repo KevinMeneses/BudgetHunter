@@ -2,13 +2,11 @@ package com.meneses.budgethunter.budgetDetail
 
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailEvent
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailState
-import com.meneses.budgethunter.budgetDetail.data.BudgetDetailRepository
 import com.meneses.budgethunter.budgetDetail.domain.BudgetDetail
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntryFilter
 import com.meneses.budgethunter.budgetList.domain.Budget
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
+import com.meneses.budgethunter.fakes.repository.FakeBudgetDetailRepository
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -17,43 +15,6 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class BudgetDetailViewModelTest {
-
-    private class FakeBudgetDetailRepository : BudgetDetailRepository {
-        var cachedDetail = BudgetDetail()
-        val deletedBudgetIds = mutableListOf<Int>()
-        val deletedEntryIds = mutableListOf<List<Int>>()
-        val updatedAmounts = mutableListOf<Double>()
-
-        override suspend fun getBudgetDetailById(budgetId: Int): Flow<BudgetDetail> {
-            return flowOf(cachedDetail)
-        }
-
-        override suspend fun getCachedDetail(): BudgetDetail = cachedDetail
-
-        override suspend fun getAllFilteredBy(filter: BudgetEntryFilter): BudgetDetail {
-            return cachedDetail.copy(
-                entries = cachedDetail.entries.filter {
-                    when (filter) {
-                        is BudgetEntryFilter.ByCategory -> it.category == filter.category
-                        is BudgetEntryFilter.ByType -> it.type == filter.type
-                        else -> true
-                    }
-                }
-            )
-        }
-
-        override suspend fun deleteBudget(budgetId: Int) {
-            deletedBudgetIds.add(budgetId)
-        }
-
-        override suspend fun deleteEntriesByIds(ids: List<Int>) {
-            deletedEntryIds.add(ids)
-        }
-
-        override suspend fun updateBudgetAmount(amount: Double) {
-            updatedAmounts.add(amount)
-        }
-    }
 
     @Test
     fun `initial state is loading`() = runTest {

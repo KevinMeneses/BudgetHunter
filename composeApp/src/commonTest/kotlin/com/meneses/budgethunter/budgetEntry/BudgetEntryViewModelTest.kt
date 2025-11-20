@@ -11,6 +11,15 @@ import com.meneses.budgethunter.commons.platform.CameraManager
 import com.meneses.budgethunter.commons.platform.FilePickerManager
 import com.meneses.budgethunter.commons.platform.NotificationManager
 import com.meneses.budgethunter.commons.platform.ShareManager
+import com.meneses.budgethunter.fakes.manager.FakeCameraManager
+import com.meneses.budgethunter.fakes.manager.FakeFileManager
+import com.meneses.budgethunter.fakes.manager.FakeFilePickerManager
+import com.meneses.budgethunter.fakes.manager.FakeNotificationManager
+import com.meneses.budgethunter.fakes.manager.FakePreferencesManager
+import com.meneses.budgethunter.fakes.manager.FakeShareManager
+import com.meneses.budgethunter.fakes.repository.FakeBudgetEntryRepository
+import com.meneses.budgethunter.fakes.usecase.FakeCreateBudgetEntryFromImageUseCase
+import com.meneses.budgethunter.fakes.usecase.FakeValidateFilePathUseCase
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -20,110 +29,6 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class BudgetEntryViewModelTest {
-
-    private class FakeBudgetEntryRepository : BudgetEntryRepository {
-        val createdEntries = mutableListOf<BudgetEntry>()
-        val updatedEntries = mutableListOf<BudgetEntry>()
-
-        override suspend fun create(budgetEntry: BudgetEntry) {
-            createdEntries.add(budgetEntry)
-        }
-
-        override suspend fun update(budgetEntry: BudgetEntry) {
-            updatedEntries.add(budgetEntry)
-        }
-    }
-
-    private class FakeCreateBudgetEntryFromImageUseCase : CreateBudgetEntryFromImageUseCase(null!!, null!!) {
-        var processedEntry: BudgetEntry? = null
-
-        override suspend fun execute(imageUri: String, budgetEntry: BudgetEntry): BudgetEntry {
-            return processedEntry ?: budgetEntry.copy(description = "AI Processed")
-        }
-    }
-
-    private class FakeValidateFilePathUseCase : ValidateFilePathUseCase(null!!) {
-        var validPath: String? = "/valid/path.pdf"
-
-        override suspend fun execute(filePath: String): String? = validPath
-    }
-
-    private class FakePreferencesManager : PreferencesManager {
-        var aiEnabled = false
-
-        override suspend fun isAiProcessingEnabled(): Boolean = aiEnabled
-        override suspend fun setAiProcessingEnabled(enabled: Boolean) {
-            aiEnabled = enabled
-        }
-
-        override suspend fun isSmsReadingEnabled(): Boolean = false
-        override suspend fun setSmsReadingEnabled(enabled: Boolean) {}
-        override suspend fun getDefaultBudgetId(): Int = -1
-        override suspend fun setDefaultBudgetId(budgetId: Int) {}
-        override suspend fun getSelectedBankIds(): Set<String> = emptySet()
-        override suspend fun setSelectedBankIds(bankIds: Set<String>) {}
-    }
-
-    private class FakeFileManager : FileManager {
-        val savedFiles = mutableListOf<ByteArray>()
-        val deletedFiles = mutableListOf<String>()
-
-        override suspend fun saveFile(fileData: ByteArray): String {
-            savedFiles.add(fileData)
-            return "/saved/file_${savedFiles.size}.pdf"
-        }
-
-        override fun deleteFile(filePath: String) {
-            deletedFiles.add(filePath)
-        }
-
-        override fun createUri(filePath: String): String = "file://$filePath"
-    }
-
-    private class FakeCameraManager : CameraManager {
-        var callback: ((ByteArray?) -> Unit)? = null
-
-        override fun takePhoto(onResult: (ByteArray?) -> Unit) {
-            callback = onResult
-        }
-
-        fun simulatePhotoTaken(data: ByteArray?) {
-            callback?.invoke(data)
-        }
-    }
-
-    private class FakeFilePickerManager : FilePickerManager {
-        var callback: ((ByteArray?) -> Unit)? = null
-
-        override fun pickFile(onResult: (ByteArray?) -> Unit) {
-            callback = onResult
-        }
-
-        fun simulateFilePicked(data: ByteArray?) {
-            callback?.invoke(data)
-        }
-    }
-
-    private class FakeShareManager : ShareManager {
-        val sharedFiles = mutableListOf<String>()
-
-        override suspend fun shareFile(filePath: String) {
-            sharedFiles.add(filePath)
-        }
-    }
-
-    private class FakeNotificationManager : NotificationManager {
-        val notifications = mutableListOf<Pair<String, String>>()
-        val toasts = mutableListOf<String>()
-
-        override fun showNotification(title: String, message: String) {
-            notifications.add(title to message)
-        }
-
-        override fun showToast(message: String) {
-            toasts.add(message)
-        }
-    }
 
     private fun createViewModel(
         repository: BudgetEntryRepository = FakeBudgetEntryRepository(),

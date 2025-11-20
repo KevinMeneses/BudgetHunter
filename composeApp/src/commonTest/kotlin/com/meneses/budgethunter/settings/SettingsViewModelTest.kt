@@ -1,13 +1,11 @@
 package com.meneses.budgethunter.settings
 
-import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.budgetList.domain.Budget
-import com.meneses.budgethunter.commons.data.PreferencesManager
-import com.meneses.budgethunter.commons.platform.PermissionsManager
+import com.meneses.budgethunter.fakes.manager.FakePermissionsManager
+import com.meneses.budgethunter.fakes.manager.FakePreferencesManager
+import com.meneses.budgethunter.fakes.repository.FakeBudgetRepository
 import com.meneses.budgethunter.settings.application.SettingsEvent
 import com.meneses.budgethunter.sms.domain.BankSmsConfig
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -15,67 +13,6 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class SettingsViewModelTest {
-
-    private class FakePreferencesManager : PreferencesManager {
-        private var smsReadingEnabled = false
-        private var aiProcessingEnabled = false
-        private var defaultBudgetId = -1
-        private var selectedBankIds = emptySet<String>()
-
-        override suspend fun isSmsReadingEnabled(): Boolean = smsReadingEnabled
-        override suspend fun setSmsReadingEnabled(enabled: Boolean) {
-            smsReadingEnabled = enabled
-        }
-
-        override suspend fun isAiProcessingEnabled(): Boolean = aiProcessingEnabled
-        override suspend fun setAiProcessingEnabled(enabled: Boolean) {
-            aiProcessingEnabled = enabled
-        }
-
-        override suspend fun getDefaultBudgetId(): Int = defaultBudgetId
-        override suspend fun setDefaultBudgetId(budgetId: Int) {
-            defaultBudgetId = budgetId
-        }
-
-        override suspend fun getSelectedBankIds(): Set<String> = selectedBankIds
-        override suspend fun setSelectedBankIds(bankIds: Set<String>) {
-            selectedBankIds = bankIds
-        }
-    }
-
-    private class FakeBudgetRepository : BudgetRepository {
-        private val budgetCache = mutableListOf<Budget>()
-        override val budgets: StateFlow<List<Budget>> = MutableStateFlow(emptyList())
-
-        fun setBudgets(budgets: List<Budget>) {
-            budgetCache.clear()
-            budgetCache.addAll(budgets)
-        }
-
-        override suspend fun create(budget: Budget): Budget = budget
-        override suspend fun update(budget: Budget) {}
-        override suspend fun getById(id: Int): Budget? = budgetCache.find { it.id == id }
-        override suspend fun getAllCached(): List<Budget> = budgetCache.toList()
-        override suspend fun getAllFilteredBy(filter: Any?): List<Budget> = budgetCache.toList()
-    }
-
-    private class FakePermissionsManager : PermissionsManager {
-        var hasSms = false
-        var shouldShowRationale = false
-        var appSettingsOpened = false
-        var permissionRequested = false
-        var grantPermission = false
-
-        override fun hasSmsPermission(): Boolean = hasSms
-        override fun shouldShowSMSPermissionRationale(): Boolean = shouldShowRationale
-        override fun requestSmsPermissions(onResult: (Boolean) -> Unit) {
-            permissionRequested = true
-            onResult(grantPermission)
-        }
-        override fun openAppSettings() {
-            appSettingsOpened = true
-        }
-    }
 
     @Test
     fun `initial state loads settings on initialization`() = runTest {

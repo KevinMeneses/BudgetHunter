@@ -1,24 +1,12 @@
 package com.meneses.budgethunter.budgetMetrics
 
-import com.meneses.budgethunter.budgetMetrics.application.GetTotalsPerCategoryUseCase
-import kotlinx.coroutines.Dispatchers
+import com.meneses.budgethunter.fakes.usecase.FakeGetTotalsPerCategoryUseCase
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class BudgetMetricsViewModelTest {
-
-    private class FakeGetTotalsPerCategoryUseCase(
-        private val totalsMap: Map<String, Double> = emptyMap()
-    ) : GetTotalsPerCategoryUseCase(
-        budgetDetailRepository = null!!,
-        ioDispatcher = Dispatchers.Default
-    ) {
-        override suspend fun execute(): Map<String, Double> {
-            return totalsMap
-        }
-    }
 
     @Test
     fun `initial state loads metrics on initialization`() = runTest {
