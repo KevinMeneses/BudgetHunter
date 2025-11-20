@@ -11,7 +11,6 @@ plugins {
     alias(libs.plugins.sqldelight)
     alias(libs.plugins.ksp)
     id("kotlin-parcelize")
-    alias(libs.plugins.mokkery)
     alias(libs.plugins.jacoco)
     alias(libs.plugins.ktlint)
 }
@@ -113,7 +112,6 @@ kotlin {
         commonTest.dependencies {
             implementation(kotlin("test"))
             implementation(libs.kotlinx.coroutines.test)
-            implementation(libs.mokkery.runtime)
             implementation(libs.ktor.client.mock)
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.kotlinx.json)
