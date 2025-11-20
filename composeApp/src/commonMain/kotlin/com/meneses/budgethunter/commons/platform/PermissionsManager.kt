@@ -1,4 +1,7 @@
 package com.meneses.budgethunter.commons.platform
 
-// Platform-specific implementations are provided in androidMain and iosMain
-// They implement IPermissionsManager interface
+/**
+ * Cross-platform permissions manager interface.
+ * Platform-specific implementations are provided in androidMain and iosMain.
+ */
+expect class PermissionsManager() : IPermissionsManager

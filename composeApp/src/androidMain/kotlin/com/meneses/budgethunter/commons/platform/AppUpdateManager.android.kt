@@ -17,7 +17,7 @@ interface AppUpdateLauncherDelegate {
     )
 }
 
-class AppUpdateManager(
+actual class AppUpdateManager(
     private val context: Context
 ) : IAppUpdateManager {
 

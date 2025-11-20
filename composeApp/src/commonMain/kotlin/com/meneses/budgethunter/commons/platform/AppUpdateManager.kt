@@ -1,5 +1,3 @@
-@file:Suppress("MatchingDeclarationName")
-
 package com.meneses.budgethunter.commons.platform
 
 sealed class AppUpdateResult {
@@ -9,5 +7,8 @@ sealed class AppUpdateResult {
     data object UpdateFailed : AppUpdateResult()
 }
 
-// Platform-specific implementations are provided in androidMain and iosMain
-// They implement IAppUpdateManager interface
+/**
+ * Cross-platform app update manager interface.
+ * Platform-specific implementations are provided in androidMain and iosMain.
+ */
+expect class AppUpdateManager() : IAppUpdateManager

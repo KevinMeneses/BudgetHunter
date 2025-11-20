@@ -1,6 +1,6 @@
 package com.meneses.budgethunter.commons.platform
 
-class PermissionsManager : IPermissionsManager {
+actual class PermissionsManager : IPermissionsManager {
 
     override fun shouldShowSMSPermissionRationale(): Boolean {
         // iOS doesn't have SMS permissions like Android
