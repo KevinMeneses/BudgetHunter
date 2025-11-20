@@ -1,17 +1,22 @@
 package com.meneses.budgethunter.budgetEntry.data.datasource
 
 import app.cash.sqldelight.Query
+import app.cash.sqldelight.coroutines.asFlow
+import app.cash.sqldelight.coroutines.mapToList
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntryFilter
 import com.meneses.budgethunter.db.BudgetEntryQueries
 import com.meneses.budgethunter.db.Budget_entry
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkStatic
+import io.mockk.unmockkAll
 import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
+import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -30,8 +35,14 @@ class BudgetEntryLocalDataSourceTest {
 
     @BeforeTest
     fun setup() {
+        mockkStatic("app.cash.sqldelight.coroutines.FlowQuery")
         mockQueries = mockk(relaxed = true)
         dataSource = BudgetEntryLocalDataSource(mockQueries, Dispatchers.Unconfined)
+    }
+
+    @AfterTest
+    fun teardown() {
+        unmockkAll()
     }
 
     @Test
@@ -43,10 +54,7 @@ class BudgetEntryLocalDataSourceTest {
     fun `getAllCached returns cached entries after flow emission`() = runTest {
         // Given
         val dbEntry = createDbEntry(id = 1, budgetId = 1, description = "Test Entry")
-        val mockQuery = mockk<Query<Budget_entry>>()
-
-        every { mockQueries.selectAllByBudgetId(1L) } returns mockQuery
-        every { mockQuery.asFlow() } returns flowOf(listOf(dbEntry))
+        setupSelectAllByBudgetId(1L, listOf(dbEntry))
 
         // When
         dataSource.selectAllByBudgetId(1L).first()
@@ -534,5 +542,18 @@ class BudgetEntryLocalDataSourceTest {
         val mockQuery = mockk<Query<Budget_entry>>()
         every { mockQueries.selectAllByBudgetId(budgetId) } returns mockQuery
         every { mockQuery.asFlow() } returns flowOf(entries)
+        every { mockQuery.asFlow().mapToList(any()) } returns flowOf(entries.map { it.toDomain() })
     }
 }
+
+// Extension function to convert DB entity to domain model (for testing)
+private fun Budget_entry.toDomain() = BudgetEntry(
+    id = id.toInt(),
+    budgetId = budget_id.toInt(),
+    amount = amount.toString(),
+    description = description,
+    type = type,
+    category = category,
+    date = date,
+    invoice = invoice
+)

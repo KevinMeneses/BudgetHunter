@@ -1,17 +1,22 @@
 package com.meneses.budgethunter.budgetList.data.datasource
 
 import app.cash.sqldelight.Query
+import app.cash.sqldelight.coroutines.asFlow
+import app.cash.sqldelight.coroutines.mapToList
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.db.BudgetQueries
 import com.meneses.budgethunter.db.SelectAll
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkStatic
 import io.mockk.slot
+import io.mockk.unmockkAll
 import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
+import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -30,8 +35,14 @@ class BudgetLocalDataSourceTest {
 
     @BeforeTest
     fun setup() {
+        mockkStatic("app.cash.sqldelight.coroutines.FlowQuery")
         mockQueries = mockk(relaxed = true)
         dataSource = BudgetLocalDataSource(mockQueries, Dispatchers.Unconfined)
+    }
+
+    @AfterTest
+    fun teardown() {
+        unmockkAll()
     }
 
     @Test
@@ -421,5 +432,13 @@ class BudgetLocalDataSourceTest {
         val mockQuery = mockk<Query<SelectAll>>()
         every { mockQueries.selectAll(any()) } returns mockQuery
         every { mockQuery.asFlow() } returns flowOf(budgets)
+        every { mockQuery.asFlow().mapToList(any()) } returns flowOf(budgets.map { mapSelectAllToBudget(it) })
     }
+
+    private fun mapSelectAllToBudget(selectAll: SelectAll) = Budget(
+        id = selectAll.id.toInt(),
+        name = selectAll.name,
+        amount = selectAll.amount,
+        date = selectAll.date
+    )
 }
