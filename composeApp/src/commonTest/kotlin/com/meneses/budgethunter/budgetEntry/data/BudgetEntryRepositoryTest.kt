@@ -316,4 +316,37 @@ class BudgetEntryRepositoryTest {
         assertEquals("2024-01-01", result[0].date)
         assertEquals("2024-01-15", result[1].date)
     }
+
+    // Error handling tests
+    @Test
+    fun `create propagates exception from data source`() = runTest {
+        val entry = BudgetEntry(id = -1, budgetId = 1, amount = "100.0", description = "New Entry")
+        val dataSource = mockk<BudgetEntryLocalDataSource> {
+            coEvery { create(entry) } throws IllegalStateException("Database error")
+        }
+        val repository = BudgetEntryRepository(dataSource, Dispatchers.Default)
+
+        val exception = kotlin.runCatching {
+            repository.create(entry)
+        }.exceptionOrNull()
+
+        assertEquals("Database error", exception?.message)
+        assertEquals(IllegalStateException::class, exception?.let { it::class })
+    }
+
+    @Test
+    fun `update propagates exception from data source`() = runTest {
+        val entry = BudgetEntry(id = 1, budgetId = 1, amount = "150.0", description = "Updated Entry")
+        val dataSource = mockk<BudgetEntryLocalDataSource> {
+            coEvery { update(entry) } throws RuntimeException("Update failed")
+        }
+        val repository = BudgetEntryRepository(dataSource, Dispatchers.Default)
+
+        val exception = kotlin.runCatching {
+            repository.update(entry)
+        }.exceptionOrNull()
+
+        assertEquals("Update failed", exception?.message)
+        assertEquals(RuntimeException::class, exception?.let { it::class })
+    }
 }

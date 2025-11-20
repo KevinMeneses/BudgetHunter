@@ -271,4 +271,83 @@ class BudgetRepositoryTest {
         assertEquals("February Budget", result[0].name)
         coVerify { dataSource.getAllFilteredBy(filter) }
     }
+
+    // Error handling tests
+    @Test
+    fun `create propagates exception from data source`() = runTest {
+        val budget = Budget(id = -1, name = "New Budget", amount = 1000.0)
+        val dataSource = mockk<BudgetLocalDataSource> {
+            coEvery { create(budget) } throws IllegalStateException("Database error")
+        }
+        val repository = BudgetRepository(dataSource, Dispatchers.Default)
+
+        val exception = kotlin.runCatching {
+            repository.create(budget)
+        }.exceptionOrNull()
+
+        assertEquals("Database error", exception?.message)
+        assertEquals(IllegalStateException::class, exception?.let { it::class })
+    }
+
+    @Test
+    fun `update propagates exception from data source`() = runTest {
+        val budget = Budget(id = 1, name = "Updated Budget", amount = 1500.0)
+        val dataSource = mockk<BudgetLocalDataSource> {
+            coEvery { update(budget) } throws RuntimeException("Update failed")
+        }
+        val repository = BudgetRepository(dataSource, Dispatchers.Default)
+
+        val exception = kotlin.runCatching {
+            repository.update(budget)
+        }.exceptionOrNull()
+
+        assertEquals("Update failed", exception?.message)
+        assertEquals(RuntimeException::class, exception?.let { it::class })
+    }
+
+    @Test
+    fun `getById propagates exception from data source`() = runTest {
+        val dataSource = mockk<BudgetLocalDataSource> {
+            coEvery { getById(1) } throws IllegalArgumentException("Invalid ID")
+        }
+        val repository = BudgetRepository(dataSource, Dispatchers.Default)
+
+        val exception = kotlin.runCatching {
+            repository.getById(1)
+        }.exceptionOrNull()
+
+        assertEquals("Invalid ID", exception?.message)
+        assertEquals(IllegalArgumentException::class, exception?.let { it::class })
+    }
+
+    @Test
+    fun `getAllCached propagates exception from data source`() = runTest {
+        val dataSource = mockk<BudgetLocalDataSource> {
+            coEvery { getAllCached() } throws Exception("Cache read error")
+        }
+        val repository = BudgetRepository(dataSource, Dispatchers.Default)
+
+        val exception = kotlin.runCatching {
+            repository.getAllCached()
+        }.exceptionOrNull()
+
+        assertEquals("Cache read error", exception?.message)
+        assertEquals(Exception::class, exception?.let { it::class })
+    }
+
+    @Test
+    fun `getAllFilteredBy propagates exception from data source`() = runTest {
+        val filter = BudgetFilter(name = "Test")
+        val dataSource = mockk<BudgetLocalDataSource> {
+            coEvery { getAllFilteredBy(filter) } throws Exception("Filter error")
+        }
+        val repository = BudgetRepository(dataSource, Dispatchers.Default)
+
+        val exception = kotlin.runCatching {
+            repository.getAllFilteredBy(filter)
+        }.exceptionOrNull()
+
+        assertEquals("Filter error", exception?.message)
+        assertEquals(Exception::class, exception?.let { it::class })
+    }
 }
