@@ -655,16 +655,17 @@ class BudgetDetailRepositoryTest {
         repository.getBudgetDetailById(1).first()
 
         // Call getCachedDetail concurrently multiple times
-        val results = List(10) {
-            kotlinx.coroutines.async {
+        val deferreds = List(10) {
+            this.async {
                 repository.getCachedDetail()
             }
-        }.map { it.await() }
+        }
+        val results = deferreds.map { it.await() }
 
         // All results should be identical (cache is properly synchronized)
         assertEquals(10, results.size)
-        results.forEach {
-            assertEquals(budget, it.budget)
+        results.forEach { result ->
+            assertEquals(budget, result.budget)
         }
     }
 
