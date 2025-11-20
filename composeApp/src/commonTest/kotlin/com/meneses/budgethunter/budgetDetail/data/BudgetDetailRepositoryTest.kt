@@ -12,6 +12,7 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
@@ -655,12 +656,11 @@ class BudgetDetailRepositoryTest {
         repository.getBudgetDetailById(1).first()
 
         // Call getCachedDetail concurrently multiple times
-        val deferreds = List(10) {
-            this.async {
+        val results = List(10) {
+            async {
                 repository.getCachedDetail()
             }
-        }
-        val results = deferreds.map { it.await() }
+        }.map { it.await() }
 
         // All results should be identical (cache is properly synchronized)
         assertEquals(10, results.size)
