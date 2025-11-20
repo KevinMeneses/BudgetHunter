@@ -116,12 +116,6 @@ kotlin {
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.kotlinx.json)
         }
-
-        androidUnitTest.dependencies {
-            implementation(kotlin("test"))
-            implementation(libs.kotlinx.coroutines.test)
-            implementation(libs.mockk)
-        }
     }
 }
 
@@ -197,6 +191,9 @@ dependencies {
     add("kspCommonMainMetadata", libs.koin.ksp.compiler)
     debugImplementation(libs.bundles.test.debug)
     runtimeOnly(libs.slf4j.simple)
+    testImplementation(libs.mockk)
+    testImplementation(kotlin("test"))
+    testImplementation(libs.kotlinx.coroutines.test)
 }
 
 // Jacoco configuration for code coverage
