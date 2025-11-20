@@ -1,3 +1,5 @@
+@file:Suppress("MatchingDeclarationName")
+
 package com.meneses.budgethunter.commons.platform
 
 sealed class AppUpdateResult {
