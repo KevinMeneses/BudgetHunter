@@ -71,6 +71,7 @@ jetbrains-lifecycle-viewmodel = { group = "org.jetbrains.androidx.lifecycle", na
 # Database
 sqldelight-android-driver = { group = "app.cash.sqldelight", name = "android-driver", version.ref = "sqldelight" }
 sqldelight-ios-driver = { group = "app.cash.sqldelight", name = "native-driver", version.ref = "sqldelight" }
+sqldelight-jvm-driver = { group = "app.cash.sqldelight", name = "sqlite-driver", version.ref = "sqldelight" }
 sqldelight-coroutines-extensions = { group = "app.cash.sqldelight", name = "coroutines-extensions", version.ref = "sqldelight" }
 
 # DataStore

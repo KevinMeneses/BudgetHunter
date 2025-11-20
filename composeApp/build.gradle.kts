@@ -192,6 +192,10 @@ dependencies {
     add("kspCommonMainMetadata", libs.koin.ksp.compiler)
     debugImplementation(libs.bundles.test.debug)
     runtimeOnly(libs.slf4j.simple)
+    testImplementation(libs.mockk)
+    testImplementation(kotlin("test"))
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.sqldelight.jvm.driver)
 }
 
 // Jacoco configuration for code coverage
