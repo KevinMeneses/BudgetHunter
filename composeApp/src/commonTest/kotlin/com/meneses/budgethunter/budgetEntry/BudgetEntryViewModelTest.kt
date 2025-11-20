@@ -1,12 +1,12 @@
 package com.meneses.budgethunter.budgetEntry
 
 import com.meneses.budgethunter.budgetEntry.application.BudgetEntryEvent
-import com.meneses.budgethunter.budgetEntry.application.CreateBudgetEntryFromImageUseCase
-import com.meneses.budgethunter.budgetEntry.data.BudgetEntryRepository
+import com.meneses.budgethunter.budgetEntry.application.ICreateBudgetEntryFromImageUseCase
+import com.meneses.budgethunter.budgetEntry.data.IBudgetEntryRepository
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
-import com.meneses.budgethunter.commons.application.ValidateFilePathUseCase
-import com.meneses.budgethunter.commons.data.FileManager
-import com.meneses.budgethunter.commons.data.PreferencesManager
+import com.meneses.budgethunter.commons.application.IValidateFilePathUseCase
+import com.meneses.budgethunter.commons.data.IFileManager
+import com.meneses.budgethunter.commons.data.IPreferencesManager
 import com.meneses.budgethunter.commons.platform.CameraManager
 import com.meneses.budgethunter.commons.platform.FilePickerManager
 import com.meneses.budgethunter.commons.platform.NotificationManager
