@@ -194,6 +194,7 @@ dependencies {
     testImplementation(libs.mockk)
     testImplementation(kotlin("test"))
     testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.sqldelight.jvm.driver)
 }
 
 // Jacoco configuration for code coverage
