@@ -267,7 +267,7 @@ class BudgetEntryLocalDataSourceTest {
         // Then
         val result = dataSource.selectAllByBudgetId(1L).first()
         assertEquals(1, result.size)
-        assertEquals("0.0", result[0].amount) // Should default to 0.0
+        assertEquals("0", result[0].amount) // toPlainString() formats 0.0 as "0"
     }
 
     @Test
@@ -291,7 +291,7 @@ class BudgetEntryLocalDataSourceTest {
         val result = dataSource.selectAllByBudgetId(1L).first()
         assertEquals(1, result.size)
         assertEquals("Updated Entry", result[0].description)
-        assertEquals("200.0", result[0].amount)
+        assertEquals("200", result[0].amount) // toPlainString() formats 200.0 as "200"
         assertEquals(BudgetEntry.Type.INCOME, result[0].type)
     }
 
@@ -479,7 +479,7 @@ class BudgetEntryLocalDataSourceTest {
 
         // Then
         val result = dataSource.selectAllByBudgetId(1L).first()
-        assertEquals("0.0", result[0].amount)
+        assertEquals("0", result[0].amount) // toPlainString() formats 0.0 as "0"
     }
 
     @Test
@@ -498,7 +498,7 @@ class BudgetEntryLocalDataSourceTest {
 
         // Then
         val result = dataSource.selectAllByBudgetId(1L).first()
-        assertEquals("0.0", result[0].amount)
+        assertEquals("0", result[0].amount) // toPlainString() formats 0.0 as "0"
     }
 
     @Test
