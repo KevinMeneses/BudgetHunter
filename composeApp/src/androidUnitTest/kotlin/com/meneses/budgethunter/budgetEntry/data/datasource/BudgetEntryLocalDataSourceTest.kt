@@ -3,6 +3,9 @@ package com.meneses.budgethunter.budgetEntry.data.datasource
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntryFilter
+import com.meneses.budgethunter.budgetList.data.adapter.categoryAdapter
+import com.meneses.budgethunter.budgetList.data.adapter.typeAdapter
+import com.meneses.budgethunter.db.Budget_entry
 import com.meneses.budgethunter.db.Database
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -28,11 +31,12 @@ class BudgetEntryLocalDataSourceTest {
         // Create in-memory SQLite database
         driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
         Database.Schema.create(driver)
-        database = Database(driver)
+        val budgetEntryAdapter = Budget_entry.Adapter(typeAdapter, categoryAdapter)
+        database = Database(driver, budgetEntryAdapter)
         dataSource = BudgetEntryLocalDataSource(database.budgetEntryQueries, Dispatchers.Unconfined)
 
         // Create a test budget for foreign key constraint
-        database.budgetQueries.insert(name = "Test Budget", amount = 1000.0, date = "2025-01-01")
+        database.budgetQueries.insert(amount = 1000.0, name = "Test Budget", date = "2025-01-01")
     }
 
     @AfterTest

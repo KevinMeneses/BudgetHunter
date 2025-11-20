@@ -1,7 +1,11 @@
 package com.meneses.budgethunter.budgetList.data.datasource
 
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
+import com.meneses.budgethunter.budgetList.data.adapter.categoryAdapter
+import com.meneses.budgethunter.budgetList.data.adapter.typeAdapter
 import com.meneses.budgethunter.budgetList.domain.Budget
+import com.meneses.budgethunter.budgetList.domain.BudgetFilter
+import com.meneses.budgethunter.db.Budget_entry
 import com.meneses.budgethunter.db.Database
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -27,7 +31,8 @@ class BudgetLocalDataSourceTest {
         // Create in-memory SQLite database
         driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
         Database.Schema.create(driver)
-        database = Database(driver)
+        val budgetEntryAdapter = Budget_entry.Adapter(typeAdapter, categoryAdapter)
+        database = Database(driver, budgetEntryAdapter)
         dataSource = BudgetLocalDataSource(database.budgetQueries, Dispatchers.Unconfined)
     }
 
@@ -126,7 +131,7 @@ class BudgetLocalDataSourceTest {
 
         // When
         dataSource.budgets.first()
-        val result = dataSource.getAllFilteredBy(null)
+        val result = dataSource.getAllFilteredBy(BudgetFilter(name = null))
 
         // Then
         assertEquals(2, result.size)
@@ -140,7 +145,7 @@ class BudgetLocalDataSourceTest {
 
         // When
         dataSource.budgets.first()
-        val result = dataSource.getAllFilteredBy("   ")
+        val result = dataSource.getAllFilteredBy(BudgetFilter(name = "   "))
 
         // Then
         assertEquals(2, result.size)
@@ -155,7 +160,7 @@ class BudgetLocalDataSourceTest {
 
         // When
         dataSource.budgets.first()
-        val result = dataSource.getAllFilteredBy("MONTHLY")
+        val result = dataSource.getAllFilteredBy(BudgetFilter(name = "MONTHLY"))
 
         // Then
         assertEquals(2, result.size)
@@ -185,7 +190,7 @@ class BudgetLocalDataSourceTest {
 
         // When
         dataSource.budgets.first()
-        val result = dataSource.getAllFilteredBy("NonExistent")
+        val result = dataSource.getAllFilteredBy(BudgetFilter(name = "NonExistent"))
 
         // Then
         assertEquals(emptyList(), result)
@@ -258,7 +263,7 @@ class BudgetLocalDataSourceTest {
 
         // When
         dataSource.budgets.first()
-        val result = dataSource.getAllFilteredBy("2025")
+        val result = dataSource.getAllFilteredBy(BudgetFilter(name = "2025"))
 
         // Then
         assertEquals(2, result.size)
@@ -279,7 +284,7 @@ class BudgetLocalDataSourceTest {
         // Given - no flow collected, cache is empty
 
         // When
-        val result = dataSource.getAllFilteredBy("Test")
+        val result = dataSource.getAllFilteredBy(BudgetFilter(name = "Test"))
 
         // Then
         assertEquals(emptyList(), result)
@@ -314,7 +319,7 @@ class BudgetLocalDataSourceTest {
 
         // When
         dataSource.budgets.first()
-        val result = dataSource.getAllFilteredBy("Budget")
+        val result = dataSource.getAllFilteredBy(BudgetFilter(name = "Budget"))
 
         // Then
         assertEquals(3, result.size)
@@ -386,7 +391,7 @@ class BudgetLocalDataSourceTest {
         amount: Double,
         date: String = "2025-01-01"
     ): Int {
-        database.budgetQueries.insert(name, amount, date)
+        database.budgetQueries.insert(amount = amount, name = name, date = date)
         return database.budgetQueries.selectLastId().executeAsOne().toInt()
     }
 }
