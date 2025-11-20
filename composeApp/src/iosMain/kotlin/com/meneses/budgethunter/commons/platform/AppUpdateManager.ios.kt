@@ -27,7 +27,7 @@ private data class AppStoreResult(
     val releaseNotes: String? = null
 )
 
-actual class AppUpdateManager {
+actual class AppUpdateManager : IAppUpdateManager {
 
     private val scope = CoroutineScope(Dispatchers.Default)
     private val httpClient = HttpClient(Darwin)
@@ -36,7 +36,7 @@ actual class AppUpdateManager {
         isLenient = true
     }
 
-    actual fun checkForUpdates(onResult: (AppUpdateResult) -> Unit) {
+    override fun checkForUpdates(onResult: (AppUpdateResult) -> Unit) {
         scope.launch {
             try {
                 val bundleId = getBundleId()

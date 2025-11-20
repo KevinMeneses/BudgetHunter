@@ -11,8 +11,8 @@ class DuplicateBudgetUseCase(
     private val budgetRepository: BudgetRepository,
     private val budgetEntryRepository: BudgetEntryRepository,
     private val defaultDispatcher: CoroutineDispatcher
-) {
-    suspend fun execute(budget: Budget) = withContext(defaultDispatcher) {
+) : IDuplicateBudgetUseCase {
+    override suspend fun execute(budget: Budget) = withContext(defaultDispatcher) {
         val updatedBudget = budget.copy(id = -1, name = budget.name + " (copy)")
         val copyBudgetId = budgetRepository.create(updatedBudget).id
         budgetEntryRepository

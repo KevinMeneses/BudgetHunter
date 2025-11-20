@@ -15,7 +15,7 @@ class BudgetMetricsViewModelTest {
             "Transport" to 50.0,
             "Entertainment" to 25.0
         )
-        val useCase = FakeGetTotalsPerCategoryUseCase(totals)
+        val useCase: IGetTotalsPerCategoryUseCase = FakeGetTotalsPerCategoryUseCase(totals)
         val viewModel = BudgetMetricsViewModel(useCase)
 
         // Wait for initialization
@@ -32,7 +32,7 @@ class BudgetMetricsViewModelTest {
             "Transport" to 50.0,
             "Entertainment" to 50.0
         )
-        val useCase = FakeGetTotalsPerCategoryUseCase(totals)
+        val useCase: IGetTotalsPerCategoryUseCase = FakeGetTotalsPerCategoryUseCase(totals)
         val viewModel = BudgetMetricsViewModel(useCase)
 
         kotlinx.coroutines.delay(100)
@@ -50,7 +50,7 @@ class BudgetMetricsViewModelTest {
             "Transport" to 50.0,
             "Entertainment" to 25.0
         )
-        val useCase = FakeGetTotalsPerCategoryUseCase(totals)
+        val useCase: IGetTotalsPerCategoryUseCase = FakeGetTotalsPerCategoryUseCase(totals)
         val viewModel = BudgetMetricsViewModel(useCase)
 
         kotlinx.coroutines.delay(100)
@@ -61,7 +61,7 @@ class BudgetMetricsViewModelTest {
 
     @Test
     fun `handles empty metrics data`() = runTest {
-        val useCase = FakeGetTotalsPerCategoryUseCase(emptyMap())
+        val useCase: IGetTotalsPerCategoryUseCase = FakeGetTotalsPerCategoryUseCase(emptyMap())
         val viewModel = BudgetMetricsViewModel(useCase)
 
         kotlinx.coroutines.delay(100)
@@ -75,7 +75,7 @@ class BudgetMetricsViewModelTest {
     @Test
     fun `handles single category`() = runTest {
         val totals = mapOf("Food" to 150.0)
-        val useCase = FakeGetTotalsPerCategoryUseCase(totals)
+        val useCase: IGetTotalsPerCategoryUseCase = FakeGetTotalsPerCategoryUseCase(totals)
         val viewModel = BudgetMetricsViewModel(useCase)
 
         kotlinx.coroutines.delay(100)
@@ -89,7 +89,7 @@ class BudgetMetricsViewModelTest {
     @Test
     fun `handles large number of categories`() = runTest {
         val totals = (1..10).associate { "Category$it" to it * 10.0 }
-        val useCase = FakeGetTotalsPerCategoryUseCase(totals)
+        val useCase: IGetTotalsPerCategoryUseCase = FakeGetTotalsPerCategoryUseCase(totals)
         val viewModel = BudgetMetricsViewModel(useCase)
 
         kotlinx.coroutines.delay(100)
@@ -107,7 +107,7 @@ class BudgetMetricsViewModelTest {
             "Transport" to 100.0,
             "Entertainment" to 100.0
         )
-        val useCase = FakeGetTotalsPerCategoryUseCase(totals)
+        val useCase: IGetTotalsPerCategoryUseCase = FakeGetTotalsPerCategoryUseCase(totals)
         val viewModel = BudgetMetricsViewModel(useCase)
 
         kotlinx.coroutines.delay(100)
@@ -125,7 +125,7 @@ class BudgetMetricsViewModelTest {
             "Food" to 33.33,
             "Transport" to 66.67
         )
-        val useCase = FakeGetTotalsPerCategoryUseCase(totals)
+        val useCase: IGetTotalsPerCategoryUseCase = FakeGetTotalsPerCategoryUseCase(totals)
         val viewModel = BudgetMetricsViewModel(useCase)
 
         kotlinx.coroutines.delay(100)
@@ -138,7 +138,7 @@ class BudgetMetricsViewModelTest {
     @Test
     fun `uiState exposes state as flow`() = runTest {
         val totals = mapOf("Food" to 100.0)
-        val useCase = FakeGetTotalsPerCategoryUseCase(totals)
+        val useCase: IGetTotalsPerCategoryUseCase = FakeGetTotalsPerCategoryUseCase(totals)
         val viewModel = BudgetMetricsViewModel(useCase)
 
         kotlinx.coroutines.delay(100)

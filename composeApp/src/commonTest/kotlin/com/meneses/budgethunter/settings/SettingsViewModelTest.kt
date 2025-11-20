@@ -16,9 +16,9 @@ class SettingsViewModelTest {
 
     @Test
     fun `initial state loads settings on initialization`() = runTest {
-        val preferences = FakePreferencesManager()
-        val repository = FakeBudgetRepository()
-        val permissions = FakePermissionsManager()
+        val preferences: IPreferencesManager = FakePreferencesManager()
+        val repository: IBudgetRepository = FakeBudgetRepository()
+        val permissions: IPermissionsManager = FakePermissionsManager()
 
         val viewModel = SettingsViewModel(preferences, repository, permissions)
 
@@ -30,14 +30,14 @@ class SettingsViewModelTest {
 
     @Test
     fun `loadSettings loads default budget`() = runTest {
-        val preferences = FakePreferencesManager()
+        val preferences: IPreferencesManager = FakePreferencesManager()
         preferences.setDefaultBudgetId(1)
 
-        val repository = FakeBudgetRepository()
+        val repository: IBudgetRepository = FakeBudgetRepository()
         val budget = Budget(id = 1, name = "Default Budget", amount = 100.0)
         repository.setBudgets(listOf(budget))
 
-        val permissions = FakePermissionsManager()
+        val permissions: IPermissionsManager = FakePermissionsManager()
 
         val viewModel = SettingsViewModel(preferences, repository, permissions)
 
@@ -49,11 +49,11 @@ class SettingsViewModelTest {
 
     @Test
     fun `loadSettings loads sms reading state`() = runTest {
-        val preferences = FakePreferencesManager()
+        val preferences: IPreferencesManager = FakePreferencesManager()
         preferences.setSmsReadingEnabled(true)
 
-        val repository = FakeBudgetRepository()
-        val permissions = FakePermissionsManager()
+        val repository: IBudgetRepository = FakeBudgetRepository()
+        val permissions: IPermissionsManager = FakePermissionsManager()
 
         val viewModel = SettingsViewModel(preferences, repository, permissions)
 
@@ -65,11 +65,11 @@ class SettingsViewModelTest {
 
     @Test
     fun `loadSettings loads ai processing state`() = runTest {
-        val preferences = FakePreferencesManager()
+        val preferences: IPreferencesManager = FakePreferencesManager()
         preferences.setAiProcessingEnabled(true)
 
-        val repository = FakeBudgetRepository()
-        val permissions = FakePermissionsManager()
+        val repository: IBudgetRepository = FakeBudgetRepository()
+        val permissions: IPermissionsManager = FakePermissionsManager()
 
         val viewModel = SettingsViewModel(preferences, repository, permissions)
 
@@ -81,9 +81,9 @@ class SettingsViewModelTest {
 
     @Test
     fun `toggleSmsReading enables sms reading`() = runTest {
-        val preferences = FakePreferencesManager()
-        val repository = FakeBudgetRepository()
-        val permissions = FakePermissionsManager()
+        val preferences: IPreferencesManager = FakePreferencesManager()
+        val repository: IBudgetRepository = FakeBudgetRepository()
+        val permissions: IPermissionsManager = FakePermissionsManager()
         permissions.hasSms = true
 
         val viewModel = SettingsViewModel(preferences, repository, permissions)
@@ -98,9 +98,9 @@ class SettingsViewModelTest {
 
     @Test
     fun `toggleSmsReading requests permission when not granted`() = runTest {
-        val preferences = FakePreferencesManager()
-        val repository = FakeBudgetRepository()
-        val permissions = FakePermissionsManager()
+        val preferences: IPreferencesManager = FakePreferencesManager()
+        val repository: IBudgetRepository = FakeBudgetRepository()
+        val permissions: IPermissionsManager = FakePermissionsManager()
         permissions.hasSms = false
         permissions.grantPermission = true
 
@@ -116,9 +116,9 @@ class SettingsViewModelTest {
 
     @Test
     fun `toggleSmsReading shows rationale dialog when needed`() = runTest {
-        val preferences = FakePreferencesManager()
-        val repository = FakeBudgetRepository()
-        val permissions = FakePermissionsManager()
+        val preferences: IPreferencesManager = FakePreferencesManager()
+        val repository: IBudgetRepository = FakeBudgetRepository()
+        val permissions: IPermissionsManager = FakePermissionsManager()
         permissions.hasSms = false
         permissions.shouldShowRationale = true
 
@@ -133,9 +133,9 @@ class SettingsViewModelTest {
 
     @Test
     fun `toggleAiProcessing updates preference`() = runTest {
-        val preferences = FakePreferencesManager()
-        val repository = FakeBudgetRepository()
-        val permissions = FakePermissionsManager()
+        val preferences: IPreferencesManager = FakePreferencesManager()
+        val repository: IBudgetRepository = FakeBudgetRepository()
+        val permissions: IPermissionsManager = FakePermissionsManager()
 
         val viewModel = SettingsViewModel(preferences, repository, permissions)
 
@@ -149,9 +149,9 @@ class SettingsViewModelTest {
 
     @Test
     fun `setDefaultBudget updates preference and state`() = runTest {
-        val preferences = FakePreferencesManager()
-        val repository = FakeBudgetRepository()
-        val permissions = FakePermissionsManager()
+        val preferences: IPreferencesManager = FakePreferencesManager()
+        val repository: IBudgetRepository = FakeBudgetRepository()
+        val permissions: IPermissionsManager = FakePermissionsManager()
 
         val viewModel = SettingsViewModel(preferences, repository, permissions)
 
@@ -167,9 +167,9 @@ class SettingsViewModelTest {
 
     @Test
     fun `showDefaultBudgetSelector sets visibility`() = runTest {
-        val preferences = FakePreferencesManager()
-        val repository = FakeBudgetRepository()
-        val permissions = FakePermissionsManager()
+        val preferences: IPreferencesManager = FakePreferencesManager()
+        val repository: IBudgetRepository = FakeBudgetRepository()
+        val permissions: IPermissionsManager = FakePermissionsManager()
 
         val viewModel = SettingsViewModel(preferences, repository, permissions)
 
@@ -181,9 +181,9 @@ class SettingsViewModelTest {
 
     @Test
     fun `hideDefaultBudgetSelector sets visibility`() = runTest {
-        val preferences = FakePreferencesManager()
-        val repository = FakeBudgetRepository()
-        val permissions = FakePermissionsManager()
+        val preferences: IPreferencesManager = FakePreferencesManager()
+        val repository: IBudgetRepository = FakeBudgetRepository()
+        val permissions: IPermissionsManager = FakePermissionsManager()
 
         val viewModel = SettingsViewModel(preferences, repository, permissions)
 
@@ -196,9 +196,9 @@ class SettingsViewModelTest {
 
     @Test
     fun `showBankSelector sets visibility`() = runTest {
-        val preferences = FakePreferencesManager()
-        val repository = FakeBudgetRepository()
-        val permissions = FakePermissionsManager()
+        val preferences: IPreferencesManager = FakePreferencesManager()
+        val repository: IBudgetRepository = FakeBudgetRepository()
+        val permissions: IPermissionsManager = FakePermissionsManager()
 
         val viewModel = SettingsViewModel(preferences, repository, permissions)
 
@@ -210,9 +210,9 @@ class SettingsViewModelTest {
 
     @Test
     fun `hideBankSelector sets visibility`() = runTest {
-        val preferences = FakePreferencesManager()
-        val repository = FakeBudgetRepository()
-        val permissions = FakePermissionsManager()
+        val preferences: IPreferencesManager = FakePreferencesManager()
+        val repository: IBudgetRepository = FakeBudgetRepository()
+        val permissions: IPermissionsManager = FakePermissionsManager()
 
         val viewModel = SettingsViewModel(preferences, repository, permissions)
 
@@ -225,9 +225,9 @@ class SettingsViewModelTest {
 
     @Test
     fun `setSelectedBanks updates preferences and state`() = runTest {
-        val preferences = FakePreferencesManager()
-        val repository = FakeBudgetRepository()
-        val permissions = FakePermissionsManager()
+        val preferences: IPreferencesManager = FakePreferencesManager()
+        val repository: IBudgetRepository = FakeBudgetRepository()
+        val permissions: IPermissionsManager = FakePermissionsManager()
 
         val viewModel = SettingsViewModel(preferences, repository, permissions)
 
@@ -245,9 +245,9 @@ class SettingsViewModelTest {
 
     @Test
     fun `showManualPermissionDialog sets visibility`() = runTest {
-        val preferences = FakePreferencesManager()
-        val repository = FakeBudgetRepository()
-        val permissions = FakePermissionsManager()
+        val preferences: IPreferencesManager = FakePreferencesManager()
+        val repository: IBudgetRepository = FakeBudgetRepository()
+        val permissions: IPermissionsManager = FakePermissionsManager()
 
         val viewModel = SettingsViewModel(preferences, repository, permissions)
 
@@ -259,9 +259,9 @@ class SettingsViewModelTest {
 
     @Test
     fun `hideManualPermissionDialog sets visibility`() = runTest {
-        val preferences = FakePreferencesManager()
-        val repository = FakeBudgetRepository()
-        val permissions = FakePermissionsManager()
+        val preferences: IPreferencesManager = FakePreferencesManager()
+        val repository: IBudgetRepository = FakeBudgetRepository()
+        val permissions: IPermissionsManager = FakePermissionsManager()
 
         val viewModel = SettingsViewModel(preferences, repository, permissions)
 
@@ -274,9 +274,9 @@ class SettingsViewModelTest {
 
     @Test
     fun `openAppSettings opens settings and hides dialog`() = runTest {
-        val preferences = FakePreferencesManager()
-        val repository = FakeBudgetRepository()
-        val permissions = FakePermissionsManager()
+        val preferences: IPreferencesManager = FakePreferencesManager()
+        val repository: IBudgetRepository = FakeBudgetRepository()
+        val permissions: IPermissionsManager = FakePermissionsManager()
 
         val viewModel = SettingsViewModel(preferences, repository, permissions)
 
@@ -290,9 +290,9 @@ class SettingsViewModelTest {
 
     @Test
     fun `loadSettings handles exception gracefully`() = runTest {
-        val preferences = FakePreferencesManager()
-        val repository = FakeBudgetRepository()
-        val permissions = FakePermissionsManager()
+        val preferences: IPreferencesManager = FakePreferencesManager()
+        val repository: IBudgetRepository = FakeBudgetRepository()
+        val permissions: IPermissionsManager = FakePermissionsManager()
 
         // This should not throw even if there are issues
         val viewModel = SettingsViewModel(preferences, repository, permissions)

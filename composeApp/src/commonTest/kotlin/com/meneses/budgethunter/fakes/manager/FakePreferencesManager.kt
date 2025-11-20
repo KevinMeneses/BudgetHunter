@@ -1,8 +1,8 @@
 package com.meneses.budgethunter.fakes.manager
 
-import com.meneses.budgethunter.commons.data.PreferencesManager
+import com.meneses.budgethunter.commons.data.IPreferencesManager
 
-class FakePreferencesManager : PreferencesManager {
+class FakePreferencesManager : IPreferencesManager {
     private var smsReadingEnabled = false
     private var aiProcessingEnabled = false
     private var defaultBudgetId = -1

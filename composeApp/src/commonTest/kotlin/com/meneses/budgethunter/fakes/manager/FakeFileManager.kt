@@ -1,8 +1,8 @@
 package com.meneses.budgethunter.fakes.manager
 
-import com.meneses.budgethunter.commons.data.FileManager
+import com.meneses.budgethunter.commons.data.IFileManager
 
-class FakeFileManager : FileManager {
+class FakeFileManager : IFileManager {
     val savedFiles = mutableListOf<ByteArray>()
     val deletedFiles = mutableListOf<String>()
 

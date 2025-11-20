@@ -1,9 +1,9 @@
 package com.meneses.budgethunter.fakes.repository
 
-import com.meneses.budgethunter.budgetEntry.data.BudgetEntryRepository
+import com.meneses.budgethunter.budgetEntry.data.IBudgetEntryRepository
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 
-class FakeBudgetEntryRepository : BudgetEntryRepository {
+class FakeBudgetEntryRepository : IBudgetEntryRepository {
     val createdEntries = mutableListOf<BudgetEntry>()
     val updatedEntries = mutableListOf<BudgetEntry>()
 

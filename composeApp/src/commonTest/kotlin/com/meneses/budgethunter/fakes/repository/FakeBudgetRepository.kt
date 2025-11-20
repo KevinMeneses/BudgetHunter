@@ -1,11 +1,11 @@
 package com.meneses.budgethunter.fakes.repository
 
-import com.meneses.budgethunter.budgetList.data.BudgetRepository
+import com.meneses.budgethunter.budgetList.data.IBudgetRepository
 import com.meneses.budgethunter.budgetList.domain.Budget
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
-class FakeBudgetRepository : BudgetRepository {
+class FakeBudgetRepository : IBudgetRepository {
     private val _budgets = MutableStateFlow<List<Budget>>(emptyList())
     override val budgets: StateFlow<List<Budget>> = _budgets
 

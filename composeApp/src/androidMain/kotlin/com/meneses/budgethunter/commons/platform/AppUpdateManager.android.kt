@@ -19,7 +19,7 @@ interface AppUpdateLauncherDelegate {
 
 actual class AppUpdateManager(
     private val context: Context
-) {
+) : IAppUpdateManager {
 
     private var googleAppUpdateManager: GoogleAppUpdateManager? = null
     private var launcherDelegate: AppUpdateLauncherDelegate? = null
@@ -39,7 +39,7 @@ actual class AppUpdateManager(
         this.launcherDelegate = delegate
     }
 
-    actual fun checkForUpdates(onResult: (AppUpdateResult) -> Unit) {
+    override fun checkForUpdates(onResult: (AppUpdateResult) -> Unit) {
         currentCallback = onResult
         googleAppUpdateManager = AppUpdateManagerFactory.create(context)
         val updateInfoTask = googleAppUpdateManager!!.appUpdateInfo

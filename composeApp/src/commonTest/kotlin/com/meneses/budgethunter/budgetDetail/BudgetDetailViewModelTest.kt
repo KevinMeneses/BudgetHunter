@@ -18,7 +18,7 @@ class BudgetDetailViewModelTest {
 
     @Test
     fun `initial state is loading`() = runTest {
-        val repository = FakeBudgetDetailRepository()
+        val repository: IBudgetDetailRepository = FakeBudgetDetailRepository()
         val viewModel = BudgetDetailViewModel(repository)
 
         val state = viewModel.uiState.value
@@ -27,7 +27,7 @@ class BudgetDetailViewModelTest {
 
     @Test
     fun `setBudget updates budget in state`() = runTest {
-        val repository = FakeBudgetDetailRepository()
+        val repository: IBudgetDetailRepository = FakeBudgetDetailRepository()
         val viewModel = BudgetDetailViewModel(repository)
 
         val budget = Budget(id = 1, name = "Test Budget", amount = 100.0)
@@ -46,7 +46,7 @@ class BudgetDetailViewModelTest {
         val budget = Budget(id = 1, name = "Test", amount = 100.0)
         val detail = BudgetDetail(budget = budget, entries = entries)
 
-        val repository = FakeBudgetDetailRepository()
+        val repository: IBudgetDetailRepository = FakeBudgetDetailRepository()
         repository.cachedDetail = detail
 
         val viewModel = BudgetDetailViewModel(repository)
@@ -62,7 +62,7 @@ class BudgetDetailViewModelTest {
 
     @Test
     fun `updateBudgetAmount calls repository`() = runTest {
-        val repository = FakeBudgetDetailRepository()
+        val repository: IBudgetDetailRepository = FakeBudgetDetailRepository()
         val viewModel = BudgetDetailViewModel(repository)
 
         viewModel.sendEvent(BudgetDetailEvent.UpdateBudgetAmount(500.0))
@@ -79,7 +79,7 @@ class BudgetDetailViewModelTest {
             BudgetEntry(id = 2, budgetId = 1, amount = "30", type = BudgetEntry.Type.OUTCOME)
         )
         val detail = BudgetDetail(entries = entries)
-        val repository = FakeBudgetDetailRepository()
+        val repository: IBudgetDetailRepository = FakeBudgetDetailRepository()
         repository.cachedDetail = detail
 
         val viewModel = BudgetDetailViewModel(repository)
@@ -94,7 +94,7 @@ class BudgetDetailViewModelTest {
 
     @Test
     fun `clearFilter removes filter from state`() = runTest {
-        val repository = FakeBudgetDetailRepository()
+        val repository: IBudgetDetailRepository = FakeBudgetDetailRepository()
         repository.cachedDetail = BudgetDetail(entries = emptyList())
 
         val viewModel = BudgetDetailViewModel(repository)
@@ -109,7 +109,7 @@ class BudgetDetailViewModelTest {
     @Test
     fun `deleteBudget calls repository and sets goBack`() = runTest {
         val budget = Budget(id = 42, name = "Test", amount = 100.0)
-        val repository = FakeBudgetDetailRepository()
+        val repository: IBudgetDetailRepository = FakeBudgetDetailRepository()
         repository.cachedDetail = BudgetDetail(budget = budget)
 
         val viewModel = BudgetDetailViewModel(repository)
@@ -129,7 +129,7 @@ class BudgetDetailViewModelTest {
             BudgetEntry(id = 2, budgetId = 1, amount = "30", isSelected = false),
             BudgetEntry(id = 3, budgetId = 1, amount = "20", isSelected = true)
         )
-        val repository = FakeBudgetDetailRepository()
+        val repository: IBudgetDetailRepository = FakeBudgetDetailRepository()
         repository.cachedDetail = BudgetDetail(entries = entries)
 
         val viewModel = BudgetDetailViewModel(repository)
@@ -144,7 +144,7 @@ class BudgetDetailViewModelTest {
     @Test
     fun `showEntry sets entry in state`() = runTest {
         val entry = BudgetEntry(id = 1, budgetId = 1, amount = "50")
-        val repository = FakeBudgetDetailRepository()
+        val repository: IBudgetDetailRepository = FakeBudgetDetailRepository()
         val viewModel = BudgetDetailViewModel(repository)
 
         viewModel.sendEvent(BudgetDetailEvent.ShowEntry(entry))
@@ -155,7 +155,7 @@ class BudgetDetailViewModelTest {
     @Test
     fun `clearNavigation resets showEntry`() = runTest {
         val entry = BudgetEntry(id = 1, budgetId = 1, amount = "50")
-        val repository = FakeBudgetDetailRepository()
+        val repository: IBudgetDetailRepository = FakeBudgetDetailRepository()
         val viewModel = BudgetDetailViewModel(repository)
 
         viewModel.sendEvent(BudgetDetailEvent.ShowEntry(entry))
@@ -166,7 +166,7 @@ class BudgetDetailViewModelTest {
 
     @Test
     fun `toggleBudgetModal sets modal visibility`() = runTest {
-        val repository = FakeBudgetDetailRepository()
+        val repository: IBudgetDetailRepository = FakeBudgetDetailRepository()
         val viewModel = BudgetDetailViewModel(repository)
 
         viewModel.sendEvent(BudgetDetailEvent.ToggleBudgetModal(true))
@@ -178,7 +178,7 @@ class BudgetDetailViewModelTest {
 
     @Test
     fun `toggleDeleteBudgetModal sets modal visibility`() = runTest {
-        val repository = FakeBudgetDetailRepository()
+        val repository: IBudgetDetailRepository = FakeBudgetDetailRepository()
         val viewModel = BudgetDetailViewModel(repository)
 
         viewModel.sendEvent(BudgetDetailEvent.ToggleDeleteBudgetModal(true))
@@ -190,7 +190,7 @@ class BudgetDetailViewModelTest {
 
     @Test
     fun `toggleDeleteEntriesModal sets modal visibility`() = runTest {
-        val repository = FakeBudgetDetailRepository()
+        val repository: IBudgetDetailRepository = FakeBudgetDetailRepository()
         val viewModel = BudgetDetailViewModel(repository)
 
         viewModel.sendEvent(BudgetDetailEvent.ToggleDeleteEntriesModal(true))
@@ -202,7 +202,7 @@ class BudgetDetailViewModelTest {
 
     @Test
     fun `toggleFilterModal sets modal visibility`() = runTest {
-        val repository = FakeBudgetDetailRepository()
+        val repository: IBudgetDetailRepository = FakeBudgetDetailRepository()
         val viewModel = BudgetDetailViewModel(repository)
 
         viewModel.sendEvent(BudgetDetailEvent.ToggleFilterModal(true))
@@ -214,7 +214,7 @@ class BudgetDetailViewModelTest {
 
     @Test
     fun `toggleSelectionState activates selection mode`() = runTest {
-        val repository = FakeBudgetDetailRepository()
+        val repository: IBudgetDetailRepository = FakeBudgetDetailRepository()
         val viewModel = BudgetDetailViewModel(repository)
 
         viewModel.sendEvent(BudgetDetailEvent.ToggleSelectionState(true))
@@ -230,7 +230,7 @@ class BudgetDetailViewModelTest {
             BudgetEntry(id = 1, budgetId = 1, amount = "50", isSelected = false),
             BudgetEntry(id = 2, budgetId = 1, amount = "30", isSelected = false)
         )
-        val repository = FakeBudgetDetailRepository()
+        val repository: IBudgetDetailRepository = FakeBudgetDetailRepository()
         repository.cachedDetail = BudgetDetail(entries = entries)
 
         val viewModel = BudgetDetailViewModel(repository)
@@ -249,7 +249,7 @@ class BudgetDetailViewModelTest {
             BudgetEntry(id = 1, budgetId = 1, amount = "50", isSelected = true),
             BudgetEntry(id = 2, budgetId = 1, amount = "30", isSelected = true)
         )
-        val repository = FakeBudgetDetailRepository()
+        val repository: IBudgetDetailRepository = FakeBudgetDetailRepository()
         repository.cachedDetail = BudgetDetail(entries = entries)
 
         val viewModel = BudgetDetailViewModel(repository)
@@ -268,7 +268,7 @@ class BudgetDetailViewModelTest {
             BudgetEntry(id = 1, budgetId = 1, amount = "50", isSelected = false),
             BudgetEntry(id = 2, budgetId = 1, amount = "30", isSelected = false)
         )
-        val repository = FakeBudgetDetailRepository()
+        val repository: IBudgetDetailRepository = FakeBudgetDetailRepository()
         repository.cachedDetail = BudgetDetail(entries = entries)
 
         val viewModel = BudgetDetailViewModel(repository)
@@ -289,7 +289,7 @@ class BudgetDetailViewModelTest {
             BudgetEntry(id = 2, budgetId = 1, amount = "50", type = BudgetEntry.Type.OUTCOME),
             BudgetEntry(id = 1, budgetId = 1, amount = "75", type = BudgetEntry.Type.INCOME)
         )
-        val repository = FakeBudgetDetailRepository()
+        val repository: IBudgetDetailRepository = FakeBudgetDetailRepository()
         repository.cachedDetail = BudgetDetail(entries = entries)
 
         val viewModel = BudgetDetailViewModel(repository)
@@ -315,7 +315,7 @@ class BudgetDetailViewModelTest {
             BudgetEntry(id = 1, budgetId = 1, amount = "50", isSelected = true),
             BudgetEntry(id = 2, budgetId = 1, amount = "30", isSelected = true)
         )
-        val repository = FakeBudgetDetailRepository()
+        val repository: IBudgetDetailRepository = FakeBudgetDetailRepository()
         repository.cachedDetail = BudgetDetail(entries = entries)
 
         val viewModel = BudgetDetailViewModel(repository)

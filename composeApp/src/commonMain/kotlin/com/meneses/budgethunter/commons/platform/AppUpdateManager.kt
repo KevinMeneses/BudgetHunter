@@ -7,6 +7,4 @@ sealed class AppUpdateResult {
     data object UpdateFailed : AppUpdateResult()
 }
 
-expect class AppUpdateManager {
-    fun checkForUpdates(onResult: (AppUpdateResult) -> Unit)
-}
+expect class AppUpdateManager() : IAppUpdateManager

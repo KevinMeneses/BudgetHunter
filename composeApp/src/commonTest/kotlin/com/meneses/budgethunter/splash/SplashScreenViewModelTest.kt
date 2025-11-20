@@ -13,7 +13,7 @@ class SplashScreenViewModelTest {
 
     @Test
     fun `initial state has navigate and updatingApp false`() = runTest {
-        val fakeManager = FakeAppUpdateManager(AppUpdateResult.NoUpdateAvailable)
+        val fakeManager: IAppUpdateManager = FakeAppUpdateManager(AppUpdateResult.NoUpdateAvailable)
         val viewModel = SplashScreenViewModel(fakeManager)
 
         val state = viewModel.uiState.value
@@ -23,7 +23,7 @@ class SplashScreenViewModelTest {
 
     @Test
     fun `verifyUpdate calls checkForUpdates on app update manager`() = runTest {
-        val fakeManager = FakeAppUpdateManager(AppUpdateResult.NoUpdateAvailable)
+        val fakeManager: IAppUpdateManager = FakeAppUpdateManager(AppUpdateResult.NoUpdateAvailable)
         val viewModel = SplashScreenViewModel(fakeManager)
 
         viewModel.sendEvent(SplashEvent.VerifyUpdate)
@@ -33,7 +33,7 @@ class SplashScreenViewModelTest {
 
     @Test
     fun `verifyUpdate sets navigate to true when no update available`() = runTest {
-        val fakeManager = FakeAppUpdateManager(AppUpdateResult.NoUpdateAvailable)
+        val fakeManager: IAppUpdateManager = FakeAppUpdateManager(AppUpdateResult.NoUpdateAvailable)
         val viewModel = SplashScreenViewModel(fakeManager)
 
         viewModel.sendEvent(SplashEvent.VerifyUpdate)
@@ -45,7 +45,7 @@ class SplashScreenViewModelTest {
 
     @Test
     fun `verifyUpdate sets updatingApp to true when update in progress`() = runTest {
-        val fakeManager = FakeAppUpdateManager(AppUpdateResult.UpdateInProgress)
+        val fakeManager: IAppUpdateManager = FakeAppUpdateManager(AppUpdateResult.UpdateInProgress)
         val viewModel = SplashScreenViewModel(fakeManager)
 
         viewModel.sendEvent(SplashEvent.VerifyUpdate)
@@ -59,7 +59,7 @@ class SplashScreenViewModelTest {
     fun `verifyUpdate calls startUpdate when update available`() = runTest {
         var startUpdateCalled = false
         val updateResult = FakeAppUpdateResult { startUpdateCalled = true }
-        val fakeManager = FakeAppUpdateManager(updateResult)
+        val fakeManager: IAppUpdateManager = FakeAppUpdateManager(updateResult)
         val viewModel = SplashScreenViewModel(fakeManager)
 
         viewModel.sendEvent(SplashEvent.VerifyUpdate)
@@ -72,7 +72,7 @@ class SplashScreenViewModelTest {
 
     @Test
     fun `verifyUpdate sets navigate to true when update failed`() = runTest {
-        val fakeManager = FakeAppUpdateManager(AppUpdateResult.UpdateFailed)
+        val fakeManager: IAppUpdateManager = FakeAppUpdateManager(AppUpdateResult.UpdateFailed)
         val viewModel = SplashScreenViewModel(fakeManager)
 
         viewModel.sendEvent(SplashEvent.VerifyUpdate)
@@ -84,7 +84,7 @@ class SplashScreenViewModelTest {
 
     @Test
     fun `verifyUpdate can be called multiple times`() = runTest {
-        val fakeManager = FakeAppUpdateManager(AppUpdateResult.NoUpdateAvailable)
+        val fakeManager: IAppUpdateManager = FakeAppUpdateManager(AppUpdateResult.NoUpdateAvailable)
         val viewModel = SplashScreenViewModel(fakeManager)
 
         viewModel.sendEvent(SplashEvent.VerifyUpdate)
@@ -95,7 +95,7 @@ class SplashScreenViewModelTest {
 
     @Test
     fun `state changes are reflected in uiState flow`() = runTest {
-        val fakeManager = FakeAppUpdateManager(AppUpdateResult.UpdateInProgress)
+        val fakeManager: IAppUpdateManager = FakeAppUpdateManager(AppUpdateResult.UpdateInProgress)
         val viewModel = SplashScreenViewModel(fakeManager)
 
         val initialState = viewModel.uiState.value

@@ -1,8 +1,8 @@
 package com.meneses.budgethunter.fakes.manager
 
-import com.meneses.budgethunter.commons.platform.PermissionsManager
+import com.meneses.budgethunter.commons.platform.IPermissionsManager
 
-class FakePermissionsManager : PermissionsManager {
+class FakePermissionsManager : IPermissionsManager {
     var hasSms = false
     var shouldShowRationale = false
     var appSettingsOpened = false

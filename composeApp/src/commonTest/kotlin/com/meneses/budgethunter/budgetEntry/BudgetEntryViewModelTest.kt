@@ -31,11 +31,11 @@ import kotlin.test.assertTrue
 class BudgetEntryViewModelTest {
 
     private fun createViewModel(
-        repository: BudgetEntryRepository = FakeBudgetEntryRepository(),
-        createUseCase: CreateBudgetEntryFromImageUseCase = FakeCreateBudgetEntryFromImageUseCase(),
-        validateUseCase: ValidateFilePathUseCase = FakeValidateFilePathUseCase(),
-        preferences: PreferencesManager = FakePreferencesManager(),
-        fileManager: FileManager = FakeFileManager(),
+        repository: IBudgetEntryRepository = FakeBudgetEntryRepository(),
+        createUseCase: ICreateBudgetEntryFromImageUseCase = FakeCreateBudgetEntryFromImageUseCase(),
+        validateUseCase: IValidateFilePathUseCase = FakeValidateFilePathUseCase(),
+        preferences: IPreferencesManager = FakePreferencesManager(),
+        fileManager: IFileManager = FakeFileManager(),
         cameraManager: CameraManager = FakeCameraManager(),
         filePickerManager: FilePickerManager = FakeFilePickerManager(),
         shareManager: ShareManager = FakeShareManager(),

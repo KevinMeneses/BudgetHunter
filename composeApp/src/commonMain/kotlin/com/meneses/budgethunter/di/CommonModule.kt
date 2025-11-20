@@ -2,7 +2,9 @@ package com.meneses.budgethunter.di
 
 import com.meneses.budgethunter.budgetList.data.adapter.categoryAdapter
 import com.meneses.budgethunter.budgetList.data.adapter.typeAdapter
+import com.meneses.budgethunter.commons.application.IValidateFilePathUseCase
 import com.meneses.budgethunter.commons.application.ValidateFilePathUseCase
+import com.meneses.budgethunter.commons.data.IPreferencesManager
 import com.meneses.budgethunter.commons.data.PreferencesManager
 import com.meneses.budgethunter.db.BudgetEntryQueries
 import com.meneses.budgethunter.db.BudgetQueries
@@ -41,12 +43,12 @@ val commonModule = module {
         }
     }
 
-    single<PreferencesManager> { PreferencesManager(get()) }
+    single<PreferencesManager> { PreferencesManager(get()) } bind IPreferencesManager::class
 
     single<ValidateFilePathUseCase> {
         ValidateFilePathUseCase(
             fileManager = get(),
             ioDispatcher = get(named("IO"))
         )
-    }
+    } bind IValidateFilePathUseCase::class
 }

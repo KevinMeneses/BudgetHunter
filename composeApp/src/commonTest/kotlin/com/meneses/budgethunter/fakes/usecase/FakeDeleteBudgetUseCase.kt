@@ -1,8 +1,8 @@
 package com.meneses.budgethunter.fakes.usecase
 
-import com.meneses.budgethunter.budgetList.application.DeleteBudgetUseCase
+import com.meneses.budgethunter.budgetList.application.IDeleteBudgetUseCase
 
-class FakeDeleteBudgetUseCase : DeleteBudgetUseCase(null!!, null!!, null!!) {
+class FakeDeleteBudgetUseCase : IDeleteBudgetUseCase {
     val deletedBudgetIds = mutableListOf<Long>()
 
     override suspend fun execute(budgetId: Long) {

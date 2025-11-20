@@ -1,12 +1,12 @@
 package com.meneses.budgethunter.fakes.repository
 
-import com.meneses.budgethunter.budgetDetail.data.BudgetDetailRepository
+import com.meneses.budgethunter.budgetDetail.data.IBudgetDetailRepository
 import com.meneses.budgethunter.budgetDetail.domain.BudgetDetail
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntryFilter
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 
-class FakeBudgetDetailRepository : BudgetDetailRepository {
+class FakeBudgetDetailRepository : IBudgetDetailRepository {
     var cachedDetail = BudgetDetail()
     val deletedBudgetIds = mutableListOf<Int>()
     val deletedEntryIds = mutableListOf<List<Int>>()

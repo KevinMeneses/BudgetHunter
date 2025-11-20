@@ -9,8 +9,8 @@ class DeleteBudgetUseCase(
     private val budgetLocalDataSource: BudgetLocalDataSource,
     private val entriesLocalDataSource: BudgetEntryLocalDataSource,
     private val ioDispatcher: CoroutineDispatcher
-) {
-    suspend fun execute(budgetId: Long) = withContext(ioDispatcher) {
+) : IDeleteBudgetUseCase {
+    override suspend fun execute(budgetId: Long) = withContext(ioDispatcher) {
         budgetLocalDataSource.delete(budgetId)
         entriesLocalDataSource.deleteAllByBudgetId(budgetId)
     }

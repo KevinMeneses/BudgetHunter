@@ -2,10 +2,10 @@ package com.meneses.budgethunter.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.meneses.budgethunter.budgetList.data.BudgetRepository
+import com.meneses.budgethunter.budgetList.data.IBudgetRepository
 import com.meneses.budgethunter.budgetList.domain.Budget
-import com.meneses.budgethunter.commons.data.PreferencesManager
-import com.meneses.budgethunter.commons.platform.PermissionsManager
+import com.meneses.budgethunter.commons.data.IPreferencesManager
+import com.meneses.budgethunter.commons.platform.IPermissionsManager
 import com.meneses.budgethunter.settings.application.SettingsEvent
 import com.meneses.budgethunter.settings.application.SettingsState
 import com.meneses.budgethunter.sms.domain.SupportedBanks
@@ -15,9 +15,9 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class SettingsViewModel(
-    private val preferencesManager: PreferencesManager,
-    private val budgetRepository: BudgetRepository,
-    private val permissionsManager: PermissionsManager
+    private val preferencesManager: IPreferencesManager,
+    private val budgetRepository: IBudgetRepository,
+    private val permissionsManager: IPermissionsManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsState())

@@ -1,11 +1,11 @@
 package com.meneses.budgethunter.fakes.manager
 
-import com.meneses.budgethunter.commons.platform.AppUpdateManager
+import com.meneses.budgethunter.commons.platform.IAppUpdateManager
 import com.meneses.budgethunter.commons.platform.AppUpdateResult
 
 class FakeAppUpdateManager(
     private val updateResult: AppUpdateResult
-) : AppUpdateManager {
+) : IAppUpdateManager {
     var checkForUpdatesCalled = false
     var startUpdateCalled = false
 

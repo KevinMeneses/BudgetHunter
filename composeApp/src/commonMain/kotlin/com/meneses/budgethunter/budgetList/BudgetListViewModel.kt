@@ -4,9 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.meneses.budgethunter.budgetList.application.BudgetListEvent
 import com.meneses.budgethunter.budgetList.application.BudgetListState
-import com.meneses.budgethunter.budgetList.application.DeleteBudgetUseCase
-import com.meneses.budgethunter.budgetList.application.DuplicateBudgetUseCase
-import com.meneses.budgethunter.budgetList.data.BudgetRepository
+import com.meneses.budgethunter.budgetList.application.IDeleteBudgetUseCase
+import com.meneses.budgethunter.budgetList.application.IDuplicateBudgetUseCase
+import com.meneses.budgethunter.budgetList.data.IBudgetRepository
 import com.meneses.budgethunter.budgetList.domain.Budget
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -14,9 +14,9 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class BudgetListViewModel(
-    private val budgetRepository: BudgetRepository,
-    private val duplicateBudgetUseCase: DuplicateBudgetUseCase,
-    private val deleteBudgetUseCase: DeleteBudgetUseCase
+    private val budgetRepository: IBudgetRepository,
+    private val duplicateBudgetUseCase: IDuplicateBudgetUseCase,
+    private val deleteBudgetUseCase: IDeleteBudgetUseCase
 ) : ViewModel() {
     val uiState get() = _uiState.asStateFlow()
     private val _uiState = MutableStateFlow(BudgetListState())

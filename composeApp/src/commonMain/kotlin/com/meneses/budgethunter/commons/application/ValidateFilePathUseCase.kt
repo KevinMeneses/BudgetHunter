@@ -11,9 +11,9 @@ import kotlinx.coroutines.withContext
 class ValidateFilePathUseCase(
     private val fileManager: FileManager,
     private val ioDispatcher: CoroutineDispatcher
-) {
+) : IValidateFilePathUseCase {
 
-    suspend fun execute(filePath: String?): String? = withContext(ioDispatcher) {
+    override suspend fun execute(filePath: String?): String? = withContext(ioDispatcher) {
         if (filePath.isNullOrEmpty()) return@withContext null
 
         return@withContext try {

@@ -16,7 +16,7 @@ class BudgetListViewModelTest {
 
     @Test
     fun `initial state is loading with empty budget list`() = runTest {
-        val repository = FakeBudgetRepository()
+        val repository: IBudgetRepository = FakeBudgetRepository()
         val viewModel = BudgetListViewModel(repository, FakeDuplicateBudgetUseCase(), FakeDeleteBudgetUseCase())
 
         val state = viewModel.uiState.value
@@ -25,7 +25,7 @@ class BudgetListViewModelTest {
 
     @Test
     fun `collectBudgetList updates state with budgets from repository`() = runTest {
-        val repository = FakeBudgetRepository()
+        val repository: IBudgetRepository = FakeBudgetRepository()
         val budgets = listOf(
             Budget(id = 1, name = "Budget 1", amount = 100.0),
             Budget(id = 2, name = "Budget 2", amount = 200.0)
@@ -43,7 +43,7 @@ class BudgetListViewModelTest {
 
     @Test
     fun `createBudget adds new budget and navigates to it`() = runTest {
-        val repository = FakeBudgetRepository()
+        val repository: IBudgetRepository = FakeBudgetRepository()
         val viewModel = BudgetListViewModel(repository, FakeDuplicateBudgetUseCase(), FakeDeleteBudgetUseCase())
 
         val newBudget = Budget(id = -1, name = "New Budget", amount = 500.0)
@@ -58,7 +58,7 @@ class BudgetListViewModelTest {
 
     @Test
     fun `updateBudget calls repository update`() = runTest {
-        val repository = FakeBudgetRepository()
+        val repository: IBudgetRepository = FakeBudgetRepository()
         val viewModel = BudgetListViewModel(repository, FakeDuplicateBudgetUseCase(), FakeDeleteBudgetUseCase())
 
         val budget = Budget(id = 1, name = "Updated", amount = 300.0)
@@ -72,7 +72,7 @@ class BudgetListViewModelTest {
 
     @Test
     fun `duplicateBudget calls use case`() = runTest {
-        val duplicateUseCase = FakeDuplicateBudgetUseCase()
+        val duplicateUseCase: IDuplicateBudgetUseCase = FakeDuplicateBudgetUseCase()
         val viewModel = BudgetListViewModel(FakeBudgetRepository(), duplicateUseCase, FakeDeleteBudgetUseCase())
 
         val budget = Budget(id = 1, name = "Original", amount = 100.0)
@@ -85,7 +85,7 @@ class BudgetListViewModelTest {
 
     @Test
     fun `deleteBudget calls use case with correct id`() = runTest {
-        val deleteUseCase = FakeDeleteBudgetUseCase()
+        val deleteUseCase: IDeleteBudgetUseCase = FakeDeleteBudgetUseCase()
         val viewModel = BudgetListViewModel(FakeBudgetRepository(), FakeDuplicateBudgetUseCase(), deleteUseCase)
 
         viewModel.sendEvent(BudgetListEvent.DeleteBudget(42L))
@@ -97,7 +97,7 @@ class BudgetListViewModelTest {
 
     @Test
     fun `openBudget sets navigation state`() = runTest {
-        val repository = FakeBudgetRepository()
+        val repository: IBudgetRepository = FakeBudgetRepository()
         val viewModel = BudgetListViewModel(repository, FakeDuplicateBudgetUseCase(), FakeDeleteBudgetUseCase())
 
         val budget = Budget(id = 1, name = "Test", amount = 100.0)
@@ -109,7 +109,7 @@ class BudgetListViewModelTest {
 
     @Test
     fun `clearNavigation resets navigation state`() = runTest {
-        val repository = FakeBudgetRepository()
+        val repository: IBudgetRepository = FakeBudgetRepository()
         val viewModel = BudgetListViewModel(repository, FakeDuplicateBudgetUseCase(), FakeDeleteBudgetUseCase())
 
         val budget = Budget(id = 1, name = "Test", amount = 100.0)
@@ -165,7 +165,7 @@ class BudgetListViewModelTest {
 
     @Test
     fun `updateSearchQuery filters budget list by name`() = runTest {
-        val repository = FakeBudgetRepository()
+        val repository: IBudgetRepository = FakeBudgetRepository()
         val budgets = listOf(
             Budget(id = 1, name = "Food Budget", amount = 100.0),
             Budget(id = 2, name = "Transport Budget", amount = 200.0),
@@ -187,7 +187,7 @@ class BudgetListViewModelTest {
 
     @Test
     fun `updateSearchQuery is case insensitive`() = runTest {
-        val repository = FakeBudgetRepository()
+        val repository: IBudgetRepository = FakeBudgetRepository()
         val budgets = listOf(
             Budget(id = 1, name = "FOOD BUDGET", amount = 100.0),
             Budget(id = 2, name = "food budget", amount = 200.0)
@@ -206,7 +206,7 @@ class BudgetListViewModelTest {
 
     @Test
     fun `updateSearchQuery with empty string shows all budgets`() = runTest {
-        val repository = FakeBudgetRepository()
+        val repository: IBudgetRepository = FakeBudgetRepository()
         val budgets = listOf(
             Budget(id = 1, name = "Budget 1", amount = 100.0),
             Budget(id = 2, name = "Budget 2", amount = 200.0)
@@ -227,7 +227,7 @@ class BudgetListViewModelTest {
 
     @Test
     fun `clearFilter restores full budget list`() = runTest {
-        val repository = FakeBudgetRepository()
+        val repository: IBudgetRepository = FakeBudgetRepository()
         val budgets = listOf(
             Budget(id = 1, name = "Budget 1", amount = 100.0),
             Budget(id = 2, name = "Budget 2", amount = 200.0)

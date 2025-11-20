@@ -19,14 +19,14 @@ class BudgetDetailRepository(
     private val entriesLocalDataSource: BudgetEntryLocalDataSource,
     private val ioDispatcher: CoroutineDispatcher,
     private val deleteBudgetUseCase: DeleteBudgetUseCase
-) {
+) : IBudgetDetailRepository {
     private val cacheMutex = Mutex()
 
-    suspend fun getCachedDetail(): BudgetDetail = cacheMutex.withLock {
+    override suspend fun getCachedDetail(): BudgetDetail = cacheMutex.withLock {
         cachedBudgetDetail
     }
 
-    fun getBudgetDetailById(budgetId: Int): Flow<BudgetDetail> =
+    override fun getBudgetDetailById(budgetId: Int): Flow<BudgetDetail> =
         budgetLocalDataSource.budgets
             .mapNotNull { budgets ->
                 budgets.find { it.id == budgetId }
@@ -43,24 +43,24 @@ class BudgetDetailRepository(
                 }
             }
 
-    suspend fun getAllFilteredBy(filter: BudgetEntryFilter): BudgetDetail {
+    override suspend fun getAllFilteredBy(filter: BudgetEntryFilter): BudgetDetail {
         val cached = getCachedDetail()
         return cached.copy(
             entries = entriesLocalDataSource.getAllFilteredBy(filter)
         )
     }
 
-    suspend fun updateBudgetAmount(amount: Double) = withContext(ioDispatcher) {
+    override suspend fun updateBudgetAmount(amount: Double) = withContext(ioDispatcher) {
         val cached = getCachedDetail()
         val budget = cached.budget.copy(amount = amount)
         budgetLocalDataSource.update(budget)
     }
 
-    suspend fun deleteBudget(budgetId: Int) = withContext(ioDispatcher) {
+    override suspend fun deleteBudget(budgetId: Int) = withContext(ioDispatcher) {
         deleteBudgetUseCase.execute(budgetId.toLong())
     }
 
-    suspend fun deleteEntriesByIds(ids: List<Int>) = withContext(ioDispatcher) {
+    override suspend fun deleteEntriesByIds(ids: List<Int>) = withContext(ioDispatcher) {
         val dbIds = ids.map { it.toLong() }
         entriesLocalDataSource.deleteByIds(dbIds)
     }
