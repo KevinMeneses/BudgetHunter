@@ -24,7 +24,7 @@ class SplashScreenViewModelTest {
 
     @Test
     fun `verifyUpdate calls checkForUpdates on app update manager`() = runTest {
-        val fakeManager: IAppUpdateManager = FakeAppUpdateManager(AppUpdateResult.NoUpdateAvailable)
+        val fakeManager = FakeAppUpdateManager(AppUpdateResult.NoUpdateAvailable)
         val viewModel = SplashScreenViewModel(fakeManager)
 
         viewModel.sendEvent(SplashEvent.VerifyUpdate)
@@ -85,7 +85,7 @@ class SplashScreenViewModelTest {
 
     @Test
     fun `verifyUpdate can be called multiple times`() = runTest {
-        val fakeManager: IAppUpdateManager = FakeAppUpdateManager(AppUpdateResult.NoUpdateAvailable)
+        val fakeManager = FakeAppUpdateManager(AppUpdateResult.NoUpdateAvailable)
         val viewModel = SplashScreenViewModel(fakeManager)
 
         viewModel.sendEvent(SplashEvent.VerifyUpdate)

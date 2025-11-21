@@ -279,7 +279,7 @@ class SettingsViewModelTest {
     fun `openAppSettings opens settings and hides dialog`() = runTest {
         val preferences: IPreferencesManager = FakePreferencesManager()
         val repository: IBudgetRepository = FakeBudgetRepository()
-        val permissions: IPermissionsManager = FakePermissionsManager()
+        val permissions = FakePermissionsManager()
 
         val viewModel = SettingsViewModel(preferences, repository, permissions)
 
