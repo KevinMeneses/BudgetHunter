@@ -15,7 +15,7 @@ class BudgetMetricsViewModelTest {
         val totals = mapOf(
             BudgetEntry.Category.FOOD to 100.0,
             BudgetEntry.Category.TRANSPORTATION to 50.0,
-            BudgetEntry.Category.ENTERTAINMENT to 25.0
+            BudgetEntry.Category.LEISURE to 25.0
         )
         val useCase: IGetTotalsPerCategoryUseCase = FakeGetTotalsPerCategoryUseCase(totals)
         val viewModel = BudgetMetricsViewModel(useCase)
@@ -32,7 +32,7 @@ class BudgetMetricsViewModelTest {
         val totals = mapOf(
             BudgetEntry.Category.FOOD to 100.0,
             BudgetEntry.Category.TRANSPORTATION to 50.0,
-            BudgetEntry.Category.ENTERTAINMENT to 50.0
+            BudgetEntry.Category.LEISURE to 50.0
         )
         val useCase: IGetTotalsPerCategoryUseCase = FakeGetTotalsPerCategoryUseCase(totals)
         val viewModel = BudgetMetricsViewModel(useCase)
@@ -50,7 +50,7 @@ class BudgetMetricsViewModelTest {
         val totals = mapOf(
             BudgetEntry.Category.FOOD to 100.0,
             BudgetEntry.Category.TRANSPORTATION to 50.0,
-            BudgetEntry.Category.ENTERTAINMENT to 25.0
+            BudgetEntry.Category.LEISURE to 25.0
         )
         val useCase: IGetTotalsPerCategoryUseCase = FakeGetTotalsPerCategoryUseCase(totals)
         val viewModel = BudgetMetricsViewModel(useCase)
@@ -96,11 +96,11 @@ class BudgetMetricsViewModelTest {
             BudgetEntry.Category.SELF_CARE,
             BudgetEntry.Category.TRANSPORTATION,
             BudgetEntry.Category.HOUSEHOLD_ITEMS,
-            BudgetEntry.Category.HEALTH,
-            BudgetEntry.Category.BILLS,
-            BudgetEntry.Category.ENTERTAINMENT,
+            BudgetEntry.Category.SERVICES,
             BudgetEntry.Category.EDUCATION,
-            BudgetEntry.Category.GIFTS
+            BudgetEntry.Category.HEALTH,
+            BudgetEntry.Category.LEISURE,
+            BudgetEntry.Category.TAXES
         )
         val totals = categories.associateWith { it.ordinal * 10.0 + 10.0 }
         val useCase: IGetTotalsPerCategoryUseCase = FakeGetTotalsPerCategoryUseCase(totals)
@@ -119,7 +119,7 @@ class BudgetMetricsViewModelTest {
         val totals = mapOf(
             BudgetEntry.Category.FOOD to 100.0,
             BudgetEntry.Category.TRANSPORTATION to 100.0,
-            BudgetEntry.Category.ENTERTAINMENT to 100.0
+            BudgetEntry.Category.LEISURE to 100.0
         )
         val useCase: IGetTotalsPerCategoryUseCase = FakeGetTotalsPerCategoryUseCase(totals)
         val viewModel = BudgetMetricsViewModel(useCase)
