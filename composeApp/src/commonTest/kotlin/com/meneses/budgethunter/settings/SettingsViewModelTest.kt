@@ -1,6 +1,9 @@
 package com.meneses.budgethunter.settings
 
+import com.meneses.budgethunter.budgetList.data.IBudgetRepository
 import com.meneses.budgethunter.budgetList.domain.Budget
+import com.meneses.budgethunter.commons.data.IPreferencesManager
+import com.meneses.budgethunter.commons.platform.IPermissionsManager
 import com.meneses.budgethunter.fakes.manager.FakePermissionsManager
 import com.meneses.budgethunter.fakes.manager.FakePreferencesManager
 import com.meneses.budgethunter.fakes.repository.FakeBudgetRepository

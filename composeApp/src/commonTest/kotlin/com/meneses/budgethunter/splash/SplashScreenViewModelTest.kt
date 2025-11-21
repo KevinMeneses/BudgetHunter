@@ -1,6 +1,7 @@
 package com.meneses.budgethunter.splash
 
 import com.meneses.budgethunter.commons.platform.AppUpdateResult
+import com.meneses.budgethunter.commons.platform.IAppUpdateManager
 import com.meneses.budgethunter.fakes.manager.FakeAppUpdateManager
 import com.meneses.budgethunter.fakes.manager.FakeAppUpdateResult
 import com.meneses.budgethunter.splash.application.SplashEvent
