@@ -14,7 +14,7 @@ interface PermissionsLauncherDelegate {
     fun shouldShowSMSPermissionRationale(): Boolean
 }
 
-actual class PermissionsManager(private val context: Context) : IPermissionsManager {
+class PermissionsManager(private val context: Context) : IPermissionsManager {
 
     private var launcherDelegate: PermissionsLauncherDelegate? = null
     private var permissionResultCallback: ((Boolean) -> Unit)? = null

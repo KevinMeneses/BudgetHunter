@@ -7,8 +7,5 @@ sealed class AppUpdateResult {
     data object UpdateFailed : AppUpdateResult()
 }
 
-/**
- * Cross-platform app update manager interface.
- * Platform-specific implementations are provided in androidMain and iosMain.
- */
-expect class AppUpdateManager() : IAppUpdateManager
+// Platform-specific implementations are provided in androidMain and iosMain
+// Use IAppUpdateManager interface for dependency injection

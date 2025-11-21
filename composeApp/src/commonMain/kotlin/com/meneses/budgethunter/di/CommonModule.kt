@@ -15,7 +15,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.serialization.json.Json
-import org.koin.core.module.dsl.bind
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
@@ -44,12 +43,16 @@ val commonModule = module {
         }
     }
 
-    single<PreferencesManager> { PreferencesManager(get()) } bind IPreferencesManager::class
+    single<PreferencesManager> { PreferencesManager(get()) }
+
+    single<IPreferencesManager> { get<PreferencesManager>() }
 
     single<ValidateFilePathUseCase> {
         ValidateFilePathUseCase(
             fileManager = get(),
             ioDispatcher = get(named("IO"))
         )
-    } bind IValidateFilePathUseCase::class
+    }
+
+    single<IValidateFilePathUseCase> { get<ValidateFilePathUseCase>() }
 }

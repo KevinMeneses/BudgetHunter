@@ -5,7 +5,6 @@ import com.meneses.budgethunter.budgetMetrics.BudgetMetricsViewModel
 import com.meneses.budgethunter.budgetMetrics.application.GetTotalsPerCategoryUseCase
 import com.meneses.budgethunter.budgetMetrics.application.IGetTotalsPerCategoryUseCase
 import kotlinx.coroutines.CoroutineDispatcher
-import org.koin.core.module.dsl.bind
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
@@ -15,7 +14,9 @@ val budgetMetricsModule = module {
             budgetEntryLocalDataSource = get<BudgetEntryLocalDataSource>(),
             defaultDispatcher = get<CoroutineDispatcher>(named("Default"))
         )
-    } bind IGetTotalsPerCategoryUseCase::class
+    }
+
+    single<IGetTotalsPerCategoryUseCase> { get<GetTotalsPerCategoryUseCase>() }
 
     factory {
         BudgetMetricsViewModel(

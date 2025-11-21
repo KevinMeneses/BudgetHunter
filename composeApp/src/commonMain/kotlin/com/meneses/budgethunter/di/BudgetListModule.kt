@@ -12,7 +12,6 @@ import com.meneses.budgethunter.budgetList.data.IBudgetRepository
 import com.meneses.budgethunter.budgetList.data.datasource.BudgetLocalDataSource
 import com.meneses.budgethunter.db.BudgetQueries
 import kotlinx.coroutines.CoroutineDispatcher
-import org.koin.core.module.dsl.bind
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
@@ -24,7 +23,9 @@ val budgetListModule = module {
 
     single<BudgetRepository> {
         BudgetRepository(get<BudgetLocalDataSource>(), get<CoroutineDispatcher>(named("IO")))
-    } bind IBudgetRepository::class
+    }
+
+    single<IBudgetRepository> { get<BudgetRepository>() }
 
     single<DuplicateBudgetUseCase> {
         DuplicateBudgetUseCase(
@@ -32,7 +33,9 @@ val budgetListModule = module {
             get<BudgetEntryRepository>(),
             get<CoroutineDispatcher>(named("Default"))
         )
-    } bind IDuplicateBudgetUseCase::class
+    }
+
+    single<IDuplicateBudgetUseCase> { get<DuplicateBudgetUseCase>() }
 
     single<DeleteBudgetUseCase> {
         DeleteBudgetUseCase(
@@ -40,7 +43,9 @@ val budgetListModule = module {
             get<BudgetEntryLocalDataSource>(),
             get<CoroutineDispatcher>(named("IO"))
         )
-    } bind IDeleteBudgetUseCase::class
+    }
+
+    single<IDeleteBudgetUseCase> { get<DeleteBudgetUseCase>() }
 
     factory<BudgetListViewModel> {
         BudgetListViewModel(

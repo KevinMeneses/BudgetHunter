@@ -7,7 +7,6 @@ import com.meneses.budgethunter.budgetEntry.data.datasource.BudgetEntryLocalData
 import com.meneses.budgethunter.budgetList.application.DeleteBudgetUseCase
 import com.meneses.budgethunter.budgetList.data.datasource.BudgetLocalDataSource
 import kotlinx.coroutines.CoroutineDispatcher
-import org.koin.core.module.dsl.bind
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
@@ -20,7 +19,9 @@ val budgetDetailModule = module {
             get<CoroutineDispatcher>(named("IO")),
             get<DeleteBudgetUseCase>()
         )
-    } bind IBudgetDetailRepository::class
+    }
+
+    single<IBudgetDetailRepository> { get<BudgetDetailRepository>() }
 
     factory<BudgetDetailViewModel> {
         BudgetDetailViewModel(

@@ -32,7 +32,6 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.serialization.json.Json
-import org.koin.core.module.dsl.bind
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
@@ -50,11 +49,18 @@ val androidPlatformModule = module {
     }
 
     // Platform-specific managers
-    single<FileManager> { FileManager() } bind IFileManager::class
+    single<FileManager> { FileManager() }
+    single<IFileManager> { get<FileManager>() }
+
     single<CameraManager> { AndroidCameraManager(get<Context>()) }
     single<FilePickerManager> { AndroidFilePickerManager(get<Context>()) }
-    single<PermissionsManager> { PermissionsManager(get<Context>()) } bind IPermissionsManager::class
-    single<AppUpdateManager> { AppUpdateManager(get<Context>()) } bind IAppUpdateManager::class
+
+    single<PermissionsManager> { PermissionsManager(get<Context>()) }
+    single<IPermissionsManager> { get<PermissionsManager>() }
+
+    single<AppUpdateManager> { AppUpdateManager(get<Context>()) }
+    single<IAppUpdateManager> { get<AppUpdateManager>() }
+
     single<NotificationManager> { AndroidNotificationManager(get<Context>()) }
     single<ShareManager> { AndroidShareManager(get<Context>()) }
 

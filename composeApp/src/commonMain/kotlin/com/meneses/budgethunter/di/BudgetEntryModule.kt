@@ -9,7 +9,6 @@ import com.meneses.budgethunter.budgetEntry.data.datasource.BudgetEntryLocalData
 import com.meneses.budgethunter.budgetEntry.domain.AIImageProcessor
 import com.meneses.budgethunter.db.BudgetEntryQueries
 import kotlinx.coroutines.CoroutineDispatcher
-import org.koin.core.module.dsl.bind
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
@@ -21,7 +20,9 @@ val budgetEntryModule = module {
 
     single<BudgetEntryRepository> {
         BudgetEntryRepository(get<BudgetEntryLocalDataSource>(), get<CoroutineDispatcher>(named("IO")))
-    } bind IBudgetEntryRepository::class
+    }
+
+    single<IBudgetEntryRepository> { get<BudgetEntryRepository>() }
 
     // AI image processing use case
     single<CreateBudgetEntryFromImageUseCase> {
@@ -29,7 +30,9 @@ val budgetEntryModule = module {
             aiImageProcessor = get<AIImageProcessor>(),
             ioDispatcher = get<CoroutineDispatcher>(named("IO"))
         )
-    } bind ICreateBudgetEntryFromImageUseCase::class
+    }
+
+    single<ICreateBudgetEntryFromImageUseCase> { get<CreateBudgetEntryFromImageUseCase>() }
 
     // BudgetEntryViewModel with all required dependencies
     factory {
