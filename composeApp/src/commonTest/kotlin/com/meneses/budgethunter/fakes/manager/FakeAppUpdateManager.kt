@@ -15,10 +15,8 @@ class FakeAppUpdateManager(
     }
 }
 
-class FakeAppUpdateResult(
-    private val onStart: () -> Unit = {}
-) : AppUpdateResult.UpdateAvailable {
-    override fun startUpdate() {
-        onStart()
-    }
+fun FakeAppUpdateResult(
+    onStart: () -> Unit = {}
+): AppUpdateResult.UpdateAvailable {
+    return AppUpdateResult.UpdateAvailable(startUpdate = onStart)
 }

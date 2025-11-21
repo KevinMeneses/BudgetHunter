@@ -12,7 +12,7 @@ class FakeBudgetDetailRepository : IBudgetDetailRepository {
     val deletedEntryIds = mutableListOf<List<Int>>()
     val updatedAmounts = mutableListOf<Double>()
 
-    override suspend fun getBudgetDetailById(budgetId: Int): Flow<BudgetDetail> {
+    override fun getBudgetDetailById(budgetId: Int): Flow<BudgetDetail> {
         return flowOf(cachedDetail)
     }
 
@@ -21,9 +21,9 @@ class FakeBudgetDetailRepository : IBudgetDetailRepository {
     override suspend fun getAllFilteredBy(filter: BudgetEntryFilter): BudgetDetail {
         return cachedDetail.copy(
             entries = cachedDetail.entries.filter {
-                when (filter) {
-                    is BudgetEntryFilter.ByCategory -> it.category == filter.category
-                    is BudgetEntryFilter.ByType -> it.type == filter.type
+                when {
+                    filter.category != null -> it.category == filter.category
+                    filter.type != null -> it.type == filter.type
                     else -> true
                 }
             }

@@ -189,7 +189,13 @@ class BudgetEntryViewModelTest {
         val entry = BudgetEntry(id = 1, budgetId = 1, amount = "100")
 
         viewModel.sendEvent(BudgetEntryEvent.SetBudgetEntry(entry))
-        viewModel.sendEvent(BudgetEntryEvent.AttachInvoice(byteArrayOf(1, 2, 3)))
+        val fileData = com.meneses.budgethunter.commons.data.FileData(
+            data = byteArrayOf(1, 2, 3),
+            filename = "invoice.pdf",
+            mimeType = "application/pdf",
+            directory = "/tmp"
+        )
+        viewModel.sendEvent(BudgetEntryEvent.AttachInvoice(fileData))
 
         kotlinx.coroutines.delay(100)
 
@@ -210,7 +216,13 @@ class BudgetEntryViewModelTest {
         val entry = BudgetEntry(id = 1, budgetId = 1, amount = "100")
 
         viewModel.sendEvent(BudgetEntryEvent.SetBudgetEntry(entry))
-        viewModel.sendEvent(BudgetEntryEvent.AttachInvoice(byteArrayOf(1, 2, 3)))
+        val fileData = com.meneses.budgethunter.commons.data.FileData(
+            data = byteArrayOf(1, 2, 3),
+            filename = "invoice.pdf",
+            mimeType = "application/pdf",
+            directory = "/tmp"
+        )
+        viewModel.sendEvent(BudgetEntryEvent.AttachInvoice(fileData))
 
         kotlinx.coroutines.delay(100)
 

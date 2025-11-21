@@ -5,7 +5,7 @@ import com.meneses.budgethunter.commons.platform.ShareManager
 class FakeShareManager : ShareManager {
     val sharedFiles = mutableListOf<String>()
 
-    override suspend fun shareFile(filePath: String) {
+    override fun shareFile(filePath: String, mimeTypes: Array<String>) {
         sharedFiles.add(filePath)
     }
 }
