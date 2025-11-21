@@ -33,16 +33,16 @@ class SettingsViewModelTest {
 
     @Test
     fun `loadSettings loads default budget`() = runTest {
-        val preferences: IPreferencesManager = FakePreferencesManager()
-        preferences.setDefaultBudgetId(1)
+        val fakePreferences = FakePreferencesManager()
+        fakePreferences.setDefaultBudgetId(1)
 
-        val repository: IBudgetRepository = FakeBudgetRepository()
+        val fakeRepository = FakeBudgetRepository()
         val budget = Budget(id = 1, name = "Default Budget", amount = 100.0)
-        repository.setBudgets(listOf(budget))
+        fakeRepository.setBudgets(listOf(budget))
 
-        val permissions: IPermissionsManager = FakePermissionsManager()
+        val fakePermissions = FakePermissionsManager()
 
-        val viewModel = SettingsViewModel(preferences, repository, permissions)
+        val viewModel = SettingsViewModel(fakePreferences, fakeRepository, fakePermissions)
 
         kotlinx.coroutines.delay(100)
 
@@ -52,13 +52,13 @@ class SettingsViewModelTest {
 
     @Test
     fun `loadSettings loads sms reading state`() = runTest {
-        val preferences: IPreferencesManager = FakePreferencesManager()
-        preferences.setSmsReadingEnabled(true)
+        val fakePreferences = FakePreferencesManager()
+        fakePreferences.setSmsReadingEnabled(true)
 
-        val repository: IBudgetRepository = FakeBudgetRepository()
-        val permissions: IPermissionsManager = FakePermissionsManager()
+        val fakeRepository = FakeBudgetRepository()
+        val fakePermissions = FakePermissionsManager()
 
-        val viewModel = SettingsViewModel(preferences, repository, permissions)
+        val viewModel = SettingsViewModel(fakePreferences, fakeRepository, fakePermissions)
 
         kotlinx.coroutines.delay(100)
 
@@ -68,13 +68,13 @@ class SettingsViewModelTest {
 
     @Test
     fun `loadSettings loads ai processing state`() = runTest {
-        val preferences: IPreferencesManager = FakePreferencesManager()
-        preferences.setAiProcessingEnabled(true)
+        val fakePreferences = FakePreferencesManager()
+        fakePreferences.setAiProcessingEnabled(true)
 
-        val repository: IBudgetRepository = FakeBudgetRepository()
-        val permissions: IPermissionsManager = FakePermissionsManager()
+        val fakeRepository = FakeBudgetRepository()
+        val fakePermissions = FakePermissionsManager()
 
-        val viewModel = SettingsViewModel(preferences, repository, permissions)
+        val viewModel = SettingsViewModel(fakePreferences, fakeRepository, fakePermissions)
 
         kotlinx.coroutines.delay(100)
 
@@ -84,48 +84,48 @@ class SettingsViewModelTest {
 
     @Test
     fun `toggleSmsReading enables sms reading`() = runTest {
-        val preferences: IPreferencesManager = FakePreferencesManager()
-        val repository: IBudgetRepository = FakeBudgetRepository()
-        val permissions: IPermissionsManager = FakePermissionsManager()
-        permissions.hasSms = true
+        val fakePreferences = FakePreferencesManager()
+        val fakeRepository = FakeBudgetRepository()
+        val fakePermissions = FakePermissionsManager()
+        fakePermissions.hasSms = true
 
-        val viewModel = SettingsViewModel(preferences, repository, permissions)
+        val viewModel = SettingsViewModel(fakePreferences, fakeRepository, fakePermissions)
 
         kotlinx.coroutines.delay(100)
         viewModel.sendEvent(SettingsEvent.ToggleSmsReading(true))
         kotlinx.coroutines.delay(100)
 
-        assertTrue(preferences.isSmsReadingEnabled())
+        assertTrue(fakePreferences.isSmsReadingEnabled())
         assertTrue(viewModel.uiState.value.isSmsReadingEnabled)
     }
 
     @Test
     fun `toggleSmsReading requests permission when not granted`() = runTest {
-        val preferences: IPreferencesManager = FakePreferencesManager()
-        val repository: IBudgetRepository = FakeBudgetRepository()
-        val permissions: IPermissionsManager = FakePermissionsManager()
-        permissions.hasSms = false
-        permissions.grantPermission = true
+        val fakePreferences = FakePreferencesManager()
+        val fakeRepository = FakeBudgetRepository()
+        val fakePermissions = FakePermissionsManager()
+        fakePermissions.hasSms = false
+        fakePermissions.grantPermission = true
 
-        val viewModel = SettingsViewModel(preferences, repository, permissions)
+        val viewModel = SettingsViewModel(fakePreferences, fakeRepository, fakePermissions)
 
         kotlinx.coroutines.delay(100)
         viewModel.sendEvent(SettingsEvent.ToggleSmsReading(true))
         kotlinx.coroutines.delay(100)
 
-        assertTrue(permissions.permissionRequested)
+        assertTrue(fakePermissions.permissionRequested)
         assertTrue(viewModel.uiState.value.hasSmsPermission)
     }
 
     @Test
     fun `toggleSmsReading shows rationale dialog when needed`() = runTest {
-        val preferences: IPreferencesManager = FakePreferencesManager()
-        val repository: IBudgetRepository = FakeBudgetRepository()
-        val permissions: IPermissionsManager = FakePermissionsManager()
-        permissions.hasSms = false
-        permissions.shouldShowRationale = true
+        val fakePreferences = FakePreferencesManager()
+        val fakeRepository = FakeBudgetRepository()
+        val fakePermissions = FakePermissionsManager()
+        fakePermissions.hasSms = false
+        fakePermissions.shouldShowRationale = true
 
-        val viewModel = SettingsViewModel(preferences, repository, permissions)
+        val viewModel = SettingsViewModel(fakePreferences, fakeRepository, fakePermissions)
 
         kotlinx.coroutines.delay(100)
         viewModel.sendEvent(SettingsEvent.ToggleSmsReading(true))
@@ -136,34 +136,34 @@ class SettingsViewModelTest {
 
     @Test
     fun `toggleAiProcessing updates preference`() = runTest {
-        val preferences: IPreferencesManager = FakePreferencesManager()
-        val repository: IBudgetRepository = FakeBudgetRepository()
-        val permissions: IPermissionsManager = FakePermissionsManager()
+        val fakePreferences = FakePreferencesManager()
+        val fakeRepository = FakeBudgetRepository()
+        val fakePermissions = FakePermissionsManager()
 
-        val viewModel = SettingsViewModel(preferences, repository, permissions)
+        val viewModel = SettingsViewModel(fakePreferences, fakeRepository, fakePermissions)
 
         kotlinx.coroutines.delay(100)
         viewModel.sendEvent(SettingsEvent.ToggleAiProcessing(true))
         kotlinx.coroutines.delay(100)
 
-        assertTrue(preferences.isAiProcessingEnabled())
+        assertTrue(fakePreferences.isAiProcessingEnabled())
         assertTrue(viewModel.uiState.value.isAiProcessingEnabled)
     }
 
     @Test
     fun `setDefaultBudget updates preference and state`() = runTest {
-        val preferences: IPreferencesManager = FakePreferencesManager()
-        val repository: IBudgetRepository = FakeBudgetRepository()
-        val permissions: IPermissionsManager = FakePermissionsManager()
+        val fakePreferences = FakePreferencesManager()
+        val fakeRepository = FakeBudgetRepository()
+        val fakePermissions = FakePermissionsManager()
 
-        val viewModel = SettingsViewModel(preferences, repository, permissions)
+        val viewModel = SettingsViewModel(fakePreferences, fakeRepository, fakePermissions)
 
         val budget = Budget(id = 5, name = "New Default", amount = 200.0)
         kotlinx.coroutines.delay(100)
         viewModel.sendEvent(SettingsEvent.SetDefaultBudget(budget))
         kotlinx.coroutines.delay(100)
 
-        assertEquals(5, preferences.getDefaultBudgetId())
+        assertEquals(5, fakePreferences.getDefaultBudgetId())
         assertEquals(budget, viewModel.uiState.value.defaultBudget)
         assertFalse(viewModel.uiState.value.isDefaultBudgetSelectorVisible)
     }
@@ -228,11 +228,11 @@ class SettingsViewModelTest {
 
     @Test
     fun `setSelectedBanks updates preferences and state`() = runTest {
-        val preferences: IPreferencesManager = FakePreferencesManager()
-        val repository: IBudgetRepository = FakeBudgetRepository()
-        val permissions: IPermissionsManager = FakePermissionsManager()
+        val fakePreferences = FakePreferencesManager()
+        val fakeRepository = FakeBudgetRepository()
+        val fakePermissions = FakePermissionsManager()
 
-        val viewModel = SettingsViewModel(preferences, repository, permissions)
+        val viewModel = SettingsViewModel(fakePreferences, fakeRepository, fakePermissions)
 
         val bankConfigs = setOf(
             BankSmsConfig(id = "bank1", displayName = "Bank 1", senderKeywords = emptyList<String>())
@@ -242,7 +242,7 @@ class SettingsViewModelTest {
         viewModel.sendEvent(SettingsEvent.SetSelectedBanks(bankConfigs))
         kotlinx.coroutines.delay(100)
 
-        assertEquals(setOf("bank1"), preferences.getSelectedBankIds())
+        assertEquals(setOf("bank1"), fakePreferences.getSelectedBankIds())
         assertEquals(bankConfigs, viewModel.uiState.value.selectedBanks)
     }
 
@@ -277,17 +277,17 @@ class SettingsViewModelTest {
 
     @Test
     fun `openAppSettings opens settings and hides dialog`() = runTest {
-        val preferences: IPreferencesManager = FakePreferencesManager()
-        val repository: IBudgetRepository = FakeBudgetRepository()
-        val permissions = FakePermissionsManager()
+        val fakePreferences = FakePreferencesManager()
+        val fakeRepository = FakeBudgetRepository()
+        val fakePermissions = FakePermissionsManager()
 
-        val viewModel = SettingsViewModel(preferences, repository, permissions)
+        val viewModel = SettingsViewModel(fakePreferences, fakeRepository, fakePermissions)
 
         kotlinx.coroutines.delay(100)
         viewModel.sendEvent(SettingsEvent.ShowManualPermissionDialog)
         viewModel.sendEvent(SettingsEvent.OpenAppSettings)
 
-        assertTrue(permissions.appSettingsOpened)
+        assertTrue(fakePermissions.appSettingsOpened)
         assertFalse(viewModel.uiState.value.isManualPermissionDialogVisible)
     }
 

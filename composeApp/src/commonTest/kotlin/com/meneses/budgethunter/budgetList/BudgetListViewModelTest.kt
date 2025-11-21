@@ -28,14 +28,14 @@ class BudgetListViewModelTest {
 
     @Test
     fun `collectBudgetList updates state with budgets from repository`() = runTest {
-        val repository: IBudgetRepository = FakeBudgetRepository()
+        val fakeRepository = FakeBudgetRepository()
         val budgets = listOf(
             Budget(id = 1, name = "Budget 1", amount = 100.0),
             Budget(id = 2, name = "Budget 2", amount = 200.0)
         )
-        repository.emitBudgets(budgets)
+        fakeRepository.emitBudgets(budgets)
 
-        val viewModel = BudgetListViewModel(repository, FakeDuplicateBudgetUseCase(), FakeDeleteBudgetUseCase())
+        val viewModel = BudgetListViewModel(fakeRepository, FakeDuplicateBudgetUseCase(), FakeDeleteBudgetUseCase())
 
         kotlinx.coroutines.delay(100)
 
@@ -46,56 +46,56 @@ class BudgetListViewModelTest {
 
     @Test
     fun `createBudget adds new budget and navigates to it`() = runTest {
-        val repository: IBudgetRepository = FakeBudgetRepository()
-        val viewModel = BudgetListViewModel(repository, FakeDuplicateBudgetUseCase(), FakeDeleteBudgetUseCase())
+        val fakeRepository = FakeBudgetRepository()
+        val viewModel = BudgetListViewModel(fakeRepository, FakeDuplicateBudgetUseCase(), FakeDeleteBudgetUseCase())
 
         val newBudget = Budget(id = -1, name = "New Budget", amount = 500.0)
         viewModel.sendEvent(BudgetListEvent.CreateBudget(newBudget))
 
         kotlinx.coroutines.delay(100)
 
-        assertEquals(1, repository.createdBudgets.size)
+        assertEquals(1, fakeRepository.createdBudgets.size)
         val state = viewModel.uiState.value
         assertEquals(1, state.navigateToBudget?.id)
     }
 
     @Test
     fun `updateBudget calls repository update`() = runTest {
-        val repository: IBudgetRepository = FakeBudgetRepository()
-        val viewModel = BudgetListViewModel(repository, FakeDuplicateBudgetUseCase(), FakeDeleteBudgetUseCase())
+        val fakeRepository = FakeBudgetRepository()
+        val viewModel = BudgetListViewModel(fakeRepository, FakeDuplicateBudgetUseCase(), FakeDeleteBudgetUseCase())
 
         val budget = Budget(id = 1, name = "Updated", amount = 300.0)
         viewModel.sendEvent(BudgetListEvent.UpdateBudget(budget))
 
         kotlinx.coroutines.delay(100)
 
-        assertEquals(1, repository.updatedBudgets.size)
-        assertEquals("Updated", repository.updatedBudgets[0].name)
+        assertEquals(1, fakeRepository.updatedBudgets.size)
+        assertEquals("Updated", fakeRepository.updatedBudgets[0].name)
     }
 
     @Test
     fun `duplicateBudget calls use case`() = runTest {
-        val duplicateUseCase: IDuplicateBudgetUseCase = FakeDuplicateBudgetUseCase()
-        val viewModel = BudgetListViewModel(FakeBudgetRepository(), duplicateUseCase, FakeDeleteBudgetUseCase())
+        val fakeDuplicateUseCase = FakeDuplicateBudgetUseCase()
+        val viewModel = BudgetListViewModel(FakeBudgetRepository(), fakeDuplicateUseCase, FakeDeleteBudgetUseCase())
 
         val budget = Budget(id = 1, name = "Original", amount = 100.0)
         viewModel.sendEvent(BudgetListEvent.DuplicateBudget(budget))
 
         kotlinx.coroutines.delay(100)
 
-        assertEquals(1, duplicateUseCase.duplicatedBudgets.size)
+        assertEquals(1, fakeDuplicateUseCase.duplicatedBudgets.size)
     }
 
     @Test
     fun `deleteBudget calls use case with correct id`() = runTest {
-        val deleteUseCase: IDeleteBudgetUseCase = FakeDeleteBudgetUseCase()
-        val viewModel = BudgetListViewModel(FakeBudgetRepository(), FakeDuplicateBudgetUseCase(), deleteUseCase)
+        val fakeDeleteUseCase = FakeDeleteBudgetUseCase()
+        val viewModel = BudgetListViewModel(FakeBudgetRepository(), FakeDuplicateBudgetUseCase(), fakeDeleteUseCase)
 
         viewModel.sendEvent(BudgetListEvent.DeleteBudget(42L))
 
         kotlinx.coroutines.delay(100)
 
-        assertEquals(listOf(42L), deleteUseCase.deletedBudgetIds)
+        assertEquals(listOf(42L), fakeDeleteUseCase.deletedBudgetIds)
     }
 
     @Test
@@ -168,15 +168,15 @@ class BudgetListViewModelTest {
 
     @Test
     fun `updateSearchQuery filters budget list by name`() = runTest {
-        val repository: IBudgetRepository = FakeBudgetRepository()
+        val fakeRepository = FakeBudgetRepository()
         val budgets = listOf(
             Budget(id = 1, name = "Food Budget", amount = 100.0),
             Budget(id = 2, name = "Transport Budget", amount = 200.0),
             Budget(id = 3, name = "Food and Drinks", amount = 150.0)
         )
-        repository.emitBudgets(budgets)
+        fakeRepository.emitBudgets(budgets)
 
-        val viewModel = BudgetListViewModel(repository, FakeDuplicateBudgetUseCase(), FakeDeleteBudgetUseCase())
+        val viewModel = BudgetListViewModel(fakeRepository, FakeDuplicateBudgetUseCase(), FakeDeleteBudgetUseCase())
 
         kotlinx.coroutines.delay(100)
         viewModel.sendEvent(BudgetListEvent.UpdateSearchQuery("Food"))
@@ -190,14 +190,14 @@ class BudgetListViewModelTest {
 
     @Test
     fun `updateSearchQuery is case insensitive`() = runTest {
-        val repository: IBudgetRepository = FakeBudgetRepository()
+        val fakeRepository = FakeBudgetRepository()
         val budgets = listOf(
             Budget(id = 1, name = "FOOD BUDGET", amount = 100.0),
             Budget(id = 2, name = "food budget", amount = 200.0)
         )
-        repository.emitBudgets(budgets)
+        fakeRepository.emitBudgets(budgets)
 
-        val viewModel = BudgetListViewModel(repository, FakeDuplicateBudgetUseCase(), FakeDeleteBudgetUseCase())
+        val viewModel = BudgetListViewModel(fakeRepository, FakeDuplicateBudgetUseCase(), FakeDeleteBudgetUseCase())
 
         kotlinx.coroutines.delay(100)
         viewModel.sendEvent(BudgetListEvent.UpdateSearchQuery("FoOd"))
@@ -209,14 +209,14 @@ class BudgetListViewModelTest {
 
     @Test
     fun `updateSearchQuery with empty string shows all budgets`() = runTest {
-        val repository: IBudgetRepository = FakeBudgetRepository()
+        val fakeRepository = FakeBudgetRepository()
         val budgets = listOf(
             Budget(id = 1, name = "Budget 1", amount = 100.0),
             Budget(id = 2, name = "Budget 2", amount = 200.0)
         )
-        repository.emitBudgets(budgets)
+        fakeRepository.emitBudgets(budgets)
 
-        val viewModel = BudgetListViewModel(repository, FakeDuplicateBudgetUseCase(), FakeDeleteBudgetUseCase())
+        val viewModel = BudgetListViewModel(fakeRepository, FakeDuplicateBudgetUseCase(), FakeDeleteBudgetUseCase())
 
         kotlinx.coroutines.delay(100)
         viewModel.sendEvent(BudgetListEvent.UpdateSearchQuery("Budget 1"))
@@ -230,14 +230,14 @@ class BudgetListViewModelTest {
 
     @Test
     fun `clearFilter restores full budget list`() = runTest {
-        val repository: IBudgetRepository = FakeBudgetRepository()
+        val fakeRepository = FakeBudgetRepository()
         val budgets = listOf(
             Budget(id = 1, name = "Budget 1", amount = 100.0),
             Budget(id = 2, name = "Budget 2", amount = 200.0)
         )
-        repository.emitBudgets(budgets)
+        fakeRepository.emitBudgets(budgets)
 
-        val viewModel = BudgetListViewModel(repository, FakeDuplicateBudgetUseCase(), FakeDeleteBudgetUseCase())
+        val viewModel = BudgetListViewModel(fakeRepository, FakeDuplicateBudgetUseCase(), FakeDeleteBudgetUseCase())
 
         kotlinx.coroutines.delay(100)
         viewModel.sendEvent(BudgetListEvent.ClearFilter)

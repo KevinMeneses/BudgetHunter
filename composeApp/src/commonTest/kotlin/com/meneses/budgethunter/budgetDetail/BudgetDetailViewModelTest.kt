@@ -47,10 +47,10 @@ class BudgetDetailViewModelTest {
         val budget = Budget(id = 1, name = "Test", amount = 100.0)
         val detail = BudgetDetail(budget = budget, entries = entries)
 
-        val repository: IBudgetDetailRepository = FakeBudgetDetailRepository()
-        repository.cachedDetail = detail
+        val fakeRepository = FakeBudgetDetailRepository()
+        fakeRepository.cachedDetail = detail
 
-        val viewModel = BudgetDetailViewModel(repository)
+        val viewModel = BudgetDetailViewModel(fakeRepository)
         viewModel.sendEvent(BudgetDetailEvent.SetBudget(budget))
         viewModel.sendEvent(BudgetDetailEvent.GetBudgetDetail)
 
@@ -63,14 +63,14 @@ class BudgetDetailViewModelTest {
 
     @Test
     fun `updateBudgetAmount calls repository`() = runTest {
-        val repository: IBudgetDetailRepository = FakeBudgetDetailRepository()
-        val viewModel = BudgetDetailViewModel(repository)
+        val fakeRepository = FakeBudgetDetailRepository()
+        val viewModel = BudgetDetailViewModel(fakeRepository)
 
         viewModel.sendEvent(BudgetDetailEvent.UpdateBudgetAmount(500.0))
 
         kotlinx.coroutines.delay(100)
 
-        assertEquals(listOf(500.0), repository.updatedAmounts)
+        assertEquals(listOf(500.0), fakeRepository.updatedAmounts)
     }
 
     @Test
@@ -80,10 +80,10 @@ class BudgetDetailViewModelTest {
             BudgetEntry(id = 2, budgetId = 1, amount = "30", type = BudgetEntry.Type.OUTCOME)
         )
         val detail = BudgetDetail(entries = entries)
-        val repository: IBudgetDetailRepository = FakeBudgetDetailRepository()
-        repository.cachedDetail = detail
+        val fakeRepository = FakeBudgetDetailRepository()
+        fakeRepository.cachedDetail = detail
 
-        val viewModel = BudgetDetailViewModel(repository)
+        val viewModel = BudgetDetailViewModel(fakeRepository)
         val filter = BudgetEntryFilter.ByType(BudgetEntry.Type.INCOME)
         viewModel.sendEvent(BudgetDetailEvent.FilterEntries(filter))
 
@@ -95,10 +95,10 @@ class BudgetDetailViewModelTest {
 
     @Test
     fun `clearFilter removes filter from state`() = runTest {
-        val repository: IBudgetDetailRepository = FakeBudgetDetailRepository()
-        repository.cachedDetail = BudgetDetail(entries = emptyList())
+        val fakeRepository = FakeBudgetDetailRepository()
+        fakeRepository.cachedDetail = BudgetDetail(entries = emptyList())
 
-        val viewModel = BudgetDetailViewModel(repository)
+        val viewModel = BudgetDetailViewModel(fakeRepository)
         viewModel.sendEvent(BudgetDetailEvent.ClearFilter)
 
         kotlinx.coroutines.delay(100)
@@ -110,16 +110,16 @@ class BudgetDetailViewModelTest {
     @Test
     fun `deleteBudget calls repository and sets goBack`() = runTest {
         val budget = Budget(id = 42, name = "Test", amount = 100.0)
-        val repository: IBudgetDetailRepository = FakeBudgetDetailRepository()
-        repository.cachedDetail = BudgetDetail(budget = budget)
+        val fakeRepository = FakeBudgetDetailRepository()
+        fakeRepository.cachedDetail = BudgetDetail(budget = budget)
 
-        val viewModel = BudgetDetailViewModel(repository)
+        val viewModel = BudgetDetailViewModel(fakeRepository)
         viewModel.sendEvent(BudgetDetailEvent.SetBudget(budget))
         viewModel.sendEvent(BudgetDetailEvent.DeleteBudget)
 
         kotlinx.coroutines.delay(100)
 
-        assertEquals(listOf(42), repository.deletedBudgetIds)
+        assertEquals(listOf(42), fakeRepository.deletedBudgetIds)
         assertTrue(viewModel.uiState.value.goBack)
     }
 
@@ -130,16 +130,16 @@ class BudgetDetailViewModelTest {
             BudgetEntry(id = 2, budgetId = 1, amount = "30", isSelected = false),
             BudgetEntry(id = 3, budgetId = 1, amount = "20", isSelected = true)
         )
-        val repository: IBudgetDetailRepository = FakeBudgetDetailRepository()
-        repository.cachedDetail = BudgetDetail(entries = entries)
+        val fakeRepository = FakeBudgetDetailRepository()
+        fakeRepository.cachedDetail = BudgetDetail(entries = entries)
 
-        val viewModel = BudgetDetailViewModel(repository)
+        val viewModel = BudgetDetailViewModel(fakeRepository)
         viewModel.sendEvent(BudgetDetailEvent.DeleteSelectedEntries)
 
         kotlinx.coroutines.delay(100)
 
-        assertEquals(1, repository.deletedEntryIds.size)
-        assertEquals(listOf(1, 3), repository.deletedEntryIds[0])
+        assertEquals(1, fakeRepository.deletedEntryIds.size)
+        assertEquals(listOf(1, 3), fakeRepository.deletedEntryIds[0])
     }
 
     @Test
@@ -231,10 +231,10 @@ class BudgetDetailViewModelTest {
             BudgetEntry(id = 1, budgetId = 1, amount = "50", isSelected = false),
             BudgetEntry(id = 2, budgetId = 1, amount = "30", isSelected = false)
         )
-        val repository: IBudgetDetailRepository = FakeBudgetDetailRepository()
-        repository.cachedDetail = BudgetDetail(entries = entries)
+        val fakeRepository = FakeBudgetDetailRepository()
+        fakeRepository.cachedDetail = BudgetDetail(entries = entries)
 
-        val viewModel = BudgetDetailViewModel(repository)
+        val viewModel = BudgetDetailViewModel(fakeRepository)
         viewModel.sendEvent(BudgetDetailEvent.GetBudgetDetail)
         kotlinx.coroutines.delay(100)
 
@@ -250,10 +250,10 @@ class BudgetDetailViewModelTest {
             BudgetEntry(id = 1, budgetId = 1, amount = "50", isSelected = true),
             BudgetEntry(id = 2, budgetId = 1, amount = "30", isSelected = true)
         )
-        val repository: IBudgetDetailRepository = FakeBudgetDetailRepository()
-        repository.cachedDetail = BudgetDetail(entries = entries)
+        val fakeRepository = FakeBudgetDetailRepository()
+        fakeRepository.cachedDetail = BudgetDetail(entries = entries)
 
-        val viewModel = BudgetDetailViewModel(repository)
+        val viewModel = BudgetDetailViewModel(fakeRepository)
         viewModel.sendEvent(BudgetDetailEvent.GetBudgetDetail)
         kotlinx.coroutines.delay(100)
 
@@ -269,10 +269,10 @@ class BudgetDetailViewModelTest {
             BudgetEntry(id = 1, budgetId = 1, amount = "50", isSelected = false),
             BudgetEntry(id = 2, budgetId = 1, amount = "30", isSelected = false)
         )
-        val repository: IBudgetDetailRepository = FakeBudgetDetailRepository()
-        repository.cachedDetail = BudgetDetail(entries = entries)
+        val fakeRepository = FakeBudgetDetailRepository()
+        fakeRepository.cachedDetail = BudgetDetail(entries = entries)
 
-        val viewModel = BudgetDetailViewModel(repository)
+        val viewModel = BudgetDetailViewModel(fakeRepository)
         viewModel.sendEvent(BudgetDetailEvent.GetBudgetDetail)
         kotlinx.coroutines.delay(100)
 
@@ -290,10 +290,10 @@ class BudgetDetailViewModelTest {
             BudgetEntry(id = 2, budgetId = 1, amount = "50", type = BudgetEntry.Type.OUTCOME),
             BudgetEntry(id = 1, budgetId = 1, amount = "75", type = BudgetEntry.Type.INCOME)
         )
-        val repository: IBudgetDetailRepository = FakeBudgetDetailRepository()
-        repository.cachedDetail = BudgetDetail(entries = entries)
+        val fakeRepository = FakeBudgetDetailRepository()
+        fakeRepository.cachedDetail = BudgetDetail(entries = entries)
 
-        val viewModel = BudgetDetailViewModel(repository)
+        val viewModel = BudgetDetailViewModel(fakeRepository)
         viewModel.sendEvent(BudgetDetailEvent.GetBudgetDetail)
         kotlinx.coroutines.delay(100)
 
@@ -316,10 +316,10 @@ class BudgetDetailViewModelTest {
             BudgetEntry(id = 1, budgetId = 1, amount = "50", isSelected = true),
             BudgetEntry(id = 2, budgetId = 1, amount = "30", isSelected = true)
         )
-        val repository: IBudgetDetailRepository = FakeBudgetDetailRepository()
-        repository.cachedDetail = BudgetDetail(entries = entries)
+        val fakeRepository = FakeBudgetDetailRepository()
+        fakeRepository.cachedDetail = BudgetDetail(entries = entries)
 
-        val viewModel = BudgetDetailViewModel(repository)
+        val viewModel = BudgetDetailViewModel(fakeRepository)
         viewModel.sendEvent(BudgetDetailEvent.GetBudgetDetail)
         kotlinx.coroutines.delay(100)
 
