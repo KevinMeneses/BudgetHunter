@@ -8,8 +8,8 @@ import kotlinx.coroutines.withContext
 class GetTotalsPerCategoryUseCase(
     private val budgetEntryLocalDataSource: BudgetEntryLocalDataSource,
     private val defaultDispatcher: CoroutineDispatcher
-) {
-    suspend fun execute(): Map<BudgetEntry.Category, Double> = withContext(defaultDispatcher) {
+) : IGetTotalsPerCategoryUseCase {
+    override suspend fun execute(): Map<BudgetEntry.Category, Double> = withContext(defaultDispatcher) {
         val categories = BudgetEntry
             .getCategories()
             .map { it }

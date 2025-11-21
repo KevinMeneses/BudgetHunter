@@ -9,8 +9,11 @@ import com.meneses.budgethunter.budgetEntry.domain.AIImageProcessor
 import com.meneses.budgethunter.budgetEntry.domain.IosAIImageProcessor
 import com.meneses.budgethunter.commons.data.DatabaseFactory
 import com.meneses.budgethunter.commons.data.FileManager
+import com.meneses.budgethunter.commons.data.IFileManager
 import com.meneses.budgethunter.commons.data.createDatabase
 import com.meneses.budgethunter.commons.platform.AppUpdateManager
+import com.meneses.budgethunter.commons.platform.IAppUpdateManager
+import com.meneses.budgethunter.commons.platform.IPermissionsManager
 import com.meneses.budgethunter.commons.platform.CameraManager
 import com.meneses.budgethunter.commons.platform.FilePickerManager
 import com.meneses.budgethunter.commons.platform.NotificationManager
@@ -61,10 +64,17 @@ val iosPlatformModule = module {
 
     // Platform-specific managers
     single<FileManager> { FileManager() }
+    single<IFileManager> { get<FileManager>() }
+
     single<CameraManager> { IOSBridge.cameraManager }
     single<FilePickerManager> { IOSBridge.filePickerManager }
+
     single<PermissionsManager> { PermissionsManager() }
+    single<IPermissionsManager> { get<PermissionsManager>() }
+
     single<AppUpdateManager> { AppUpdateManager() }
+    single<IAppUpdateManager> { get<AppUpdateManager>() }
+
     single<NotificationManager> { IOSBridge.notificationManager }
     single<ShareManager> { IOSBridge.shareManager }
 

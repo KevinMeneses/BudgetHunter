@@ -11,6 +11,7 @@ import com.meneses.budgethunter.budgetEntry.domain.AIImageProcessor
 import com.meneses.budgethunter.budgetEntry.domain.AndroidAIImageProcessor
 import com.meneses.budgethunter.commons.data.DatabaseFactory
 import com.meneses.budgethunter.commons.data.FileManager
+import com.meneses.budgethunter.commons.data.IFileManager
 import com.meneses.budgethunter.commons.data.createDatabase
 import com.meneses.budgethunter.commons.platform.AndroidCameraManager
 import com.meneses.budgethunter.commons.platform.AndroidFilePickerManager
@@ -19,6 +20,8 @@ import com.meneses.budgethunter.commons.platform.AndroidShareManager
 import com.meneses.budgethunter.commons.platform.AppUpdateManager
 import com.meneses.budgethunter.commons.platform.CameraManager
 import com.meneses.budgethunter.commons.platform.FilePickerManager
+import com.meneses.budgethunter.commons.platform.IAppUpdateManager
+import com.meneses.budgethunter.commons.platform.IPermissionsManager
 import com.meneses.budgethunter.commons.platform.NotificationManager
 import com.meneses.budgethunter.commons.platform.PermissionsManager
 import com.meneses.budgethunter.commons.platform.ShareManager
@@ -47,10 +50,17 @@ val androidPlatformModule = module {
 
     // Platform-specific managers
     single<FileManager> { FileManager() }
+    single<IFileManager> { get<FileManager>() }
+
     single<CameraManager> { AndroidCameraManager(get<Context>()) }
     single<FilePickerManager> { AndroidFilePickerManager(get<Context>()) }
+
     single<PermissionsManager> { PermissionsManager(get<Context>()) }
+    single<IPermissionsManager> { get<PermissionsManager>() }
+
     single<AppUpdateManager> { AppUpdateManager(get<Context>()) }
+    single<IAppUpdateManager> { get<AppUpdateManager>() }
+
     single<NotificationManager> { AndroidNotificationManager(get<Context>()) }
     single<ShareManager> { AndroidShareManager(get<Context>()) }
 

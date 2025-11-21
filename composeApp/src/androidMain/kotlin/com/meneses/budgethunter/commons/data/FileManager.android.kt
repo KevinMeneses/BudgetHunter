@@ -7,9 +7,9 @@ import java.io.IOException
 /**
  * Android implementation of FileManager for budget entry invoice handling.
  */
-actual class FileManager {
+actual class FileManager : IFileManager {
 
-    actual fun saveFile(fileData: FileData): String {
+    override fun saveFile(fileData: FileData): String {
         return saveFile(fileData.data, fileData.directory, fileData.filename)
     }
 
@@ -23,7 +23,7 @@ actual class FileManager {
         return file.absolutePath
     }
 
-    actual fun deleteFile(filePath: String): Boolean {
+    override fun deleteFile(filePath: String): Boolean {
         return try {
             File(filePath).delete()
         } catch (_: IOException) {
@@ -31,11 +31,11 @@ actual class FileManager {
         }
     }
 
-    actual fun createUri(filePath: String): String {
+    override fun createUri(filePath: String): String {
         return File(filePath).toUri().toString()
     }
 
-    actual fun fileExists(filePath: String): Boolean {
+    override fun fileExists(filePath: String): Boolean {
         return File(filePath).exists()
     }
 }

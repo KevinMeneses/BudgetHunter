@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailEvent
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailState
-import com.meneses.budgethunter.budgetDetail.data.BudgetDetailRepository
+import com.meneses.budgethunter.budgetDetail.data.IBudgetDetailRepository
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntryFilter
 import com.meneses.budgethunter.budgetList.domain.Budget
@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class BudgetDetailViewModel(
-    private val budgetDetailRepository: BudgetDetailRepository
+    private val budgetDetailRepository: IBudgetDetailRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(BudgetDetailState())

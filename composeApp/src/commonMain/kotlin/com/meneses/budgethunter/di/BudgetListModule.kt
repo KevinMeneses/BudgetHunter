@@ -4,8 +4,11 @@ import com.meneses.budgethunter.budgetEntry.data.BudgetEntryRepository
 import com.meneses.budgethunter.budgetEntry.data.datasource.BudgetEntryLocalDataSource
 import com.meneses.budgethunter.budgetList.BudgetListViewModel
 import com.meneses.budgethunter.budgetList.application.DeleteBudgetUseCase
+import com.meneses.budgethunter.budgetList.application.IDeleteBudgetUseCase
 import com.meneses.budgethunter.budgetList.application.DuplicateBudgetUseCase
+import com.meneses.budgethunter.budgetList.application.IDuplicateBudgetUseCase
 import com.meneses.budgethunter.budgetList.data.BudgetRepository
+import com.meneses.budgethunter.budgetList.data.IBudgetRepository
 import com.meneses.budgethunter.budgetList.data.datasource.BudgetLocalDataSource
 import com.meneses.budgethunter.db.BudgetQueries
 import kotlinx.coroutines.CoroutineDispatcher
@@ -22,6 +25,8 @@ val budgetListModule = module {
         BudgetRepository(get<BudgetLocalDataSource>(), get<CoroutineDispatcher>(named("IO")))
     }
 
+    single<IBudgetRepository> { get<BudgetRepository>() }
+
     single<DuplicateBudgetUseCase> {
         DuplicateBudgetUseCase(
             get<BudgetRepository>(),
@@ -30,6 +35,8 @@ val budgetListModule = module {
         )
     }
 
+    single<IDuplicateBudgetUseCase> { get<DuplicateBudgetUseCase>() }
+
     single<DeleteBudgetUseCase> {
         DeleteBudgetUseCase(
             get<BudgetLocalDataSource>(),
@@ -37,6 +44,8 @@ val budgetListModule = module {
             get<CoroutineDispatcher>(named("IO"))
         )
     }
+
+    single<IDeleteBudgetUseCase> { get<DeleteBudgetUseCase>() }
 
     factory<BudgetListViewModel> {
         BudgetListViewModel(

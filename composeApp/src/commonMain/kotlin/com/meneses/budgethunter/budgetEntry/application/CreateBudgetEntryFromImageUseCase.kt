@@ -17,7 +17,7 @@ import kotlinx.datetime.toLocalDateTime
 class CreateBudgetEntryFromImageUseCase(
     private val aiImageProcessor: AIImageProcessor,
     private val ioDispatcher: CoroutineDispatcher
-) {
+) : ICreateBudgetEntryFromImageUseCase {
 
     /**
      * AI prompt preserved from the original Android implementation.
@@ -37,7 +37,7 @@ class CreateBudgetEntryFromImageUseCase(
 
         or return an empty response if the image is not an invoice, receipt or bill"""
 
-    suspend fun execute(
+    override suspend fun execute(
         imageUri: String,
         budgetEntry: BudgetEntry
     ): BudgetEntry = withContext(ioDispatcher) {

@@ -9,37 +9,37 @@ import androidx.datastore.preferences.core.stringSetPreferencesKey
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 
-class PreferencesManager(private val preferences: DataStore<Preferences>) {
+class PreferencesManager(private val preferences: DataStore<Preferences>) : IPreferencesManager {
 
-    suspend fun isSmsReadingEnabled() = preferences.data
+    override suspend fun isSmsReadingEnabled() = preferences.data
         .map { it[KEY_SMS_READING_ENABLED] }
         .firstOrNull() == true
 
-    suspend fun setSmsReadingEnabled(value: Boolean) {
+    override suspend fun setSmsReadingEnabled(value: Boolean) {
         preferences.edit { it[KEY_SMS_READING_ENABLED] = value }
     }
 
-    suspend fun getDefaultBudgetId() = preferences.data
+    override suspend fun getDefaultBudgetId() = preferences.data
         .map { it[KEY_DEFAULT_BUDGET_ID] }
         .firstOrNull() ?: -1
 
-    suspend fun setDefaultBudgetId(value: Int) {
+    override suspend fun setDefaultBudgetId(value: Int) {
         preferences.edit { it[KEY_DEFAULT_BUDGET_ID] = value }
     }
 
-    suspend fun getSelectedBankIds() = preferences.data
+    override suspend fun getSelectedBankIds() = preferences.data
         .map { it[KEY_SELECTED_BANK_IDS] }
         .firstOrNull() ?: emptySet()
 
-    suspend fun setSelectedBankIds(value: Set<String>) {
+    override suspend fun setSelectedBankIds(value: Set<String>) {
         preferences.edit { it[KEY_SELECTED_BANK_IDS] = value }
     }
 
-    suspend fun isAiProcessingEnabled() = preferences.data
+    override suspend fun isAiProcessingEnabled() = preferences.data
         .map { it[KEY_AI_PROCESSING_ENABLED] }
         .firstOrNull() != false
 
-    suspend fun setAiProcessingEnabled(value: Boolean) {
+    override suspend fun setAiProcessingEnabled(value: Boolean) {
         preferences.edit { it[KEY_AI_PROCESSING_ENABLED] = value }
     }
 

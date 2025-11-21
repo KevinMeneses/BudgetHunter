@@ -4,12 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.meneses.budgethunter.budgetEntry.application.BudgetEntryEvent
 import com.meneses.budgethunter.budgetEntry.application.BudgetEntryState
-import com.meneses.budgethunter.budgetEntry.application.CreateBudgetEntryFromImageUseCase
-import com.meneses.budgethunter.budgetEntry.data.BudgetEntryRepository
+import com.meneses.budgethunter.budgetEntry.application.ICreateBudgetEntryFromImageUseCase
+import com.meneses.budgethunter.budgetEntry.data.IBudgetEntryRepository
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
-import com.meneses.budgethunter.commons.application.ValidateFilePathUseCase
-import com.meneses.budgethunter.commons.data.FileManager
-import com.meneses.budgethunter.commons.data.PreferencesManager
+import com.meneses.budgethunter.commons.application.IValidateFilePathUseCase
+import com.meneses.budgethunter.commons.data.IFileManager
+import com.meneses.budgethunter.commons.data.IPreferencesManager
 import com.meneses.budgethunter.commons.platform.CameraManager
 import com.meneses.budgethunter.commons.platform.FilePickerManager
 import com.meneses.budgethunter.commons.platform.NotificationManager
@@ -26,11 +26,11 @@ import kotlinx.coroutines.launch
  * while being cross-platform compatible.
  */
 class BudgetEntryViewModel(
-    private val budgetEntryRepository: BudgetEntryRepository,
-    private val createBudgetEntryFromImageUseCase: CreateBudgetEntryFromImageUseCase,
-    private val validateFilePathUseCase: ValidateFilePathUseCase,
-    private val preferencesManager: PreferencesManager,
-    private val fileManager: FileManager,
+    private val budgetEntryRepository: IBudgetEntryRepository,
+    private val createBudgetEntryFromImageUseCase: ICreateBudgetEntryFromImageUseCase,
+    private val validateFilePathUseCase: IValidateFilePathUseCase,
+    private val preferencesManager: IPreferencesManager,
+    private val fileManager: IFileManager,
     private val cameraManager: CameraManager,
     private val filePickerManager: FilePickerManager,
     private val shareManager: ShareManager,

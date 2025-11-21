@@ -14,7 +14,7 @@ interface PermissionsLauncherDelegate {
     fun shouldShowSMSPermissionRationale(): Boolean
 }
 
-actual class PermissionsManager(private val context: Context) {
+class PermissionsManager(private val context: Context) : IPermissionsManager {
 
     private var launcherDelegate: PermissionsLauncherDelegate? = null
     private var permissionResultCallback: ((Boolean) -> Unit)? = null
@@ -23,11 +23,11 @@ actual class PermissionsManager(private val context: Context) {
         this.launcherDelegate = delegate
     }
 
-    actual fun shouldShowSMSPermissionRationale(): Boolean {
+    override fun shouldShowSMSPermissionRationale(): Boolean {
         return launcherDelegate?.shouldShowSMSPermissionRationale() ?: false
     }
 
-    actual fun hasSmsPermission(): Boolean {
+    override fun hasSmsPermission(): Boolean {
         val receiveSmsGranted = ContextCompat
             .checkSelfPermission(context, Manifest.permission.RECEIVE_SMS) ==
             PackageManager.PERMISSION_GRANTED
@@ -39,7 +39,7 @@ actual class PermissionsManager(private val context: Context) {
         return receiveSmsGranted && readSmsGranted
     }
 
-    actual fun requestSmsPermissions(callback: (granted: Boolean) -> Unit) {
+    override fun requestSmsPermissions(callback: (granted: Boolean) -> Unit) {
         permissionResultCallback = callback
         val permissions = mutableListOf(Manifest.permission.RECEIVE_SMS, Manifest.permission.READ_SMS)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -48,7 +48,7 @@ actual class PermissionsManager(private val context: Context) {
         launcherDelegate?.launchPermissionsRequest(permissions.toTypedArray())
     }
 
-    actual fun openAppSettings() {
+    override fun openAppSettings() {
         val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
             data = Uri.fromParts("package", context.packageName, null)
             flags = Intent.FLAG_ACTIVITY_NEW_TASK

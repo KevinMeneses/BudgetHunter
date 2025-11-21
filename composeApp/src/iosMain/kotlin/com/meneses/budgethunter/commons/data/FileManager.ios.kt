@@ -20,9 +20,9 @@ import platform.Foundation.create
  * iOS implementation of FileManager for budget entry invoice handling.
  */
 @OptIn(ExperimentalForeignApi::class)
-actual class FileManager {
+actual class FileManager : IFileManager {
 
-    actual fun saveFile(fileData: FileData): String {
+    override fun saveFile(fileData: FileData): String {
         val targetDirectory = if (fileData.directory.isNotEmpty()) {
             fileData.directory
         } else {
@@ -48,7 +48,7 @@ actual class FileManager {
         }
     }
 
-    actual fun deleteFile(filePath: String): Boolean {
+    override fun deleteFile(filePath: String): Boolean {
         return try {
             println("FileManager.deleteFile: Attempting to delete $filePath")
 
@@ -78,14 +78,14 @@ actual class FileManager {
         }
     }
 
-    actual fun createUri(filePath: String): String {
+    override fun createUri(filePath: String): String {
         return "file://$filePath"
     }
 
     /**
      * Validates if a file exists and is accessible
      */
-    actual fun fileExists(filePath: String): Boolean {
+    override fun fileExists(filePath: String): Boolean {
         val cleanPath = if (filePath.startsWith("file://")) {
             filePath.removePrefix("file://")
         } else {
