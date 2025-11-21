@@ -21,6 +21,8 @@ class DuplicateBudgetUseCase(
                 val updatedEntry = it.copy(id = -1, budgetId = copyBudgetId)
                 budgetEntryRepository.create(updatedEntry)
             }
-        budgetRepository.getById(copyBudgetId)
+        requireNotNull(budgetRepository.getById(copyBudgetId)) {
+            "Budget with id $copyBudgetId not found after creation"
+        }
     }
 }
