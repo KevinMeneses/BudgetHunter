@@ -23,7 +23,7 @@ class BudgetMetricsViewModelTest {
         kotlinx.coroutines.delay(100)
 
         val state = viewModel.uiState.value
-        assertEquals(totals, state.metricsData)
+        assertEquals<Map<String, Double>>(totals, state.metricsData)
     }
 
     @Test
@@ -82,7 +82,7 @@ class BudgetMetricsViewModelTest {
         kotlinx.coroutines.delay(100)
 
         val state = viewModel.uiState.value
-        assertEquals(mapOf("Food" to 150.0), state.metricsData)
+        assertEquals<Map<String, Double>>(mapOf("Food" to 150.0), state.metricsData)
         assertEquals(listOf(100.0), state.percentages)
         assertEquals(1, state.chartColors.size)
     }

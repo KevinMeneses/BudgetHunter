@@ -1,9 +1,6 @@
 package com.meneses.budgethunter.budgetList
 
 import com.meneses.budgethunter.budgetList.application.BudgetListEvent
-import com.meneses.budgethunter.budgetList.application.IDeleteBudgetUseCase
-import com.meneses.budgethunter.budgetList.application.IDuplicateBudgetUseCase
-import com.meneses.budgethunter.budgetList.data.IBudgetRepository
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.fakes.repository.FakeBudgetRepository
 import com.meneses.budgethunter.fakes.usecase.FakeDeleteBudgetUseCase

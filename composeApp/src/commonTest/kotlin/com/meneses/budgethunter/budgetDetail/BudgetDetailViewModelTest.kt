@@ -84,7 +84,7 @@ class BudgetDetailViewModelTest {
         fakeRepository.cachedDetail = detail
 
         val viewModel = BudgetDetailViewModel(fakeRepository)
-        val filter = BudgetEntryFilter.ByType(BudgetEntry.Type.INCOME)
+        val filter = BudgetEntryFilter(type = BudgetEntry.Type.INCOME)
         viewModel.sendEvent(BudgetDetailEvent.FilterEntries(filter))
 
         kotlinx.coroutines.delay(100)
