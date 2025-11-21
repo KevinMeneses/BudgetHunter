@@ -235,7 +235,7 @@ class SettingsViewModelTest {
         val viewModel = SettingsViewModel(preferences, repository, permissions)
 
         val bankConfigs = setOf(
-            BankSmsConfig(id = "bank1", name = "Bank 1", senderIds = emptyList<String>())
+            BankSmsConfig(id = "bank1", displayName = "Bank 1", senderKeywords = emptyList<String>())
         )
 
         kotlinx.coroutines.delay(100)

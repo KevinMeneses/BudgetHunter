@@ -2,6 +2,7 @@ package com.meneses.budgethunter.budgetDetail
 
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailEvent
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailState
+import com.meneses.budgethunter.budgetDetail.data.IBudgetDetailRepository
 import com.meneses.budgethunter.budgetDetail.domain.BudgetDetail
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntryFilter

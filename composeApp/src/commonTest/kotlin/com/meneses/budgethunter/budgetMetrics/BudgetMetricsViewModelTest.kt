@@ -1,5 +1,6 @@
 package com.meneses.budgethunter.budgetMetrics
 
+import com.meneses.budgethunter.budgetMetrics.application.IGetTotalsPerCategoryUseCase
 import com.meneses.budgethunter.fakes.usecase.FakeGetTotalsPerCategoryUseCase
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
