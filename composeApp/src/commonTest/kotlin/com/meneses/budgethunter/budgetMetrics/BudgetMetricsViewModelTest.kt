@@ -1,5 +1,6 @@
 package com.meneses.budgethunter.budgetMetrics
 
+import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.budgetMetrics.application.IGetTotalsPerCategoryUseCase
 import com.meneses.budgethunter.fakes.usecase.FakeGetTotalsPerCategoryUseCase
 import kotlinx.coroutines.test.runTest
@@ -12,9 +13,9 @@ class BudgetMetricsViewModelTest {
     @Test
     fun `initial state loads metrics on initialization`() = runTest {
         val totals = mapOf(
-            "Food" to 100.0,
-            "Transport" to 50.0,
-            "Entertainment" to 25.0
+            BudgetEntry.Category.FOOD to 100.0,
+            BudgetEntry.Category.TRANSPORTATION to 50.0,
+            BudgetEntry.Category.ENTERTAINMENT to 25.0
         )
         val useCase: IGetTotalsPerCategoryUseCase = FakeGetTotalsPerCategoryUseCase(totals)
         val viewModel = BudgetMetricsViewModel(useCase)
@@ -23,15 +24,15 @@ class BudgetMetricsViewModelTest {
         kotlinx.coroutines.delay(100)
 
         val state = viewModel.uiState.value
-        assertEquals<Map<String, Double>>(totals, state.metricsData)
+        assertEquals<Map<BudgetEntry.Category, Double>>(totals, state.metricsData)
     }
 
     @Test
     fun `calculates correct percentages from totals`() = runTest {
         val totals = mapOf(
-            "Food" to 100.0,
-            "Transport" to 50.0,
-            "Entertainment" to 50.0
+            BudgetEntry.Category.FOOD to 100.0,
+            BudgetEntry.Category.TRANSPORTATION to 50.0,
+            BudgetEntry.Category.ENTERTAINMENT to 50.0
         )
         val useCase: IGetTotalsPerCategoryUseCase = FakeGetTotalsPerCategoryUseCase(totals)
         val viewModel = BudgetMetricsViewModel(useCase)
@@ -47,9 +48,9 @@ class BudgetMetricsViewModelTest {
     @Test
     fun `assigns correct number of colors based on categories`() = runTest {
         val totals = mapOf(
-            "Food" to 100.0,
-            "Transport" to 50.0,
-            "Entertainment" to 25.0
+            BudgetEntry.Category.FOOD to 100.0,
+            BudgetEntry.Category.TRANSPORTATION to 50.0,
+            BudgetEntry.Category.ENTERTAINMENT to 25.0
         )
         val useCase: IGetTotalsPerCategoryUseCase = FakeGetTotalsPerCategoryUseCase(totals)
         val viewModel = BudgetMetricsViewModel(useCase)
@@ -75,21 +76,33 @@ class BudgetMetricsViewModelTest {
 
     @Test
     fun `handles single category`() = runTest {
-        val totals = mapOf("Food" to 150.0)
+        val totals = mapOf(BudgetEntry.Category.FOOD to 150.0)
         val useCase: IGetTotalsPerCategoryUseCase = FakeGetTotalsPerCategoryUseCase(totals)
         val viewModel = BudgetMetricsViewModel(useCase)
 
         kotlinx.coroutines.delay(100)
 
         val state = viewModel.uiState.value
-        assertEquals<Map<String, Double>>(mapOf("Food" to 150.0), state.metricsData)
+        assertEquals<Map<BudgetEntry.Category, Double>>(mapOf(BudgetEntry.Category.FOOD to 150.0), state.metricsData)
         assertEquals(listOf(100.0), state.percentages)
         assertEquals(1, state.chartColors.size)
     }
 
     @Test
     fun `handles large number of categories`() = runTest {
-        val totals = (1..10).associate { "Category$it" to it * 10.0 }
+        val categories = listOf(
+            BudgetEntry.Category.FOOD,
+            BudgetEntry.Category.GROCERIES,
+            BudgetEntry.Category.SELF_CARE,
+            BudgetEntry.Category.TRANSPORTATION,
+            BudgetEntry.Category.HOUSEHOLD_ITEMS,
+            BudgetEntry.Category.HEALTH,
+            BudgetEntry.Category.BILLS,
+            BudgetEntry.Category.ENTERTAINMENT,
+            BudgetEntry.Category.EDUCATION,
+            BudgetEntry.Category.GIFTS
+        )
+        val totals = categories.associateWith { it.ordinal * 10.0 + 10.0 }
         val useCase: IGetTotalsPerCategoryUseCase = FakeGetTotalsPerCategoryUseCase(totals)
         val viewModel = BudgetMetricsViewModel(useCase)
 
@@ -104,9 +117,9 @@ class BudgetMetricsViewModelTest {
     @Test
     fun `percentages sum to approximately 100`() = runTest {
         val totals = mapOf(
-            "Food" to 100.0,
-            "Transport" to 100.0,
-            "Entertainment" to 100.0
+            BudgetEntry.Category.FOOD to 100.0,
+            BudgetEntry.Category.TRANSPORTATION to 100.0,
+            BudgetEntry.Category.ENTERTAINMENT to 100.0
         )
         val useCase: IGetTotalsPerCategoryUseCase = FakeGetTotalsPerCategoryUseCase(totals)
         val viewModel = BudgetMetricsViewModel(useCase)
@@ -123,8 +136,8 @@ class BudgetMetricsViewModelTest {
     @Test
     fun `handles decimal values correctly`() = runTest {
         val totals = mapOf(
-            "Food" to 33.33,
-            "Transport" to 66.67
+            BudgetEntry.Category.FOOD to 33.33,
+            BudgetEntry.Category.TRANSPORTATION to 66.67
         )
         val useCase: IGetTotalsPerCategoryUseCase = FakeGetTotalsPerCategoryUseCase(totals)
         val viewModel = BudgetMetricsViewModel(useCase)
@@ -138,7 +151,7 @@ class BudgetMetricsViewModelTest {
 
     @Test
     fun `uiState exposes state as flow`() = runTest {
-        val totals = mapOf("Food" to 100.0)
+        val totals = mapOf(BudgetEntry.Category.FOOD to 100.0)
         val useCase: IGetTotalsPerCategoryUseCase = FakeGetTotalsPerCategoryUseCase(totals)
         val viewModel = BudgetMetricsViewModel(useCase)
 
