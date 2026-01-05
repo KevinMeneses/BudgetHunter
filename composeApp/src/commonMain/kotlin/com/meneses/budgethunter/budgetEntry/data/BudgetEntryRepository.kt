@@ -28,7 +28,7 @@ class BudgetEntryRepository(
     }
 
     suspend fun update(budgetEntry: BudgetEntry) = withContext(ioDispatcher) {
-        localDataSource.update(budgetEntry)
+        localDataSource.update(budgetEntry.copy(isSynced = false))
 
         if (authRepository.isAuthenticated()) {
             syncManager.syncPendingEntries(budgetEntry.budgetId)

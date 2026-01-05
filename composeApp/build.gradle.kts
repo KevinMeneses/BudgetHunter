@@ -59,6 +59,7 @@ kotlin {
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.kotlinx.json)
             implementation(libs.ktor.client.auth)
+            // SSE support is built into ktor-client-core in 3.x+
 
             // Database (common parts only)
             implementation(libs.sqldelight.coroutines.extensions)

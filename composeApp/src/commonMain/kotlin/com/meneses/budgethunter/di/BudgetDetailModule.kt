@@ -4,6 +4,7 @@ import com.meneses.budgethunter.budgetDetail.BudgetDetailViewModel
 import com.meneses.budgethunter.budgetDetail.data.BudgetDetailRepository
 import com.meneses.budgethunter.budgetEntry.data.BudgetEntryRepository
 import com.meneses.budgethunter.budgetEntry.data.datasource.BudgetEntryLocalDataSource
+import com.meneses.budgethunter.budgetEntry.data.sync.RealTimeSyncManager
 import com.meneses.budgethunter.budgetList.application.DeleteBudgetUseCase
 import com.meneses.budgethunter.budgetList.data.datasource.BudgetLocalDataSource
 import kotlinx.coroutines.CoroutineDispatcher
@@ -24,7 +25,8 @@ val budgetDetailModule = module {
 
     factory<BudgetDetailViewModel> {
         BudgetDetailViewModel(
-            get<BudgetDetailRepository>()
+            budgetDetailRepository = get<BudgetDetailRepository>(),
+            realTimeSyncManager = get<RealTimeSyncManager>()
         )
     }
 }

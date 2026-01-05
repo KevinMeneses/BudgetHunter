@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailEvent
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailState
 import com.meneses.budgethunter.budgetDetail.data.BudgetDetailRepository
+import com.meneses.budgethunter.budgetEntry.data.sync.RealTimeSyncManager
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntryFilter
 import com.meneses.budgethunter.budgetList.domain.Budget
@@ -15,12 +16,33 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class BudgetDetailViewModel(
-    private val budgetDetailRepository: BudgetDetailRepository
+    private val budgetDetailRepository: BudgetDetailRepository,
+    private val realTimeSyncManager: RealTimeSyncManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(BudgetDetailState())
     val uiState = _uiState.asStateFlow()
     private var hasTriggeredInitialSync = false
+
+    init {
+        // Start listening for real-time updates when the ViewModel is created
+        viewModelScope.launch {
+            uiState.collect { state ->
+                val budget = state.budgetDetail.budget
+                // Start listening if budget is synced and has a server ID
+                if (budget.isSynced && budget.serverId != null) {
+                    println("BudgetDetailViewModel: Starting real-time listener for budget ${budget.serverId}")
+                    realTimeSyncManager.startListening(budget.serverId)
+                }
+            }
+        }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        println("BudgetDetailViewModel: Clearing, stopping real-time listener")
+        realTimeSyncManager.stopListening()
+    }
 
     fun sendEvent(event: BudgetDetailEvent) {
         when (event) {

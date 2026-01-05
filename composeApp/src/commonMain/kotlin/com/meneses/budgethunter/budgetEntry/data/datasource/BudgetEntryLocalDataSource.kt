@@ -99,4 +99,8 @@ class BudgetEntryLocalDataSource(
         queries.deleteAllByBudgetId(budgetId)
 
     fun clearAllData() = queries.deleteAll()
+
+    suspend fun selectByServerId(serverId: Long) = cacheMutex.withLock {
+        queries.selectByServerId(serverId).executeAsOneOrNull()
+    }
 }
