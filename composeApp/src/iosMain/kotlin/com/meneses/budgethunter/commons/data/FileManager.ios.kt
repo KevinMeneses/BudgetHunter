@@ -15,6 +15,7 @@ import platform.Foundation.NSFileManager
 import platform.Foundation.NSSearchPathForDirectoriesInDomains
 import platform.Foundation.NSUserDomainMask
 import platform.Foundation.create
+import platform.Foundation.writeToFile
 
 /**
  * iOS implementation of FileManager for budget entry invoice handling.
