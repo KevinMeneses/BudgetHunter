@@ -59,7 +59,6 @@ class RealTimeSyncManager(
 
         currentBudgetServerId = budgetServerId
 
-        // Subscribe to SSE events and handle them
         currentJob = sseClient.subscribeToBudgetEntries(budgetServerId)
             .onEach { event -> handleBudgetEntryEvent(event) }
             .catch { it.printStackTrace() }
@@ -78,31 +77,18 @@ class RealTimeSyncManager(
     private suspend fun handleBudgetEntryEvent(event: BudgetEntryEvent) {
         try {
             withContext(ioDispatcher) {
-                println("RealTimeSyncManager: Received ${event.action} event for entry ${event.entryId} by ${event.userInfo.name}")
-
                 when (event.action) {
                     BudgetEntryAction.CREATED, BudgetEntryAction.UPDATED -> {
-                        // Trigger a full refresh from the server to get the latest state
-                        syncManager.pullEntriesFromServer(event.budgetId).onFailure { error ->
-                            println("RealTimeSyncManager: Failed to refresh entries: ${error.message}")
-                        }
+                        syncManager.pullEntriesFromServer(event.budgetId)
                     }
 
                     BudgetEntryAction.DELETED -> {
-                        // Find and delete the entry from local database
                         val existingEntry = localDataSource.selectByServerId(event.entryId)
-
-                        if (existingEntry != null) {
-                            localDataSource.delete(existingEntry.id)
-                            println("RealTimeSyncManager: Deleted entry ${existingEntry.id} (server_id=${event.entryId})")
-                        } else {
-                            println("RealTimeSyncManager: Entry ${event.entryId} not found in local database, nothing to delete")
-                        }
+                        if (existingEntry != null) localDataSource.delete(existingEntry.id)
                     }
                 }
             }
         } catch (e: Exception) {
-            println("RealTimeSyncManager: Error handling event: ${e.message}")
             e.printStackTrace()
         }
     }

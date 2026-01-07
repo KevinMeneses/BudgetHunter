@@ -12,6 +12,8 @@ import com.meneses.budgethunter.budgetList.domain.Budget
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -25,14 +27,15 @@ class BudgetDetailViewModel(
     private var hasTriggeredInitialSync = false
 
     init {
-        // Start listening for real-time updates when the ViewModel is created
         viewModelScope.launch {
-            uiState.collect { state ->
+            uiState.map { state ->
                 val budget = state.budgetDetail.budget
-                // Start listening if budget is synced and has a server ID
-                if (budget.isSynced && budget.serverId != null) {
-                    println("BudgetDetailViewModel: Starting real-time listener for budget ${budget.serverId}")
-                    realTimeSyncManager.startListening(budget.serverId)
+                if (budget.isSynced && budget.serverId != null) budget.serverId else null
+            }.distinctUntilChanged().collect { serverId ->
+                if (serverId != null) {
+                    realTimeSyncManager.startListening(serverId)
+                } else {
+                    realTimeSyncManager.stopListening()
                 }
             }
         }
