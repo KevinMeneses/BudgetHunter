@@ -1,6 +1,5 @@
 package com.meneses.budgethunter.budgetDetail.ui
 
-import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -27,7 +26,6 @@ import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.commons.platform.NetworkMonitor
 import com.meneses.budgethunter.commons.ui.AppBar
-import com.meneses.budgethunter.commons.ui.OfflineBanner
 import kotlinx.serialization.Serializable
 import org.jetbrains.compose.resources.stringResource
 

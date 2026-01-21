@@ -58,7 +58,7 @@ class AndroidNetworkMonitor(
     override fun stopMonitoring() {
         try {
             connectivityManager.unregisterNetworkCallback(networkCallback)
-        } catch (e: IllegalArgumentException) {
+        } catch (_: IllegalArgumentException) {
             // Callback was not registered, ignore
         }
     }
