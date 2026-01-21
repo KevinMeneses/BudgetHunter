@@ -13,6 +13,8 @@ import com.meneses.budgethunter.commons.data.createDatabase
 import com.meneses.budgethunter.commons.platform.AppUpdateManager
 import com.meneses.budgethunter.commons.platform.CameraManager
 import com.meneses.budgethunter.commons.platform.FilePickerManager
+import com.meneses.budgethunter.commons.platform.IosNetworkMonitor
+import com.meneses.budgethunter.commons.platform.NetworkMonitor
 import com.meneses.budgethunter.commons.platform.NotificationManager
 import com.meneses.budgethunter.commons.platform.PermissionsManager
 import com.meneses.budgethunter.commons.platform.ShareManager
@@ -67,6 +69,9 @@ val iosPlatformModule = module {
     single<AppUpdateManager> { AppUpdateManager() }
     single<NotificationManager> { IOSBridge.notificationManager }
     single<ShareManager> { IOSBridge.shareManager }
+    single<NetworkMonitor> {
+        IosNetworkMonitor().apply { startMonitoring() }
+    }
 
     single<ImageProcessor> {
         ImageProcessor()

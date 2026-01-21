@@ -104,16 +104,18 @@ class BudgetSyncManager(
                         // Check if budget already exists locally by server_id
                         val existingBudget = budgetQueries.selectByServerId(serverBudget.id)
                             .executeAsOneOrNull()
-                            ?.let { mapSelectAllToBudget(
-                                it.id,
-                                it.amount,
-                                it.name,
-                                it.date,
-                                it.server_id,
-                                it.is_synced,
-                                it.last_synced_at,
-                                it.total_expenses
-                            ) }
+                            ?.let {
+                                mapSelectAllToBudget(
+                                    it.id,
+                                    it.amount,
+                                    it.name,
+                                    it.date,
+                                    it.server_id,
+                                    it.is_synced,
+                                    it.last_synced_at,
+                                    it.total_expenses
+                                )
+                            }
 
                         if (existingBudget != null) {
                             // Update existing budget

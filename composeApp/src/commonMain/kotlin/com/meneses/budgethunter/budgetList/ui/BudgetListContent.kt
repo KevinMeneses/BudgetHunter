@@ -42,6 +42,7 @@ import com.meneses.budgethunter.budgetList.application.BudgetListEvent
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.commons.ui.CompottiePlaceholder
 import com.meneses.budgethunter.commons.ui.LoadingScreen
+import com.meneses.budgethunter.commons.ui.OfflineBanner
 import com.meneses.budgethunter.commons.ui.SyncStatusIndicator
 import com.meneses.budgethunter.commons.util.toCurrency
 import com.meneses.budgethunter.theme.AppColors
@@ -54,6 +55,7 @@ fun BudgetListContent(
     list: List<Budget>,
     isLoading: Boolean,
     isSyncing: Boolean,
+    isOnline: Boolean,
     paddingValues: PaddingValues,
     onEvent: (BudgetListEvent) -> Unit
 ) {
@@ -67,29 +69,32 @@ fun BudgetListContent(
                 .padding(paddingValues)
                 .fillMaxSize()
         ) {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 20.dp)
-                    .padding(top = 5.dp)
-                    .padding(bottom = 90.dp),
-                verticalArrangement = if (list.isEmpty()) Arrangement.Center else Arrangement.Top
-            ) {
-                if (list.isEmpty()) {
-                    item {
-                        CompottiePlaceholder(
-                            fileName = "empty_state.json",
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    }
-                } else {
-                    items(list.size) {
-                        Spacer(Modifier.size(10.dp))
-                        BudgetItem(
-                            budget = list[it],
-                            onEvent = onEvent
-                        )
-                        Spacer(modifier = Modifier.size(10.dp))
+            Column {
+                OfflineBanner(isOffline = !isOnline)
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 20.dp)
+                        .padding(top = 5.dp)
+                        .padding(bottom = 90.dp),
+                    verticalArrangement = if (list.isEmpty()) Arrangement.Center else Arrangement.Top
+                ) {
+                    if (list.isEmpty()) {
+                        item {
+                            CompottiePlaceholder(
+                                fileName = "empty_state.json",
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
+                    } else {
+                        items(list.size) {
+                            Spacer(Modifier.size(10.dp))
+                            BudgetItem(
+                                budget = list[it],
+                                onEvent = onEvent
+                            )
+                            Spacer(modifier = Modifier.size(10.dp))
+                        }
                     }
                 }
             }

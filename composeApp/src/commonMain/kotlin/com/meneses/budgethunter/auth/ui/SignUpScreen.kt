@@ -252,9 +252,9 @@ object SignUpScreen {
                         onClick = { onEvent(SignUpEvent.SignUpClicked) },
                         modifier = Modifier.fillMaxWidth(),
                         enabled = uiState.email.isNotBlank() &&
-                                uiState.name.isNotBlank() &&
-                                uiState.password.isNotBlank() &&
-                                uiState.confirmPassword.isNotBlank()
+                            uiState.name.isNotBlank() &&
+                            uiState.password.isNotBlank() &&
+                            uiState.confirmPassword.isNotBlank()
                     ) {
                         Text(stringResource(Res.string.sign_up))
                     }

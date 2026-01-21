@@ -69,6 +69,7 @@ import com.meneses.budgethunter.commons.EMPTY
 import com.meneses.budgethunter.commons.ui.CompottiePlaceholder
 import com.meneses.budgethunter.commons.ui.DefDivider
 import com.meneses.budgethunter.commons.ui.LoadingScreen
+import com.meneses.budgethunter.commons.ui.OfflineBanner
 import com.meneses.budgethunter.commons.ui.SyncStatusIndicator
 import com.meneses.budgethunter.commons.util.toCurrency
 import com.meneses.budgethunter.theme.AppColors
@@ -79,6 +80,7 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun BudgetDetailContent(
     paddingValues: PaddingValues,
+    isOnline: Boolean,
     uiState: BudgetDetailState,
     onEvent: (BudgetDetailEvent) -> Unit
 ) {
@@ -89,49 +91,50 @@ fun BudgetDetailContent(
     if (uiState.isLoading) {
         LoadingScreen()
     } else {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(
-                    vertical = 15.dp,
-                    horizontal = 20.dp
-                )
-        ) {
-            Column(
+        Column(modifier = Modifier.padding(paddingValues)) {
+            OfflineBanner(isOffline = !isOnline)
+            Box(
                 modifier = Modifier
-                    .fillMaxSize(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.SpaceBetween
+                    .fillMaxSize()
+                    .padding(
+                        vertical = 15.dp,
+                        horizontal = 20.dp
+                    )
             ) {
                 Column(
-                    modifier = Modifier.weight(0.9f, true)
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.SpaceBetween
                 ) {
-                    BudgetSection(
-                        amount = uiState.budgetDetail.budget.amount,
-                        onClick = onBudgetClick
-                    )
-
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    ListSection(
-                        budgetEntries = uiState.budgetDetail.entries,
-                        isSelectionActive = uiState.isSelectionActive,
-                        listOrder = uiState.listOrder,
-                        isSyncing = uiState.isSyncingEntries,
-                        onRefresh = { BudgetDetailEvent.SyncEntries.run(onEvent) },
-                        onEvent = onEvent
-                    )
-
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    if (!uiState.isSelectionActive) {
-                        BalanceSection(
-                            budgetEntries = uiState.budgetDetail.entries,
-                            budgetAmount = uiState.budgetDetail.budget.amount
+                    Column(
+                        modifier = Modifier.weight(0.9f, true)
+                    ) {
+                        BudgetSection(
+                            amount = uiState.budgetDetail.budget.amount,
+                            onClick = onBudgetClick
                         )
-                    } else {
-                        DeleteButton(onEvent)
+
+                        Spacer(modifier = Modifier.height(20.dp))
+
+                        ListSection(
+                            budgetEntries = uiState.budgetDetail.entries,
+                            isSelectionActive = uiState.isSelectionActive,
+                            listOrder = uiState.listOrder,
+                            isSyncing = uiState.isSyncingEntries,
+                            onRefresh = { BudgetDetailEvent.SyncEntries.run(onEvent) },
+                            onEvent = onEvent
+                        )
+
+                        Spacer(modifier = Modifier.height(20.dp))
+
+                        if (!uiState.isSelectionActive) {
+                            BalanceSection(
+                                budgetEntries = uiState.budgetDetail.entries,
+                                budgetAmount = uiState.budgetDetail.budget.amount
+                            )
+                        } else {
+                            DeleteButton(onEvent)
+                        }
                     }
                 }
             }

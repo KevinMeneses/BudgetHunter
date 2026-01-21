@@ -79,10 +79,10 @@ The app now has **fully functional budget synchronization and collaborator manag
 ### 📊 PROGRESS METRICS
 - **Total Phases**: 11
 - **Completed Phases**: 7 (64%)
-- **In Progress**: None - ready for Phase 9
+- **In Progress**: Phase 9 - Error Handling & Offline Support (1/5 tasks complete)
 - **Total Tasks**: ~76 (added Task 2.8, 2.9, and 4 Phase 7 tasks)
-- **Completed Tasks**: 45 (59%)
-- **Estimated Remaining Time**: ~40 hours (~1 week)
+- **Completed Tasks**: 46 (61%)
+- **Estimated Remaining Time**: ~39 hours (~1 week)
 
 ### 🚨 CRITICAL GAPS & RISKS
 1. ~~**No Database Schema Changes Yet**~~ ✅ - Budget/BudgetEntry tables now have sync fields
@@ -1807,48 +1807,85 @@ Call after successful first sign in.
 
 ---
 
-## PHASE 9: ERROR HANDLING & OFFLINE SUPPORT (MEDIUM RISK) ⏳ NOT STARTED
+## PHASE 9: ERROR HANDLING & OFFLINE SUPPORT (MEDIUM RISK) 🔄 IN PROGRESS (1/5)
 
 ### 📋 PHASE 9 OVERVIEW
-**Status**: NOT STARTED
+**Status**: IN PROGRESS (Task 9.1 complete, 4 tasks remaining)
 **Critical Priority**: HIGH - Essential for production app
 **Description**: Implement robust error handling, offline detection, and retry logic
 
-**Current Issue**: Network errors will cause app crashes or unexpected behavior. This phase is essential before production release.
+**Current Progress**: Basic offline detection implemented. Need to add offline UX and retry logic.
 
 ---
 
-### Task 9.1: Implement Offline Detection ⏳ NOT STARTED
-**Effort**: 2 hours
+### Task 9.1: Implement Offline Detection ✅ COMPLETED
+**Effort**: 2 hours (actual: ~1 hour)
 **Risk**: Low
 **Description**: Monitor network connectivity and adjust sync behavior
 
-**Deliverable**: Create `/composeApp/src/commonMain/kotlin/com/meneses/budgethunter/commons/network/NetworkMonitor.kt`:
+**Deliverable**: Create `/composeApp/src/commonMain/kotlin/com/meneses/budgethunter/commons/platform/NetworkMonitor.kt`:
 ```kotlin
-class NetworkMonitor(/* platform-specific */) {
+interface NetworkMonitor {
     val isOnline: StateFlow<Boolean>
+    fun startMonitoring()
+    fun stopMonitoring()
 }
 ```
 
-Platform implementations for Android (ConnectivityManager) and iOS (NWPathMonitor)
+Platform implementations:
+- **Android**: Uses `ConnectivityManager.NetworkCallback` with capability validation
+- **iOS**: Uses `NWPathMonitor` from Network framework
+
+**Completion Notes**:
+- ✅ Created `NetworkMonitor` interface in commonMain at `commons/platform/NetworkMonitor.kt`
+- ✅ Implemented `AndroidNetworkMonitor` using `ConnectivityManager` with proper capability checks:
+  - Monitors `NET_CAPABILITY_INTERNET` and `NET_CAPABILITY_VALIDATED`
+  - Real-time connectivity changes via `NetworkCallback`
+  - Checks current state synchronously on initialization
+- ✅ Implemented `IosNetworkMonitor` using `nw_path_monitor_*` APIs from Network framework:
+  - Monitors network path status changes
+  - Uses dispatch queue for asynchronous updates
+  - Properly integrated with Kotlin/Native interop
+- ✅ Wired into Koin DI modules (both androidPlatformModule and iosPlatformModule)
+- ✅ Auto-starts monitoring on app launch via `startMonitoring()` in singleton initialization
+- ✅ Code compiles successfully on all platforms (Android + iOS)
+- ✅ Code style validated and formatted with ktlint
 
 **Validation**:
-- Detects online/offline correctly
-- Updates reactive state
-- No battery drain
+- ✅ Detects online/offline correctly on both platforms
+- ✅ Updates reactive StateFlow on connectivity changes
+- ✅ Proper lifecycle management (startMonitoring/stopMonitoring)
+- ✅ No crashes or memory leaks
 
-**Rollback**: Delete network monitor
+**Rollback**: Delete NetworkMonitor files and remove from DI modules
 
 **Dependencies**: None
 
 ---
 
-### Task 9.2: Add Offline Banner
+### Task 9.2: Add Offline Banner ✅ COMPLETED
 **Effort**: 1 hour
 **Risk**: Low
 **Description**: Show banner when offline
 
-**Deliverable**: Add to main screen scaffold:
+**Completion Notes**: Offline banner successfully implemented:
+- ✅ Created `OfflineBanner` composable in `commonMain/ui/OfflineBanner.kt`
+- ✅ Uses `AnimatedVisibility` with expandVertically/shrinkVertically transitions
+- ✅ Orange background (#FF9800) with white text for high visibility
+- ✅ Message: "Offline - Changes will sync when online"
+- ✅ Integrated into `BudgetListScreen.Show` (injected NetworkMonitor via Koin)
+- ✅ Integrated into `BudgetDetailScreen.Show` (injected NetworkMonitor via Koin)
+- ✅ Updated navigation routing to pass NetworkMonitor parameter
+- ✅ Banner appears/disappears smoothly based on NetworkMonitor.isOnline state
+- ✅ Build successful with ktlintFormat
+
+**Implementation Notes**:
+- NetworkMonitor is injected at the screen level using `koinInject()`
+- Banner observes `networkMonitor.isOnline.collectAsState()` to react to connectivity changes
+- Placed at top of screen content using Column layout
+- Does not obstruct main UI functionality
+
+**Deliverable**: ~~Add to main screen scaffold:~~
 ```kotlin
 @Composable
 fun OfflineBanner(isOffline: Boolean) {
@@ -1861,9 +1898,9 @@ fun OfflineBanner(isOffline: Boolean) {
 ```
 
 **Validation**:
-- Banner shows when offline
-- Hides when back online
-- Doesn't obstruct UI
+- ✅ Banner shows when offline
+- ✅ Hides when back online
+- ✅ Doesn't obstruct UI
 
 **Rollback**: Remove banner
 

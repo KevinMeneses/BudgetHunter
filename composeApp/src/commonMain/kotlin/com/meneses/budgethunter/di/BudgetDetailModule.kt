@@ -1,5 +1,6 @@
 package com.meneses.budgethunter.di
 
+import com.meneses.budgethunter.auth.data.AuthRepository
 import com.meneses.budgethunter.budgetDetail.BudgetDetailViewModel
 import com.meneses.budgethunter.budgetDetail.data.BudgetDetailRepository
 import com.meneses.budgethunter.budgetEntry.data.BudgetEntryRepository
@@ -26,7 +27,8 @@ val budgetDetailModule = module {
     factory<BudgetDetailViewModel> {
         BudgetDetailViewModel(
             budgetDetailRepository = get<BudgetDetailRepository>(),
-            realTimeSyncManager = get<RealTimeSyncManager>()
+            realTimeSyncManager = get<RealTimeSyncManager>(),
+            authRepository = get<AuthRepository>()
         )
     }
 }

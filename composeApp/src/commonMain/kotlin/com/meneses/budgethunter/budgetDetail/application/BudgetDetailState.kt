@@ -18,7 +18,8 @@ data class BudgetDetailState(
     val isSelectionActive: Boolean = false,
     val goBack: Boolean = false,
     val showEntry: BudgetEntry? = null,
-    val listOrder: ListOrder = ListOrder.DEFAULT
+    val listOrder: ListOrder = ListOrder.DEFAULT,
+    val isAuthenticated: Boolean = false
 ) {
     enum class ListOrder {
         DEFAULT,

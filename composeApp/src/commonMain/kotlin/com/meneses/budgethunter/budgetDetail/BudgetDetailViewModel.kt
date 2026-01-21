@@ -2,6 +2,7 @@ package com.meneses.budgethunter.budgetDetail
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.meneses.budgethunter.auth.data.AuthRepository
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailEvent
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailState
 import com.meneses.budgethunter.budgetDetail.data.BudgetDetailRepository
@@ -19,7 +20,8 @@ import kotlinx.coroutines.launch
 
 class BudgetDetailViewModel(
     private val budgetDetailRepository: BudgetDetailRepository,
-    private val realTimeSyncManager: RealTimeSyncManager
+    private val realTimeSyncManager: RealTimeSyncManager,
+    private val authRepository: AuthRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(BudgetDetailState())
@@ -27,6 +29,7 @@ class BudgetDetailViewModel(
     private var hasTriggeredInitialSync = false
 
     init {
+        checkAuthState()
         viewModelScope.launch {
             uiState.map { state ->
                 val budget = state.budgetDetail.budget
@@ -43,7 +46,6 @@ class BudgetDetailViewModel(
 
     override fun onCleared() {
         super.onCleared()
-        println("BudgetDetailViewModel: Clearing, stopping real-time listener")
         realTimeSyncManager.stopListening()
     }
 
@@ -251,5 +253,12 @@ class BudgetDetailViewModel(
 
     private fun clearSyncError() {
         _uiState.update { it.copy(syncError = null) }
+    }
+
+    private fun checkAuthState() {
+        viewModelScope.launch {
+            val isAuthenticated = authRepository.isAuthenticated()
+            _uiState.update { it.copy(isAuthenticated = isAuthenticated) }
+        }
     }
 }

@@ -30,6 +30,7 @@ import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.budgetList.ui.BudgetListScreen
 import com.meneses.budgethunter.budgetMetrics.BudgetMetricsViewModel
 import com.meneses.budgethunter.budgetMetrics.ui.BudgetMetricsScreen
+import com.meneses.budgethunter.commons.platform.NetworkMonitor
 import com.meneses.budgethunter.commons.util.serializableType
 import com.meneses.budgethunter.collaborator.CollaboratorsViewModel
 import com.meneses.budgethunter.collaborator.ui.CollaboratorsScreen
@@ -154,6 +155,7 @@ fun BudgetHunterNavigation() {
             composable<BudgetListScreen> {
                 val budgetListViewModel: BudgetListViewModel = koinInject()
                 val uiState by budgetListViewModel.uiState.collectAsStateWithLifecycle()
+                val networkMonitor: NetworkMonitor = koinInject()
 
                 // Handle navigation to sign in
                 LaunchedEffect(uiState.navigateToSignIn) {
@@ -176,7 +178,8 @@ fun BudgetHunterNavigation() {
                     },
                     showSettings = {
                         navController.navigate(SettingsScreen)
-                    }
+                    },
+                    networkMonitor = networkMonitor
                 )
             }
 
@@ -197,6 +200,7 @@ fun BudgetHunterNavigation() {
                 val budgetDetailRoute = backStackEntry.toRoute<BudgetDetailScreen>()
                 val budgetDetailViewModel: BudgetDetailViewModel = koinInject()
                 val uiState by budgetDetailViewModel.uiState.collectAsStateWithLifecycle()
+                val networkMonitor: NetworkMonitor = koinInject()
 
                 budgetDetailRoute.Show(
                     uiState = uiState,
@@ -213,7 +217,8 @@ fun BudgetHunterNavigation() {
                     },
                     showCollaborators = { serverId, budgetName ->
                         navController.navigate(CollaboratorsScreen(serverId, budgetName))
-                    }
+                    },
+                    networkMonitor = networkMonitor
                 )
             }
 

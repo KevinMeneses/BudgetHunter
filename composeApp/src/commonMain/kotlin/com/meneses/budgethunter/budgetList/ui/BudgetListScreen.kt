@@ -1,5 +1,6 @@
 package com.meneses.budgethunter.budgetList.ui
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
@@ -17,6 +18,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,7 +33,9 @@ import budgethunter.composeapp.generated.resources.search
 import com.meneses.budgethunter.budgetList.application.BudgetListEvent
 import com.meneses.budgethunter.budgetList.application.BudgetListState
 import com.meneses.budgethunter.budgetList.domain.Budget
+import com.meneses.budgethunter.commons.platform.NetworkMonitor
 import com.meneses.budgethunter.commons.ui.AppBar
+import com.meneses.budgethunter.commons.ui.OfflineBanner
 import com.meneses.budgethunter.commons.ui.dashedBorder
 import com.meneses.budgethunter.theme.AppColors
 import kotlinx.serialization.Serializable
@@ -44,10 +48,12 @@ object BudgetListScreen {
         uiState: BudgetListState,
         onEvent: (BudgetListEvent) -> Unit,
         showBudgetDetail: (Budget) -> Unit,
-        showSettings: () -> Unit
+        showSettings: () -> Unit,
+        networkMonitor: NetworkMonitor
     ) {
         val snackBarHostState = remember { SnackbarHostState() }
         var dropdownExpanded by remember { mutableStateOf(false) }
+        val isOnline by networkMonitor.isOnline.collectAsState()
 
         Scaffold(
             topBar = {
@@ -130,6 +136,7 @@ object BudgetListScreen {
                 list = uiState.budgetList,
                 isLoading = uiState.isLoading,
                 isSyncing = uiState.isSyncing,
+                isOnline = if (uiState.isAuthenticated) isOnline else true,
                 paddingValues = paddingValues,
                 onEvent = onEvent
             )

@@ -14,11 +14,13 @@ import com.meneses.budgethunter.commons.data.FileManager
 import com.meneses.budgethunter.commons.data.createDatabase
 import com.meneses.budgethunter.commons.platform.AndroidCameraManager
 import com.meneses.budgethunter.commons.platform.AndroidFilePickerManager
+import com.meneses.budgethunter.commons.platform.AndroidNetworkMonitor
 import com.meneses.budgethunter.commons.platform.AndroidNotificationManager
 import com.meneses.budgethunter.commons.platform.AndroidShareManager
 import com.meneses.budgethunter.commons.platform.AppUpdateManager
 import com.meneses.budgethunter.commons.platform.CameraManager
 import com.meneses.budgethunter.commons.platform.FilePickerManager
+import com.meneses.budgethunter.commons.platform.NetworkMonitor
 import com.meneses.budgethunter.commons.platform.NotificationManager
 import com.meneses.budgethunter.commons.platform.PermissionsManager
 import com.meneses.budgethunter.commons.platform.ShareManager
@@ -53,6 +55,9 @@ val androidPlatformModule = module {
     single<AppUpdateManager> { AppUpdateManager(get<Context>()) }
     single<NotificationManager> { AndroidNotificationManager(get<Context>()) }
     single<ShareManager> { AndroidShareManager(get<Context>()) }
+    single<NetworkMonitor> {
+        AndroidNetworkMonitor(get<Context>()).apply { startMonitoring() }
+    }
 
     // Keep concrete types available if needed elsewhere - use the same instance as the interface
     single<AndroidCameraManager> { get<CameraManager>() as AndroidCameraManager }

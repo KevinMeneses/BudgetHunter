@@ -1,5 +1,6 @@
 package com.meneses.budgethunter.budgetDetail.ui
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -11,6 +12,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -23,7 +25,9 @@ import com.meneses.budgethunter.budgetDetail.application.BudgetDetailEvent
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailState
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.budgetList.domain.Budget
+import com.meneses.budgethunter.commons.platform.NetworkMonitor
 import com.meneses.budgethunter.commons.ui.AppBar
+import com.meneses.budgethunter.commons.ui.OfflineBanner
 import kotlinx.serialization.Serializable
 import org.jetbrains.compose.resources.stringResource
 
@@ -38,12 +42,14 @@ data class BudgetDetailScreen(val budget: Budget) {
         showBudgetEntry: (BudgetEntry) -> Unit,
         showBudgetMetrics: (Budget) -> Unit,
         showSettings: () -> Unit,
-        showCollaborators: (Long, String) -> Unit
+        showCollaborators: (Long, String) -> Unit,
+        networkMonitor: NetworkMonitor
     ) {
         val snackBarHostState = remember { SnackbarHostState() }
         var dropdownExpanded by remember { mutableStateOf(false) }
         val currentBudget = uiState.budgetDetail.budget
         val isBudgetSynced = currentBudget.serverId != null
+        val isOnline by networkMonitor.isOnline.collectAsState()
 
         DisposableEffect(Unit) {
             if (uiState.budgetDetail.budget.id != budget.id) {
@@ -116,6 +122,7 @@ data class BudgetDetailScreen(val budget: Budget) {
         ) { paddingValues ->
             BudgetDetailContent(
                 paddingValues = paddingValues,
+                isOnline = if (uiState.isAuthenticated) isOnline else true,
                 uiState = uiState,
                 onEvent = onEvent
             )
