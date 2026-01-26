@@ -1,10 +1,26 @@
 package com.meneses.budgethunter.budgetEntry.domain
 
+import androidx.compose.runtime.Composable
+import budgethunter.composeapp.generated.resources.Res
+import budgethunter.composeapp.generated.resources.education
+import budgethunter.composeapp.generated.resources.food
+import budgethunter.composeapp.generated.resources.groceries
+import budgethunter.composeapp.generated.resources.health
+import budgethunter.composeapp.generated.resources.household_items
+import budgethunter.composeapp.generated.resources.income
+import budgethunter.composeapp.generated.resources.leisure
+import budgethunter.composeapp.generated.resources.other
+import budgethunter.composeapp.generated.resources.outcome
+import budgethunter.composeapp.generated.resources.self_care
+import budgethunter.composeapp.generated.resources.services
+import budgethunter.composeapp.generated.resources.taxes
+import budgethunter.composeapp.generated.resources.transportation
 import com.meneses.budgethunter.commons.EMPTY
-import kotlinx.serialization.Serializable
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import kotlinx.serialization.Serializable
+import org.jetbrains.compose.resources.stringResource
 
 @Serializable
 data class BudgetEntry(
@@ -62,28 +78,27 @@ data class BudgetEntry(
         )
     }
 }
-
-// TODO: get the real string resources not just hardcoded strings
+@Composable
 fun BudgetEntry.Type.toStringResource(): String {
     return when (this) {
-        BudgetEntry.Type.OUTCOME -> "Outcome"
-        BudgetEntry.Type.INCOME -> "Income"
+        BudgetEntry.Type.OUTCOME -> stringResource(Res.string.outcome)
+        BudgetEntry.Type.INCOME -> stringResource(Res.string.income)
     }
 }
 
-// TODO: get the real string resources not just hardcoded strings
+@Composable
 fun BudgetEntry.Category.toStringResource(): String {
     return when (this) {
-        BudgetEntry.Category.FOOD -> "Food"
-        BudgetEntry.Category.GROCERIES -> "Groceries"
-        BudgetEntry.Category.SELF_CARE -> "Self Care"
-        BudgetEntry.Category.TRANSPORTATION -> "Transportation"
-        BudgetEntry.Category.HOUSEHOLD_ITEMS -> "Household Items"
-        BudgetEntry.Category.SERVICES -> "Services"
-        BudgetEntry.Category.EDUCATION -> "Education"
-        BudgetEntry.Category.HEALTH -> "Health"
-        BudgetEntry.Category.LEISURE -> "Leisure"
-        BudgetEntry.Category.TAXES -> "Taxes"
-        BudgetEntry.Category.OTHER -> "Other"
+        BudgetEntry.Category.FOOD -> stringResource(Res.string.food)
+        BudgetEntry.Category.GROCERIES -> stringResource(Res.string.groceries)
+        BudgetEntry.Category.SELF_CARE -> stringResource(Res.string.self_care)
+        BudgetEntry.Category.TRANSPORTATION -> stringResource(Res.string.transportation)
+        BudgetEntry.Category.HOUSEHOLD_ITEMS -> stringResource(Res.string.household_items)
+        BudgetEntry.Category.SERVICES -> stringResource(Res.string.services)
+        BudgetEntry.Category.EDUCATION -> stringResource(Res.string.education)
+        BudgetEntry.Category.HEALTH -> stringResource(Res.string.health)
+        BudgetEntry.Category.LEISURE -> stringResource(Res.string.leisure)
+        BudgetEntry.Category.TAXES -> stringResource(Res.string.taxes)
+        BudgetEntry.Category.OTHER -> stringResource(Res.string.other)
     }
 }

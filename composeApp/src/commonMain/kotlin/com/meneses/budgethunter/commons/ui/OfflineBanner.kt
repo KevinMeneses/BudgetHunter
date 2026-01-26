@@ -14,6 +14,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import budgethunter.composeapp.generated.resources.Res
+import budgethunter.composeapp.generated.resources.offline_banner_message
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Banner component that displays when the device is offline
@@ -43,7 +46,7 @@ fun OfflineBanner(
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "Offline - Changes will sync when online",
+                text = stringResource(Res.string.offline_banner_message),
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color.White
             )

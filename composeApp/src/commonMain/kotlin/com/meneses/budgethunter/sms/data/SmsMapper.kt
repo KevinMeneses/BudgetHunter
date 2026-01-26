@@ -1,11 +1,15 @@
 package com.meneses.budgethunter.sms.data
 
+import budgethunter.composeapp.generated.resources.Res
+import budgethunter.composeapp.generated.resources.sms_transaction_from_bank
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
-import com.meneses.budgethunter.sms.domain.BankSmsConfig
 import com.meneses.budgethunter.commons.data.PreferencesManager
+import com.meneses.budgethunter.commons.resources.StringResourceProvider
+import com.meneses.budgethunter.sms.domain.BankSmsConfig
 
 class SmsMapper(
-    private val preferencesManager: PreferencesManager
+    private val preferencesManager: PreferencesManager,
+    private val stringResourceProvider: StringResourceProvider
 ) {
     suspend fun smsToBudgetEntry(messageBody: String, bankConfig: BankSmsConfig): BudgetEntry? {
         return try {
@@ -33,7 +37,10 @@ class SmsMapper(
 
             BudgetEntry(
                 amount = amount,
-                description = description ?: "Transacción de ${bankConfig.displayName}",
+                description = description ?: stringResourceProvider.getString(
+                    Res.string.sms_transaction_from_bank,
+                    bankConfig.displayName
+                ),
                 type = BudgetEntry.Type.OUTCOME,
                 budgetId = defaultBudgetId
             )

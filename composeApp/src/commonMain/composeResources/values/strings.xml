@@ -60,6 +60,7 @@
     <!-- Budget Fields -->
     <string name="name">Name</string>
     <string name="amount">Amount</string>
+    <string name="amount_placeholder">0.00</string>
     <string name="description">Description</string>
     <string name="no_description">No description</string>
     <string name="date">Date</string>
@@ -127,6 +128,11 @@
     <string name="ignore_transaction">Ignore</string>
     <string name="transaction_added">Transaction added successfully</string>
     <string name="transaction_failed">Error adding transaction</string>
+    <string name="transaction_added_message">Transaction for %1$s was detected</string>
+    <string name="transaction_failed_message">No bank configuration found for this SMS</string>
+    <string name="transaction_error">Transaction error</string>
+    <string name="transaction_error_message">Error processing SMS: %1$s</string>
+    <string name="sms_transaction_from_bank">Transaction from %1$s</string>
     
     <!-- Bank Settings -->
     <string name="default_budget">Default budget</string>
@@ -236,4 +242,9 @@
     <!-- Sync Status -->
     <string name="synced">Synced</string>
     <string name="pending_sync">Pending sync</string>
+    <string name="offline_banner_message">Offline - Changes will sync when online</string>
+
+    <!-- Common UI -->
+    <string name="confirmation">Confirmation</string>
+    <string name="error">Error</string>
 </resources>

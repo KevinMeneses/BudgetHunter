@@ -2,6 +2,8 @@ package com.meneses.budgethunter.budgetEntry
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import budgethunter.composeapp.generated.resources.Res
+import budgethunter.composeapp.generated.resources.error
 import com.meneses.budgethunter.budgetEntry.application.BudgetEntryEvent
 import com.meneses.budgethunter.budgetEntry.application.BudgetEntryState
 import com.meneses.budgethunter.budgetEntry.application.CreateBudgetEntryFromImageUseCase
@@ -14,6 +16,7 @@ import com.meneses.budgethunter.commons.platform.CameraManager
 import com.meneses.budgethunter.commons.platform.FilePickerManager
 import com.meneses.budgethunter.commons.platform.NotificationManager
 import com.meneses.budgethunter.commons.platform.ShareManager
+import com.meneses.budgethunter.commons.resources.StringResourceProvider
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -34,7 +37,8 @@ class BudgetEntryViewModel(
     private val cameraManager: CameraManager,
     private val filePickerManager: FilePickerManager,
     private val shareManager: ShareManager,
-    private val notificationManager: NotificationManager
+    private val notificationManager: NotificationManager,
+    private val stringResourceProvider: StringResourceProvider
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(BudgetEntryState())
@@ -234,10 +238,15 @@ class BudgetEntryViewModel(
     }
 
     private fun showNotification(message: String, isError: Boolean) {
-        if (isError) {
-            notificationManager.showNotification(title = "Error", message = message)
-        } else {
-            notificationManager.showToast(message)
+        viewModelScope.launch {
+            if (isError) {
+                notificationManager.showNotification(
+                    title = stringResourceProvider.getString(Res.string.error),
+                    message = message
+                )
+            } else {
+                notificationManager.showToast(message)
+            }
         }
     }
 

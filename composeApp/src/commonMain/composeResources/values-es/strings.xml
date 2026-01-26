@@ -60,6 +60,7 @@
     <!-- Budget Fields -->
     <string name="name">Nombre</string>
     <string name="amount">Monto</string>
+    <string name="amount_placeholder">0.00</string>
     <string name="description">Descripcion</string>
     <string name="no_description">Sin descripcion</string>
     <string name="date">Fecha</string>
@@ -127,6 +128,11 @@
     <string name="ignore_transaction">Ignorar</string>
     <string name="transaction_added">Transacción agregada exitosamente</string>
     <string name="transaction_failed">Error al agregar transacción</string>
+    <string name="transaction_added_message">Se detectó una transacción por %1$s</string>
+    <string name="transaction_failed_message">No se encontró configuración bancaria para este SMS</string>
+    <string name="transaction_error">Error de transacción</string>
+    <string name="transaction_error_message">Error procesando SMS: %1$s</string>
+    <string name="sms_transaction_from_bank">Transacción de %1$s</string>
     
     <!-- Bank Settings -->
     <string name="default_budget">Presupuesto por defecto</string>
@@ -236,4 +242,9 @@
     <!-- Sync Status -->
     <string name="synced">Sincronizado</string>
     <string name="pending_sync">Sincronización pendiente</string>
+    <string name="offline_banner_message">Sin conexión - Los cambios se sincronizarán cuando estés en línea</string>
+
+    <!-- Common UI -->
+    <string name="confirmation">Confirmación</string>
+    <string name="error">Error</string>
 </resources>

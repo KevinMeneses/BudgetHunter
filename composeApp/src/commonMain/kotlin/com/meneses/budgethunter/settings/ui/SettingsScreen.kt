@@ -53,6 +53,8 @@ import budgethunter.composeapp.generated.resources.no_default_budget
 import budgethunter.composeapp.generated.resources.settings
 import budgethunter.composeapp.generated.resources.sms_reading
 import budgethunter.composeapp.generated.resources.sms_reading_description
+import budgethunter.composeapp.generated.resources.banks_selected
+import budgethunter.composeapp.generated.resources.no_banks_selected
 import com.meneses.budgethunter.commons.ui.AppBar
 import com.meneses.budgethunter.commons.util.Platform
 import com.meneses.budgethunter.settings.application.SettingsEvent
@@ -230,9 +232,9 @@ object SettingsScreen {
                         icon = Icons.Default.Build,
                         title = stringResource(Res.string.bank_for_sms_notifications),
                         subtitle = if (uiState.selectedBanks.isNotEmpty()) {
-                            "${uiState.selectedBanks.size} banks selected"
+                            stringResource(Res.string.banks_selected, uiState.selectedBanks.size)
                         } else {
-                            "No banks selected"
+                            stringResource(Res.string.no_banks_selected)
                         },
                         showButton = true,
                         onButtonClick = onSelectBanks,
