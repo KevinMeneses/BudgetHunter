@@ -79,10 +79,10 @@ The app now has **fully functional budget synchronization and collaborator manag
 ### 📊 PROGRESS METRICS
 - **Total Phases**: 11
 - **Completed Phases**: 7 (64%)
-- **In Progress**: Phase 9 - Error Handling & Offline Support (1/5 tasks complete)
+- **In Progress**: Phase 9 - Error Handling & Offline Support (3/5 tasks complete)
 - **Total Tasks**: ~76 (added Task 2.8, 2.9, and 4 Phase 7 tasks)
-- **Completed Tasks**: 46 (61%)
-- **Estimated Remaining Time**: ~39 hours (~1 week)
+- **Completed Tasks**: 48 (63%)
+- **Estimated Remaining Time**: ~35 hours (~1 week)
 
 ### 🚨 CRITICAL GAPS & RISKS
 1. ~~**No Database Schema Changes Yet**~~ ✅ - Budget/BudgetEntry tables now have sync fields
@@ -93,8 +93,8 @@ The app now has **fully functional budget synchronization and collaborator manag
 6. ~~**No Collaborator Management**~~ ✅ - Full collaborator add/remove functionality complete (Phase 6)
 7. **Hardcoded Backend URL** - Not configurable per environment (Task 10.7)
 8. **No Offline Support** - Network errors not handled gracefully (Phase 9) **← HIGHEST PRIORITY**
-9. **No Real-time Updates** - SSE not implemented (Phase 7)
-10. **Token Refresh Not Automatic** - Auth plugin refresh logic incomplete (Task 9.5)
+9. ~~**No Real-time Updates**~~ ✅ - SSE implementation complete (Phase 7)
+10. ~~**Token Refresh Not Automatic**~~ ✅ - Auth plugin refresh logic implemented (Task 9.5)
 
 ---
 
@@ -1807,10 +1807,10 @@ Call after successful first sign in.
 
 ---
 
-## PHASE 9: ERROR HANDLING & OFFLINE SUPPORT (MEDIUM RISK) 🔄 IN PROGRESS (1/5)
+## PHASE 9: ERROR HANDLING & OFFLINE SUPPORT (MEDIUM RISK) 🔄 IN PROGRESS (3/5)
 
 ### 📋 PHASE 9 OVERVIEW
-**Status**: IN PROGRESS (Task 9.1 complete, 4 tasks remaining)
+**Status**: IN PROGRESS (Tasks 9.1, 9.2, 9.5 complete, 2 tasks remaining)
 **Critical Priority**: HIGH - Essential for production app
 **Description**: Implement robust error handling, offline detection, and retry logic
 
@@ -1955,38 +1955,38 @@ fun OfflineBanner(isOffline: Boolean) {
 
 ---
 
-### Task 9.5: Implement Token Refresh on 401
+### Task 9.5: Implement Token Refresh on 401 ✅ COMPLETED
 **Effort**: 2 hours
 **Risk**: Medium
 **Description**: Automatically refresh expired tokens and retry request
 
-**Deliverable**: Update Ktor Auth plugin in ApiClient:
-```kotlin
-install(Auth) {
-    bearer {
-        loadTokens { /* ... */ }
+**Completion Notes**: Token refresh successfully implemented:
+- ✅ Replaced custom auth plugin with Ktor's official `Auth` plugin with `bearer` provider
+- ✅ Implemented `loadTokens` to load auth and refresh tokens from `TokenStorage`
+- ✅ Implemented `refreshTokens` block that:
+  - Creates temporary HttpClient without auth to avoid recursion
+  - Makes POST request to `/api/users/refresh_token` with current refresh token
+  - Saves new tokens from response (token rotation)
+  - Returns new `BearerTokens` to retry original request
+  - Clears tokens and forces re-login if refresh fails
+- ✅ Added `sendWithoutRequest` to exclude auth endpoints from token attachment
+- ✅ Proper error handling with token cleanup on failure
+- ✅ Builds successfully on both Android and iOS
 
-        refreshTokens {
-            val refreshToken = tokenStorage.getRefreshToken() ?: return@refreshTokens null
-
-            val response = authRepository.refreshToken()
-            response.getOrNull()?.let {
-                tokenStorage.saveAuthToken(it.authToken)
-                tokenStorage.saveRefreshToken(it.refreshToken)
-                BearerTokens(it.authToken, it.refreshToken)
-            }
-        }
-    }
-}
-```
+**Implementation Details**:
+- Updated `HttpClientFactory.kt` in `composeApp/src/commonMain/kotlin/com/meneses/budgethunter/commons/data/network/`
+- Uses Ktor's `ktor-client-auth` dependency (already present)
+- Creates separate temporary HttpClient for refresh calls to prevent circular dependency
+- Properly closes temporary client after use to prevent resource leaks
 
 **Validation**:
-- Expired token triggers refresh
-- Refresh rotates token correctly
-- Original request retries with new token
-- Failed refresh logs user out
+- ✅ Code compiles on both Android and iOS platforms
+- ⏳ Runtime testing: Expired token triggers refresh (requires backend testing)
+- ⏳ Runtime testing: Refresh rotates token correctly (requires backend testing)
+- ⏳ Runtime testing: Original request retries with new token (requires backend testing)
+- ⏳ Runtime testing: Failed refresh logs user out (requires backend testing)
 
-**Rollback**: Remove auto-refresh logic
+**Rollback**: Revert HttpClientFactory.kt to use custom auth plugin
 
 **Dependencies**: Task 2.1, Task 9.4
 
@@ -2309,7 +2309,7 @@ Advanced features and polish:
 
 ### ⚠️ CRITICAL ITEMS TO ADDRESS IMMEDIATELY
 1. ~~**Clear Local Data on Sign Out** (Task 2.8)~~ ✅: COMPLETED - Sign out now clears all budgets and entries
-2. **Fix Token Refresh Logic** (Task 9.5): HttpClientFactory has placeholder for token refresh - needs to call AuthRepository.refreshToken()
+2. ~~**Fix Token Refresh Logic** (Task 9.5)~~ ✅: COMPLETED - HttpClientFactory now uses Ktor Auth plugin with automatic token refresh on 401
 3. **Make Base URL Configurable** (Task 10.7): Move hardcoded "http://10.0.2.2:8080" to build config or environment variable
 4. **Add Basic Error Handling**: Current auth flows don't handle network errors gracefully
 
