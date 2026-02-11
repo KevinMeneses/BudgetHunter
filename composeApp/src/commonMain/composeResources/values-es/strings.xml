@@ -231,6 +231,16 @@
     <string name="error_sign_in_failed">Error al iniciar sesión. Por favor verifica tus credenciales e intenta nuevamente.</string>
     <string name="error_sign_up_failed">Error al registrarse. Por favor intenta más tarde.</string>
 
+    <!-- API Errors -->
+    <string name="error_unauthorized">Sesión expirada. Por favor inicia sesión nuevamente.</string>
+    <string name="error_forbidden">No tienes permiso para realizar esta acción.</string>
+    <string name="error_not_found">El recurso solicitado no fue encontrado.</string>
+    <string name="error_conflict">Este elemento ha sido modificado por otro usuario. Por favor actualiza e intenta nuevamente.</string>
+    <string name="error_server">Error del servidor. Por favor intenta más tarde.</string>
+    <string name="error_timeout">Se agotó el tiempo de espera. Por favor intenta nuevamente.</string>
+    <string name="error_parse">Error al procesar la respuesta del servidor. Por favor intenta nuevamente.</string>
+    <string name="error_unknown">Ocurrió un error inesperado. Por favor intenta nuevamente.</string>
+
     <!-- Offline Mode -->
     <string name="continue_offline">Continuar Sin Conexión</string>
     <string name="offline_mode_description">Usa la aplicación sin una cuenta. Tus datos se guardarán localmente solo en este dispositivo.</string>

@@ -231,6 +231,16 @@
     <string name="error_sign_in_failed">Sign in failed. Please check your credentials and try again.</string>
     <string name="error_sign_up_failed">Sign up failed. Please try again later.</string>
 
+    <!-- API Errors -->
+    <string name="error_unauthorized">Session expired. Please sign in again.</string>
+    <string name="error_forbidden">You don\'t have permission to perform this action.</string>
+    <string name="error_not_found">The requested resource was not found.</string>
+    <string name="error_conflict">This item has been modified by another user. Please refresh and try again.</string>
+    <string name="error_server">Server error. Please try again later.</string>
+    <string name="error_timeout">Request timed out. Please try again.</string>
+    <string name="error_parse">Failed to process server response. Please try again.</string>
+    <string name="error_unknown">An unexpected error occurred. Please try again.</string>
+
     <!-- Offline Mode -->
     <string name="continue_offline">Continue Offline</string>
     <string name="offline_mode_description">Use the app without an account. Your data will be stored locally on this device only.</string>

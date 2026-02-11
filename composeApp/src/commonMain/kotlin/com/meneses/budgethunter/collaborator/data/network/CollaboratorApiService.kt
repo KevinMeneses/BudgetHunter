@@ -3,6 +3,7 @@ package com.meneses.budgethunter.collaborator.data.network
 import com.meneses.budgethunter.commons.data.network.models.AddCollaboratorRequest
 import com.meneses.budgethunter.commons.data.network.models.CollaboratorResponse
 import com.meneses.budgethunter.commons.data.network.models.UserInfo
+import com.meneses.budgethunter.commons.data.network.safeApiCall
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.delete
@@ -36,19 +37,14 @@ class CollaboratorApiService(
         budgetId: Long,
         request: AddCollaboratorRequest
     ): Result<CollaboratorResponse> = withContext(ioDispatcher) {
-        try {
-            println("CollaboratorApiService: Adding collaborator to budget $budgetId with request: $request")
-            val response: CollaboratorResponse = httpClient.post("/api/budgets/$budgetId/collaborators") {
+        println("CollaboratorApiService: Adding collaborator to budget $budgetId with request: $request")
+        safeApiCall {
+            httpClient.post("/api/budgets/$budgetId/collaborators") {
                 contentType(ContentType.Application.Json)
                 setBody(request)
-            }.body()
-            println("CollaboratorApiService: Successfully added collaborator: $response")
-            Result.success(response)
-        } catch (e: Exception) {
-            println("CollaboratorApiService: Error adding collaborator - ${e.message}")
-            println("CollaboratorApiService: Error type: ${e::class.simpleName}")
-            e.printStackTrace()
-            Result.failure(Exception("Failed to add collaborator to budget: ${e.message}", e))
+            }.body<CollaboratorResponse>().also {
+                println("CollaboratorApiService: Successfully added collaborator: $it")
+            }
         }
     }
 
@@ -62,16 +58,11 @@ class CollaboratorApiService(
      */
     suspend fun getCollaborators(budgetId: Long): Result<List<UserInfo>> =
         withContext(ioDispatcher) {
-            try {
-                println("CollaboratorApiService: Fetching collaborators for budget $budgetId")
-                val response = httpClient.get("/api/budgets/$budgetId/collaborators")
-                val collaborators = response.body<List<UserInfo>>()
-                println("CollaboratorApiService: Successfully fetched ${collaborators.size} collaborators")
-                Result.success(collaborators)
-            } catch (e: Exception) {
-                println("CollaboratorApiService: Error fetching collaborators - ${e.message}")
-                e.printStackTrace()
-                Result.failure(Exception("Failed to fetch collaborators: ${e.message}", e))
+            println("CollaboratorApiService: Fetching collaborators for budget $budgetId")
+            safeApiCall {
+                httpClient.get("/api/budgets/$budgetId/collaborators")
+                    .body<List<UserInfo>>()
+                    .also { println("CollaboratorApiService: Successfully fetched ${it.size} collaborators") }
             }
         }
 
@@ -88,17 +79,11 @@ class CollaboratorApiService(
         budgetId: Long,
         email: String
     ): Result<Unit> = withContext(ioDispatcher) {
-        try {
-            println("CollaboratorApiService: Removing collaborator $email from budget $budgetId")
+        println("CollaboratorApiService: Removing collaborator $email from budget $budgetId")
+        safeApiCall {
             val encodedEmail = email.encodeURLPath()
             httpClient.delete("/api/budgets/$budgetId/collaborators/$encodedEmail")
             println("CollaboratorApiService: Successfully removed collaborator: $email")
-            Result.success(Unit)
-        } catch (e: Exception) {
-            println("CollaboratorApiService: Error removing collaborator - ${e.message}")
-            println("CollaboratorApiService: Error type: ${e::class.simpleName}")
-            e.printStackTrace()
-            Result.failure(Exception("Failed to remove collaborator from budget: ${e.message}", e))
         }
     }
 }

@@ -2,6 +2,7 @@ package com.meneses.budgethunter.budgetList.data.network
 
 import com.meneses.budgethunter.commons.data.network.models.BudgetResponse
 import com.meneses.budgethunter.commons.data.network.models.CreateBudgetRequest
+import com.meneses.budgethunter.commons.data.network.safeApiCall
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.delete
@@ -29,19 +30,14 @@ class BudgetApiService(
      */
     suspend fun createBudget(request: CreateBudgetRequest): Result<BudgetResponse> =
         withContext(ioDispatcher) {
-            try {
-                println("BudgetApiService: Creating budget with request: $request")
-                val response: BudgetResponse = httpClient.post("/api/budgets") {
+            println("BudgetApiService: Creating budget with request: $request")
+            safeApiCall {
+                httpClient.post("/api/budgets") {
                     contentType(ContentType.Application.Json)
                     setBody(request)
-                }.body()
-                println("BudgetApiService: Successfully created budget: $response")
-                Result.success(response)
-            } catch (e: Exception) {
-                println("BudgetApiService: Error creating budget - ${e.message}")
-                println("BudgetApiService: Error type: ${e::class.simpleName}")
-                e.printStackTrace()
-                Result.failure(Exception("Failed to create budget on server: ${e.message}", e))
+                }.body<BudgetResponse>().also {
+                    println("BudgetApiService: Successfully created budget: $it")
+                }
             }
         }
 
@@ -52,16 +48,11 @@ class BudgetApiService(
      */
     suspend fun getBudgets(): Result<List<BudgetResponse>> =
         withContext(ioDispatcher) {
-            try {
-                println("BudgetApiService: Fetching budgets from server")
-                val response = httpClient.get("/api/budgets")
-                val budgets = response.body<List<BudgetResponse>>()
-                println("BudgetApiService: Successfully fetched ${budgets.size} budgets")
-                Result.success(budgets)
-            } catch (e: Exception) {
-                println("BudgetApiService: Error fetching budgets - ${e.message}")
-                e.printStackTrace()
-                Result.failure(e)
+            println("BudgetApiService: Fetching budgets from server")
+            safeApiCall {
+                httpClient.get("/api/budgets")
+                    .body<List<BudgetResponse>>()
+                    .also { println("BudgetApiService: Successfully fetched ${it.size} budgets") }
             }
         }
 
@@ -75,15 +66,10 @@ class BudgetApiService(
      */
     suspend fun deleteBudget(budgetId: Long): Result<Unit> =
         withContext(ioDispatcher) {
-            try {
-                println("BudgetApiService: Deleting budget with ID: $budgetId")
+            println("BudgetApiService: Deleting budget with ID: $budgetId")
+            safeApiCall {
                 httpClient.delete("/api/budgets/$budgetId")
                 println("BudgetApiService: Successfully deleted budget with ID: $budgetId")
-                Result.success(Unit)
-            } catch (e: Exception) {
-                println("BudgetApiService: Error deleting budget - ${e.message}")
-                e.printStackTrace()
-                Result.failure(Exception("Failed to delete budget from server: ${e.message}", e))
             }
         }
 }

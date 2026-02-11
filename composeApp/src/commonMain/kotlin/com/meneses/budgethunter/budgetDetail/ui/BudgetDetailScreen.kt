@@ -156,8 +156,11 @@ data class BudgetDetailScreen(val budget: Budget) {
             uiState.showEntry?.let { showBudgetEntry(it) }
         }
 
-        LaunchedEffect(key1 = uiState.syncError) {
-            uiState.syncError?.let { message ->
+        // Convert StringResource to String in composable context
+        val syncErrorMessage = uiState.syncError?.let { stringResource(it) }
+
+        LaunchedEffect(key1 = syncErrorMessage) {
+            syncErrorMessage?.let { message ->
                 snackBarHostState.showSnackbar(message)
                 BudgetDetailEvent.ClearSyncError.run(onEvent)
             }

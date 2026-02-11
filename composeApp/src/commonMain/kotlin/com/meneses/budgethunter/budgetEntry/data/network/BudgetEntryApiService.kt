@@ -3,6 +3,7 @@ package com.meneses.budgethunter.budgetEntry.data.network
 import com.meneses.budgethunter.commons.data.network.models.BudgetEntryResponse
 import com.meneses.budgethunter.commons.data.network.models.CreateBudgetEntryRequest
 import com.meneses.budgethunter.commons.data.network.models.UpdateBudgetEntryRequest
+import com.meneses.budgethunter.commons.data.network.safeApiCall
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.delete
@@ -36,19 +37,14 @@ class BudgetEntryApiService(
         budgetId: Long,
         request: CreateBudgetEntryRequest
     ): Result<BudgetEntryResponse> = withContext(ioDispatcher) {
-        try {
-            println("BudgetEntryApiService: Creating entry for budget $budgetId with request: $request")
-            val response: BudgetEntryResponse = httpClient.post("/api/budgets/$budgetId/entries") {
+        println("BudgetEntryApiService: Creating entry for budget $budgetId with request: $request")
+        safeApiCall {
+            httpClient.post("/api/budgets/$budgetId/entries") {
                 contentType(ContentType.Application.Json)
                 setBody(request)
-            }.body()
-            println("BudgetEntryApiService: Successfully created entry: $response")
-            Result.success(response)
-        } catch (e: Exception) {
-            println("BudgetEntryApiService: Error creating entry - ${e.message}")
-            println("BudgetEntryApiService: Error type: ${e::class.simpleName}")
-            e.printStackTrace()
-            Result.failure(Exception("Failed to create entry on server: ${e.message}", e))
+            }.body<BudgetEntryResponse>().also {
+                println("BudgetEntryApiService: Successfully created entry: $it")
+            }
         }
     }
 
@@ -67,19 +63,14 @@ class BudgetEntryApiService(
         entryId: Long,
         request: UpdateBudgetEntryRequest
     ): Result<BudgetEntryResponse> = withContext(ioDispatcher) {
-        try {
-            println("BudgetEntryApiService: Updating entry $entryId for budget $budgetId with request: $request")
-            val response: BudgetEntryResponse = httpClient.put("/api/budgets/$budgetId/entries/$entryId") {
+        println("BudgetEntryApiService: Updating entry $entryId for budget $budgetId with request: $request")
+        safeApiCall {
+            httpClient.put("/api/budgets/$budgetId/entries/$entryId") {
                 contentType(ContentType.Application.Json)
                 setBody(request)
-            }.body()
-            println("BudgetEntryApiService: Successfully updated entry: $response")
-            Result.success(response)
-        } catch (e: Exception) {
-            println("BudgetEntryApiService: Error updating entry - ${e.message}")
-            println("BudgetEntryApiService: Error type: ${e::class.simpleName}")
-            e.printStackTrace()
-            Result.failure(Exception("Failed to update entry on server: ${e.message}", e))
+            }.body<BudgetEntryResponse>().also {
+                println("BudgetEntryApiService: Successfully updated entry: $it")
+            }
         }
     }
 
@@ -93,16 +84,11 @@ class BudgetEntryApiService(
      */
     suspend fun getEntries(budgetId: Long): Result<List<BudgetEntryResponse>> =
         withContext(ioDispatcher) {
-            try {
-                println("BudgetEntryApiService: Fetching entries for budget $budgetId")
-                val response = httpClient.get("/api/budgets/$budgetId/entries")
-                val entries = response.body<List<BudgetEntryResponse>>()
-                println("BudgetEntryApiService: Successfully fetched ${entries.size} entries")
-                Result.success(entries)
-            } catch (e: Exception) {
-                println("BudgetEntryApiService: Error fetching entries - ${e.message}")
-                e.printStackTrace()
-                Result.failure(e)
+            println("BudgetEntryApiService: Fetching entries for budget $budgetId")
+            safeApiCall {
+                httpClient.get("/api/budgets/$budgetId/entries")
+                    .body<List<BudgetEntryResponse>>()
+                    .also { println("BudgetEntryApiService: Successfully fetched ${it.size} entries") }
             }
         }
 
@@ -119,15 +105,10 @@ class BudgetEntryApiService(
         budgetId: Long,
         entryId: Long
     ): Result<Unit> = withContext(ioDispatcher) {
-        try {
-            println("BudgetEntryApiService: Deleting entry $entryId for budget $budgetId")
+        println("BudgetEntryApiService: Deleting entry $entryId for budget $budgetId")
+        safeApiCall {
             httpClient.delete("/api/budgets/$budgetId/entries/$entryId")
             println("BudgetEntryApiService: Successfully deleted entry $entryId for budget $budgetId")
-            Result.success(Unit)
-        } catch (e: Exception) {
-            println("BudgetEntryApiService: Error deleting entry - ${e.message}")
-            e.printStackTrace()
-            Result.failure(Exception("Failed to delete entry on server: ${e.message}", e))
         }
     }
 }

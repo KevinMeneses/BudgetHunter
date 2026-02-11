@@ -3,12 +3,13 @@ package com.meneses.budgethunter.budgetDetail.application
 import com.meneses.budgethunter.budgetDetail.domain.BudgetDetail
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntryFilter
+import org.jetbrains.compose.resources.StringResource
 
 data class BudgetDetailState(
     val budgetDetail: BudgetDetail = BudgetDetail(),
     val isLoading: Boolean = true,
     val isSyncingEntries: Boolean = false,
-    val syncError: String? = null,
+    val syncError: StringResource? = null,
     val isBudgetModalVisible: Boolean = false,
     val isFilterModalVisible: Boolean = false,
     val isCollaborateModalVisible: Boolean = false,

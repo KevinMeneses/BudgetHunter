@@ -10,6 +10,8 @@ import com.meneses.budgethunter.budgetEntry.data.sync.RealTimeSyncManager
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntryFilter
 import com.meneses.budgethunter.budgetList.domain.Budget
+import com.meneses.budgethunter.commons.data.network.ApiError
+import com.meneses.budgethunter.commons.data.network.toApiError
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -232,13 +234,13 @@ class BudgetDetailViewModel(
             val result = budgetDetailRepository.syncEntries()
             if (result.isFailure && showErrors) {
                 val error = result.exceptionOrNull()
-                val message = error?.message ?: "Failed to sync entries"
-                _uiState.update { it.copy(syncError = message) }
+                val apiError = error?.toApiError() ?: ApiError.Unknown
+                _uiState.update { it.copy(syncError = apiError.messageResource) }
             }
         } catch (e: Exception) {
             if (showErrors) {
-                val message = e.message ?: "Failed to sync entries"
-                _uiState.update { it.copy(syncError = message) }
+                val apiError = e.toApiError()
+                _uiState.update { it.copy(syncError = apiError.messageResource) }
             }
         } finally {
             delay(100)
