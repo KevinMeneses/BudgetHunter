@@ -32,14 +32,12 @@ class BudgetEntrySyncManager(
     suspend fun syncPendingEntries(budgetId: Int): Result<Unit> = withContext(ioDispatcher) {
         try {
             if (!authRepository.isAuthenticated()) {
-                println("BudgetEntrySyncManager: Cannot sync entries – user not authenticated")
                 return@withContext Result.failure(Exception("User not authenticated"))
             }
 
             val budget = budgetLocalDataSource.getById(budgetId)
             val budgetServerId = budget?.serverId
             if (budgetServerId == null) {
-                println("BudgetEntrySyncManager: Budget $budgetId has no server ID; skipping entry sync")
                 return@withContext Result.failure(Exception("Budget not yet synced with server"))
             }
 
@@ -47,8 +45,6 @@ class BudgetEntrySyncManager(
                 .selectUnsyncedByBudgetId(budgetId.toLong())
                 .executeAsList()
                 .toDomain()
-
-            println("BudgetEntrySyncManager: Found ${pendingEntries.size} unsynced entries for budget $budgetId")
 
             pendingEntries.forEach { entry ->
                 if (entry.serverId == null) {
@@ -60,7 +56,6 @@ class BudgetEntrySyncManager(
 
             Result.success(Unit)
         } catch (e: Exception) {
-            println("BudgetEntrySyncManager: Unexpected error while syncing pending entries - ${e.message}")
             Result.failure(e)
         }
     }
@@ -77,7 +72,6 @@ class BudgetEntrySyncManager(
     ): Result<Unit> = withContext(ioDispatcher) {
         try {
             if (!authRepository.isAuthenticated()) {
-                println("BudgetEntrySyncManager: Cannot pull entries – user not authenticated")
                 return@withContext Result.failure(Exception("User not authenticated"))
             }
 
@@ -87,24 +81,22 @@ class BudgetEntrySyncManager(
                 ?.id
 
             if (budgetId == null) {
-                println("BudgetEntrySyncManager: No local budget for server ID $budgetServerId; skipping pull")
                 return@withContext Result.failure(Exception("Local budget not found for server ID $budgetServerId"))
             }
 
             budgetEntryApiService.getEntries(budgetServerId).fold(
                 onSuccess = { serverEntries ->
-                    println("BudgetEntrySyncManager: Pulled ${serverEntries.size} entries from server for budget $budgetServerId")
-                    serverEntries.forEach { mergeServerEntry(budgetId, it) }
+                    serverEntries.forEach { serverEntry ->
+                        mergeServerEntry(budgetId, serverEntry)
+                    }
                 },
                 onFailure = { error ->
-                    println("BudgetEntrySyncManager: Failed to fetch entries - ${error.message}")
                     return@withContext Result.failure(error)
                 }
             )
 
             Result.success(Unit)
         } catch (e: Exception) {
-            println("BudgetEntrySyncManager: Unexpected error while pulling entries - ${e.message}")
             Result.failure(e)
         }
     }
@@ -118,7 +110,27 @@ class BudgetEntrySyncManager(
             pullEntriesFromServer(budgetServerId, localBudgetId = budgetId).getOrThrow()
             Result.success(Unit)
         } catch (e: Exception) {
-            println("BudgetEntrySyncManager: Full sync failed - ${e.message}")
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Syncs entries for all budgets that have been synced to the server.
+     * Called during sign-in to ensure all budget entries are up to date.
+     */
+    suspend fun syncAllBudgetsEntries(): Result<Unit> = withContext(ioDispatcher) {
+        try {
+            val budgets = budgetLocalDataSource.getAllCached()
+            budgets.forEach { budget ->
+                budget.serverId?.let { serverId ->
+                    performFullSync(
+                        budgetId = budget.id,
+                        budgetServerId = serverId
+                    )
+                }
+            }
+            Result.success(Unit)
+        } catch (e: Exception) {
             Result.failure(e)
         }
     }
@@ -127,19 +139,15 @@ class BudgetEntrySyncManager(
         val request = entry.toCreateRequest()
         budgetEntryApiService.createEntry(budgetServerId, request).fold(
             onSuccess = { response ->
-                println("BudgetEntrySyncManager: Created entry on server with ID ${response.id}")
                 updateLocalEntryFromResponse(entry, response)
             },
-            onFailure = { error ->
-                println("BudgetEntrySyncManager: Failed to create entry ${entry.id} - ${error.message}")
-            }
+            onFailure = { /* Ignore push failures */ }
         )
     }
 
     private suspend fun pushUpdatedEntry(budgetServerId: Long, entry: BudgetEntry) {
         val entryServerId = entry.serverId
         if (entryServerId == null) {
-            println("BudgetEntrySyncManager: Entry ${entry.id} missing server ID; treating as new entry")
             pushNewEntry(budgetServerId, entry)
             return
         }
@@ -147,22 +155,36 @@ class BudgetEntrySyncManager(
         val request = entry.toUpdateRequest()
         budgetEntryApiService.updateEntry(budgetServerId, entryServerId, request).fold(
             onSuccess = { response ->
-                println("BudgetEntrySyncManager: Updated server entry ${response.id}")
                 updateLocalEntryFromResponse(entry, response)
             },
-            onFailure = { error ->
-                println("BudgetEntrySyncManager: Failed to update entry ${entry.id} - ${error.message}")
-            }
+            onFailure = { /* Ignore push failures */ }
         )
     }
 
     private fun mergeServerEntry(localBudgetId: Int, serverEntry: BudgetEntryResponse) {
-        val existingEntry = budgetEntryQueries
+        // First, try to find existing entry by server ID
+        var existingEntry = budgetEntryQueries
             .selectByServerId(serverEntry.id)
             .executeAsOneOrNull()
             ?.toDomain()
 
+        // If not found by server ID, check by unique fields (budgetId + amount + description + creationDate)
+        // This handles the case where an entry was just pushed to the server but the serverId
+        // update hasn't been committed yet (race condition during sync/SSE)
+        if (existingEntry == null) {
+            existingEntry = budgetEntryQueries
+                .selectByUniqueFields(
+                    budgetId = localBudgetId.toLong(),
+                    amount = serverEntry.amount,
+                    description = serverEntry.description,
+                    creationDate = serverEntry.creationDate
+                )
+                .executeAsOneOrNull()
+                ?.toDomain()
+        }
+
         if (existingEntry != null) {
+            // Update existing entry with server data
             val updatedEntry = existingEntry.copy(
                 amount = serverEntry.amount.toPlainString(),
                 description = serverEntry.description,
@@ -177,6 +199,7 @@ class BudgetEntrySyncManager(
             )
             localDataSource.update(updatedEntry)
         } else {
+            // Create new entry from server (this is a new entry from another user/device)
             val newEntry = BudgetEntry(
                 budgetId = localBudgetId,
                 amount = serverEntry.amount.toPlainString(),

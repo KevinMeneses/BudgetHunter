@@ -70,7 +70,11 @@ class BudgetDetailViewModel(
             is BudgetDetailEvent.ToggleSelectEntry -> toggleEntrySelection(event)
             is BudgetDetailEvent.ClearNavigation -> clearNavigation()
             is BudgetDetailEvent.SortList -> orderList()
-            is BudgetDetailEvent.SyncEntries -> syncEntries(showErrors = true)
+            is BudgetDetailEvent.SyncEntries -> {
+                val budget = _uiState.value.budgetDetail.budget
+                syncEntries(budgetId = budget.id, serverId = budget.serverId, showErrors = true)
+            }
+
             is BudgetDetailEvent.ClearSyncError -> clearSyncError()
         }
     }
@@ -121,23 +125,36 @@ class BudgetDetailViewModel(
             )
         }
 
-    private fun getBudgetDetail() = viewModelScope.launch {
+    private fun getBudgetDetail() {
         val budgetId = _uiState.value.budgetDetail.budget.id
-        budgetDetailRepository
-            .getBudgetDetailById(budgetId)
-            .collect { detail ->
-                val currentFilter = _uiState.value.filter
-                val updatedDetail = if (currentFilter == null) detail
-                else budgetDetailRepository.getAllFilteredBy(currentFilter)
-                _uiState.update {
-                    it.copy(budgetDetail = updatedDetail, isLoading = false)
-                }
 
-                if (!hasTriggeredInitialSync && updatedDetail.budget.serverId != null) {
+        viewModelScope.launch {
+            // Trigger auto-sync ONCE before starting to collect, not on every emission
+            if (!hasTriggeredInitialSync) {
+                val currentServerId = _uiState.value.budgetDetail.budget.serverId
+                if (currentServerId != null) {
                     hasTriggeredInitialSync = true
-                    syncEntries(showErrors = false)
+                    viewModelScope.launch {
+                        syncEntries(
+                            budgetId = budgetId,
+                            serverId = currentServerId,
+                            showErrors = false
+                        )
+                    }
                 }
             }
+
+            budgetDetailRepository
+                .getBudgetDetailById(budgetId)
+                .collect { detail ->
+                    val currentFilter = _uiState.value.filter
+                    val updatedDetail = if (currentFilter == null) detail
+                    else budgetDetailRepository.getAllFilteredBy(currentFilter)
+                    _uiState.update {
+                        it.copy(budgetDetail = updatedDetail, isLoading = false)
+                    }
+                }
+        }
     }
 
     private fun clearNavigation() =
@@ -221,37 +238,38 @@ class BudgetDetailViewModel(
             )
         }
 
-    private fun syncEntries(showErrors: Boolean) = viewModelScope.launch {
-        hasTriggeredInitialSync = true
-        _uiState.update {
-            it.copy(
-                isSyncingEntries = showErrors,
-                isLoading = if (showErrors) it.isLoading else true,
-                syncError = if (showErrors) null else it.syncError
-            )
-        }
-        try {
-            val result = budgetDetailRepository.syncEntries()
-            if (result.isFailure && showErrors) {
-                val error = result.exceptionOrNull()
-                val apiError = error?.toApiError() ?: ApiError.Unknown
-                _uiState.update { it.copy(syncError = apiError.messageResource) }
-            }
-        } catch (e: Exception) {
-            if (showErrors) {
-                val apiError = e.toApiError()
-                _uiState.update { it.copy(syncError = apiError.messageResource) }
-            }
-        } finally {
-            delay(100)
+    private fun syncEntries(budgetId: Int? = null, serverId: Long? = null, showErrors: Boolean) =
+        viewModelScope.launch {
+            hasTriggeredInitialSync = true
             _uiState.update {
                 it.copy(
-                    isSyncingEntries = false,
-                    isLoading = if (showErrors) it.isLoading else false
+                    isSyncingEntries = showErrors,
+                    isLoading = if (showErrors) it.isLoading else true,
+                    syncError = if (showErrors) null else it.syncError
                 )
             }
+            try {
+                val result = budgetDetailRepository.syncEntries(budgetId, serverId)
+                if (result.isFailure && showErrors) {
+                    val error = result.exceptionOrNull()
+                    val apiError = error?.toApiError() ?: ApiError.Unknown
+                    _uiState.update { it.copy(syncError = apiError.messageResource) }
+                }
+            } catch (e: Exception) {
+                if (showErrors) {
+                    val apiError = e.toApiError()
+                    _uiState.update { it.copy(syncError = apiError.messageResource) }
+                }
+            } finally {
+                delay(100)
+                _uiState.update {
+                    it.copy(
+                        isSyncingEntries = false,
+                        isLoading = if (showErrors) it.isLoading else false
+                    )
+                }
+            }
         }
-    }
 
     private fun clearSyncError() {
         _uiState.update { it.copy(syncError = null) }

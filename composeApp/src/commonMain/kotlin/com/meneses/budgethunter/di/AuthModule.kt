@@ -51,7 +51,8 @@ val authModule = module {
         SignInViewModel(
             authRepository = get<AuthRepository>(),
             preferencesManager = get(),
-            budgetRepository = get()
+            budgetRepository = get(),
+            budgetEntrySyncManager = get()
         )
     }
 

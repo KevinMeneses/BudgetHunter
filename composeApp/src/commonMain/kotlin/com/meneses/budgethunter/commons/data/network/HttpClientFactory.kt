@@ -121,8 +121,8 @@ fun createHttpClient(
                     // Send tokens with all requests except auth endpoints
                     val path = request.url.toString()
                     !path.contains("/api/users/sign_in") &&
-                    !path.contains("/api/users/sign_up") &&
-                    !path.contains("/api/users/refresh_token")
+                        !path.contains("/api/users/sign_up") &&
+                        !path.contains("/api/users/refresh_token")
                 }
             }
         }

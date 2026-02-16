@@ -78,6 +78,7 @@ data class BudgetEntry(
         )
     }
 }
+
 @Composable
 fun BudgetEntry.Type.toStringResource(): String {
     return when (this) {

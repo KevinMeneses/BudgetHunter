@@ -84,7 +84,9 @@ class RealTimeSyncManager(
 
                     BudgetEntryAction.DELETED -> {
                         val existingEntry = localDataSource.selectByServerId(event.entryId)
-                        if (existingEntry != null) localDataSource.delete(existingEntry.id)
+                        if (existingEntry != null) {
+                            localDataSource.delete(existingEntry.id)
+                        }
                     }
                 }
             }

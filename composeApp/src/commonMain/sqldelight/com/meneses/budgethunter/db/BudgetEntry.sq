@@ -57,3 +57,10 @@ WHERE id = :id;
 
 selectByServerId:
 SELECT * FROM budget_entry WHERE server_id = ?;
+
+selectByUniqueFields:
+SELECT * FROM budget_entry
+WHERE budget_id = :budgetId
+  AND amount = :amount
+  AND description = :description
+  AND creation_date = :creationDate;

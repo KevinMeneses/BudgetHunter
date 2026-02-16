@@ -86,12 +86,16 @@ class BudgetDetailRepository(
         }
     }
 
-    suspend fun syncEntries(): Result<Unit> {
-        val cached = getCachedDetail()
-        val budget = cached.budget
-        val serverId = budget.serverId
-        return if (serverId != null) {
-            budgetEntryRepository.sync(budget.id, serverId)
+    suspend fun syncEntries(budgetId: Int? = null, serverId: Long? = null): Result<Unit> {
+        val (finalBudgetId, finalServerId) = if (budgetId != null && serverId != null) {
+            budgetId to serverId
+        } else {
+            val cached = getCachedDetail()
+            cached.budget.id to cached.budget.serverId
+        }
+
+        return if (finalServerId != null) {
+            budgetEntryRepository.sync(finalBudgetId, finalServerId)
         } else {
             Result.failure(Exception("Budget must sync before syncing entries"))
         }
