@@ -1,4 +1,6 @@
+import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.STRING
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSetTree
 import java.util.Properties
 
@@ -9,6 +11,7 @@ plugins {
     alias(libs.plugins.compose.multiplatform)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.sqldelight)
+    alias(libs.plugins.buildkonfig)
     alias(libs.plugins.ksp)
     id("kotlin-parcelize")
     alias(libs.plugins.jacoco)
@@ -22,8 +25,10 @@ kotlin {
             sourceSetTree.set(KotlinSourceSetTree.test)
         }
         compilations.all {
-            kotlinOptions {
-                jvmTarget = "17"
+            compileTaskProvider.configure {
+                compilerOptions {
+                    jvmTarget.set(JvmTarget.JVM_17)
+                }
             }
         }
     }
@@ -188,6 +193,33 @@ sqldelight {
     databases {
         create("Database") {
             packageName.set("com.meneses.budgethunter.db")
+        }
+    }
+}
+
+buildkonfig {
+    packageName = "com.meneses.budgethunter"
+
+    // Load properties from local.properties
+    val props = Properties()
+    val propsFile = rootProject.file("local.properties")
+    if (propsFile.exists()) {
+        props.load(propsFile.inputStream())
+    }
+
+    // Default config for all platforms
+    defaultConfigs {
+        // Backend URL - defaults to Android emulator localhost
+        val backendUrl = props.getProperty("BACKEND_URL") ?: "http://10.0.2.2:8080"
+        buildConfigField(STRING, "BACKEND_URL", backendUrl)
+    }
+
+    // Platform-specific overrides
+    targetConfigs {
+        // iOS uses localhost directly (simulator shares host network)
+        create("ios") {
+            val backendUrl = props.getProperty("BACKEND_URL") ?: "http://localhost:8080"
+            buildConfigField(STRING, "BACKEND_URL", backendUrl)
         }
     }
 }
