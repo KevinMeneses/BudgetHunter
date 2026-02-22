@@ -6,11 +6,11 @@ import com.meneses.budgethunter.budgetList.data.network.BudgetApiService
 import com.meneses.budgethunter.budgetList.data.sync.BudgetSyncManager
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.budgetList.domain.BudgetFilter
+import com.meneses.budgethunter.commons.data.sync.Logger
+import com.meneses.budgethunter.commons.data.sync.SyncResult
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.CoroutineScope
 
 class BudgetRepository(
     private val localDataSource: BudgetLocalDataSource,
@@ -18,8 +18,10 @@ class BudgetRepository(
     private val budgetApiService: BudgetApiService,
     private val authRepository: AuthRepository,
     private val ioDispatcher: CoroutineDispatcher,
-    private val scope: CoroutineScope
+    private val logger: Logger
 ) {
+    private val tag = "BudgetRepository"
+
     val budgets: Flow<List<Budget>>
         get() = localDataSource.budgets
 
@@ -37,8 +39,9 @@ class BudgetRepository(
 
         // Trigger sync in background if authenticated
         if (authRepository.isAuthenticated()) {
-            scope.launch(ioDispatcher) {
-                budgetSyncManager.syncPendingBudgets()
+            val result = budgetSyncManager.syncPendingBudgets()
+            if (result is SyncResult.Failure) {
+                logger.warn(tag, "Background sync failed after create", result.error)
             }
         }
 
@@ -50,8 +53,9 @@ class BudgetRepository(
 
         // Trigger sync in background if authenticated
         if (authRepository.isAuthenticated()) {
-            scope.launch(ioDispatcher) {
-                budgetSyncManager.syncPendingBudgets()
+            val result = budgetSyncManager.syncPendingBudgets()
+            if (result is SyncResult.Failure) {
+                logger.warn(tag, "Background sync failed after update", result.error)
             }
         }
     }
@@ -63,7 +67,18 @@ class BudgetRepository(
      * @return Result indicating success or failure
      */
     suspend fun sync(): Result<Unit> = withContext(ioDispatcher) {
-        budgetSyncManager.performFullSync()
+        when (val syncResult = budgetSyncManager.performFullSync()) {
+            is SyncResult.Success -> Result.success(Unit)
+            is SyncResult.PartialSuccess -> {
+                logger.warn(
+                    tag = tag,
+                    message = "Partial sync: ${syncResult.succeeded} succeeded, ${syncResult.failed} failed"
+                )
+                Result.success(Unit)
+            }
+
+            is SyncResult.Failure -> Result.failure(syncResult.error)
+        }
     }
 
     /**
@@ -87,17 +102,10 @@ class BudgetRepository(
 
         // If synced, delete from server first
         if (budget != null && authRepository.isAuthenticated() && budget.serverId != null) {
-            try {
-                budgetApiService.deleteBudget(budget.serverId).getOrThrow()
-                println("BudgetRepository: Successfully deleted budget from server (ID: ${budget.serverId})")
-            } catch (e: Exception) {
-                println("BudgetRepository: Failed to delete budget from server, proceeding with local deletion - ${e.message}")
-                // Continue with local deletion even if server deletion fails
-            }
+            budgetApiService.deleteBudget(budget.serverId).getOrThrow()
         }
 
         // Then delete locally
         localDataSource.delete(budgetId.toLong())
-        println("BudgetRepository: Successfully deleted budget locally (ID: $budgetId)")
     }
 }

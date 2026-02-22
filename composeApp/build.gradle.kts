@@ -1,3 +1,4 @@
+import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.BOOLEAN
 import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.STRING
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
@@ -212,6 +213,18 @@ buildkonfig {
         // Backend URL - defaults to Android emulator localhost
         val backendUrl = props.getProperty("BACKEND_URL") ?: "http://10.0.2.2:8080"
         buildConfigField(STRING, "BACKEND_URL", backendUrl)
+
+        // Debug flag - defaults to true for safety
+        buildConfigField(BOOLEAN, "DEBUG", "true")
+    }
+
+    // Build type specific configs
+    defaultConfigs("debug") {
+        buildConfigField(BOOLEAN, "DEBUG", "true")
+    }
+
+    defaultConfigs("release") {
+        buildConfigField(BOOLEAN, "DEBUG", "false")
     }
 
     // Platform-specific overrides

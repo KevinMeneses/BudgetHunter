@@ -37,14 +37,11 @@ class BudgetEntryApiService(
         budgetId: Long,
         request: CreateBudgetEntryRequest
     ): Result<BudgetEntryResponse> = withContext(ioDispatcher) {
-        println("BudgetEntryApiService: Creating entry for budget $budgetId with request: $request")
         safeApiCall {
             httpClient.post("/api/budgets/$budgetId/entries") {
                 contentType(ContentType.Application.Json)
                 setBody(request)
-            }.body<BudgetEntryResponse>().also {
-                println("BudgetEntryApiService: Successfully created entry: $it")
-            }
+            }.body<BudgetEntryResponse>()
         }
     }
 
@@ -63,14 +60,11 @@ class BudgetEntryApiService(
         entryId: Long,
         request: UpdateBudgetEntryRequest
     ): Result<BudgetEntryResponse> = withContext(ioDispatcher) {
-        println("BudgetEntryApiService: Updating entry $entryId for budget $budgetId with request: $request")
         safeApiCall {
             httpClient.put("/api/budgets/$budgetId/entries/$entryId") {
                 contentType(ContentType.Application.Json)
                 setBody(request)
-            }.body<BudgetEntryResponse>().also {
-                println("BudgetEntryApiService: Successfully updated entry: $it")
-            }
+            }.body<BudgetEntryResponse>()
         }
     }
 
@@ -84,11 +78,9 @@ class BudgetEntryApiService(
      */
     suspend fun getEntries(budgetId: Long): Result<List<BudgetEntryResponse>> =
         withContext(ioDispatcher) {
-            println("BudgetEntryApiService: Fetching entries for budget $budgetId")
             safeApiCall {
                 httpClient.get("/api/budgets/$budgetId/entries")
                     .body<List<BudgetEntryResponse>>()
-                    .also { println("BudgetEntryApiService: Successfully fetched ${it.size} entries") }
             }
         }
 
@@ -105,10 +97,8 @@ class BudgetEntryApiService(
         budgetId: Long,
         entryId: Long
     ): Result<Unit> = withContext(ioDispatcher) {
-        println("BudgetEntryApiService: Deleting entry $entryId for budget $budgetId")
         safeApiCall {
-            httpClient.delete("/api/budgets/$budgetId/entries/$entryId")
-            println("BudgetEntryApiService: Successfully deleted entry $entryId for budget $budgetId")
+            httpClient.delete("/api/budgets/$budgetId/entries/$entryId").body<Unit>()
         }
     }
 }

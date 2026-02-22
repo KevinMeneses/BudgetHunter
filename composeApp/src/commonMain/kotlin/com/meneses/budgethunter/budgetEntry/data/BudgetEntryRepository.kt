@@ -5,6 +5,8 @@ import com.meneses.budgethunter.budgetEntry.data.datasource.BudgetEntryLocalData
 import com.meneses.budgethunter.budgetEntry.data.network.BudgetEntryApiService
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.budgetList.data.datasource.BudgetLocalDataSource
+import com.meneses.budgethunter.commons.data.sync.Logger
+import com.meneses.budgethunter.commons.data.sync.SyncResult
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 
@@ -14,8 +16,11 @@ class BudgetEntryRepository(
     private val authRepository: AuthRepository,
     private val budgetEntryApiService: BudgetEntryApiService,
     private val budgetLocalDataSource: BudgetLocalDataSource,
-    private val ioDispatcher: CoroutineDispatcher
+    private val ioDispatcher: CoroutineDispatcher,
+    private val logger: Logger
 ) {
+    private val tag = "BudgetEntryRepository"
+
     fun getAllByBudgetId(budgetId: Long) =
         localDataSource.selectAllByBudgetId(budgetId)
 
@@ -23,7 +28,10 @@ class BudgetEntryRepository(
         localDataSource.create(budgetEntry)
 
         if (authRepository.isAuthenticated()) {
-            syncManager.syncPendingEntries(budgetEntry.budgetId)
+            val result = syncManager.syncPendingEntries(budgetEntry.budgetId)
+            if (result is SyncResult.Failure) {
+                logger.warn(tag, "Background sync failed after create", result.error)
+            }
         }
     }
 
@@ -31,12 +39,22 @@ class BudgetEntryRepository(
         localDataSource.update(budgetEntry.copy(isSynced = false))
 
         if (authRepository.isAuthenticated()) {
-            syncManager.syncPendingEntries(budgetEntry.budgetId)
+            val result = syncManager.syncPendingEntries(budgetEntry.budgetId)
+            if (result is SyncResult.Failure) {
+                logger.warn(tag, "Background sync failed after update", result.error)
+            }
         }
     }
 
     suspend fun sync(budgetId: Int, budgetServerId: Long): Result<Unit> = withContext(ioDispatcher) {
-        syncManager.performFullSync(budgetId, budgetServerId)
+        when (val syncResult = syncManager.performFullSync(budgetId, budgetServerId)) {
+            is SyncResult.Success -> Result.success(Unit)
+            is SyncResult.PartialSuccess -> {
+                logger.warn(tag, "Partial sync: ${syncResult.succeeded} succeeded, ${syncResult.failed} failed")
+                Result.success(Unit)
+            }
+            is SyncResult.Failure -> Result.failure(syncResult.error)
+        }
     }
 
     /**
@@ -54,7 +72,7 @@ class BudgetEntryRepository(
      */
     suspend fun delete(budgetEntry: BudgetEntry) = withContext(ioDispatcher) {
         if (budgetEntry.id < 0) {
-            println("BudgetEntryRepository: Entry ${budgetEntry.id} not persisted; skipping delete")
+            logger.debug(tag, "Entry ${budgetEntry.id} not persisted; skipping delete")
             return@withContext
         }
 
@@ -63,18 +81,14 @@ class BudgetEntryRepository(
             val budgetServerId = budgetLocalDataSource.getById(budgetEntry.budgetId)?.serverId
 
             if (budgetServerId != null && entryServerId != null) {
-                try {
-                    budgetEntryApiService.deleteEntry(budgetServerId, entryServerId).getOrThrow()
-                    println("BudgetEntryRepository: Deleted entry from server (budgetId=$budgetServerId, entryId=$entryServerId)")
-                } catch (e: Exception) {
-                    println("BudgetEntryRepository: Failed to delete entry from server, proceeding with local deletion - ${e.message}")
-                }
-            } else {
-                println("BudgetEntryRepository: Skipping server delete for entry ${budgetEntry.id} - budgetServerId=$budgetServerId, entryServerId=$entryServerId")
+                budgetEntryApiService
+                    .deleteEntry(budgetServerId, entryServerId)
+                    .onFailure {
+                        logger.warn(tag, "Failed to delete entry from server, proceeding with local deletion", it)
+                    }
             }
         }
 
         localDataSource.delete(budgetEntry.id.toLong())
-        println("BudgetEntryRepository: Deleted entry locally (id=${budgetEntry.id})")
     }
 }

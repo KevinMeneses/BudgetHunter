@@ -5,6 +5,8 @@ import com.meneses.budgethunter.budgetEntry.data.datasource.BudgetEntryLocalData
 import com.meneses.budgethunter.commons.data.network.models.BudgetEntryAction
 import com.meneses.budgethunter.commons.data.network.models.BudgetEntryEvent
 import com.meneses.budgethunter.commons.data.network.services.SseClient
+import com.meneses.budgethunter.commons.data.sync.Logger
+import com.meneses.budgethunter.commons.data.sync.SyncResult
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -28,14 +30,17 @@ import kotlinx.coroutines.withContext
  * @property localDataSource Local database access for budget entries
  * @property ioDispatcher Dispatcher for database operations
  * @property scope Coroutine scope for launching collection jobs
+ * @property logger Logger for real-time sync operations
  */
 class RealTimeSyncManager(
     private val sseClient: SseClient,
     private val syncManager: BudgetEntrySyncManager,
     private val localDataSource: BudgetEntryLocalDataSource,
     private val ioDispatcher: CoroutineDispatcher,
-    private val scope: CoroutineScope
+    private val scope: CoroutineScope,
+    private val logger: Logger
 ) {
+    private val tag = "RealTimeSyncManager"
     private var currentJob: Job? = null
     private var currentBudgetServerId: Long? = null
 
@@ -75,23 +80,33 @@ class RealTimeSyncManager(
      * @param event The notification event received from SSE
      */
     private suspend fun handleBudgetEntryEvent(event: BudgetEntryEvent) {
-        try {
-            withContext(ioDispatcher) {
-                when (event.action) {
-                    BudgetEntryAction.CREATED, BudgetEntryAction.UPDATED -> {
-                        syncManager.pullEntriesFromServer(event.budgetId)
-                    }
+        withContext(ioDispatcher) {
+            when (event.action) {
+                BudgetEntryAction.CREATED, BudgetEntryAction.UPDATED -> {
+                    val result = syncManager.pullEntriesFromServer(event.budgetId)
+                    when (result) {
+                        is SyncResult.Failure -> {
+                            logger.warn(tag, "Failed to pull entries after SSE event", result.error)
+                        }
 
-                    BudgetEntryAction.DELETED -> {
-                        val existingEntry = localDataSource.selectByServerId(event.entryId)
-                        if (existingEntry != null) {
-                            localDataSource.delete(existingEntry.id)
+                        is SyncResult.PartialSuccess -> {
+                            logger.warn(
+                                tag = tag,
+                                message = "Partial sync after SSE event: ${result.succeeded} succeeded, ${result.failed} failed"
+                            )
+                        }
+
+                        is SyncResult.Success -> {
+                            logger.debug(tag, "Successfully synced entries after SSE event")
                         }
                     }
                 }
+
+                BudgetEntryAction.DELETED -> {
+                    val existingEntry = localDataSource.selectByServerId(event.entryId)
+                    if (existingEntry != null) localDataSource.delete(existingEntry.id)
+                }
             }
-        } catch (e: Exception) {
-            e.printStackTrace()
         }
     }
 

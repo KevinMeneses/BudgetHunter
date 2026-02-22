@@ -50,11 +50,6 @@ SELECT * FROM budget_entry WHERE is_synced = 0;
 selectUnsyncedByBudgetId:
 SELECT * FROM budget_entry WHERE budget_id = :budgetId AND is_synced = 0;
 
-markAsSynced:
-UPDATE budget_entry
-SET is_synced = 1, server_id = :server_id, created_by_email = :created_by_email, updated_by_email = :updated_by_email, creation_date = :creation_date, modification_date = :modification_date
-WHERE id = :id;
-
 selectByServerId:
 SELECT * FROM budget_entry WHERE server_id = ?;
 

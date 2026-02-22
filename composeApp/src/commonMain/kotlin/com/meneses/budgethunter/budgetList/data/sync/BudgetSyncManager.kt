@@ -4,10 +4,13 @@ import com.meneses.budgethunter.auth.data.AuthRepository
 import com.meneses.budgethunter.budgetList.data.datasource.BudgetLocalDataSource
 import com.meneses.budgethunter.budgetList.data.network.BudgetApiService
 import com.meneses.budgethunter.budgetList.domain.Budget
+import com.meneses.budgethunter.commons.data.network.models.BudgetResponse
 import com.meneses.budgethunter.commons.data.network.models.CreateBudgetRequest
-import com.meneses.budgethunter.db.BudgetQueries
+import com.meneses.budgethunter.commons.data.sync.BaseSyncManager
+import com.meneses.budgethunter.commons.data.sync.Logger
+import com.meneses.budgethunter.commons.data.sync.SyncResult
+import com.meneses.budgethunter.commons.data.sync.SyncStats
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
 
 /**
@@ -17,140 +20,131 @@ import kotlinx.datetime.Clock
 class BudgetSyncManager(
     private val localDataSource: BudgetLocalDataSource,
     private val budgetApiService: BudgetApiService,
-    private val authRepository: AuthRepository,
-    private val budgetQueries: BudgetQueries,
-    private val ioDispatcher: CoroutineDispatcher
-) {
+    authRepository: AuthRepository,
+    ioDispatcher: CoroutineDispatcher,
+    logger: Logger
+) : BaseSyncManager(authRepository, ioDispatcher, logger) {
+
+    override val logTag = "BudgetSyncManager"
+
     /**
      * Pushes all unsynced local budgets to the server.
      * Updates local budgets with server IDs after successful creation.
      *
-     * @return Result indicating success or failure with error details
+     * @return SyncResult with statistics about succeeded/failed syncs
      */
-    suspend fun syncPendingBudgets(): Result<Unit> = withContext(ioDispatcher) {
-        try {
-            // Check authentication
-            if (!authRepository.isAuthenticated()) {
-                return@withContext Result.failure(Exception("User not authenticated"))
-            }
-
-            // Test connection by fetching existing budgets first
-            println("BudgetSyncManager: Testing backend connection...")
-            budgetApiService.getBudgets().fold(
-                onSuccess = { serverBudgets ->
-                    println("BudgetSyncManager: Successfully connected to backend, found ${serverBudgets.size} server budgets")
-                },
-                onFailure = { error ->
-                    println("BudgetSyncManager: Failed to connect to backend: ${error.message}")
-                    return@withContext Result.failure(Exception("Cannot connect to backend: ${error.message}"))
-                }
-            )
-
+    suspend fun syncPendingBudgets(): SyncResult<SyncStats> {
+        return authenticatedSync {
             // Get all unsynced budgets
-            val unsyncedBudgets = budgetQueries.selectUnsynced(::mapSelectAllToBudget)
-                .executeAsList()
+            val unsyncedBudgets = localDataSource.getUnsynced()
 
-            println("BudgetSyncManager: Found ${unsyncedBudgets.size} unsynced budgets")
-
-            // Push each unsynced budget to server
-            unsyncedBudgets.forEach { budget ->
-                val request = CreateBudgetRequest(
-                    name = budget.name,
-                    amount = budget.amount
-                )
-
-                println("BudgetSyncManager: Syncing budget '${budget.name}' with amount ${budget.amount}")
-                budgetApiService.createBudget(request).fold(
-                    onSuccess = { response ->
-                        // Mark budget as synced with server ID
-                        budgetQueries.markAsSynced(
-                            server_id = response.id,
-                            last_synced_at = Clock.System.now().toString(),
-                            id = budget.id.toLong()
-                        )
-                        println("BudgetSyncManager: Successfully synced budget ${budget.id}, server assigned ID: ${response.id}")
-                    },
-                    onFailure = { error ->
-                        // Log error but continue with other budgets
-                        println("BudgetSyncManager: Failed to sync budget ${budget.id}: ${error.message}")
-                    }
-                )
+            if (unsyncedBudgets.isEmpty()) {
+                return@authenticatedSync SyncStats(totalItems = 0)
             }
 
-            Result.success(Unit)
-        } catch (e: Exception) {
-            println("BudgetSyncManager: Unexpected error during sync: ${e.message}")
-            Result.failure(e)
-        }
+            // Use aggregateSync to push each budget and track partial failures
+            aggregateSync(
+                items = unsyncedBudgets,
+                itemIdentifier = { budget -> "Budget(id=${budget.id}, name='${budget.name}')" },
+                syncOperation = { budget -> syncSingleBudget(budget) }
+            )
+        }.fold(
+            onSuccess = { stats -> statsToResult(stats) },
+            onFailure = { error -> SyncResult.Failure(error) }
+        )
+    }
+
+    /**
+     * Syncs a single budget to the server.
+     */
+    private suspend fun syncSingleBudget(budget: Budget): Result<Unit> {
+        val request = CreateBudgetRequest(
+            name = budget.name,
+            amount = budget.amount
+        )
+
+        return budgetApiService.createBudget(request).fold(
+            onSuccess = { response ->
+                // Mark budget as synced with server ID
+                localDataSource.markAsSynced(
+                    id = budget.id,
+                    serverId = response.id,
+                    lastSyncedAt = Clock.System.now().toString()
+                )
+                Result.success(Unit)
+            },
+            onFailure = { error ->
+                logger.warn(logTag, "Failed to sync budget ${budget.id}", error)
+                Result.failure(error)
+            }
+        )
     }
 
     /**
      * Pulls budgets from the server and merges with local database.
      * Updates existing budgets or creates new ones based on server ID.
      *
-     * @return Result indicating success or failure with error details
+     * @return SyncResult with statistics about succeeded/failed merges
      */
-    suspend fun pullBudgetsFromServer(): Result<Unit> = withContext(ioDispatcher) {
-        try {
-            // Check authentication
-            if (!authRepository.isAuthenticated()) {
-                return@withContext Result.failure(Exception("User not authenticated"))
-            }
-
+    suspend fun pullBudgetsFromServer(): SyncResult<SyncStats> {
+        return authenticatedSync {
             // Fetch budgets from server
             budgetApiService.getBudgets().fold(
                 onSuccess = { serverBudgets ->
-                    serverBudgets.forEach { serverBudget ->
-                        // Check if budget already exists locally by server_id
-                        val existingBudget = budgetQueries.selectByServerId(serverBudget.id)
-                            .executeAsOneOrNull()
-                            ?.let {
-                                mapSelectAllToBudget(
-                                    it.id,
-                                    it.amount,
-                                    it.name,
-                                    it.date,
-                                    it.server_id,
-                                    it.is_synced,
-                                    it.last_synced_at,
-                                    it.total_expenses
-                                )
-                            }
-
-                        if (existingBudget != null) {
-                            // Update existing budget
-                            localDataSource.update(
-                                existingBudget.copy(
-                                    amount = serverBudget.amount,
-                                    name = serverBudget.name,
-                                    isSynced = true,
-                                    lastSyncedAt = Clock.System.now().toString()
-                                )
-                            )
-                        } else {
-                            // Create new budget from server
-                            localDataSource.create(
-                                Budget(
-                                    id = -1, // Auto-generated by database
-                                    name = serverBudget.name,
-                                    amount = serverBudget.amount,
-                                    serverId = serverBudget.id,
-                                    isSynced = true,
-                                    lastSyncedAt = Clock.System.now().toString()
-                                )
-                            )
-                        }
+                    if (serverBudgets.isEmpty()) {
+                        return@authenticatedSync SyncStats(totalItems = 0)
                     }
+
+                    // Use aggregateSync to merge each budget and track partial failures
+                    aggregateSync(
+                        items = serverBudgets,
+                        itemIdentifier = { serverBudget -> "ServerBudget(id=${serverBudget.id}, name='${serverBudget.name}')" },
+                        syncOperation = { serverBudget -> mergeServerBudget(serverBudget) }
+                    )
                 },
                 onFailure = { error ->
-                    return@withContext Result.failure(error)
+                    logger.error(logTag, "Failed to fetch budgets from server", error)
+                    throw error
                 }
             )
+        }.fold(
+            onSuccess = { stats -> statsToResult(stats) },
+            onFailure = { error -> SyncResult.Failure(error) }
+        )
+    }
 
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
+    /**
+     * Merges a single server budget into local database.
+     */
+    private fun mergeServerBudget(serverBudget: BudgetResponse): Result<Unit> {
+        // Check if budget already exists locally by server_id
+        val existingBudget = localDataSource.getByServerId(serverBudget.id)
+
+        if (existingBudget != null) {
+            // Update existing budget
+            localDataSource.update(
+                existingBudget.copy(
+                    amount = serverBudget.amount,
+                    name = serverBudget.name,
+                    isSynced = true,
+                    lastSyncedAt = Clock.System.now().toString()
+                )
+            )
+        } else {
+            // Create new budget from server
+            localDataSource.create(
+                Budget(
+                    id = -1, // Auto-generated by database
+                    name = serverBudget.name,
+                    amount = serverBudget.amount,
+                    serverId = serverBudget.id,
+                    isSynced = true,
+                    lastSyncedAt = Clock.System.now().toString()
+                )
+            )
         }
+
+        return Result.success(Unit)
     }
 
     /**
@@ -158,43 +152,43 @@ class BudgetSyncManager(
      * 1. Pushes unsynced local budgets to server
      * 2. Pulls all budgets from server and merges with local
      *
-     * @return Result indicating success or failure with error details
+     * @return SyncResult aggregating both push and pull operations
      */
-    suspend fun performFullSync(): Result<Unit> = withContext(ioDispatcher) {
-        try {
-            // Push local changes first
-            syncPendingBudgets().getOrThrow()
-
-            // Then pull server changes
-            pullBudgetsFromServer().getOrThrow()
-
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
+    suspend fun performFullSync(): SyncResult<SyncStats> {
+        // Push local changes first
+        val pushResult = syncPendingBudgets()
+        if (pushResult is SyncResult.Failure) {
+            logger.error(logTag, "Full sync failed during push phase", pushResult.error)
+            return pushResult
         }
-    }
 
-    /**
-     * Helper function to map database result to Budget domain model.
-     * This is needed because we're calling budgetQueries directly.
-     */
-    private fun mapSelectAllToBudget(
-        id: Long,
-        amount: Double,
-        name: String,
-        date: String,
-        serverId: Long?,
-        isSynced: Long,
-        lastSyncedAt: String?,
-        totalExpenses: Double
-    ) = Budget(
-        id = id.toInt(),
-        amount = amount,
-        name = name,
-        totalExpenses = totalExpenses,
-        date = date,
-        serverId = serverId,
-        isSynced = isSynced == 1L,
-        lastSyncedAt = lastSyncedAt
-    )
+        // Then pull server changes
+        val pullResult = pullBudgetsFromServer()
+        if (pullResult is SyncResult.Failure) {
+            logger.error(logTag, "Full sync failed during pull phase", pullResult.error)
+            return pullResult
+        }
+
+        // Aggregate statistics from both operations
+        val pushStats = when (pushResult) {
+            is SyncResult.Success -> pushResult.data
+            is SyncResult.PartialSuccess -> pushResult.data
+            is SyncResult.Failure -> SyncStats(totalItems = 0) // Already returned above
+        }
+
+        val pullStats = when (pullResult) {
+            is SyncResult.Success -> pullResult.data
+            is SyncResult.PartialSuccess -> pullResult.data
+            is SyncResult.Failure -> SyncStats(totalItems = 0) // Already returned above
+        }
+
+        val aggregatedStats = SyncStats(
+            totalItems = pushStats.totalItems + pullStats.totalItems,
+            syncedItems = pushStats.syncedItems + pullStats.syncedItems,
+            failedItems = pushStats.failedItems + pullStats.failedItems,
+            errors = pushStats.errors + pullStats.errors
+        )
+
+        return statsToResult(aggregatedStats)
+    }
 }

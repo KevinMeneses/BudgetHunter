@@ -12,7 +12,6 @@ import com.meneses.budgethunter.budgetList.data.sync.BudgetSyncManager
 import com.meneses.budgethunter.db.BudgetQueries
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.CoroutineScope
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
@@ -34,8 +33,8 @@ val budgetListModule = module {
             localDataSource = get<BudgetLocalDataSource>(),
             budgetApiService = get<BudgetApiService>(),
             authRepository = get(),
-            budgetQueries = get<BudgetQueries>(),
-            ioDispatcher = get<CoroutineDispatcher>(named("IO"))
+            ioDispatcher = get<CoroutineDispatcher>(named("IO")),
+            logger = get()
         )
     }
 
@@ -46,7 +45,7 @@ val budgetListModule = module {
             budgetApiService = get<BudgetApiService>(),
             authRepository = get(),
             ioDispatcher = get<CoroutineDispatcher>(named("IO")),
-            scope = get<CoroutineScope>(named("ApplicationScope"))
+            logger = get()
         )
     }
 

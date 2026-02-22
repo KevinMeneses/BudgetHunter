@@ -36,10 +36,10 @@ val budgetEntryModule = module {
         BudgetEntrySyncManager(
             localDataSource = get<BudgetEntryLocalDataSource>(),
             budgetEntryApiService = get<BudgetEntryApiService>(),
-            authRepository = get(),
-            budgetEntryQueries = get<BudgetEntryQueries>(),
             budgetLocalDataSource = get<BudgetLocalDataSource>(),
-            ioDispatcher = get<CoroutineDispatcher>(named("IO"))
+            authRepository = get(),
+            ioDispatcher = get<CoroutineDispatcher>(named("IO")),
+            logger = get()
         )
     }
 
@@ -50,7 +50,8 @@ val budgetEntryModule = module {
             authRepository = get(),
             budgetEntryApiService = get(),
             budgetLocalDataSource = get<BudgetLocalDataSource>(),
-            ioDispatcher = get<CoroutineDispatcher>(named("IO"))
+            ioDispatcher = get<CoroutineDispatcher>(named("IO")),
+            logger = get()
         )
     }
 
@@ -70,7 +71,8 @@ val budgetEntryModule = module {
             syncManager = get<BudgetEntrySyncManager>(),
             localDataSource = get<BudgetEntryLocalDataSource>(),
             ioDispatcher = get<CoroutineDispatcher>(named("IO")),
-            scope = get<CoroutineScope>(named("ApplicationScope"))
+            scope = get<CoroutineScope>(named("ApplicationScope")),
+            logger = get()
         )
     }
 

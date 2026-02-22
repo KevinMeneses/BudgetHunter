@@ -30,14 +30,11 @@ class BudgetApiService(
      */
     suspend fun createBudget(request: CreateBudgetRequest): Result<BudgetResponse> =
         withContext(ioDispatcher) {
-            println("BudgetApiService: Creating budget with request: $request")
             safeApiCall {
                 httpClient.post("/api/budgets") {
                     contentType(ContentType.Application.Json)
                     setBody(request)
-                }.body<BudgetResponse>().also {
-                    println("BudgetApiService: Successfully created budget: $it")
-                }
+                }.body<BudgetResponse>()
             }
         }
 
@@ -48,11 +45,9 @@ class BudgetApiService(
      */
     suspend fun getBudgets(): Result<List<BudgetResponse>> =
         withContext(ioDispatcher) {
-            println("BudgetApiService: Fetching budgets from server")
             safeApiCall {
                 httpClient.get("/api/budgets")
                     .body<List<BudgetResponse>>()
-                    .also { println("BudgetApiService: Successfully fetched ${it.size} budgets") }
             }
         }
 
@@ -66,10 +61,8 @@ class BudgetApiService(
      */
     suspend fun deleteBudget(budgetId: Long): Result<Unit> =
         withContext(ioDispatcher) {
-            println("BudgetApiService: Deleting budget with ID: $budgetId")
             safeApiCall {
-                httpClient.delete("/api/budgets/$budgetId")
-                println("BudgetApiService: Successfully deleted budget with ID: $budgetId")
+                httpClient.delete("/api/budgets/$budgetId").body()
             }
         }
 }

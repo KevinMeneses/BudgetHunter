@@ -103,4 +103,24 @@ class BudgetEntryLocalDataSource(
     suspend fun selectByServerId(serverId: Long) = cacheMutex.withLock {
         queries.selectByServerId(serverId).executeAsOneOrNull()
     }
+
+    fun getUnsynced(localBudgetId: Int): List<BudgetEntry> {
+        return queries.selectUnsyncedByBudgetId(localBudgetId.toLong())
+            .executeAsList()
+            .toDomain()
+    }
+
+    suspend fun selectByUniqueFields(
+        budgetId: Long,
+        amount: Double,
+        description: String,
+        creationDate: String
+    ) = cacheMutex.withLock {
+        queries.selectByUniqueFields(
+            budgetId = budgetId,
+            amount = amount,
+            description = description,
+            creationDate = creationDate
+        ).executeAsOneOrNull()
+    }
 }

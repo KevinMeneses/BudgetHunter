@@ -36,6 +36,12 @@ class BudgetLocalDataSource(
         cachedList.firstOrNull { it.id == id }
     }
 
+    fun getByServerId(serverId: Long): Budget? =
+        queries.selectByServerId(serverId, ::mapSelectAllToBudget).executeAsOne()
+
+    fun getUnsynced(): List<Budget> =
+        queries.selectUnsynced(::mapSelectAllToBudget).executeAsList()
+
     suspend fun getAllFilteredBy(filter: BudgetFilter): List<Budget> = cacheMutex.withLock {
         cachedList.filter {
             if (filter.name.isNullOrBlank()) true
@@ -74,6 +80,12 @@ class BudgetLocalDataSource(
         server_id = budget.serverId,
         is_synced = if (budget.isSynced) 1L else 0L,
         last_synced_at = budget.lastSyncedAt
+    )
+
+    fun markAsSynced(id: Int, serverId: Long, lastSyncedAt: String) = queries.markAsSynced(
+        server_id = serverId,
+        last_synced_at = lastSyncedAt,
+        id = id.toLong()
     )
 
     fun delete(id: Long) = queries.delete(id)
