@@ -243,6 +243,11 @@ dependencies {
     add("kspCommonMainMetadata", libs.koin.ksp.compiler)
     debugImplementation(libs.bundles.test.debug)
     runtimeOnly(libs.slf4j.simple)
+
+    // Android unit test dependencies for integration tests
+    testImplementation(libs.robolectric)
+    testImplementation(libs.sqldelight.android.driver)
+    testImplementation(libs.androidx.core)
 }
 
 // Jacoco configuration for code coverage

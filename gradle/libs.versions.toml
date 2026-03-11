@@ -1,10 +1,9 @@
 [versions]
 # Kotlin and Compose
+core = "1.6.1"
 kotlin = "2.2.21"
 ksp = "2.2.21-2.0.4"
 compose-ui = "1.9.1"
-compose-material3 = "1.3.2"
-compose-material-icons = "1.7.8"
 compose-multiplatform = "1.8.2"
 buildkonfig = "0.15.2"
 
@@ -19,7 +18,6 @@ androidx-navigation-compose = "2.9.4"
 jetbrains-navigation-compose = "2.9.0-rc02"
 jetbrains-lifecycle-viewmodel = "2.9.3"
 androidx-datastore = "1.1.7"
-androidx-arch-core = "2.2.0"
 
 # Koin
 koin = "4.0.0"
@@ -39,14 +37,13 @@ compottie = "2.0.0-rc04"
 play-app-update = "2.1.0"
 security-crypto = "1.1.0-alpha06"
 slf4j = "2.0.12"
-junit = "4.13.2"
-junit-ext = "1.3.0"
 mockk = "1.13.5"
-espresso = "3.7.0"
 ui-test-manifest = "1.9.1"
+robolectric = "4.13"
 
 [libraries]
 # AndroidX Core
+androidx-core = { module = "androidx.test:core", version.ref = "core" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidx-core" }
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "androidx-lifecycle" }
 androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
@@ -55,11 +52,7 @@ androidx-lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "l
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "androidx-activity-compose" }
 
 # Compose
-compose-ui = { group = "androidx.compose.ui", name = "ui", version.ref = "compose-ui" }
-compose-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "compose-material3" }
-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview", version.ref = "compose-ui" }
 compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling", version.ref = "compose-ui" }
-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version.ref = "compose-material-icons" }
 
 # Navigation
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "androidx-navigation-compose" }
@@ -116,14 +109,10 @@ androidx-security-crypto = { group = "androidx.security", name = "security-crypt
 slf4j-simple = { group = "org.slf4j", name = "slf4j-simple", version.ref = "slf4j" }
 
 # Testing
-junit = { group = "junit", name = "junit", version.ref = "junit" }
-junit-ext = { group = "androidx.test.ext", name = "junit", version.ref = "junit-ext" }
 mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
-androidx-arch-core-testing = { group = "androidx.arch.core", name = "core-testing", version.ref = "androidx-arch-core" }
-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espresso" }
-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4", version.ref = "compose-ui" }
 compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest", version.ref = "ui-test-manifest" }
+robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
 
 [plugins]
 # Android plugins
@@ -147,13 +136,6 @@ jacoco = { id = "jacoco" }
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version = "12.1.0" }
 
 [bundles]
-compose = [
-    "compose-ui",
-    "compose-material3",
-    "compose-ui-tooling-preview",
-    "compose-material-icons-extended"
-]
-
 androidx-lifecycle = [
     "androidx-lifecycle-runtime-ktx",
     "androidx-lifecycle-runtime-compose",
@@ -180,11 +162,6 @@ ktor = [
     "ktor-client-logging"
 ]
 
-sqldelight-android = [
-    "sqldelight-android-driver",
-    "sqldelight-coroutines-extensions"
-]
-
 datastore = [
     "androidx-datastore-preferences",
     "androidx-datastore-preferences-core"
@@ -193,20 +170,6 @@ datastore = [
 play-update = [
     "play-app-update",
     "play-app-update-ktx"
-]
-
-
-test-unit = [
-    "junit",
-    "mockk",
-    "kotlinx-coroutines-test",
-    "androidx-arch-core-testing"
-]
-
-test-android = [
-    "junit-ext",
-    "espresso-core",
-    "compose-ui-test-junit4"
 ]
 
 test-debug = [

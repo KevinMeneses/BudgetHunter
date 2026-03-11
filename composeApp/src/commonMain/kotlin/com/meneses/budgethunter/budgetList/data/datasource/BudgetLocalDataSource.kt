@@ -37,7 +37,7 @@ class BudgetLocalDataSource(
     }
 
     fun getByServerId(serverId: Long): Budget? =
-        queries.selectByServerId(serverId, ::mapSelectAllToBudget).executeAsOne()
+        queries.selectByServerId(serverId, ::mapSelectAllToBudget).executeAsOneOrNull()
 
     fun getUnsynced(): List<Budget> =
         queries.selectUnsynced(::mapSelectAllToBudget).executeAsList()
