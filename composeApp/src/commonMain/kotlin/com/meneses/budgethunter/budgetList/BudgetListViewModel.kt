@@ -99,12 +99,27 @@ class BudgetListViewModel(
     }
 
     private fun createBudget(budget: Budget) = viewModelScope.launch {
-        val budgetSaved = budgetRepository.create(budget)
-        openBudget(budgetSaved)
+        _uiState.update { it.copy(isCreatingBudget = true) }
+        try {
+            val budgetSaved = budgetRepository.create(budget)
+            openBudget(budgetSaved)
+        } finally {
+            _uiState.update { it.copy(isCreatingBudget = false) }
+        }
     }
 
     private fun updateBudget(budget: Budget) = viewModelScope.launch {
-        budgetRepository.update(budget)
+        _uiState.update { it.copy(isUpdatingBudget = true) }
+        try {
+            // Mark as unsynced so it will be pushed to server
+            val budgetToUpdate = budget.copy(
+                isSynced = false,
+                lastSyncedAt = null
+            )
+            budgetRepository.update(budgetToUpdate)
+        } finally {
+            _uiState.update { it.copy(isUpdatingBudget = false) }
+        }
     }
 
     private fun openBudget(budget: Budget) =
@@ -169,8 +184,13 @@ class BudgetListViewModel(
 
     private fun signOut() {
         viewModelScope.launch {
-            signOutUseCase.execute()
-            _uiState.update { it.copy(navigateToSignIn = true, isAuthenticated = false) }
+            _uiState.update { it.copy(isSigningOut = true) }
+            try {
+                signOutUseCase.execute()
+                _uiState.update { it.copy(navigateToSignIn = true, isAuthenticated = false) }
+            } finally {
+                _uiState.update { it.copy(isSigningOut = false) }
+            }
         }
     }
 

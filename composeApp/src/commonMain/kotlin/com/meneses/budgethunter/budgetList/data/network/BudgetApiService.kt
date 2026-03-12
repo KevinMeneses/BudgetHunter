@@ -8,6 +8,7 @@ import io.ktor.client.call.body
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.post
+import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
@@ -32,6 +33,23 @@ class BudgetApiService(
         withContext(ioDispatcher) {
             safeApiCall {
                 httpClient.post("/api/budgets") {
+                    contentType(ContentType.Application.Json)
+                    setBody(request)
+                }.body<BudgetResponse>()
+            }
+        }
+
+    /**
+     * Updates an existing budget on the server.
+     *
+     * @param budgetId Server-side budget ID
+     * @param request Budget update request with name and amount
+     * @return Result containing the updated budget response or error
+     */
+    suspend fun updateBudget(budgetId: Long, request: CreateBudgetRequest): Result<BudgetResponse> =
+        withContext(ioDispatcher) {
+            safeApiCall {
+                httpClient.put("/api/budgets/$budgetId") {
                     contentType(ContentType.Application.Json)
                     setBody(request)
                 }.body<BudgetResponse>()

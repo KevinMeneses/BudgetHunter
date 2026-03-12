@@ -23,7 +23,8 @@ import kotlinx.coroutines.launch
 class BudgetDetailViewModel(
     private val budgetDetailRepository: BudgetDetailRepository,
     private val realTimeSyncManager: RealTimeSyncManager,
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val collaboratorRepository: com.meneses.budgethunter.collaborator.data.CollaboratorRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(BudgetDetailState())
@@ -38,11 +39,23 @@ class BudgetDetailViewModel(
                 if (budget.isSynced && budget.serverId != null) budget.serverId else null
             }.distinctUntilChanged().collect { serverId ->
                 if (serverId != null) {
-                    realTimeSyncManager.startListening(serverId)
+                    // Only start SSE if the budget has collaborators
+                    checkAndStartSSE(serverId)
                 } else {
                     realTimeSyncManager.stopListening()
                 }
             }
+        }
+    }
+
+    private suspend fun checkAndStartSSE(serverId: Long) {
+        val collaboratorsResult = collaboratorRepository.getCollaborators(serverId)
+        val hasCollaborators = (collaboratorsResult.getOrNull()?.size ?: 0) > 1
+
+        if (hasCollaborators) {
+            realTimeSyncManager.startListening(serverId)
+        } else {
+            realTimeSyncManager.stopListening()
         }
     }
 

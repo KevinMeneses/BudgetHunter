@@ -5,6 +5,7 @@ import com.meneses.budgethunter.budgetEntry.data.BudgetEntryRepository
 import com.meneses.budgethunter.budgetEntry.data.datasource.BudgetEntryLocalDataSource
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntryFilter
 import com.meneses.budgethunter.budgetList.application.DeleteBudgetUseCase
+import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.budgetList.data.datasource.BudgetLocalDataSource
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
@@ -19,6 +20,7 @@ class BudgetDetailRepository(
     private val budgetLocalDataSource: BudgetLocalDataSource,
     private val entriesLocalDataSource: BudgetEntryLocalDataSource,
     private val budgetEntryRepository: BudgetEntryRepository,
+    private val budgetRepository: BudgetRepository,
     private val ioDispatcher: CoroutineDispatcher,
     private val deleteBudgetUseCase: DeleteBudgetUseCase
 ) {
@@ -54,8 +56,12 @@ class BudgetDetailRepository(
 
     suspend fun updateBudgetAmount(amount: Double) = withContext(ioDispatcher) {
         val cached = getCachedDetail()
-        val budget = cached.budget.copy(amount = amount)
-        budgetLocalDataSource.update(budget)
+        val budget = cached.budget.copy(
+            amount = amount,
+            isSynced = false,  // Mark as unsynced so it will be pushed to server
+            lastSyncedAt = null
+        )
+        budgetRepository.update(budget)
     }
 
     suspend fun deleteBudget(budgetId: Int) = withContext(ioDispatcher) {

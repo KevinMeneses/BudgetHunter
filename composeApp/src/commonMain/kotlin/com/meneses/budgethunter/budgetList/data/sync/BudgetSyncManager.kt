@@ -56,6 +56,7 @@ class BudgetSyncManager(
 
     /**
      * Syncs a single budget to the server.
+     * Creates new budgets or updates existing ones based on whether they have a server ID.
      */
     private suspend fun syncSingleBudget(budget: Budget): Result<Unit> {
         val request = CreateBudgetRequest(
@@ -63,8 +64,18 @@ class BudgetSyncManager(
             amount = budget.amount
         )
 
-        return budgetApiService.createBudget(request).fold(
+        // If budget has a server ID, update it; otherwise create a new one
+        val apiCall = if (budget.serverId != null) {
+            logger.debug(logTag, "Updating existing budget ${budget.id} with serverId ${budget.serverId}")
+            budgetApiService.updateBudget(budget.serverId, request)
+        } else {
+            logger.debug(logTag, "Creating new budget ${budget.id}")
+            budgetApiService.createBudget(request)
+        }
+
+        return apiCall.fold(
             onSuccess = { response ->
+                logger.debug(logTag, "Successfully synced budget ${budget.id}, serverId: ${response.id}")
                 // Mark budget as synced with server ID
                 localDataSource.markAsSynced(
                     id = budget.id,
@@ -74,7 +85,7 @@ class BudgetSyncManager(
                 Result.success(Unit)
             },
             onFailure = { error ->
-                logger.warn(logTag, "Failed to sync budget ${budget.id}", error)
+                logger.error(logTag, "Failed to sync budget ${budget.id} (serverId: ${budget.serverId}): ${error.message}", error)
                 Result.failure(error)
             }
         )

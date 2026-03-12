@@ -8,6 +8,7 @@ import com.meneses.budgethunter.budgetEntry.data.datasource.BudgetEntryLocalData
 import com.meneses.budgethunter.budgetEntry.data.sync.RealTimeSyncManager
 import com.meneses.budgethunter.budgetList.application.DeleteBudgetUseCase
 import com.meneses.budgethunter.budgetList.data.datasource.BudgetLocalDataSource
+import com.meneses.budgethunter.collaborator.data.CollaboratorRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
@@ -19,6 +20,7 @@ val budgetDetailModule = module {
             get<BudgetLocalDataSource>(),
             get<BudgetEntryLocalDataSource>(),
             get<BudgetEntryRepository>(),
+            get<com.meneses.budgethunter.budgetList.data.BudgetRepository>(),
             get<CoroutineDispatcher>(named("IO")),
             get<DeleteBudgetUseCase>()
         )
@@ -28,7 +30,8 @@ val budgetDetailModule = module {
         BudgetDetailViewModel(
             budgetDetailRepository = get<BudgetDetailRepository>(),
             realTimeSyncManager = get<RealTimeSyncManager>(),
-            authRepository = get<AuthRepository>()
+            authRepository = get<AuthRepository>(),
+            collaboratorRepository = get<CollaboratorRepository>()
         )
     }
 }

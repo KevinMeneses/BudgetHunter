@@ -105,6 +105,10 @@ data class BudgetEntryScreen(val budgetEntry: BudgetEntry) {
             LoadingOverlay()
         }
 
+        if (uiState.isSaving) {
+            LoadingOverlay()
+        }
+
         ConfirmationModal(
             show = uiState.isDiscardChangesModalVisible,
             message = stringResource(Res.string.unsaved_changes_confirmation_message),

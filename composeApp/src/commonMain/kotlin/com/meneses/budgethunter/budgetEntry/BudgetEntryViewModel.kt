@@ -161,17 +161,23 @@ class BudgetEntryViewModel(
                 return@launch
             }
 
-            if (invoiceToDelete != null) {
-                deleteDetachedInvoice()
-            }
+            _uiState.update { it.copy(isSaving = true) }
 
-            if (entry.id < 0) {
-                budgetEntryRepository.create(entry)
-            } else {
-                budgetEntryRepository.update(entry)
-            }
+            try {
+                if (invoiceToDelete != null) {
+                    deleteDetachedInvoice()
+                }
 
-            goBack()
+                if (entry.id < 0) {
+                    budgetEntryRepository.create(entry)
+                } else {
+                    budgetEntryRepository.update(entry)
+                }
+
+                goBack()
+            } finally {
+                _uiState.update { it.copy(isSaving = false) }
+            }
         }
     }
 

@@ -14,5 +14,8 @@ data class BudgetListState(
     val searchQuery: String = "",
     val isAuthenticated: Boolean = false,
     val navigateToSignIn: Boolean = false,
-    val isSyncing: Boolean = false
+    val isSyncing: Boolean = false,
+    val isSigningOut: Boolean = false,
+    val isCreatingBudget: Boolean = false,
+    val isUpdatingBudget: Boolean = false
 )

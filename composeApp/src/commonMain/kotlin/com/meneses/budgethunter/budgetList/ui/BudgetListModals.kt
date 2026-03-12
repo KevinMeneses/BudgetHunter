@@ -45,7 +45,8 @@ import com.meneses.budgethunter.commons.EMPTY
 @Composable
 fun NewBudgetModal(
     show: Boolean,
-    onEvent: (BudgetListEvent) -> Unit
+    onEvent: (BudgetListEvent) -> Unit,
+    isCreating: Boolean = false
 ) {
     if (show) {
         var name by remember {
@@ -82,6 +83,7 @@ fun NewBudgetModal(
                         value = name,
                         onValueChange = { name = it },
                         label = { Text(text = stringResource(Res.string.name)) },
+                        enabled = !isCreating,
                         keyboardOptions = KeyboardOptions(
                             capitalization = KeyboardCapitalization.Words
                         )
@@ -96,16 +98,19 @@ fun NewBudgetModal(
                         BudgetListEvent.CreateBudget(budget).run(onEvent)
                         onDismiss()
                     },
-                    enabled = name.isNotBlank()
+                    enabled = name.isNotBlank() && !isCreating
                 ) {
                     Text(
-                        text = stringResource(Res.string.create),
+                        text = if (isCreating) "Creating..." else stringResource(Res.string.create),
                         fontWeight = FontWeight.Medium
                     )
                 }
             },
             dismissButton = {
-                TextButton(onClick = onDismiss) {
+                TextButton(
+                    onClick = onDismiss,
+                    enabled = !isCreating
+                ) {
                     Text(
                         text = stringResource(Res.string.cancel),
                         fontWeight = FontWeight.Medium
@@ -119,7 +124,8 @@ fun NewBudgetModal(
 @Composable
 fun UpdateBudgetModal(
     budget: Budget?,
-    onEvent: (BudgetListEvent) -> Unit
+    onEvent: (BudgetListEvent) -> Unit,
+    isUpdating: Boolean = false
 ) {
     if (budget != null) {
         var name by remember {
@@ -167,6 +173,7 @@ fun UpdateBudgetModal(
                         value = name,
                         onValueChange = { name = it },
                         label = { Text(text = stringResource(Res.string.name)) },
+                        enabled = !isUpdating,
                         keyboardOptions = KeyboardOptions(
                             capitalization = KeyboardCapitalization.Words
                         )
@@ -181,16 +188,19 @@ fun UpdateBudgetModal(
                         BudgetListEvent.UpdateBudget(updatedBudget).run(onEvent)
                         onDismiss()
                     },
-                    enabled = name.isNotBlank()
+                    enabled = name.isNotBlank() && !isUpdating
                 ) {
                     Text(
-                        text = stringResource(Res.string.update),
+                        text = if (isUpdating) "Updating..." else stringResource(Res.string.update),
                         fontWeight = FontWeight.Medium
                     )
                 }
             },
             dismissButton = {
-                TextButton(onClick = onDismiss) {
+                TextButton(
+                    onClick = onDismiss,
+                    enabled = !isUpdating
+                ) {
                     Text(
                         text = stringResource(Res.string.cancel),
                         fontWeight = FontWeight.Medium
