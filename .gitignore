@@ -12,7 +12,6 @@
 .externalNativeBuild
 .cxx
 local.properties
-/CLAUDE.md
 
 # KMP specific
 .kotlin/

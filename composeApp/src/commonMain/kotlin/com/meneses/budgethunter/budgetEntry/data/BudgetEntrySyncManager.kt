@@ -13,6 +13,8 @@ import com.meneses.budgethunter.commons.data.sync.SyncResult
 import com.meneses.budgethunter.commons.data.sync.SyncStats
 import com.meneses.budgethunter.commons.util.toPlainString
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /**
  * Handles bidirectional synchronization for budget entries (local <-> backend).
@@ -28,6 +30,10 @@ class BudgetEntrySyncManager(
 ) : BaseSyncManager(authRepository, ioDispatcher, logger) {
 
     override val logTag = "BudgetEntrySyncManager"
+
+    // Serializes concurrent pullEntriesFromServer calls to prevent duplicate inserts
+    // in mergeServerEntry when SSE events and performFullSync overlap.
+    private val pullMutex = Mutex()
 
     /**
      * Pushes all unsynced entries for the given local budget to the server.
@@ -88,7 +94,7 @@ class BudgetEntrySyncManager(
     suspend fun pullEntriesFromServer(
         budgetServerId: Long,
         localBudgetId: Int? = null
-    ): SyncResult<SyncStats> {
+    ): SyncResult<SyncStats> = pullMutex.withLock {
         return authenticatedSync {
             // Find the local budget ID if not provided
             val budgetId = localBudgetId ?: budgetLocalDataSource
