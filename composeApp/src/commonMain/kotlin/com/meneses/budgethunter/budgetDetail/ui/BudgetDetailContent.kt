@@ -62,7 +62,7 @@ import budgethunter.composeapp.generated.resources.description
 import budgethunter.composeapp.generated.resources.no_description
 import budgethunter.composeapp.generated.resources.selected_entries
 import budgethunter.composeapp.generated.resources.total_outcomes
-import com.meneses.budgethunter.budgetDetail.application.BudgetDetailEvent
+import com.meneses.budgethunter.budgetDetail.application.BudgetDetailIntent
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailState
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.commons.EMPTY
@@ -82,10 +82,10 @@ fun BudgetDetailContent(
     paddingValues: PaddingValues,
     isOnline: Boolean,
     uiState: BudgetDetailState,
-    onEvent: (BudgetDetailEvent) -> Unit
+    onIntent: (BudgetDetailIntent) -> Unit
 ) {
     val onBudgetClick = remember {
-        fun() { onEvent(BudgetDetailEvent.ToggleBudgetModal(true)) }
+        fun() { onIntent(BudgetDetailIntent.ToggleBudgetModal(true)) }
     }
 
     if (uiState.isLoading) {
@@ -121,8 +121,8 @@ fun BudgetDetailContent(
                             isSelectionActive = uiState.isSelectionActive,
                             listOrder = uiState.listOrder,
                             isSyncing = uiState.isSyncingEntries,
-                            onRefresh = { BudgetDetailEvent.SyncEntries.run(onEvent) },
-                            onEvent = onEvent
+                            onRefresh = { BudgetDetailIntent.SyncEntries.run(onIntent) },
+                            onIntent = onIntent
                         )
 
                         Spacer(modifier = Modifier.height(20.dp))
@@ -133,7 +133,7 @@ fun BudgetDetailContent(
                                 budgetAmount = uiState.budgetDetail.budget.amount
                             )
                         } else {
-                            DeleteButton(onEvent)
+                            DeleteButton(onIntent)
                         }
                     }
                 }
@@ -191,7 +191,7 @@ private fun ColumnScope.ListSection(
     listOrder: BudgetDetailState.ListOrder,
     isSyncing: Boolean,
     onRefresh: () -> Unit,
-    onEvent: (BudgetDetailEvent) -> Unit
+    onIntent: (BudgetDetailIntent) -> Unit
 ) {
     var showDate by remember {
         mutableStateOf(false)
@@ -199,7 +199,7 @@ private fun ColumnScope.ListSection(
 
     val onSelectAllItems = remember {
         fun(isActive: Boolean) {
-            onEvent(BudgetDetailEvent.ToggleAllEntriesSelection(isActive))
+            onIntent(BudgetDetailIntent.ToggleAllEntriesSelection(isActive))
         }
     }
 
@@ -237,7 +237,7 @@ private fun ColumnScope.ListSection(
                 } else {
                     if (isSelectionActive) stickyHeader {
                         val onCloseSelection = remember {
-                            fun() { onEvent(BudgetDetailEvent.ToggleSelectionState(false)) }
+                            fun() { onIntent(BudgetDetailIntent.ToggleSelectionState(false)) }
                         }
                         Row(
                             modifier = Modifier
@@ -310,7 +310,7 @@ private fun ColumnScope.ListSection(
                                 IconButton(
                                     modifier = Modifier.offset(x = 10.dp),
                                     onClick = {
-                                        onEvent(BudgetDetailEvent.SortList)
+                                        onIntent(BudgetDetailIntent.SortList)
                                     }
                                 ) {
                                     Icon(
@@ -327,18 +327,18 @@ private fun ColumnScope.ListSection(
                         val budgetItem = budgetEntries[index]
 
                         val onItemClick = {
-                            onEvent(
-                                if (!isSelectionActive) BudgetDetailEvent.ShowEntry(budgetItem)
-                                else BudgetDetailEvent.ToggleSelectEntry(index, !budgetItem.isSelected)
+                            onIntent(
+                                if (!isSelectionActive) BudgetDetailIntent.ShowEntry(budgetItem)
+                                else BudgetDetailIntent.ToggleSelectEntry(index, !budgetItem.isSelected)
                             )
                         }
 
                         val onLongClick = remember {
-                            fun() { onEvent(BudgetDetailEvent.ToggleSelectionState(true)) }
+                            fun() { onIntent(BudgetDetailIntent.ToggleSelectionState(true)) }
                         }
 
                         val onItemChecked = fun(isChecked: Boolean) {
-                            onEvent(BudgetDetailEvent.ToggleSelectEntry(index, isChecked))
+                            onIntent(BudgetDetailIntent.ToggleSelectEntry(index, isChecked))
                         }
 
                         Row(
@@ -502,10 +502,10 @@ fun BalanceSection(
 
 @Composable
 private fun DeleteButton(
-    onEvent: (BudgetDetailEvent) -> Unit
+    onIntent: (BudgetDetailIntent) -> Unit
 ) {
     val onClick = remember {
-        fun() { onEvent(BudgetDetailEvent.ToggleDeleteEntriesModal(true)) }
+        fun() { onIntent(BudgetDetailIntent.ToggleDeleteEntriesModal(true)) }
     }
     Box(
         modifier = Modifier

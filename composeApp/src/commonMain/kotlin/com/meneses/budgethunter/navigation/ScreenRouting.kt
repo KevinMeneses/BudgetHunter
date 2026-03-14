@@ -25,7 +25,7 @@ import com.meneses.budgethunter.budgetEntry.BudgetEntryViewModel
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.budgetEntry.ui.BudgetEntryScreen
 import com.meneses.budgethunter.budgetList.BudgetListViewModel
-import com.meneses.budgethunter.budgetList.application.BudgetListEvent
+import com.meneses.budgethunter.budgetList.application.BudgetListIntent
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.budgetList.ui.BudgetListScreen
 import com.meneses.budgethunter.budgetMetrics.BudgetMetricsViewModel
@@ -85,7 +85,7 @@ fun BudgetHunterNavigation() {
 
                 SplashScreen.Show(
                     uiState = uiState,
-                    onEvent = splashScreenViewModel::sendEvent,
+                    onIntent = splashScreenViewModel::sendIntent,
                     navigateToSignIn = {
                         navController.navigate(
                             route = SignInScreen,
@@ -117,7 +117,7 @@ fun BudgetHunterNavigation() {
 
                 SignInScreen.Show(
                     uiState = uiState,
-                    onEvent = signInViewModel::sendEvent,
+                    onIntent = signInViewModel::sendIntent,
                     navigateToSignUp = {
                         navController.navigate(SignUpScreen)
                     },
@@ -142,7 +142,7 @@ fun BudgetHunterNavigation() {
 
                 SignUpScreen.Show(
                     uiState = uiState,
-                    onEvent = signUpViewModel::sendEvent,
+                    onIntent = signUpViewModel::sendIntent,
                     navigateToSignIn = {
                         navController.popBackStack()
                     },
@@ -166,13 +166,13 @@ fun BudgetHunterNavigation() {
                                 popUpTo<BudgetListScreen> { inclusive = true }
                             }
                         )
-                        budgetListViewModel.sendEvent(BudgetListEvent.ClearSignInNavigation)
+                        budgetListViewModel.sendIntent(BudgetListIntent.ClearSignInNavigation)
                     }
                 }
 
                 BudgetListScreen.Show(
                     uiState = uiState,
-                    onEvent = budgetListViewModel::sendEvent,
+                    onIntent = budgetListViewModel::sendIntent,
                     showBudgetDetail = { budget ->
                         navController.navigate(BudgetDetailScreen(budget))
                     },
@@ -189,7 +189,7 @@ fun BudgetHunterNavigation() {
 
                 SettingsScreen.Show(
                     uiState = uiState,
-                    onEvent = settingsViewModel::sendEvent,
+                    onIntent = settingsViewModel::sendIntent,
                     goBack = { navController.popBackStack() }
                 )
             }
@@ -204,7 +204,7 @@ fun BudgetHunterNavigation() {
 
                 budgetDetailRoute.Show(
                     uiState = uiState,
-                    onEvent = budgetDetailViewModel::sendEvent,
+                    onIntent = budgetDetailViewModel::sendIntent,
                     goBack = { navController.popBackStack() },
                     showBudgetEntry = { budgetEntry ->
                         navController.navigate(BudgetEntryScreen(budgetEntry))
@@ -231,7 +231,7 @@ fun BudgetHunterNavigation() {
 
                 budgetEntryRoute.Show(
                     uiState = uiState,
-                    onEvent = budgetEntryViewModel::sendEvent,
+                    onIntent = budgetEntryViewModel::sendIntent,
                     goBack = { navController.popBackStack() }
                 )
             }
@@ -258,7 +258,7 @@ fun BudgetHunterNavigation() {
 
                 collaboratorsRoute.Show(
                     uiState = uiState,
-                    onEvent = collaboratorsViewModel::sendEvent,
+                    onIntent = collaboratorsViewModel::sendIntent,
                     goBack = { navController.popBackStack() }
                 )
             }

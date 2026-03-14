@@ -29,7 +29,7 @@ import budgethunter.composeapp.generated.resources.budgets
 import budgethunter.composeapp.generated.resources.create_new_budget
 import budgethunter.composeapp.generated.resources.open_menu
 import budgethunter.composeapp.generated.resources.search
-import com.meneses.budgethunter.budgetList.application.BudgetListEvent
+import com.meneses.budgethunter.budgetList.application.BudgetListIntent
 import com.meneses.budgethunter.budgetList.application.BudgetListState
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.commons.platform.NetworkMonitor
@@ -45,7 +45,7 @@ object BudgetListScreen {
     @Composable
     fun Show(
         uiState: BudgetListState,
-        onEvent: (BudgetListEvent) -> Unit,
+        onIntent: (BudgetListIntent) -> Unit,
         showBudgetDetail: (Budget) -> Unit,
         showSettings: () -> Unit,
         networkMonitor: NetworkMonitor
@@ -60,14 +60,14 @@ object BudgetListScreen {
                     SearchAppBar(
                         searchQuery = uiState.searchQuery,
                         onSearchQueryChange = { query ->
-                            BudgetListEvent
+                            BudgetListIntent
                                 .UpdateSearchQuery(query)
-                                .run(onEvent)
+                                .run(onIntent)
                         },
                         onBackClick = {
-                            BudgetListEvent
+                            BudgetListIntent
                                 .ToggleSearchMode(false)
-                                .run(onEvent)
+                                .run(onIntent)
                         }
                     )
                 } else {
@@ -78,9 +78,9 @@ object BudgetListScreen {
                         leftButtonDescription = stringResource(Res.string.search),
                         rightButtonDescription = stringResource(Res.string.open_menu),
                         onLeftButtonClick = {
-                            BudgetListEvent
+                            BudgetListIntent
                                 .ToggleSearchMode(true)
-                                .run(onEvent)
+                                .run(onIntent)
                         },
                         onRightButtonClick = {
                             dropdownExpanded = true
@@ -92,8 +92,8 @@ object BudgetListScreen {
                                 onDismiss = { dropdownExpanded = false },
                                 onSettingsClick = showSettings,
                                 isAuthenticated = uiState.isAuthenticated,
-                                onSignOutClick = { BudgetListEvent.SignOut.run(onEvent) },
-                                onSignInClick = { BudgetListEvent.SignIn.run(onEvent) }
+                                onSignOutClick = { BudgetListIntent.SignOut.run(onIntent) },
+                                onSignInClick = { BudgetListIntent.SignIn.run(onIntent) }
                             )
                         }
                     )
@@ -117,9 +117,9 @@ object BudgetListScreen {
                     shape = AbsoluteRoundedCornerShape(10.dp),
                     elevation = FloatingActionButtonDefaults.elevation(5.dp),
                     onClick = {
-                        BudgetListEvent
+                        BudgetListIntent
                             .ToggleAddModal(true)
-                            .run(onEvent)
+                            .run(onIntent)
                     }
                 ) {
                     Icon(
@@ -137,19 +137,19 @@ object BudgetListScreen {
                 isSyncing = uiState.isSyncing,
                 isOnline = if (uiState.isAuthenticated) isOnline else true,
                 paddingValues = paddingValues,
-                onEvent = onEvent
+                onIntent = onIntent
             )
         }
 
         NewBudgetModal(
             show = uiState.addModalVisibility,
-            onEvent = onEvent,
+            onIntent = onIntent,
             isCreating = uiState.isCreatingBudget
         )
 
         UpdateBudgetModal(
             budget = uiState.budgetToUpdate,
-            onEvent = onEvent,
+            onIntent = onIntent,
             isUpdating = uiState.isUpdatingBudget
         )
 
@@ -163,9 +163,9 @@ object BudgetListScreen {
 
         DisposableEffect(key1 = Unit) {
             onDispose {
-                BudgetListEvent
+                BudgetListIntent
                     .ClearNavigation
-                    .run(onEvent)
+                    .run(onIntent)
             }
         }
     }

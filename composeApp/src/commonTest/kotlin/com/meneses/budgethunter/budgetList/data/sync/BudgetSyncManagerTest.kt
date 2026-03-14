@@ -280,10 +280,10 @@ class BudgetSyncManagerTest {
             localDataSource.update(
                 match { budget ->
                     budget.id == 1 &&
-                            budget.name == "Updated Name" &&
-                            budget.amount == 1500.0 &&
-                            budget.serverId == 101L &&
-                            budget.isSynced
+                        budget.name == "Updated Name" &&
+                        budget.amount == 1500.0 &&
+                        budget.serverId == 101L &&
+                        budget.isSynced
                 }
             )
         }

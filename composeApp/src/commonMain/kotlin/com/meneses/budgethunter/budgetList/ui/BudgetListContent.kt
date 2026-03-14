@@ -38,7 +38,7 @@ import androidx.compose.ui.unit.dp
 import budgethunter.composeapp.generated.resources.Res
 import budgethunter.composeapp.generated.resources.budget_options
 import budgethunter.composeapp.generated.resources.created
-import com.meneses.budgethunter.budgetList.application.BudgetListEvent
+import com.meneses.budgethunter.budgetList.application.BudgetListIntent
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.commons.ui.CompottiePlaceholder
 import com.meneses.budgethunter.commons.ui.LoadingScreen
@@ -57,14 +57,14 @@ fun BudgetListContent(
     isSyncing: Boolean,
     isOnline: Boolean,
     paddingValues: PaddingValues,
-    onEvent: (BudgetListEvent) -> Unit
+    onIntent: (BudgetListIntent) -> Unit
 ) {
     if (isLoading) {
         LoadingScreen()
     } else {
         PullToRefreshBox(
             isRefreshing = isSyncing,
-            onRefresh = { BudgetListEvent.SyncBudgets.run(onEvent) },
+            onRefresh = { BudgetListIntent.SyncBudgets.run(onIntent) },
             modifier = Modifier
                 .padding(paddingValues)
                 .fillMaxSize()
@@ -91,7 +91,7 @@ fun BudgetListContent(
                             Spacer(Modifier.size(10.dp))
                             BudgetItem(
                                 budget = list[it],
-                                onEvent = onEvent
+                                onIntent = onIntent
                             )
                             Spacer(modifier = Modifier.size(10.dp))
                         }
@@ -105,7 +105,7 @@ fun BudgetListContent(
 @Composable
 private fun BudgetItem(
     budget: Budget,
-    onEvent: (BudgetListEvent) -> Unit
+    onIntent: (BudgetListIntent) -> Unit
 ) {
     Card(
         colors = CardDefaults.cardColors(
@@ -117,9 +117,9 @@ private fun BudgetItem(
             defaultElevation = 4.dp
         ),
         onClick = {
-            BudgetListEvent
+            BudgetListIntent
                 .OpenBudget(budget)
-                .run(onEvent)
+                .run(onIntent)
         }
     ) {
         Row(
@@ -190,19 +190,19 @@ private fun BudgetItem(
                         dropdownExpanded = dropdownExpanded,
                         onDismiss = { dropdownExpanded = false },
                         onUpdateClick = {
-                            BudgetListEvent
+                            BudgetListIntent
                                 .ToggleUpdateModal(budget)
-                                .run(onEvent)
+                                .run(onIntent)
                         },
                         onDuplicateClick = {
-                            BudgetListEvent
+                            BudgetListIntent
                                 .DuplicateBudget(budget)
-                                .run(onEvent)
+                                .run(onIntent)
                         },
                         onDeleteClick = {
-                            BudgetListEvent
+                            BudgetListIntent
                                 .DeleteBudget(budget.id.toLong())
-                                .run(onEvent)
+                                .run(onIntent)
                         }
                     )
                 }

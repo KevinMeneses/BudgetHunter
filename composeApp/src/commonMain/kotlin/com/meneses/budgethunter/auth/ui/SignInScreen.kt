@@ -53,7 +53,7 @@ import budgethunter.composeapp.generated.resources.offline_mode_description
 import budgethunter.composeapp.generated.resources.password
 import budgethunter.composeapp.generated.resources.show_password
 import budgethunter.composeapp.generated.resources.sign_in
-import com.meneses.budgethunter.auth.application.SignInEvent
+import com.meneses.budgethunter.auth.application.SignInIntent
 import com.meneses.budgethunter.auth.application.SignInState
 import com.meneses.budgethunter.commons.ui.LoadingOverlay
 import kotlinx.serialization.Serializable
@@ -65,7 +65,7 @@ object SignInScreen {
     @Composable
     fun Show(
         uiState: SignInState,
-        onEvent: (SignInEvent) -> Unit,
+        onIntent: (SignInIntent) -> Unit,
         navigateToSignUp: () -> Unit,
         navigateToBudgetList: () -> Unit,
         canNavigateBack: Boolean = false,
@@ -140,7 +140,7 @@ object SignInScreen {
                                     modifier = Modifier.weight(1f)
                                 )
                                 IconButton(
-                                    onClick = { onEvent(SignInEvent.DismissError) }
+                                    onClick = { onIntent(SignInIntent.DismissError) }
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Close,
@@ -154,7 +154,7 @@ object SignInScreen {
 
                     OutlinedTextField(
                         value = uiState.email,
-                        onValueChange = { onEvent(SignInEvent.EmailChanged(it)) },
+                        onValueChange = { onIntent(SignInIntent.EmailChanged(it)) },
                         label = { Text(stringResource(Res.string.email)) },
                         modifier = Modifier.fillMaxWidth(),
                         keyboardOptions = KeyboardOptions(
@@ -169,7 +169,7 @@ object SignInScreen {
                     var passwordVisible by remember { mutableStateOf(false) }
                     OutlinedTextField(
                         value = uiState.password,
-                        onValueChange = { onEvent(SignInEvent.PasswordChanged(it)) },
+                        onValueChange = { onIntent(SignInIntent.PasswordChanged(it)) },
                         label = { Text(stringResource(Res.string.password)) },
                         modifier = Modifier.fillMaxWidth(),
                         visualTransformation = if (passwordVisible)
@@ -181,7 +181,7 @@ object SignInScreen {
                             imeAction = ImeAction.Done
                         ),
                         keyboardActions = KeyboardActions(
-                            onDone = { onEvent(SignInEvent.SignInClicked) }
+                            onDone = { onIntent(SignInIntent.SignInClicked) }
                         ),
                         trailingIcon = {
                             IconButton(onClick = { passwordVisible = !passwordVisible }) {
@@ -203,7 +203,7 @@ object SignInScreen {
                     Spacer(modifier = Modifier.height(24.dp))
 
                     Button(
-                        onClick = { onEvent(SignInEvent.SignInClicked) },
+                        onClick = { onIntent(SignInIntent.SignInClicked) },
                         modifier = Modifier.fillMaxWidth(),
                         enabled = uiState.email.isNotBlank() && uiState.password.isNotBlank()
                     ) {
@@ -245,7 +245,7 @@ object SignInScreen {
                         Spacer(modifier = Modifier.height(12.dp))
 
                         TextButton(
-                            onClick = { onEvent(SignInEvent.ContinueOfflineClicked) }
+                            onClick = { onIntent(SignInIntent.ContinueOfflineClicked) }
                         ) {
                             Text(stringResource(Res.string.continue_offline))
                         }

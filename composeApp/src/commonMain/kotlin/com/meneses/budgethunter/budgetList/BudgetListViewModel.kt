@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.meneses.budgethunter.auth.application.SignOutUseCase
 import com.meneses.budgethunter.auth.data.AuthRepository
-import com.meneses.budgethunter.budgetList.application.BudgetListEvent
+import com.meneses.budgethunter.budgetList.application.BudgetListIntent
 import com.meneses.budgethunter.budgetList.application.BudgetListState
 import com.meneses.budgethunter.budgetList.application.DeleteBudgetUseCase
 import com.meneses.budgethunter.budgetList.application.DuplicateBudgetUseCase
@@ -56,23 +56,23 @@ class BudgetListViewModel(
         }
     }
 
-    fun sendEvent(event: BudgetListEvent) {
-        when (event) {
-            is BudgetListEvent.CreateBudget -> createBudget(event.budget)
-            is BudgetListEvent.UpdateBudget -> updateBudget(event.budget)
-            is BudgetListEvent.DuplicateBudget -> duplicateBudget(event.budget)
-            is BudgetListEvent.DeleteBudget -> deleteBudget(event.budgetId)
-            is BudgetListEvent.OpenBudget -> openBudget(event.budget)
-            is BudgetListEvent.ToggleAddModal -> setAddModalVisibility(event.isVisible)
-            is BudgetListEvent.ToggleUpdateModal -> setUpdateModalVisibility(event.budget)
-            is BudgetListEvent.ToggleSearchMode -> setSearchMode(event.isSearchMode)
-            is BudgetListEvent.UpdateSearchQuery -> updateSearchQuery(event.query)
-            is BudgetListEvent.ClearFilter -> clearFilter()
-            is BudgetListEvent.ClearNavigation -> clearNavigation()
-            is BudgetListEvent.SignOut -> signOut()
-            is BudgetListEvent.SignIn -> signIn()
-            is BudgetListEvent.ClearSignInNavigation -> clearSignInNavigation()
-            is BudgetListEvent.SyncBudgets -> syncBudgets()
+    fun sendIntent(intent: BudgetListIntent) {
+        when (intent) {
+            is BudgetListIntent.CreateBudget -> createBudget(intent.budget)
+            is BudgetListIntent.UpdateBudget -> updateBudget(intent.budget)
+            is BudgetListIntent.DuplicateBudget -> duplicateBudget(intent.budget)
+            is BudgetListIntent.DeleteBudget -> deleteBudget(intent.budgetId)
+            is BudgetListIntent.OpenBudget -> openBudget(intent.budget)
+            is BudgetListIntent.ToggleAddModal -> setAddModalVisibility(intent.isVisible)
+            is BudgetListIntent.ToggleUpdateModal -> setUpdateModalVisibility(intent.budget)
+            is BudgetListIntent.ToggleSearchMode -> setSearchMode(intent.isSearchMode)
+            is BudgetListIntent.UpdateSearchQuery -> updateSearchQuery(intent.query)
+            is BudgetListIntent.ClearFilter -> clearFilter()
+            is BudgetListIntent.ClearNavigation -> clearNavigation()
+            is BudgetListIntent.SignOut -> signOut()
+            is BudgetListIntent.SignIn -> signIn()
+            is BudgetListIntent.ClearSignInNavigation -> clearSignInNavigation()
+            is BudgetListIntent.SyncBudgets -> syncBudgets()
         }
     }
 

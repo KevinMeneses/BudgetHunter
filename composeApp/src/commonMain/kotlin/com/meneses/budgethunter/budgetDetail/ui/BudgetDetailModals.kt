@@ -32,7 +32,7 @@ import budgethunter.composeapp.generated.resources.filter_entries_criteria
 import budgethunter.composeapp.generated.resources.save
 import budgethunter.composeapp.generated.resources.set_budget_amount
 import budgethunter.composeapp.generated.resources.start_date
-import com.meneses.budgethunter.budgetDetail.application.BudgetDetailEvent
+import com.meneses.budgethunter.budgetDetail.application.BudgetDetailIntent
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntryFilter
 import com.meneses.budgethunter.budgetEntry.ui.AmountField
 import com.meneses.budgethunter.budgetEntry.ui.CategorySelector
@@ -48,7 +48,7 @@ import org.jetbrains.compose.resources.stringResource
 fun BudgetModal(
     show: Boolean,
     budgetAmount: Double,
-    onEvent: (BudgetDetailEvent) -> Unit
+    onIntent: (BudgetDetailIntent) -> Unit
 ) {
     if (show) {
         var budget by remember {
@@ -59,13 +59,13 @@ fun BudgetModal(
         }
 
         val onDismiss = remember {
-            fun() { onEvent(BudgetDetailEvent.ToggleBudgetModal(false)) }
+            fun() { onIntent(BudgetDetailIntent.ToggleBudgetModal(false)) }
         }
 
         val onSaveClick = remember {
             fun() {
                 val amount = budget.toDoubleOrNull() ?: 0.0
-                onEvent(BudgetDetailEvent.UpdateBudgetAmount(amount))
+                onIntent(BudgetDetailIntent.UpdateBudgetAmount(amount))
                 onDismiss()
             }
         }
@@ -122,7 +122,7 @@ fun BudgetModal(
 fun FilterModal(
     show: Boolean,
     filter: BudgetEntryFilter?,
-    onEvent: (BudgetDetailEvent) -> Unit
+    onIntent: (BudgetDetailIntent) -> Unit
 ) {
     if (show) {
         val entryFilter = filter ?: BudgetEntryFilter()
@@ -148,12 +148,12 @@ fun FilterModal(
         }
 
         val onDismiss = remember {
-            fun() { onEvent(BudgetDetailEvent.ToggleFilterModal(false)) }
+            fun() { onIntent(BudgetDetailIntent.ToggleFilterModal(false)) }
         }
 
         val onClear = remember {
             fun() {
-                onEvent(BudgetDetailEvent.ClearFilter)
+                onIntent(BudgetDetailIntent.ClearFilter)
                 onDismiss()
             }
         }
@@ -167,7 +167,7 @@ fun FilterModal(
                     startDate == null &&
                     endDate == null
                 ) {
-                    onEvent(BudgetDetailEvent.ClearFilter)
+                    onIntent(BudgetDetailIntent.ClearFilter)
                 } else {
                     val budgetEntryFilter = BudgetEntryFilter(
                         description = description,
@@ -176,7 +176,7 @@ fun FilterModal(
                         startDate = startDate,
                         endDate = endDate
                     )
-                    onEvent(BudgetDetailEvent.FilterEntries(budgetEntryFilter))
+                    onIntent(BudgetDetailIntent.FilterEntries(budgetEntryFilter))
                 }
                 onDismiss()
             }
@@ -261,14 +261,14 @@ fun FilterModal(
 @Composable
 fun DeleteBudgetConfirmationModal(
     show: Boolean,
-    onEvent: (BudgetDetailEvent) -> Unit
+    onIntent: (BudgetDetailIntent) -> Unit
 ) {
     val onDismiss = remember {
-        fun() { onEvent(BudgetDetailEvent.ToggleDeleteBudgetModal(false)) }
+        fun() { onIntent(BudgetDetailIntent.ToggleDeleteBudgetModal(false)) }
     }
 
     val onConfirm = remember {
-        fun() { onEvent(BudgetDetailEvent.DeleteBudget) }
+        fun() { onIntent(BudgetDetailIntent.DeleteBudget) }
     }
 
     ConfirmationModal(
@@ -284,14 +284,14 @@ fun DeleteBudgetConfirmationModal(
 @Composable
 fun DeleteEntriesConfirmationModal(
     show: Boolean,
-    onEvent: (BudgetDetailEvent) -> Unit
+    onIntent: (BudgetDetailIntent) -> Unit
 ) {
     val onDismiss = remember {
-        fun() { onEvent(BudgetDetailEvent.ToggleDeleteEntriesModal(false)) }
+        fun() { onIntent(BudgetDetailIntent.ToggleDeleteEntriesModal(false)) }
     }
 
     val onConfirm = remember {
-        fun() { onEvent(BudgetDetailEvent.DeleteSelectedEntries) }
+        fun() { onIntent(BudgetDetailIntent.DeleteSelectedEntries) }
     }
 
     ConfirmationModal(

@@ -10,7 +10,7 @@ import budgethunter.composeapp.generated.resources.error_password_required
 import budgethunter.composeapp.generated.resources.error_password_too_short
 import budgethunter.composeapp.generated.resources.error_passwords_do_not_match
 import budgethunter.composeapp.generated.resources.error_sign_up_failed
-import com.meneses.budgethunter.auth.application.SignUpEvent
+import com.meneses.budgethunter.auth.application.SignUpIntent
 import com.meneses.budgethunter.auth.application.SignUpState
 import com.meneses.budgethunter.auth.data.AuthRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,14 +25,14 @@ class SignUpViewModel(
     val uiState get() = _uiState.asStateFlow()
     private val _uiState = MutableStateFlow(SignUpState())
 
-    fun sendEvent(event: SignUpEvent) {
-        when (event) {
-            is SignUpEvent.EmailChanged -> updateEmail(event.email)
-            is SignUpEvent.NameChanged -> updateName(event.name)
-            is SignUpEvent.PasswordChanged -> updatePassword(event.password)
-            is SignUpEvent.ConfirmPasswordChanged -> updateConfirmPassword(event.confirmPassword)
-            is SignUpEvent.SignUpClicked -> signUp()
-            is SignUpEvent.DismissError -> dismissError()
+    fun sendIntent(intent: SignUpIntent) {
+        when (intent) {
+            is SignUpIntent.EmailChanged -> updateEmail(intent.email)
+            is SignUpIntent.NameChanged -> updateName(intent.name)
+            is SignUpIntent.PasswordChanged -> updatePassword(intent.password)
+            is SignUpIntent.ConfirmPasswordChanged -> updateConfirmPassword(intent.confirmPassword)
+            is SignUpIntent.SignUpClicked -> signUp()
+            is SignUpIntent.DismissError -> dismissError()
         }
     }
 

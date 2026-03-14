@@ -3,7 +3,7 @@ package com.meneses.budgethunter.budgetDetail
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.meneses.budgethunter.auth.data.AuthRepository
-import com.meneses.budgethunter.budgetDetail.application.BudgetDetailEvent
+import com.meneses.budgethunter.budgetDetail.application.BudgetDetailIntent
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailState
 import com.meneses.budgethunter.budgetDetail.data.BudgetDetailRepository
 import com.meneses.budgethunter.budgetEntry.data.sync.RealTimeSyncManager
@@ -64,31 +64,31 @@ class BudgetDetailViewModel(
         realTimeSyncManager.stopListening()
     }
 
-    fun sendEvent(event: BudgetDetailEvent) {
-        when (event) {
-            is BudgetDetailEvent.SetBudget -> setBudget(event.budget)
-            is BudgetDetailEvent.GetBudgetDetail -> getBudgetDetail()
-            is BudgetDetailEvent.UpdateBudgetAmount -> updateBudgetAmount(event.amount)
-            is BudgetDetailEvent.FilterEntries -> filterEntries(event.filter)
-            is BudgetDetailEvent.ClearFilter -> clearFilter()
-            is BudgetDetailEvent.DeleteBudget -> deleteBudget()
-            is BudgetDetailEvent.DeleteSelectedEntries -> deleteSelectedEntries()
-            is BudgetDetailEvent.ShowEntry -> showEntry(event.budgetItem)
-            is BudgetDetailEvent.ToggleBudgetModal -> setBudgetModalVisibility(event.isVisible)
-            is BudgetDetailEvent.ToggleDeleteBudgetModal -> setDeleteBudgetModalVisibility(event.isVisible)
-            is BudgetDetailEvent.ToggleDeleteEntriesModal -> setDeleteEntriesModalVisibility(event.isVisible)
-            is BudgetDetailEvent.ToggleFilterModal -> setFilterModalVisibility(event.isVisible)
-            is BudgetDetailEvent.ToggleSelectionState -> toggleSelectionState(event.isActivated)
-            is BudgetDetailEvent.ToggleAllEntriesSelection -> toggleAllEntriesSelection(event.isSelected)
-            is BudgetDetailEvent.ToggleSelectEntry -> toggleEntrySelection(event)
-            is BudgetDetailEvent.ClearNavigation -> clearNavigation()
-            is BudgetDetailEvent.SortList -> orderList()
-            is BudgetDetailEvent.SyncEntries -> {
+    fun sendIntent(intent: BudgetDetailIntent) {
+        when (intent) {
+            is BudgetDetailIntent.SetBudget -> setBudget(intent.budget)
+            is BudgetDetailIntent.GetBudgetDetail -> getBudgetDetail()
+            is BudgetDetailIntent.UpdateBudgetAmount -> updateBudgetAmount(intent.amount)
+            is BudgetDetailIntent.FilterEntries -> filterEntries(intent.filter)
+            is BudgetDetailIntent.ClearFilter -> clearFilter()
+            is BudgetDetailIntent.DeleteBudget -> deleteBudget()
+            is BudgetDetailIntent.DeleteSelectedEntries -> deleteSelectedEntries()
+            is BudgetDetailIntent.ShowEntry -> showEntry(intent.budgetItem)
+            is BudgetDetailIntent.ToggleBudgetModal -> setBudgetModalVisibility(intent.isVisible)
+            is BudgetDetailIntent.ToggleDeleteBudgetModal -> setDeleteBudgetModalVisibility(intent.isVisible)
+            is BudgetDetailIntent.ToggleDeleteEntriesModal -> setDeleteEntriesModalVisibility(intent.isVisible)
+            is BudgetDetailIntent.ToggleFilterModal -> setFilterModalVisibility(intent.isVisible)
+            is BudgetDetailIntent.ToggleSelectionState -> toggleSelectionState(intent.isActivated)
+            is BudgetDetailIntent.ToggleAllEntriesSelection -> toggleAllEntriesSelection(intent.isSelected)
+            is BudgetDetailIntent.ToggleSelectEntry -> toggleEntrySelection(intent)
+            is BudgetDetailIntent.ClearNavigation -> clearNavigation()
+            is BudgetDetailIntent.SortList -> orderList()
+            is BudgetDetailIntent.SyncEntries -> {
                 val budget = _uiState.value.budgetDetail.budget
                 syncEntries(budgetId = budget.id, serverId = budget.serverId, showErrors = true)
             }
 
-            is BudgetDetailEvent.ClearSyncError -> clearSyncError()
+            is BudgetDetailIntent.ClearSyncError -> clearSyncError()
         }
     }
 
@@ -182,16 +182,16 @@ class BudgetDetailViewModel(
         toggleSelectionState(false)
     }
 
-    private fun toggleEntrySelection(event: BudgetDetailEvent.ToggleSelectEntry) {
+    private fun toggleEntrySelection(intent: BudgetDetailIntent.ToggleSelectEntry) {
         _uiState.update { state ->
             val updatedEntry = state.budgetDetail
-                .entries[event.index]
-                .copy(isSelected = event.isSelected)
+                .entries[intent.index]
+                .copy(isSelected = intent.isSelected)
 
             val updatedList = state.budgetDetail
                 .entries
                 .toMutableList()
-                .apply { set(index = event.index, element = updatedEntry) }
+                .apply { set(index = intent.index, element = updatedEntry) }
 
             state.copy(
                 budgetDetail = state.budgetDetail

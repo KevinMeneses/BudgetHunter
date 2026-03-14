@@ -6,7 +6,7 @@ import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.commons.data.PreferencesManager
 import com.meneses.budgethunter.commons.platform.PermissionsManager
-import com.meneses.budgethunter.settings.application.SettingsEvent
+import com.meneses.budgethunter.settings.application.SettingsIntent
 import com.meneses.budgethunter.settings.application.SettingsState
 import com.meneses.budgethunter.sms.domain.SupportedBanks
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,19 +27,19 @@ class SettingsViewModel(
         loadSettings()
     }
 
-    fun sendEvent(event: SettingsEvent) {
-        when (event) {
-            is SettingsEvent.ToggleSmsReading -> toggleSmsReading(event.enabled)
-            is SettingsEvent.SetDefaultBudget -> setDefaultBudget(event.budget)
-            is SettingsEvent.ShowDefaultBudgetSelector -> showDefaultBudgetSelector()
-            is SettingsEvent.HideDefaultBudgetSelector -> hideDefaultBudgetSelector()
-            is SettingsEvent.ShowBankSelector -> showBankSelector()
-            is SettingsEvent.HideBankSelector -> hideBankSelector()
-            is SettingsEvent.SetSelectedBanks -> setSelectedBanks(event.bankConfigs)
-            is SettingsEvent.ToggleAiProcessing -> toggleAiProcessing(event.enabled)
-            is SettingsEvent.ShowManualPermissionDialog -> showManualPermissionDialog()
-            is SettingsEvent.HideManualPermissionDialog -> hideManualPermissionDialog()
-            is SettingsEvent.OpenAppSettings -> openAppSettings()
+    fun sendIntent(intent: SettingsIntent) {
+        when (intent) {
+            is SettingsIntent.ToggleSmsReading -> toggleSmsReading(intent.enabled)
+            is SettingsIntent.SetDefaultBudget -> setDefaultBudget(intent.budget)
+            is SettingsIntent.ShowDefaultBudgetSelector -> showDefaultBudgetSelector()
+            is SettingsIntent.HideDefaultBudgetSelector -> hideDefaultBudgetSelector()
+            is SettingsIntent.ShowBankSelector -> showBankSelector()
+            is SettingsIntent.HideBankSelector -> hideBankSelector()
+            is SettingsIntent.SetSelectedBanks -> setSelectedBanks(intent.bankConfigs)
+            is SettingsIntent.ToggleAiProcessing -> toggleAiProcessing(intent.enabled)
+            is SettingsIntent.ShowManualPermissionDialog -> showManualPermissionDialog()
+            is SettingsIntent.HideManualPermissionDialog -> hideManualPermissionDialog()
+            is SettingsIntent.OpenAppSettings -> openAppSettings()
         }
     }
 

@@ -40,6 +40,7 @@ import io.ktor.serialization.kotlinx.json.json
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
@@ -97,6 +98,7 @@ class SyncFlowIntegrationTest {
         prettyPrint = true
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     @BeforeTest
     fun setup() {
         // Create in-memory SQLite database using Android driver with Robolectric context
@@ -451,7 +453,7 @@ class SyncFlowIntegrationTest {
                     content = json.encodeToString(
                         BudgetEntryResponse(
                             id = 501,
-                            budgetId = 402,  // budget1 has server ID 402
+                            budgetId = 402, // budget1 has server ID 402
                             amount = 100.0,
                             description = "Old Entry 1",
                             category = "OTHER",
@@ -469,7 +471,7 @@ class SyncFlowIntegrationTest {
                     content = json.encodeToString(
                         BudgetEntryResponse(
                             id = 502,
-                            budgetId = 402,  // budget1 has server ID 402
+                            budgetId = 402, // budget1 has server ID 402
                             amount = 200.0,
                             description = "Old Entry 2",
                             category = "OTHER",
@@ -489,7 +491,7 @@ class SyncFlowIntegrationTest {
                         listOf(
                             BudgetEntryResponse(
                                 id = 501,
-                                budgetId = 402,  // budget1 has server ID 402
+                                budgetId = 402, // budget1 has server ID 402
                                 amount = 100.0,
                                 description = "Old Entry 1",
                                 category = "OTHER",
@@ -501,7 +503,7 @@ class SyncFlowIntegrationTest {
                             ),
                             BudgetEntryResponse(
                                 id = 502,
-                                budgetId = 402,  // budget1 has server ID 402
+                                budgetId = 402, // budget1 has server ID 402
                                 amount = 200.0,
                                 description = "Old Entry 2",
                                 category = "OTHER",

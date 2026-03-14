@@ -16,13 +16,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import okio.Path.Companion.toPath
-import java.util.UUID
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 /**
  * Comprehensive unit tests for AuthRepository.
@@ -35,9 +36,10 @@ class AuthRepositoryTest {
         isLenient = true
     }
 
+    @OptIn(ExperimentalUuidApi::class)
     private fun createTestTokenStorage(): TokenStorage {
         val testDataStore = PreferenceDataStoreFactory.createWithPath(
-            produceFile = { "test-${UUID.randomUUID()}.preferences_pb".toPath() }
+            produceFile = { "test-${Uuid.random()}.preferences_pb".toPath() }
         )
         return TokenStorage(testDataStore)
     }

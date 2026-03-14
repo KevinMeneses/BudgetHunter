@@ -57,7 +57,7 @@ import budgethunter.composeapp.generated.resources.banks_selected
 import budgethunter.composeapp.generated.resources.no_banks_selected
 import com.meneses.budgethunter.commons.ui.AppBar
 import com.meneses.budgethunter.commons.util.Platform
-import com.meneses.budgethunter.settings.application.SettingsEvent
+import com.meneses.budgethunter.settings.application.SettingsIntent
 import com.meneses.budgethunter.settings.application.SettingsState
 import kotlinx.serialization.Serializable
 import org.jetbrains.compose.resources.stringResource
@@ -67,7 +67,7 @@ object SettingsScreen {
     @Composable
     fun Show(
         uiState: SettingsState,
-        onEvent: (SettingsEvent) -> Unit,
+        onIntent: (SettingsIntent) -> Unit,
         goBack: () -> Unit
     ) {
         Scaffold(
@@ -89,13 +89,13 @@ object SettingsScreen {
                 SmsReadingSection(
                     uiState = uiState,
                     onToggleSmsReading = { enabled ->
-                        onEvent(SettingsEvent.ToggleSmsReading(enabled))
+                        onIntent(SettingsIntent.ToggleSmsReading(enabled))
                     },
                     onSelectDefaultBudget = {
-                        onEvent(SettingsEvent.ShowDefaultBudgetSelector)
+                        onIntent(SettingsIntent.ShowDefaultBudgetSelector)
                     },
                     onSelectBanks = {
-                        onEvent(SettingsEvent.ShowBankSelector)
+                        onIntent(SettingsIntent.ShowBankSelector)
                     }
                 )
 
@@ -106,7 +106,7 @@ object SettingsScreen {
                 AiProcessingSection(
                     uiState = uiState,
                     onToggleAiProcessing = { enabled ->
-                        onEvent(SettingsEvent.ToggleAiProcessing(enabled))
+                        onIntent(SettingsIntent.ToggleAiProcessing(enabled))
                     }
                 )
 
@@ -123,9 +123,9 @@ object SettingsScreen {
             DefaultBudgetSelectorModal(
                 availableBudgets = uiState.allBudgets,
                 currentDefaultBudget = uiState.defaultBudget,
-                onDismiss = { onEvent(SettingsEvent.HideDefaultBudgetSelector) },
+                onDismiss = { onIntent(SettingsIntent.HideDefaultBudgetSelector) },
                 onBudgetSelected = { budget ->
-                    onEvent(SettingsEvent.SetDefaultBudget(budget))
+                    onIntent(SettingsIntent.SetDefaultBudget(budget))
                 }
             )
         }
@@ -135,9 +135,9 @@ object SettingsScreen {
             BankSelectorModal(
                 availableBanks = uiState.availableBanks,
                 selectedBanks = uiState.selectedBanks,
-                onDismiss = { onEvent(SettingsEvent.HideBankSelector) },
+                onDismiss = { onIntent(SettingsIntent.HideBankSelector) },
                 onBanksSelected = { banks ->
-                    onEvent(SettingsEvent.SetSelectedBanks(banks))
+                    onIntent(SettingsIntent.SetSelectedBanks(banks))
                 }
             )
         }
@@ -145,8 +145,8 @@ object SettingsScreen {
         // Manual Permission Dialog
         if (uiState.isManualPermissionDialogVisible) {
             ManualPermissionDialog(
-                onDismiss = { onEvent(SettingsEvent.HideManualPermissionDialog) },
-                onOpenSettings = { onEvent(SettingsEvent.OpenAppSettings) }
+                onDismiss = { onIntent(SettingsIntent.HideManualPermissionDialog) },
+                onOpenSettings = { onIntent(SettingsIntent.OpenAppSettings) }
             )
         }
     }

@@ -44,7 +44,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import budgethunter.composeapp.generated.resources.Res
 import budgethunter.composeapp.generated.resources.back_content_description
-import com.meneses.budgethunter.collaborator.application.CollaboratorsEvent
+import com.meneses.budgethunter.collaborator.application.CollaboratorsIntent
 import com.meneses.budgethunter.collaborator.application.CollaboratorsState
 import com.meneses.budgethunter.commons.data.network.models.UserInfo
 import com.meneses.budgethunter.commons.ui.AppBar
@@ -66,14 +66,14 @@ data class CollaboratorsScreen(
     @Composable
     fun Show(
         uiState: CollaboratorsState,
-        onEvent: (CollaboratorsEvent) -> Unit,
+        onIntent: (CollaboratorsIntent) -> Unit,
         goBack: () -> Unit
     ) {
         val snackBarHostState = remember { SnackbarHostState() }
 
         // Load collaborators when screen opens
         DisposableEffect(Unit) {
-            CollaboratorsEvent.LoadCollaborators.run(onEvent)
+            CollaboratorsIntent.LoadCollaborators.run(onIntent)
             onDispose { }
         }
 
@@ -81,7 +81,7 @@ data class CollaboratorsScreen(
         LaunchedEffect(key1 = uiState.errorMessage) {
             uiState.errorMessage?.let { message ->
                 snackBarHostState.showSnackbar(message)
-                CollaboratorsEvent.ClearMessages.run(onEvent)
+                CollaboratorsIntent.ClearMessages.run(onIntent)
             }
         }
 
@@ -89,7 +89,7 @@ data class CollaboratorsScreen(
         LaunchedEffect(key1 = uiState.successMessage) {
             uiState.successMessage?.let { message ->
                 snackBarHostState.showSnackbar(message)
-                CollaboratorsEvent.ClearMessages.run(onEvent)
+                CollaboratorsIntent.ClearMessages.run(onIntent)
             }
         }
 
@@ -105,7 +105,7 @@ data class CollaboratorsScreen(
             floatingActionButton = {
                 if (!uiState.isLoading) {
                     FloatingActionButton(
-                        onClick = { CollaboratorsEvent.ToggleAddCollaboratorDialog(true).run(onEvent) }
+                        onClick = { CollaboratorsIntent.ToggleAddCollaboratorDialog(true).run(onIntent) }
                     ) {
                         Icon(
                             imageVector = Icons.Default.Add,
@@ -121,7 +121,7 @@ data class CollaboratorsScreen(
             CollaboratorsContent(
                 paddingValues = paddingValues,
                 uiState = uiState,
-                onEvent = onEvent
+                onIntent = onIntent
             )
         }
 
@@ -129,9 +129,9 @@ data class CollaboratorsScreen(
         if (uiState.showAddCollaboratorDialog) {
             AddCollaboratorDialog(
                 isLoading = uiState.isAddingCollaborator,
-                onDismiss = { CollaboratorsEvent.ToggleAddCollaboratorDialog(false).run(onEvent) },
+                onDismiss = { CollaboratorsIntent.ToggleAddCollaboratorDialog(false).run(onIntent) },
                 onConfirm = { email ->
-                    CollaboratorsEvent.AddCollaborator(email).run(onEvent)
+                    CollaboratorsIntent.AddCollaborator(email).run(onIntent)
                 }
             )
         }
@@ -141,9 +141,9 @@ data class CollaboratorsScreen(
             RemoveCollaboratorConfirmationDialog(
                 email = emailToRemove,
                 isLoading = uiState.isRemovingCollaborator,
-                onDismiss = { CollaboratorsEvent.ToggleRemoveConfirmationDialog(null).run(onEvent) },
+                onDismiss = { CollaboratorsIntent.ToggleRemoveConfirmationDialog(null).run(onIntent) },
                 onConfirm = {
-                    CollaboratorsEvent.RemoveCollaborator(emailToRemove).run(onEvent)
+                    CollaboratorsIntent.RemoveCollaborator(emailToRemove).run(onIntent)
                 }
             )
         }
@@ -157,7 +157,7 @@ data class CollaboratorsScreen(
 private fun CollaboratorsContent(
     paddingValues: PaddingValues,
     uiState: CollaboratorsState,
-    onEvent: (CollaboratorsEvent) -> Unit
+    onIntent: (CollaboratorsIntent) -> Unit
 ) {
     Box(
         modifier = Modifier
@@ -206,7 +206,7 @@ private fun CollaboratorsContent(
                         CollaboratorCard(
                             collaborator = collaborator,
                             onRemoveClick = {
-                                CollaboratorsEvent.ToggleRemoveConfirmationDialog(collaborator.email).run(onEvent)
+                                CollaboratorsIntent.ToggleRemoveConfirmationDialog(collaborator.email).run(onIntent)
                             }
                         )
                     }
@@ -369,4 +369,4 @@ private fun RemoveCollaboratorConfirmationDialog(
 }
 
 // Extension function for cleaner event handling
-private fun CollaboratorsEvent.run(onEvent: (CollaboratorsEvent) -> Unit) = onEvent(this)
+private fun CollaboratorsIntent.run(onIntent: (CollaboratorsIntent) -> Unit) = onIntent(this)

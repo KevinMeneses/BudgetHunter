@@ -58,7 +58,7 @@ class BudgetDetailRepository(
         val cached = getCachedDetail()
         val budget = cached.budget.copy(
             amount = amount,
-            isSynced = false,  // Mark as unsynced so it will be pushed to server
+            isSynced = false, // Mark as unsynced so it will be pushed to server
             lastSyncedAt = null
         )
         budgetRepository.update(budget)

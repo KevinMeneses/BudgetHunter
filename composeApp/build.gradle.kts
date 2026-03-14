@@ -293,9 +293,10 @@ tasks.register<JacocoReport>("testDebugUnitTestCoverage") {
 configure<org.jlleitschuh.gradle.ktlint.KtlintExtension> {
     version.set("0.49.1")
     filter {
-        exclude("**/generated/**")
-        exclude("**/build/**")
-        exclude("**/build/generated/**")
-        exclude { it.file.absolutePath.contains("/build/generated/") }
+        exclude { projectFilePath ->
+            val path = projectFilePath.file.absolutePath
+            path.contains("/composeApp/build/buildkonfig/") ||
+                path.contains("/composeApp/build/generated/")
+        }
     }
 }

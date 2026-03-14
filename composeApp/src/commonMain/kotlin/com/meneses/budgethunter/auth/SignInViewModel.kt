@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import budgethunter.composeapp.generated.resources.Res
 import budgethunter.composeapp.generated.resources.error_sign_in_failed
-import com.meneses.budgethunter.auth.application.SignInEvent
+import com.meneses.budgethunter.auth.application.SignInIntent
 import com.meneses.budgethunter.auth.application.SignInState
 import com.meneses.budgethunter.auth.data.AuthRepository
 import com.meneses.budgethunter.budgetEntry.data.BudgetEntrySyncManager
@@ -25,13 +25,13 @@ class SignInViewModel(
     val uiState get() = _uiState.asStateFlow()
     private val _uiState = MutableStateFlow(SignInState())
 
-    fun sendEvent(event: SignInEvent) {
-        when (event) {
-            is SignInEvent.EmailChanged -> updateEmail(event.email)
-            is SignInEvent.PasswordChanged -> updatePassword(event.password)
-            is SignInEvent.SignInClicked -> signIn()
-            is SignInEvent.DismissError -> dismissError()
-            is SignInEvent.ContinueOfflineClicked -> continueOffline()
+    fun sendIntent(intent: SignInIntent) {
+        when (intent) {
+            is SignInIntent.EmailChanged -> updateEmail(intent.email)
+            is SignInIntent.PasswordChanged -> updatePassword(intent.password)
+            is SignInIntent.SignInClicked -> signIn()
+            is SignInIntent.DismissError -> dismissError()
+            is SignInIntent.ContinueOfflineClicked -> continueOffline()
         }
     }
 

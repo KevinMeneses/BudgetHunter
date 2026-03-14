@@ -15,7 +15,7 @@ import androidx.compose.ui.unit.sp
 import budgethunter.composeapp.generated.resources.Res
 import budgethunter.composeapp.generated.resources.budget_hunter
 import budgethunter.composeapp.generated.resources.wait_for_update
-import com.meneses.budgethunter.splash.application.SplashEvent
+import com.meneses.budgethunter.splash.application.SplashIntent
 import com.meneses.budgethunter.splash.application.SplashState
 import com.meneses.budgethunter.theme.AppColors
 import com.meneses.budgethunter.theme.Typography
@@ -28,7 +28,7 @@ object SplashScreen {
     @Composable
     fun Show(
         uiState: SplashState,
-        onEvent: (SplashEvent) -> Unit,
+        onIntent: (SplashIntent) -> Unit,
         navigateToSignIn: () -> Unit,
         navigateToBudgetList: () -> Unit
     ) {
@@ -57,7 +57,7 @@ object SplashScreen {
 
         LaunchedEffect(uiState.navigate, uiState.isAuthenticated) {
             if (!uiState.navigate) {
-                onEvent(SplashEvent.VerifyUpdate)
+                onIntent(SplashIntent.VerifyUpdate)
             } else {
                 delay(200)
                 if (uiState.isAuthenticated) {

@@ -20,7 +20,7 @@ import budgethunter.composeapp.generated.resources.Res
 import budgethunter.composeapp.generated.resources.add_transaction
 import budgethunter.composeapp.generated.resources.back_content_description
 import budgethunter.composeapp.generated.resources.open_menu
-import com.meneses.budgethunter.budgetDetail.application.BudgetDetailEvent
+import com.meneses.budgethunter.budgetDetail.application.BudgetDetailIntent
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailState
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.budgetList.domain.Budget
@@ -35,7 +35,7 @@ data class BudgetDetailScreen(val budget: Budget) {
     @Composable
     fun Show(
         uiState: BudgetDetailState,
-        onEvent: (BudgetDetailEvent) -> Unit,
+        onIntent: (BudgetDetailIntent) -> Unit,
         goBack: () -> Unit,
         showBudgetEntry: (BudgetEntry) -> Unit,
         showBudgetMetrics: (Budget) -> Unit,
@@ -51,19 +51,19 @@ data class BudgetDetailScreen(val budget: Budget) {
 
         DisposableEffect(Unit) {
             if (uiState.budgetDetail.budget.id != budget.id) {
-                BudgetDetailEvent
+                BudgetDetailIntent
                     .SetBudget(budget)
-                    .run(onEvent)
+                    .run(onIntent)
             }
 
-            BudgetDetailEvent
+            BudgetDetailIntent
                 .GetBudgetDetail
-                .run(onEvent)
+                .run(onIntent)
 
             onDispose {
-                BudgetDetailEvent
+                BudgetDetailIntent
                     .ClearNavigation
-                    .run(onEvent)
+                    .run(onIntent)
             }
         }
 
@@ -80,9 +80,9 @@ data class BudgetDetailScreen(val budget: Budget) {
                     onLeftButtonClick = goBack,
                     onSecondRightButtonClick = {
                         val budgetEntry = BudgetEntry(budgetId = currentBudget.id)
-                        BudgetDetailEvent
+                        BudgetDetailIntent
                             .ShowEntry(budgetEntry)
-                            .run(onEvent)
+                            .run(onIntent)
                     },
                     onRightButtonClick = {
                         dropdownExpanded = true
@@ -93,15 +93,15 @@ data class BudgetDetailScreen(val budget: Budget) {
                             expanded = dropdownExpanded,
                             onDismiss = { dropdownExpanded = false },
                             onFilterClick = {
-                                BudgetDetailEvent
+                                BudgetDetailIntent
                                     .ToggleFilterModal(true)
-                                    .run(onEvent)
+                                    .run(onIntent)
                             },
                             onMetricsClick = { showBudgetMetrics(currentBudget) },
                             onDeleteClick = {
-                                BudgetDetailEvent
+                                BudgetDetailIntent
                                     .ToggleDeleteBudgetModal(true)
-                                    .run(onEvent)
+                                    .run(onIntent)
                             },
                             onSettingsClick = showSettings,
                             showCollaboratorsOption = isBudgetSynced,
@@ -122,30 +122,30 @@ data class BudgetDetailScreen(val budget: Budget) {
                 paddingValues = paddingValues,
                 isOnline = if (uiState.isAuthenticated) isOnline else true,
                 uiState = uiState,
-                onEvent = onEvent
+                onIntent = onIntent
             )
         }
 
         BudgetModal(
             show = uiState.isBudgetModalVisible,
             budgetAmount = currentBudget.amount,
-            onEvent = onEvent
+            onIntent = onIntent
         )
 
         FilterModal(
             show = uiState.isFilterModalVisible,
             filter = uiState.filter,
-            onEvent = onEvent
+            onIntent = onIntent
         )
 
         DeleteBudgetConfirmationModal(
             show = uiState.isDeleteBudgetModalVisible,
-            onEvent = onEvent
+            onIntent = onIntent
         )
 
         DeleteEntriesConfirmationModal(
             show = uiState.isDeleteEntriesModalVisible,
-            onEvent = onEvent
+            onIntent = onIntent
         )
 
         LaunchedEffect(key1 = uiState.goBack) {
@@ -162,7 +162,7 @@ data class BudgetDetailScreen(val budget: Budget) {
         LaunchedEffect(key1 = syncErrorMessage) {
             syncErrorMessage?.let { message ->
                 snackBarHostState.showSnackbar(message)
-                BudgetDetailEvent.ClearSyncError.run(onEvent)
+                BudgetDetailIntent.ClearSyncError.run(onIntent)
             }
         }
     }

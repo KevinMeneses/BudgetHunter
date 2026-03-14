@@ -55,7 +55,7 @@ import budgethunter.composeapp.generated.resources.name
 import budgethunter.composeapp.generated.resources.password
 import budgethunter.composeapp.generated.resources.show_password
 import budgethunter.composeapp.generated.resources.sign_up
-import com.meneses.budgethunter.auth.application.SignUpEvent
+import com.meneses.budgethunter.auth.application.SignUpIntent
 import com.meneses.budgethunter.auth.application.SignUpState
 import com.meneses.budgethunter.commons.ui.LoadingOverlay
 import kotlinx.serialization.Serializable
@@ -67,7 +67,7 @@ object SignUpScreen {
     @Composable
     fun Show(
         uiState: SignUpState,
-        onEvent: (SignUpEvent) -> Unit,
+        onIntent: (SignUpIntent) -> Unit,
         navigateToSignIn: () -> Unit,
         onNavigateBack: () -> Unit = {}
     ) {
@@ -139,7 +139,7 @@ object SignUpScreen {
                                     modifier = Modifier.weight(1f)
                                 )
                                 IconButton(
-                                    onClick = { onEvent(SignUpEvent.DismissError) }
+                                    onClick = { onIntent(SignUpIntent.DismissError) }
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Close,
@@ -153,7 +153,7 @@ object SignUpScreen {
 
                     OutlinedTextField(
                         value = uiState.email,
-                        onValueChange = { onEvent(SignUpEvent.EmailChanged(it)) },
+                        onValueChange = { onIntent(SignUpIntent.EmailChanged(it)) },
                         label = { Text(stringResource(Res.string.email)) },
                         modifier = Modifier.fillMaxWidth(),
                         keyboardOptions = KeyboardOptions(
@@ -167,7 +167,7 @@ object SignUpScreen {
 
                     OutlinedTextField(
                         value = uiState.name,
-                        onValueChange = { onEvent(SignUpEvent.NameChanged(it)) },
+                        onValueChange = { onIntent(SignUpIntent.NameChanged(it)) },
                         label = { Text(stringResource(Res.string.name)) },
                         modifier = Modifier.fillMaxWidth(),
                         keyboardOptions = KeyboardOptions(
@@ -182,7 +182,7 @@ object SignUpScreen {
                     var passwordVisible by remember { mutableStateOf(false) }
                     OutlinedTextField(
                         value = uiState.password,
-                        onValueChange = { onEvent(SignUpEvent.PasswordChanged(it)) },
+                        onValueChange = { onIntent(SignUpIntent.PasswordChanged(it)) },
                         label = { Text(stringResource(Res.string.password)) },
                         modifier = Modifier.fillMaxWidth(),
                         visualTransformation = if (passwordVisible)
@@ -215,7 +215,7 @@ object SignUpScreen {
                     var confirmPasswordVisible by remember { mutableStateOf(false) }
                     OutlinedTextField(
                         value = uiState.confirmPassword,
-                        onValueChange = { onEvent(SignUpEvent.ConfirmPasswordChanged(it)) },
+                        onValueChange = { onIntent(SignUpIntent.ConfirmPasswordChanged(it)) },
                         label = { Text(stringResource(Res.string.confirm_password)) },
                         modifier = Modifier.fillMaxWidth(),
                         visualTransformation = if (confirmPasswordVisible)
@@ -227,7 +227,7 @@ object SignUpScreen {
                             imeAction = ImeAction.Done
                         ),
                         keyboardActions = KeyboardActions(
-                            onDone = { onEvent(SignUpEvent.SignUpClicked) }
+                            onDone = { onIntent(SignUpIntent.SignUpClicked) }
                         ),
                         trailingIcon = {
                             IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
@@ -249,7 +249,7 @@ object SignUpScreen {
                     Spacer(modifier = Modifier.height(24.dp))
 
                     Button(
-                        onClick = { onEvent(SignUpEvent.SignUpClicked) },
+                        onClick = { onIntent(SignUpIntent.SignUpClicked) },
                         modifier = Modifier.fillMaxWidth(),
                         enabled = uiState.email.isNotBlank() &&
                             uiState.name.isNotBlank() &&

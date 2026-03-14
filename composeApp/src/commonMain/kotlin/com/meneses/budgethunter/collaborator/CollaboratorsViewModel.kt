@@ -2,7 +2,7 @@ package com.meneses.budgethunter.collaborator
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.meneses.budgethunter.collaborator.application.CollaboratorsEvent
+import com.meneses.budgethunter.collaborator.application.CollaboratorsIntent
 import com.meneses.budgethunter.collaborator.application.CollaboratorsState
 import com.meneses.budgethunter.collaborator.data.CollaboratorRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,19 +25,14 @@ class CollaboratorsViewModel(
     private val _uiState = MutableStateFlow(CollaboratorsState())
     val uiState = _uiState.asStateFlow()
 
-    /**
-     * Handles events from the UI.
-     *
-     * @param event The event to handle
-     */
-    fun sendEvent(event: CollaboratorsEvent) {
-        when (event) {
-            is CollaboratorsEvent.LoadCollaborators -> loadCollaborators()
-            is CollaboratorsEvent.ToggleAddCollaboratorDialog -> toggleAddCollaboratorDialog(event.show)
-            is CollaboratorsEvent.AddCollaborator -> addCollaborator(event.email)
-            is CollaboratorsEvent.RemoveCollaborator -> removeCollaborator(event.email)
-            is CollaboratorsEvent.ToggleRemoveConfirmationDialog -> toggleRemoveConfirmationDialog(event.email)
-            is CollaboratorsEvent.ClearMessages -> clearMessages()
+    fun sendIntent(intent: CollaboratorsIntent) {
+        when (intent) {
+            is CollaboratorsIntent.LoadCollaborators -> loadCollaborators()
+            is CollaboratorsIntent.ToggleAddCollaboratorDialog -> toggleAddCollaboratorDialog(intent.show)
+            is CollaboratorsIntent.AddCollaborator -> addCollaborator(intent.email)
+            is CollaboratorsIntent.RemoveCollaborator -> removeCollaborator(intent.email)
+            is CollaboratorsIntent.ToggleRemoveConfirmationDialog -> toggleRemoveConfirmationDialog(intent.email)
+            is CollaboratorsIntent.ClearMessages -> clearMessages()
         }
     }
 

@@ -17,7 +17,7 @@ import budgethunter.composeapp.generated.resources.new_registry
 import budgethunter.composeapp.generated.resources.save_entry
 import budgethunter.composeapp.generated.resources.unsaved_changes_confirmation_message
 import budgethunter.composeapp.generated.resources.update_registry
-import com.meneses.budgethunter.budgetEntry.application.BudgetEntryEvent
+import com.meneses.budgethunter.budgetEntry.application.BudgetEntryIntent
 import com.meneses.budgethunter.budgetEntry.application.BudgetEntryState
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.commons.ui.AppBar
@@ -32,22 +32,22 @@ data class BudgetEntryScreen(val budgetEntry: BudgetEntry) {
     @Composable
     fun Show(
         uiState: BudgetEntryState,
-        onEvent: (BudgetEntryEvent) -> Unit,
+        onIntent: (BudgetEntryIntent) -> Unit,
         goBack: () -> Unit
     ) {
         val onBack = remember {
             fun() {
-                BudgetEntryEvent
+                BudgetEntryIntent
                     .ValidateChanges(budgetEntry)
-                    .run(onEvent)
+                    .run(onIntent)
             }
         }
 
         val setBudgetEntry = remember {
             fun(budgetEntry: BudgetEntry) {
-                BudgetEntryEvent
+                BudgetEntryIntent
                     .SetBudgetEntry(budgetEntry)
-                    .run(onEvent)
+                    .run(onIntent)
             }
         }
 
@@ -70,9 +70,9 @@ data class BudgetEntryScreen(val budgetEntry: BudgetEntry) {
                     rightButtonDescription = stringResource(Res.string.save_entry),
                     onLeftButtonClick = onBack,
                     onRightButtonClick = {
-                        BudgetEntryEvent
+                        BudgetEntryIntent
                             .SaveBudgetEntry
-                            .run(onEvent)
+                            .run(onIntent)
                     }
                 )
             }
@@ -85,10 +85,10 @@ data class BudgetEntryScreen(val budgetEntry: BudgetEntry) {
                 onBudgetItemChanged = setBudgetEntry,
                 onInvoiceFieldClick = {
                     if (uiState.budgetEntry?.invoice == null) {
-                        BudgetEntryEvent.ToggleAttachInvoiceModal(true)
+                        BudgetEntryIntent.ToggleAttachInvoiceModal(true)
                     } else {
-                        BudgetEntryEvent.ToggleShowInvoiceModal(true)
-                    }.run(onEvent)
+                        BudgetEntryIntent.ToggleShowInvoiceModal(true)
+                    }.run(onIntent)
                 }
             )
         }
@@ -115,27 +115,27 @@ data class BudgetEntryScreen(val budgetEntry: BudgetEntry) {
             confirmButtonText = stringResource(Res.string.discard),
             cancelButtonText = stringResource(Res.string.come_back),
             onDismiss = {
-                BudgetEntryEvent
+                BudgetEntryIntent
                     .HideDiscardChangesModal
-                    .run(onEvent)
+                    .run(onIntent)
             },
             onConfirm = {
-                BudgetEntryEvent.DiscardChanges
-                    .run(onEvent)
+                BudgetEntryIntent.DiscardChanges
+                    .run(onIntent)
             }
         )
 
         FileNotFoundModal(
             show = uiState.shouldShowFileNotFoundModal(),
             onDismiss = {
-                BudgetEntryEvent
+                BudgetEntryIntent
                     .ToggleShowInvoiceModal(false)
-                    .run(onEvent)
+                    .run(onIntent)
             },
             onReattach = {
-                BudgetEntryEvent
+                BudgetEntryIntent
                     .UpdateInvoice
-                    .run(onEvent)
+                    .run(onIntent)
             }
         )
 
@@ -148,24 +148,24 @@ data class BudgetEntryScreen(val budgetEntry: BudgetEntry) {
                 show = uiState.shouldShowInvoiceDisplayModal(),
                 validatedFilePath = validatedPath,
                 onDismiss = {
-                    BudgetEntryEvent
+                    BudgetEntryIntent
                         .ToggleShowInvoiceModal(false)
-                        .run(onEvent)
+                        .run(onIntent)
                 },
                 onEdit = {
-                    BudgetEntryEvent
+                    BudgetEntryIntent
                         .UpdateInvoice
-                        .run(onEvent)
+                        .run(onIntent)
                 },
                 onShare = {
-                    BudgetEntryEvent
+                    BudgetEntryIntent
                         .ShareFile(validatedPath)
-                        .run(onEvent)
+                        .run(onIntent)
                 },
                 onDelete = {
-                    BudgetEntryEvent
+                    BudgetEntryIntent
                         .DeleteAttachedInvoice
-                        .run(onEvent)
+                        .run(onIntent)
                 },
                 onError = {
                     isFileLoadable = false
@@ -178,9 +178,9 @@ data class BudgetEntryScreen(val budgetEntry: BudgetEntry) {
                     isFileLoadable = true
                 },
                 onReplace = {
-                    BudgetEntryEvent
+                    BudgetEntryIntent
                         .UpdateInvoice
-                        .run(onEvent)
+                        .run(onIntent)
                 }
             )
         }
@@ -188,23 +188,23 @@ data class BudgetEntryScreen(val budgetEntry: BudgetEntry) {
         AttachInvoiceModal(
             show = uiState.isAttachInvoiceModalVisible,
             onDismiss = {
-                BudgetEntryEvent
+                BudgetEntryIntent
                     .ToggleAttachInvoiceModal(false)
-                    .run(onEvent)
+                    .run(onIntent)
             },
             onTakePhoto = {
-                BudgetEntryEvent.TakePhoto.run(onEvent)
+                BudgetEntryIntent.TakePhoto.run(onIntent)
             },
             onSelectFile = {
-                BudgetEntryEvent.PickFile.run(onEvent)
+                BudgetEntryIntent.PickFile.run(onIntent)
             }
         )
 
         if (uiState.attachInvoiceError != null) {
             LaunchedEffect(uiState.attachInvoiceError) {
-                BudgetEntryEvent
+                BudgetEntryIntent
                     .ShowNotification(uiState.attachInvoiceError, isError = true)
-                    .run(onEvent)
+                    .run(onIntent)
             }
         }
 

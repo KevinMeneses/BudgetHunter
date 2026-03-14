@@ -37,7 +37,7 @@ import budgethunter.composeapp.generated.resources.new_budget
 import budgethunter.composeapp.generated.resources.update
 import budgethunter.composeapp.generated.resources.update_budget
 import budgethunter.composeapp.generated.resources.update_budget_modal
-import com.meneses.budgethunter.budgetList.application.BudgetListEvent
+import com.meneses.budgethunter.budgetList.application.BudgetListIntent
 import org.jetbrains.compose.resources.stringResource
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.commons.EMPTY
@@ -45,7 +45,7 @@ import com.meneses.budgethunter.commons.EMPTY
 @Composable
 fun NewBudgetModal(
     show: Boolean,
-    onEvent: (BudgetListEvent) -> Unit,
+    onIntent: (BudgetListIntent) -> Unit,
     isCreating: Boolean = false
 ) {
     if (show) {
@@ -55,9 +55,9 @@ fun NewBudgetModal(
 
         val onDismiss = remember {
             fun() {
-                BudgetListEvent
+                BudgetListIntent
                     .ToggleAddModal(false)
-                    .run(onEvent)
+                    .run(onIntent)
             }
         }
 
@@ -95,7 +95,7 @@ fun NewBudgetModal(
                     onClick = {
                         if (name.isBlank()) return@TextButton
                         val budget = Budget(name = name)
-                        BudgetListEvent.CreateBudget(budget).run(onEvent)
+                        BudgetListIntent.CreateBudget(budget).run(onIntent)
                         onDismiss()
                     },
                     enabled = name.isNotBlank() && !isCreating
@@ -124,7 +124,7 @@ fun NewBudgetModal(
 @Composable
 fun UpdateBudgetModal(
     budget: Budget?,
-    onEvent: (BudgetListEvent) -> Unit,
+    onIntent: (BudgetListIntent) -> Unit,
     isUpdating: Boolean = false
 ) {
     if (budget != null) {
@@ -134,9 +134,9 @@ fun UpdateBudgetModal(
 
         val onDismiss = remember {
             fun() {
-                BudgetListEvent
+                BudgetListIntent
                     .ToggleUpdateModal(null)
-                    .run(onEvent)
+                    .run(onIntent)
             }
         }
 
@@ -185,7 +185,7 @@ fun UpdateBudgetModal(
                     onClick = {
                         if (name.isBlank()) return@TextButton
                         val updatedBudget = budget.copy(name = name)
-                        BudgetListEvent.UpdateBudget(updatedBudget).run(onEvent)
+                        BudgetListIntent.UpdateBudget(updatedBudget).run(onIntent)
                         onDismiss()
                     },
                     enabled = name.isNotBlank() && !isUpdating

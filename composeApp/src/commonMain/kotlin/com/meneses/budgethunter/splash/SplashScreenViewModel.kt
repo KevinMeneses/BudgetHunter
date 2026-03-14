@@ -6,7 +6,7 @@ import com.meneses.budgethunter.auth.data.AuthRepository
 import com.meneses.budgethunter.commons.data.PreferencesManager
 import com.meneses.budgethunter.commons.platform.AppUpdateManager
 import com.meneses.budgethunter.commons.platform.AppUpdateResult
-import com.meneses.budgethunter.splash.application.SplashEvent
+import com.meneses.budgethunter.splash.application.SplashIntent
 import com.meneses.budgethunter.splash.application.SplashState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,9 +22,9 @@ class SplashScreenViewModel(
     private val _uiState = MutableStateFlow(SplashState())
     val uiState = _uiState.asStateFlow()
 
-    fun sendEvent(event: SplashEvent) {
-        when (event) {
-            is SplashEvent.VerifyUpdate -> verifyUpdate()
+    fun sendIntent(intent: SplashIntent) {
+        when (intent) {
+            is SplashIntent.VerifyUpdate -> verifyUpdate()
         }
     }
 
