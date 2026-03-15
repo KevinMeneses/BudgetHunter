@@ -4,6 +4,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -33,7 +35,7 @@ data class BudgetEntryScreen(val budgetEntry: BudgetEntry) {
     fun Show(
         uiState: BudgetEntryState,
         onIntent: (BudgetEntryIntent) -> Unit,
-        goBack: () -> Unit
+        snackbarHostState: SnackbarHostState
     ) {
         val onBack = remember {
             fun() {
@@ -51,7 +53,7 @@ data class BudgetEntryScreen(val budgetEntry: BudgetEntry) {
             }
         }
 
-        LaunchedEffect(Unit) {
+        LaunchedEffect(budgetEntry.id) {
             if (uiState.budgetEntry?.id != budgetEntry.id) {
                 setBudgetEntry(budgetEntry)
             }
@@ -75,6 +77,9 @@ data class BudgetEntryScreen(val budgetEntry: BudgetEntry) {
                             .run(onIntent)
                     }
                 )
+            },
+            snackbarHost = {
+                SnackbarHost(hostState = snackbarHostState)
             }
         ) { paddingValues ->
             BudgetEntryForm(
@@ -200,18 +205,6 @@ data class BudgetEntryScreen(val budgetEntry: BudgetEntry) {
             }
         )
 
-        if (uiState.attachInvoiceError != null) {
-            LaunchedEffect(uiState.attachInvoiceError) {
-                BudgetEntryIntent
-                    .ShowNotification(uiState.attachInvoiceError, isError = true)
-                    .run(onIntent)
-            }
-        }
-
         PlatformBackHandler(enabled = true, onBack = onBack)
-
-        LaunchedEffect(key1 = uiState.goBack) {
-            if (uiState.goBack) goBack()
-        }
     }
 }

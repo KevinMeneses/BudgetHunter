@@ -15,7 +15,6 @@ sealed interface BudgetEntryIntent {
     data object TakePhoto : BudgetEntryIntent
     data object PickFile : BudgetEntryIntent
     data class ShareFile(val filePath: String) : BudgetEntryIntent
-    data class ShowNotification(val message: String, val isError: Boolean = false) : BudgetEntryIntent
     data object GoBack : BudgetEntryIntent
     data object DeleteAttachedInvoice : BudgetEntryIntent
     data object UpdateInvoice : BudgetEntryIntent

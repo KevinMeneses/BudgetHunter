@@ -3,13 +3,18 @@ package com.meneses.budgethunter.navigation
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -17,28 +22,35 @@ import androidx.navigation.navOptions
 import androidx.navigation.toRoute
 import com.meneses.budgethunter.auth.SignInViewModel
 import com.meneses.budgethunter.auth.SignUpViewModel
+import com.meneses.budgethunter.auth.application.SignInEvent
+import com.meneses.budgethunter.auth.application.SignUpEvent
 import com.meneses.budgethunter.auth.ui.SignInScreen
 import com.meneses.budgethunter.auth.ui.SignUpScreen
 import com.meneses.budgethunter.budgetDetail.BudgetDetailViewModel
+import com.meneses.budgethunter.budgetDetail.application.BudgetDetailEvent
 import com.meneses.budgethunter.budgetDetail.ui.BudgetDetailScreen
 import com.meneses.budgethunter.budgetEntry.BudgetEntryViewModel
+import com.meneses.budgethunter.budgetEntry.application.BudgetEntryEvent
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.budgetEntry.ui.BudgetEntryScreen
 import com.meneses.budgethunter.budgetList.BudgetListViewModel
-import com.meneses.budgethunter.budgetList.application.BudgetListIntent
+import com.meneses.budgethunter.budgetList.application.BudgetListEvent
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.budgetList.ui.BudgetListScreen
 import com.meneses.budgethunter.budgetMetrics.BudgetMetricsViewModel
 import com.meneses.budgethunter.budgetMetrics.ui.BudgetMetricsScreen
+import com.meneses.budgethunter.collaborator.CollaboratorsViewModel
+import com.meneses.budgethunter.collaborator.application.CollaboratorsEvent
+import com.meneses.budgethunter.collaborator.ui.CollaboratorsScreen
 import com.meneses.budgethunter.commons.platform.NetworkMonitor
 import com.meneses.budgethunter.commons.util.serializableType
-import com.meneses.budgethunter.collaborator.CollaboratorsViewModel
-import com.meneses.budgethunter.collaborator.ui.CollaboratorsScreen
 import com.meneses.budgethunter.settings.SettingsViewModel
 import com.meneses.budgethunter.settings.ui.SettingsScreen
 import com.meneses.budgethunter.splash.SplashScreenViewModel
+import com.meneses.budgethunter.splash.application.SplashEvent
 import com.meneses.budgethunter.splash.ui.SplashScreen
-import androidx.compose.material3.MaterialTheme
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.core.parameter.parametersOf
 import kotlin.reflect.typeOf
@@ -83,25 +95,28 @@ fun BudgetHunterNavigation() {
                 val splashScreenViewModel: SplashScreenViewModel = koinInject()
                 val uiState by splashScreenViewModel.uiState.collectAsStateWithLifecycle()
 
+                LaunchedEffect(Unit) {
+                    splashScreenViewModel.events.collect { event ->
+                        when (event) {
+                            is SplashEvent.NavigateToSignIn -> navController.navigate(
+                                route = SignInScreen,
+                                navOptions = navOptions {
+                                    popUpTo<SplashScreen> { inclusive = true }
+                                }
+                            )
+                            is SplashEvent.NavigateToBudgetList -> navController.navigate(
+                                route = BudgetListScreen,
+                                navOptions = navOptions {
+                                    popUpTo<SplashScreen> { inclusive = true }
+                                }
+                            )
+                        }
+                    }
+                }
+
                 SplashScreen.Show(
                     uiState = uiState,
-                    onIntent = splashScreenViewModel::sendIntent,
-                    navigateToSignIn = {
-                        navController.navigate(
-                            route = SignInScreen,
-                            navOptions = navOptions {
-                                popUpTo<SplashScreen> { inclusive = true }
-                            }
-                        )
-                    },
-                    navigateToBudgetList = {
-                        navController.navigate(
-                            route = BudgetListScreen,
-                            navOptions = navOptions {
-                                popUpTo<SplashScreen> { inclusive = true }
-                            }
-                        )
-                    }
+                    onIntent = splashScreenViewModel::sendIntent
                 )
             }
 
@@ -109,30 +124,29 @@ fun BudgetHunterNavigation() {
                 val signInViewModel: SignInViewModel = koinInject()
                 val uiState by signInViewModel.uiState.collectAsStateWithLifecycle()
 
-                // Track if we came directly from splash (initial entry = false)
-                // This will be saved across recompositions but reset when the screen is recreated
                 val cameFromSignUp = rememberSaveable {
                     navController.previousBackStackEntry != null
+                }
+
+                LaunchedEffect(Unit) {
+                    signInViewModel.events.collect { event ->
+                        when (event) {
+                            is SignInEvent.NavigateToBudgetList -> navController.navigate(
+                                route = BudgetListScreen,
+                                navOptions = navOptions {
+                                    popUpTo<SignInScreen> { inclusive = true }
+                                }
+                            )
+                        }
+                    }
                 }
 
                 SignInScreen.Show(
                     uiState = uiState,
                     onIntent = signInViewModel::sendIntent,
-                    navigateToSignUp = {
-                        navController.navigate(SignUpScreen)
-                    },
-                    navigateToBudgetList = {
-                        navController.navigate(
-                            route = BudgetListScreen,
-                            navOptions = navOptions {
-                                popUpTo<SignInScreen> { inclusive = true }
-                            }
-                        )
-                    },
+                    navigateToSignUp = { navController.navigate(SignUpScreen) },
                     canNavigateBack = cameFromSignUp,
-                    onNavigateBack = {
-                        navController.popBackStack()
-                    }
+                    onNavigateBack = { navController.popBackStack() }
                 )
             }
 
@@ -140,15 +154,17 @@ fun BudgetHunterNavigation() {
                 val signUpViewModel: SignUpViewModel = koinInject()
                 val uiState by signUpViewModel.uiState.collectAsStateWithLifecycle()
 
+                LaunchedEffect(Unit) {
+                    signUpViewModel.events.collect { event ->
+                        when (event) {
+                            is SignUpEvent.NavigateToSignIn -> navController.popBackStack()
+                        }
+                    }
+                }
+
                 SignUpScreen.Show(
                     uiState = uiState,
-                    onIntent = signUpViewModel::sendIntent,
-                    navigateToSignIn = {
-                        navController.popBackStack()
-                    },
-                    onNavigateBack = {
-                        navController.popBackStack()
-                    }
+                    onIntent = signUpViewModel::sendIntent
                 )
             }
 
@@ -157,28 +173,26 @@ fun BudgetHunterNavigation() {
                 val uiState by budgetListViewModel.uiState.collectAsStateWithLifecycle()
                 val networkMonitor: NetworkMonitor = koinInject()
 
-                // Handle navigation to sign in
-                LaunchedEffect(uiState.navigateToSignIn) {
-                    if (uiState.navigateToSignIn) {
-                        navController.navigate(
-                            route = SignInScreen,
-                            navOptions = navOptions {
-                                popUpTo<BudgetListScreen> { inclusive = true }
-                            }
-                        )
-                        budgetListViewModel.sendIntent(BudgetListIntent.ClearSignInNavigation)
+                LaunchedEffect(Unit) {
+                    budgetListViewModel.events.collect { event ->
+                        when (event) {
+                            is BudgetListEvent.NavigateToBudget -> navController.navigate(
+                                BudgetDetailScreen(event.budget)
+                            )
+                            is BudgetListEvent.NavigateToSignIn -> navController.navigate(
+                                route = SignInScreen,
+                                navOptions = navOptions {
+                                    popUpTo<BudgetListScreen> { inclusive = true }
+                                }
+                            )
+                        }
                     }
                 }
 
                 BudgetListScreen.Show(
                     uiState = uiState,
                     onIntent = budgetListViewModel::sendIntent,
-                    showBudgetDetail = { budget ->
-                        navController.navigate(BudgetDetailScreen(budget))
-                    },
-                    showSettings = {
-                        navController.navigate(SettingsScreen)
-                    },
+                    showSettings = { navController.navigate(SettingsScreen) },
                     networkMonitor = networkMonitor
                 )
             }
@@ -201,20 +215,38 @@ fun BudgetHunterNavigation() {
                 val budgetDetailViewModel: BudgetDetailViewModel = koinInject()
                 val uiState by budgetDetailViewModel.uiState.collectAsStateWithLifecycle()
                 val networkMonitor: NetworkMonitor = koinInject()
+                val snackbarHostState = remember { SnackbarHostState() }
+                var errorResource by remember { mutableStateOf<StringResource?>(null) }
+
+                LaunchedEffect(Unit) {
+                    budgetDetailViewModel.events.collect { event ->
+                        when (event) {
+                            is BudgetDetailEvent.NavigateBack -> navController.popBackStack()
+                            is BudgetDetailEvent.ShowEntry -> navController.navigate(
+                                BudgetEntryScreen(event.entry)
+                            )
+                            is BudgetDetailEvent.ShowError -> errorResource = event.message
+                        }
+                    }
+                }
+
+                errorResource?.let { res ->
+                    val message = stringResource(res)
+                    LaunchedEffect(res) {
+                        snackbarHostState.showSnackbar(message)
+                        errorResource = null
+                    }
+                }
 
                 budgetDetailRoute.Show(
                     uiState = uiState,
                     onIntent = budgetDetailViewModel::sendIntent,
+                    snackbarHostState = snackbarHostState,
                     goBack = { navController.popBackStack() },
-                    showBudgetEntry = { budgetEntry ->
-                        navController.navigate(BudgetEntryScreen(budgetEntry))
-                    },
                     showBudgetMetrics = { budget ->
                         navController.navigate(BudgetMetricsScreen(budget))
                     },
-                    showSettings = {
-                        navController.navigate(SettingsScreen)
-                    },
+                    showSettings = { navController.navigate(SettingsScreen) },
                     showCollaborators = { serverId, budgetName ->
                         navController.navigate(CollaboratorsScreen(serverId, budgetName))
                     },
@@ -228,11 +260,21 @@ fun BudgetHunterNavigation() {
                 val budgetEntryRoute = backStackEntry.toRoute<BudgetEntryScreen>()
                 val budgetEntryViewModel: BudgetEntryViewModel = koinInject()
                 val uiState by budgetEntryViewModel.uiState.collectAsStateWithLifecycle()
+                val snackbarHostState = remember { SnackbarHostState() }
+
+                LaunchedEffect(Unit) {
+                    budgetEntryViewModel.events.collect { event ->
+                        when (event) {
+                            is BudgetEntryEvent.NavigateBack -> navController.popBackStack()
+                            is BudgetEntryEvent.ShowNotification -> snackbarHostState.showSnackbar(event.message)
+                        }
+                    }
+                }
 
                 budgetEntryRoute.Show(
                     uiState = uiState,
                     onIntent = budgetEntryViewModel::sendIntent,
-                    goBack = { navController.popBackStack() }
+                    snackbarHostState = snackbarHostState
                 )
             }
 
@@ -255,10 +297,21 @@ fun BudgetHunterNavigation() {
                     parameters = { parametersOf(collaboratorsRoute.budgetServerId) }
                 )
                 val uiState by collaboratorsViewModel.uiState.collectAsStateWithLifecycle()
+                val snackbarHostState = remember { SnackbarHostState() }
+
+                LaunchedEffect(Unit) {
+                    collaboratorsViewModel.events.collect { event ->
+                        when (event) {
+                            is CollaboratorsEvent.ShowError -> snackbarHostState.showSnackbar(event.message)
+                            is CollaboratorsEvent.ShowSuccess -> snackbarHostState.showSnackbar(event.message)
+                        }
+                    }
+                }
 
                 collaboratorsRoute.Show(
                     uiState = uiState,
                     onIntent = collaboratorsViewModel::sendIntent,
+                    snackbarHostState = snackbarHostState,
                     goBack = { navController.popBackStack() }
                 )
             }

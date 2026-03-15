@@ -20,8 +20,6 @@ sealed interface BudgetDetailIntent {
     data class ToggleDeleteEntriesModal(val isVisible: Boolean) : BudgetDetailIntent
     data class ToggleAllEntriesSelection(val isSelected: Boolean) : BudgetDetailIntent
     data class ToggleSelectionState(val isActivated: Boolean) : BudgetDetailIntent
-    data object ClearNavigation : BudgetDetailIntent
     data object SortList : BudgetDetailIntent
     data object SyncEntries : BudgetDetailIntent
-    data object ClearSyncError : BudgetDetailIntent
 }

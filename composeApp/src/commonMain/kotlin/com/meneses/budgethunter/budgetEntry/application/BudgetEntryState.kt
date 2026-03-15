@@ -8,8 +8,6 @@ data class BudgetEntryState(
     val isDiscardChangesModalVisible: Boolean = false,
     val isAttachInvoiceModalVisible: Boolean = false,
     val isShowInvoiceModalVisible: Boolean = false,
-    val attachInvoiceError: String? = null,
-    val goBack: Boolean = false,
     val isProcessingInvoice: Boolean = false,
     val isFileValid: Boolean = true,
     val validatedFilePath: String? = null,

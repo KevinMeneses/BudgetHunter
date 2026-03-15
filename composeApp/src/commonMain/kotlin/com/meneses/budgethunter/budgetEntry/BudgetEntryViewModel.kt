@@ -2,8 +2,7 @@ package com.meneses.budgethunter.budgetEntry
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import budgethunter.composeapp.generated.resources.Res
-import budgethunter.composeapp.generated.resources.error
+import com.meneses.budgethunter.budgetEntry.application.BudgetEntryEvent
 import com.meneses.budgethunter.budgetEntry.application.BudgetEntryIntent
 import com.meneses.budgethunter.budgetEntry.application.BudgetEntryState
 import com.meneses.budgethunter.budgetEntry.application.CreateBudgetEntryFromImageUseCase
@@ -14,20 +13,15 @@ import com.meneses.budgethunter.commons.data.FileManager
 import com.meneses.budgethunter.commons.data.PreferencesManager
 import com.meneses.budgethunter.commons.platform.CameraManager
 import com.meneses.budgethunter.commons.platform.FilePickerManager
-import com.meneses.budgethunter.commons.platform.NotificationManager
 import com.meneses.budgethunter.commons.platform.ShareManager
-import com.meneses.budgethunter.commons.resources.StringResourceProvider
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/**
- * KMP BudgetEntryViewModel migrated from Android version.
- * Maintains all the complex business logic, state management, and platform service integrations
- * while being cross-platform compatible.
- */
 class BudgetEntryViewModel(
     private val budgetEntryRepository: BudgetEntryRepository,
     private val createBudgetEntryFromImageUseCase: CreateBudgetEntryFromImageUseCase,
@@ -36,13 +30,14 @@ class BudgetEntryViewModel(
     private val fileManager: FileManager,
     private val cameraManager: CameraManager,
     private val filePickerManager: FilePickerManager,
-    private val shareManager: ShareManager,
-    private val notificationManager: NotificationManager,
-    private val stringResourceProvider: StringResourceProvider
+    private val shareManager: ShareManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(BudgetEntryState())
     val uiState = _uiState.asStateFlow()
+
+    private val _events = Channel<BudgetEntryEvent>(Channel.BUFFERED)
+    val events = _events.receiveAsFlow()
 
     private var wasNewInvoiceAttached: Boolean = false
     private var invoiceToDelete: String? = null
@@ -62,7 +57,6 @@ class BudgetEntryViewModel(
             is BudgetEntryIntent.TakePhoto -> takePhoto()
             is BudgetEntryIntent.PickFile -> pickFile()
             is BudgetEntryIntent.ShareFile -> shareFile(intent.filePath)
-            is BudgetEntryIntent.ShowNotification -> showNotification(intent.message, intent.isError)
             is BudgetEntryIntent.UpdateInvoice -> updateInvoice()
         }
     }
@@ -118,14 +112,12 @@ class BudgetEntryViewModel(
             validateInvoiceFile(invoicePath)
         } catch (_: Exception) {
             _uiState.update { it.copy(isProcessingInvoice = false) }
-            updateInvoiceError("Something went wrong loading file, please try again")
-            delay(2000)
-            updateInvoiceError(null)
+            _events.trySend(BudgetEntryEvent.ShowNotification(
+                message = "Something went wrong loading file, please try again",
+                isError = true
+            ))
         }
     }
-
-    private fun updateInvoiceError(message: String?) =
-        _uiState.update { it.copy(attachInvoiceError = message) }
 
     private fun toggleAttachInvoiceModal(show: Boolean) =
         _uiState.update { it.copy(isAttachInvoiceModalVisible = show) }
@@ -197,19 +189,21 @@ class BudgetEntryViewModel(
 
     private fun showAmountError() {
         _uiState.update {
-            it.copy(emptyAmountError = "Amount is mandatory") // KMP: Using string instead of R.string
+            it.copy(emptyAmountError = "Amount is mandatory")
         }
     }
 
     private fun goBack() {
-        _uiState.update { it.copy(goBack = true) }
+        _events.trySend(BudgetEntryEvent.NavigateBack)
     }
 
-    private fun validateChanges(budgetEntry: BudgetEntry) =
-        _uiState.update {
-            if (budgetEntry == it.budgetEntry) it.copy(goBack = true)
-            else it.copy(isDiscardChangesModalVisible = true)
+    private fun validateChanges(budgetEntry: BudgetEntry) {
+        if (budgetEntry == _uiState.value.budgetEntry) {
+            _events.trySend(BudgetEntryEvent.NavigateBack)
+        } else {
+            _uiState.update { it.copy(isDiscardChangesModalVisible = true) }
         }
+    }
 
     private fun hideDiscardChangesModal() =
         _uiState.update { it.copy(isDiscardChangesModalVisible = false) }
@@ -240,19 +234,6 @@ class BudgetEntryViewModel(
             // Small delay to ensure share sheet is presented before hiding loading
             delay(500)
             _uiState.update { it.copy(isSharingFile = false) }
-        }
-    }
-
-    private fun showNotification(message: String, isError: Boolean) {
-        viewModelScope.launch {
-            if (isError) {
-                notificationManager.showNotification(
-                    title = stringResourceProvider.getString(Res.string.error),
-                    message = message
-                )
-            } else {
-                notificationManager.showToast(message)
-            }
         }
     }
 

@@ -6,5 +6,4 @@ sealed interface CollaboratorsIntent {
     data class AddCollaborator(val email: String) : CollaboratorsIntent
     data class RemoveCollaborator(val email: String) : CollaboratorsIntent
     data class ToggleRemoveConfirmationDialog(val email: String?) : CollaboratorsIntent
-    data object ClearMessages : CollaboratorsIntent
 }

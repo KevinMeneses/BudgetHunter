@@ -12,11 +12,7 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,7 +27,6 @@ import budgethunter.composeapp.generated.resources.open_menu
 import budgethunter.composeapp.generated.resources.search
 import com.meneses.budgethunter.budgetList.application.BudgetListIntent
 import com.meneses.budgethunter.budgetList.application.BudgetListState
-import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.commons.platform.NetworkMonitor
 import com.meneses.budgethunter.commons.ui.AppBar
 import com.meneses.budgethunter.commons.ui.LoadingOverlay
@@ -46,11 +41,9 @@ object BudgetListScreen {
     fun Show(
         uiState: BudgetListState,
         onIntent: (BudgetListIntent) -> Unit,
-        showBudgetDetail: (Budget) -> Unit,
         showSettings: () -> Unit,
         networkMonitor: NetworkMonitor
     ) {
-        val snackBarHostState = remember { SnackbarHostState() }
         var dropdownExpanded by remember { mutableStateOf(false) }
         val isOnline by networkMonitor.isOnline.collectAsState()
 
@@ -98,9 +91,6 @@ object BudgetListScreen {
                         }
                     )
                 }
-            },
-            snackbarHost = {
-                SnackbarHost(hostState = snackBarHostState)
             },
             floatingActionButton = {
                 FloatingActionButton(
@@ -155,18 +145,6 @@ object BudgetListScreen {
 
         if (uiState.isSigningOut) {
             LoadingOverlay()
-        }
-
-        LaunchedEffect(key1 = uiState.navigateToBudget) {
-            uiState.navigateToBudget?.let { showBudgetDetail(it) }
-        }
-
-        DisposableEffect(key1 = Unit) {
-            onDispose {
-                BudgetListIntent
-                    .ClearNavigation
-                    .run(onIntent)
-            }
         }
     }
 }

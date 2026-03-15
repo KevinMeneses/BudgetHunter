@@ -94,9 +94,7 @@ val budgetEntryModule = module {
             fileManager = get(),
             cameraManager = get(),
             filePickerManager = get(),
-            shareManager = get(),
-            notificationManager = get(),
-            stringResourceProvider = get()
+            shareManager = get()
         )
     }
 }

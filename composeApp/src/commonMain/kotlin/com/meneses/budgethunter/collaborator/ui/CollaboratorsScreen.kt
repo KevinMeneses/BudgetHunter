@@ -33,7 +33,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -67,30 +66,13 @@ data class CollaboratorsScreen(
     fun Show(
         uiState: CollaboratorsState,
         onIntent: (CollaboratorsIntent) -> Unit,
+        snackbarHostState: SnackbarHostState,
         goBack: () -> Unit
     ) {
-        val snackBarHostState = remember { SnackbarHostState() }
-
         // Load collaborators when screen opens
         DisposableEffect(Unit) {
             CollaboratorsIntent.LoadCollaborators.run(onIntent)
             onDispose { }
-        }
-
-        // Show snackbar for error messages
-        LaunchedEffect(key1 = uiState.errorMessage) {
-            uiState.errorMessage?.let { message ->
-                snackBarHostState.showSnackbar(message)
-                CollaboratorsIntent.ClearMessages.run(onIntent)
-            }
-        }
-
-        // Show snackbar for success messages
-        LaunchedEffect(key1 = uiState.successMessage) {
-            uiState.successMessage?.let { message ->
-                snackBarHostState.showSnackbar(message)
-                CollaboratorsIntent.ClearMessages.run(onIntent)
-            }
         }
 
         Scaffold(
@@ -115,7 +97,7 @@ data class CollaboratorsScreen(
                 }
             },
             snackbarHost = {
-                SnackbarHost(hostState = snackBarHostState)
+                SnackbarHost(hostState = snackbarHostState)
             }
         ) { paddingValues ->
             CollaboratorsContent(

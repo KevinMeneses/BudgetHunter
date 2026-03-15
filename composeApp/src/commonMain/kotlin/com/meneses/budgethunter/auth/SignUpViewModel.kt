@@ -10,11 +10,14 @@ import budgethunter.composeapp.generated.resources.error_password_required
 import budgethunter.composeapp.generated.resources.error_password_too_short
 import budgethunter.composeapp.generated.resources.error_passwords_do_not_match
 import budgethunter.composeapp.generated.resources.error_sign_up_failed
+import com.meneses.budgethunter.auth.application.SignUpEvent
 import com.meneses.budgethunter.auth.application.SignUpIntent
 import com.meneses.budgethunter.auth.application.SignUpState
 import com.meneses.budgethunter.auth.data.AuthRepository
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -25,6 +28,9 @@ class SignUpViewModel(
     val uiState get() = _uiState.asStateFlow()
     private val _uiState = MutableStateFlow(SignUpState())
 
+    private val _events = Channel<SignUpEvent>(Channel.BUFFERED)
+    val events = _events.receiveAsFlow()
+
     fun sendIntent(intent: SignUpIntent) {
         when (intent) {
             is SignUpIntent.EmailChanged -> updateEmail(intent.email)
@@ -33,6 +39,7 @@ class SignUpViewModel(
             is SignUpIntent.ConfirmPasswordChanged -> updateConfirmPassword(intent.confirmPassword)
             is SignUpIntent.SignUpClicked -> signUp()
             is SignUpIntent.DismissError -> dismissError()
+            is SignUpIntent.NavigateBack -> _events.trySend(SignUpEvent.NavigateToSignIn)
         }
     }
 
@@ -92,14 +99,10 @@ class SignUpViewModel(
                 password = currentState.password
             ).fold(
                 onSuccess = {
-                    _uiState.update {
-                        it.copy(
-                            isLoading = false,
-                            isSignedUp = true
-                        )
-                    }
+                    _uiState.update { it.copy(isLoading = false) }
+                    _events.trySend(SignUpEvent.NavigateToSignIn)
                 },
-                onFailure = { exception ->
+                onFailure = {
                     _uiState.update {
                         it.copy(
                             isLoading = false,

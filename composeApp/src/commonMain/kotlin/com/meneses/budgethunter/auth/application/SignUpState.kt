@@ -8,6 +8,5 @@ data class SignUpState(
     val password: String = "",
     val confirmPassword: String = "",
     val isLoading: Boolean = false,
-    val error: StringResource? = null,
-    val isSignedUp: Boolean = false
+    val error: StringResource? = null
 )

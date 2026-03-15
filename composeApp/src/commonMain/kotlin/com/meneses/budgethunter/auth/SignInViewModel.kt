@@ -4,14 +4,17 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import budgethunter.composeapp.generated.resources.Res
 import budgethunter.composeapp.generated.resources.error_sign_in_failed
+import com.meneses.budgethunter.auth.application.SignInEvent
 import com.meneses.budgethunter.auth.application.SignInIntent
 import com.meneses.budgethunter.auth.application.SignInState
 import com.meneses.budgethunter.auth.data.AuthRepository
 import com.meneses.budgethunter.budgetEntry.data.BudgetEntrySyncManager
 import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.commons.data.PreferencesManager
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -24,6 +27,9 @@ class SignInViewModel(
 
     val uiState get() = _uiState.asStateFlow()
     private val _uiState = MutableStateFlow(SignInState())
+
+    private val _events = Channel<SignInEvent>(Channel.BUFFERED)
+    val events = _events.receiveAsFlow()
 
     fun sendIntent(intent: SignInIntent) {
         when (intent) {
@@ -67,14 +73,10 @@ class SignInViewModel(
                         budgetEntrySyncManager.syncAllBudgetsEntries()
                     }
 
-                    _uiState.update {
-                        it.copy(
-                            isLoading = false,
-                            isSignedIn = true
-                        )
-                    }
+                    _uiState.update { it.copy(isLoading = false) }
+                    _events.trySend(SignInEvent.NavigateToBudgetList)
                 },
-                onFailure = { exception ->
+                onFailure = {
                     _uiState.update {
                         it.copy(
                             isLoading = false,
@@ -94,7 +96,7 @@ class SignInViewModel(
         viewModelScope.launch {
             // Save offline mode preference
             preferencesManager.setOfflineModeEnabled(true)
-            _uiState.update { it.copy(continueOffline = true) }
+            _events.trySend(SignInEvent.NavigateToBudgetList)
         }
     }
 }

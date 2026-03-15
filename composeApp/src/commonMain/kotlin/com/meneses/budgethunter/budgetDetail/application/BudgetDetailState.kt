@@ -1,15 +1,12 @@
 package com.meneses.budgethunter.budgetDetail.application
 
 import com.meneses.budgethunter.budgetDetail.domain.BudgetDetail
-import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntryFilter
-import org.jetbrains.compose.resources.StringResource
 
 data class BudgetDetailState(
     val budgetDetail: BudgetDetail = BudgetDetail(),
     val isLoading: Boolean = true,
     val isSyncingEntries: Boolean = false,
-    val syncError: StringResource? = null,
     val isBudgetModalVisible: Boolean = false,
     val isFilterModalVisible: Boolean = false,
     val isCollaborateModalVisible: Boolean = false,
@@ -17,8 +14,6 @@ data class BudgetDetailState(
     val isDeleteEntriesModalVisible: Boolean = false,
     val filter: BudgetEntryFilter? = null,
     val isSelectionActive: Boolean = false,
-    val goBack: Boolean = false,
-    val showEntry: BudgetEntry? = null,
     val listOrder: ListOrder = ListOrder.DEFAULT,
     val isAuthenticated: Boolean = false
 ) {

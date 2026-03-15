@@ -4,15 +4,18 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.meneses.budgethunter.auth.application.SignOutUseCase
 import com.meneses.budgethunter.auth.data.AuthRepository
+import com.meneses.budgethunter.budgetList.application.BudgetListEvent
 import com.meneses.budgethunter.budgetList.application.BudgetListIntent
 import com.meneses.budgethunter.budgetList.application.BudgetListState
 import com.meneses.budgethunter.budgetList.application.DeleteBudgetUseCase
 import com.meneses.budgethunter.budgetList.application.DuplicateBudgetUseCase
 import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.budgetList.domain.Budget
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -25,6 +28,9 @@ class BudgetListViewModel(
 ) : ViewModel() {
     val uiState get() = _uiState.asStateFlow()
     private val _uiState = MutableStateFlow(BudgetListState())
+
+    private val _events = Channel<BudgetListEvent>(Channel.BUFFERED)
+    val events = _events.receiveAsFlow()
 
     init {
         collectBudgetList()
@@ -68,10 +74,8 @@ class BudgetListViewModel(
             is BudgetListIntent.ToggleSearchMode -> setSearchMode(intent.isSearchMode)
             is BudgetListIntent.UpdateSearchQuery -> updateSearchQuery(intent.query)
             is BudgetListIntent.ClearFilter -> clearFilter()
-            is BudgetListIntent.ClearNavigation -> clearNavigation()
             is BudgetListIntent.SignOut -> signOut()
             is BudgetListIntent.SignIn -> signIn()
-            is BudgetListIntent.ClearSignInNavigation -> clearSignInNavigation()
             is BudgetListIntent.SyncBudgets -> syncBudgets()
         }
     }
@@ -123,7 +127,7 @@ class BudgetListViewModel(
     }
 
     private fun openBudget(budget: Budget) =
-        _uiState.update { it.copy(navigateToBudget = budget) }
+        _events.trySend(BudgetListEvent.NavigateToBudget(budget))
 
     private fun clearFilter() {
         viewModelScope.launch {
@@ -131,9 +135,6 @@ class BudgetListViewModel(
             _uiState.update { it.copy(budgetList = budgetList, filter = null) }
         }
     }
-
-    private fun clearNavigation() =
-        _uiState.update { it.copy(navigateToBudget = null) }
 
     private fun setAddModalVisibility(visible: Boolean) =
         _uiState.update { it.copy(addModalVisibility = visible) }
@@ -187,7 +188,8 @@ class BudgetListViewModel(
             _uiState.update { it.copy(isSigningOut = true) }
             try {
                 signOutUseCase.execute()
-                _uiState.update { it.copy(navigateToSignIn = true, isAuthenticated = false) }
+                _uiState.update { it.copy(isAuthenticated = false) }
+                _events.trySend(BudgetListEvent.NavigateToSignIn)
             } finally {
                 _uiState.update { it.copy(isSigningOut = false) }
             }
@@ -195,10 +197,6 @@ class BudgetListViewModel(
     }
 
     private fun signIn() {
-        _uiState.update { it.copy(navigateToSignIn = true) }
-    }
-
-    private fun clearSignInNavigation() {
-        _uiState.update { it.copy(navigateToSignIn = false) }
+        _events.trySend(BudgetListEvent.NavigateToSignIn)
     }
 }

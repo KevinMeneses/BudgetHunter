@@ -13,9 +13,7 @@ sealed interface BudgetListIntent {
     data class ToggleSearchMode(val isSearchMode: Boolean) : BudgetListIntent
     data class UpdateSearchQuery(val query: String) : BudgetListIntent
     data object ClearFilter : BudgetListIntent
-    data object ClearNavigation : BudgetListIntent
     data object SignOut : BudgetListIntent
     data object SignIn : BudgetListIntent
-    data object ClearSignInNavigation : BudgetListIntent
     data object SyncBudgets : BudgetListIntent
 }

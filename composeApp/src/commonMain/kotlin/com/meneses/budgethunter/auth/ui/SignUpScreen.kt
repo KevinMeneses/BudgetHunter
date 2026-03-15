@@ -33,7 +33,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -67,22 +66,14 @@ object SignUpScreen {
     @Composable
     fun Show(
         uiState: SignUpState,
-        onIntent: (SignUpIntent) -> Unit,
-        navigateToSignIn: () -> Unit,
-        onNavigateBack: () -> Unit = {}
+        onIntent: (SignUpIntent) -> Unit
     ) {
-        LaunchedEffect(uiState.isSignedUp) {
-            if (uiState.isSignedUp) {
-                navigateToSignIn()
-            }
-        }
-
         Scaffold(
             topBar = {
                 TopAppBar(
                     title = { },
                     navigationIcon = {
-                        IconButton(onClick = onNavigateBack) {
+                        IconButton(onClick = { onIntent(SignUpIntent.NavigateBack) }) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = "Back"
@@ -262,7 +253,7 @@ object SignUpScreen {
                     Spacer(modifier = Modifier.height(16.dp))
 
                     TextButton(
-                        onClick = { navigateToSignIn() }
+                        onClick = { onIntent(SignUpIntent.NavigateBack) }
                     ) {
                         Text(stringResource(Res.string.already_have_account))
                     }

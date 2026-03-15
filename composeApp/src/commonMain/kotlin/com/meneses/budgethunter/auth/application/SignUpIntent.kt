@@ -7,4 +7,5 @@ sealed interface SignUpIntent {
     data class ConfirmPasswordChanged(val confirmPassword: String) : SignUpIntent
     data object SignUpClicked : SignUpIntent
     data object DismissError : SignUpIntent
+    data object NavigateBack : SignUpIntent
 }

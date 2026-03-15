@@ -10,7 +10,6 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -36,14 +35,13 @@ data class BudgetDetailScreen(val budget: Budget) {
     fun Show(
         uiState: BudgetDetailState,
         onIntent: (BudgetDetailIntent) -> Unit,
+        snackbarHostState: SnackbarHostState,
         goBack: () -> Unit,
-        showBudgetEntry: (BudgetEntry) -> Unit,
         showBudgetMetrics: (Budget) -> Unit,
         showSettings: () -> Unit,
         showCollaborators: (Long, String) -> Unit,
         networkMonitor: NetworkMonitor
     ) {
-        val snackBarHostState = remember { SnackbarHostState() }
         var dropdownExpanded by remember { mutableStateOf(false) }
         val currentBudget = uiState.budgetDetail.budget
         val isBudgetSynced = currentBudget.serverId != null
@@ -60,11 +58,7 @@ data class BudgetDetailScreen(val budget: Budget) {
                 .GetBudgetDetail
                 .run(onIntent)
 
-            onDispose {
-                BudgetDetailIntent
-                    .ClearNavigation
-                    .run(onIntent)
-            }
+            onDispose { }
         }
 
         Scaffold(
@@ -115,7 +109,7 @@ data class BudgetDetailScreen(val budget: Budget) {
                 )
             },
             snackbarHost = {
-                SnackbarHost(hostState = snackBarHostState)
+                SnackbarHost(hostState = snackbarHostState)
             }
         ) { paddingValues ->
             BudgetDetailContent(
@@ -147,23 +141,5 @@ data class BudgetDetailScreen(val budget: Budget) {
             show = uiState.isDeleteEntriesModalVisible,
             onIntent = onIntent
         )
-
-        LaunchedEffect(key1 = uiState.goBack) {
-            if (uiState.goBack) goBack()
-        }
-
-        LaunchedEffect(key1 = uiState.showEntry) {
-            uiState.showEntry?.let { showBudgetEntry(it) }
-        }
-
-        // Convert StringResource to String in composable context
-        val syncErrorMessage = uiState.syncError?.let { stringResource(it) }
-
-        LaunchedEffect(key1 = syncErrorMessage) {
-            syncErrorMessage?.let { message ->
-                snackBarHostState.showSnackbar(message)
-                BudgetDetailIntent.ClearSyncError.run(onIntent)
-            }
-        }
     }
 }

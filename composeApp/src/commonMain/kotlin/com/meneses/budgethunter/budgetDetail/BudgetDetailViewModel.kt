@@ -3,6 +3,7 @@ package com.meneses.budgethunter.budgetDetail
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.meneses.budgethunter.auth.data.AuthRepository
+import com.meneses.budgethunter.budgetDetail.application.BudgetDetailEvent
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailIntent
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailState
 import com.meneses.budgethunter.budgetDetail.data.BudgetDetailRepository
@@ -12,11 +13,13 @@ import com.meneses.budgethunter.budgetEntry.domain.BudgetEntryFilter
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.commons.data.network.ApiError
 import com.meneses.budgethunter.commons.data.network.toApiError
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -29,6 +32,10 @@ class BudgetDetailViewModel(
 
     private val _uiState = MutableStateFlow(BudgetDetailState())
     val uiState = _uiState.asStateFlow()
+
+    private val _events = Channel<BudgetDetailEvent>(Channel.BUFFERED)
+    val events = _events.receiveAsFlow()
+
     private var hasTriggeredInitialSync = false
 
     init {
@@ -81,14 +88,11 @@ class BudgetDetailViewModel(
             is BudgetDetailIntent.ToggleSelectionState -> toggleSelectionState(intent.isActivated)
             is BudgetDetailIntent.ToggleAllEntriesSelection -> toggleAllEntriesSelection(intent.isSelected)
             is BudgetDetailIntent.ToggleSelectEntry -> toggleEntrySelection(intent)
-            is BudgetDetailIntent.ClearNavigation -> clearNavigation()
             is BudgetDetailIntent.SortList -> orderList()
             is BudgetDetailIntent.SyncEntries -> {
                 val budget = _uiState.value.budgetDetail.budget
                 syncEntries(budgetId = budget.id, serverId = budget.serverId, showErrors = true)
             }
-
-            is BudgetDetailIntent.ClearSyncError -> clearSyncError()
         }
     }
 
@@ -170,9 +174,6 @@ class BudgetDetailViewModel(
         }
     }
 
-    private fun clearNavigation() =
-        _uiState.update { it.copy(showEntry = null) }
-
     private fun deleteSelectedEntries() = viewModelScope.launch {
         val entriesToDeleteIds = _uiState.value.budgetDetail.entries
             .filter { it.isSelected }
@@ -201,7 +202,7 @@ class BudgetDetailViewModel(
     }
 
     private fun showEntry(budgetItem: BudgetEntry) =
-        _uiState.update { it.copy(showEntry = budgetItem) }
+        _events.trySend(BudgetDetailEvent.ShowEntry(budgetItem))
 
     private fun updateBudgetAmount(amount: Double) = viewModelScope.launch {
         budgetDetailRepository.updateBudgetAmount(amount)
@@ -219,10 +220,8 @@ class BudgetDetailViewModel(
 
     private fun deleteBudget() = viewModelScope.launch {
         val budgetId = _uiState.value.budgetDetail.budget.id
-        _uiState.update {
-            budgetDetailRepository.deleteBudget(budgetId)
-            it.copy(goBack = true)
-        }
+        budgetDetailRepository.deleteBudget(budgetId)
+        _events.trySend(BudgetDetailEvent.NavigateBack)
     }
 
     private fun setFilterModalVisibility(visible: Boolean) =
@@ -257,8 +256,7 @@ class BudgetDetailViewModel(
             _uiState.update {
                 it.copy(
                     isSyncingEntries = showErrors,
-                    isLoading = if (showErrors) it.isLoading else true,
-                    syncError = if (showErrors) null else it.syncError
+                    isLoading = if (showErrors) it.isLoading else true
                 )
             }
             try {
@@ -266,12 +264,12 @@ class BudgetDetailViewModel(
                 if (result.isFailure && showErrors) {
                     val error = result.exceptionOrNull()
                     val apiError = error?.toApiError() ?: ApiError.Unknown
-                    _uiState.update { it.copy(syncError = apiError.messageResource) }
+                    _events.trySend(BudgetDetailEvent.ShowError(apiError.messageResource))
                 }
             } catch (e: Exception) {
                 if (showErrors) {
                     val apiError = e.toApiError()
-                    _uiState.update { it.copy(syncError = apiError.messageResource) }
+                    _events.trySend(BudgetDetailEvent.ShowError(apiError.messageResource))
                 }
             } finally {
                 delay(100)
@@ -283,10 +281,6 @@ class BudgetDetailViewModel(
                 }
             }
         }
-
-    private fun clearSyncError() {
-        _uiState.update { it.copy(syncError = null) }
-    }
 
     private fun checkAuthState() {
         viewModelScope.launch {

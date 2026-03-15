@@ -19,7 +19,6 @@ import com.meneses.budgethunter.splash.application.SplashIntent
 import com.meneses.budgethunter.splash.application.SplashState
 import com.meneses.budgethunter.theme.AppColors
 import com.meneses.budgethunter.theme.Typography
-import kotlinx.coroutines.delay
 import kotlinx.serialization.Serializable
 import org.jetbrains.compose.resources.stringResource
 
@@ -28,10 +27,12 @@ object SplashScreen {
     @Composable
     fun Show(
         uiState: SplashState,
-        onIntent: (SplashIntent) -> Unit,
-        navigateToSignIn: () -> Unit,
-        navigateToBudgetList: () -> Unit
+        onIntent: (SplashIntent) -> Unit
     ) {
+        LaunchedEffect(Unit) {
+            onIntent(SplashIntent.VerifyUpdate)
+        }
+
         Box(
             modifier = Modifier.fillMaxSize()
         ) {
@@ -52,19 +53,6 @@ object SplashScreen {
                     text = stringResource(Res.string.wait_for_update),
                     fontSize = 16.sp
                 )
-            }
-        }
-
-        LaunchedEffect(uiState.navigate, uiState.isAuthenticated) {
-            if (!uiState.navigate) {
-                onIntent(SplashIntent.VerifyUpdate)
-            } else {
-                delay(200)
-                if (uiState.isAuthenticated) {
-                    navigateToBudgetList()
-                } else {
-                    navigateToSignIn()
-                }
             }
         }
     }
