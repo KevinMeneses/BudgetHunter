@@ -49,9 +49,11 @@ class CollaboratorsViewModel(
                 }
                 .onFailure { error ->
                     _uiState.update { it.copy(isLoading = false) }
-                    _events.trySend(CollaboratorsEvent.ShowError(
-                        error.message ?: "Failed to load collaborators"
-                    ))
+                    _events.trySend(
+                        CollaboratorsEvent.ShowError(
+                            error.message ?: "Failed to load collaborators"
+                        )
+                    )
                 }
         }
     }
@@ -83,17 +85,21 @@ class CollaboratorsViewModel(
                             showAddCollaboratorDialog = false
                         )
                     }
-                    _events.trySend(CollaboratorsEvent.ShowSuccess(
-                        "Successfully added ${response.collaboratorName} to ${response.budgetName}"
-                    ))
+                    _events.trySend(
+                        CollaboratorsEvent.ShowSuccess(
+                            "Successfully added ${response.collaboratorName} to ${response.budgetName}"
+                        )
+                    )
                     // Reload collaborators to show the new one
                     loadCollaborators()
                 }
                 .onFailure { error ->
                     _uiState.update { it.copy(isAddingCollaborator = false) }
-                    _events.trySend(CollaboratorsEvent.ShowError(
-                        error.message ?: "Failed to add collaborator"
-                    ))
+                    _events.trySend(
+                        CollaboratorsEvent.ShowError(
+                            error.message ?: "Failed to add collaborator"
+                        )
+                    )
                 }
         }
     }
@@ -114,17 +120,21 @@ class CollaboratorsViewModel(
                             removeConfirmationEmail = null
                         )
                     }
-                    _events.trySend(CollaboratorsEvent.ShowSuccess(
-                        "Successfully removed $email from collaborators"
-                    ))
+                    _events.trySend(
+                        CollaboratorsEvent.ShowSuccess(
+                            "Successfully removed $email from collaborators"
+                        )
+                    )
                     // Reload collaborators to reflect the removal
                     loadCollaborators()
                 }
                 .onFailure { error ->
                     _uiState.update { it.copy(isRemovingCollaborator = false) }
-                    _events.trySend(CollaboratorsEvent.ShowError(
-                        error.message ?: "Failed to remove collaborator"
-                    ))
+                    _events.trySend(
+                        CollaboratorsEvent.ShowError(
+                            error.message ?: "Failed to remove collaborator"
+                        )
+                    )
                 }
         }
     }

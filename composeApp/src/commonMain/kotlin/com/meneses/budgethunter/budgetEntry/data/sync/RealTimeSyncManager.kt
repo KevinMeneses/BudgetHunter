@@ -10,6 +10,9 @@ import com.meneses.budgethunter.commons.data.sync.SyncResult
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -43,6 +46,9 @@ class RealTimeSyncManager(
     private val tag = "RealTimeSyncManager"
     private var currentJob: Job? = null
     private var currentBudgetServerId: Long? = null
+
+    private val _collaboratorNotifications = MutableSharedFlow<String>(extraBufferCapacity = 8)
+    val collaboratorNotifications: SharedFlow<String> = _collaboratorNotifications.asSharedFlow()
 
     /**
      * Start listening for real-time budget entry updates from a specific budget.
@@ -98,6 +104,7 @@ class RealTimeSyncManager(
 
                         is SyncResult.Success -> {
                             logger.debug(tag, "Successfully synced entries after SSE event")
+                            _collaboratorNotifications.emit(event.userInfo.name)
                         }
                     }
                 }

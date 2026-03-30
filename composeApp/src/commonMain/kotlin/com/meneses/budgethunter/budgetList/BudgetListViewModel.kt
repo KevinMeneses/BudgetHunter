@@ -4,6 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.meneses.budgethunter.auth.application.SignOutUseCase
 import com.meneses.budgethunter.auth.data.AuthRepository
+import budgethunter.composeapp.generated.resources.Res
+import budgethunter.composeapp.generated.resources.budget_synced_successfully
+import budgethunter.composeapp.generated.resources.sync_failed_retry_online
 import com.meneses.budgethunter.budgetList.application.BudgetListEvent
 import com.meneses.budgethunter.budgetList.application.BudgetListIntent
 import com.meneses.budgethunter.budgetList.application.BudgetListState
@@ -84,9 +87,10 @@ class BudgetListViewModel(
         _uiState.update { it.copy(isSyncing = true) }
         try {
             budgetRepository.sync()
+            _events.trySend(BudgetListEvent.ShowMessage(Res.string.budget_synced_successfully))
         } catch (e: Exception) {
-            // Log sync errors silently - user is likely not authenticated
             println("BudgetListViewModel: Sync failed - ${e.message}")
+            _events.trySend(BudgetListEvent.ShowMessage(Res.string.sync_failed_retry_online))
         } finally {
             // Small delay to ensure PullToRefreshBox can process the state change
             delay(100)

@@ -115,4 +115,34 @@ class BudgetListViewModelTest {
         val event = viewModel.events.first()
         assertIs<BudgetListEvent.NavigateToSignIn>(event)
     }
+
+    // ========== syncBudgets Tests ==========
+
+    @Test
+    fun `syncBudgets success emits ShowMessage with success string resource`() = runTest {
+        // Given - sync completes without throwing
+        coJustRun { budgetRepository.sync() }
+
+        // When
+        viewModel.sendIntent(BudgetListIntent.SyncBudgets)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then - a ShowMessage event is emitted (StringResource cannot be compared directly)
+        val event = viewModel.events.first()
+        assertIs<BudgetListEvent.ShowMessage>(event)
+    }
+
+    @Test
+    fun `syncBudgets failure emits ShowMessage with failure string resource`() = runTest {
+        // Given - sync throws a network-related exception
+        coEvery { budgetRepository.sync() } throws Exception("Network error")
+
+        // When
+        viewModel.sendIntent(BudgetListIntent.SyncBudgets)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then - a ShowMessage event is still emitted so the user is informed of the failure
+        val event = viewModel.events.first()
+        assertIs<BudgetListEvent.ShowMessage>(event)
+    }
 }

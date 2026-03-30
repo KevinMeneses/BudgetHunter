@@ -2165,16 +2165,25 @@ fun OfflineBanner(isOffline: Boolean) {
 
 ---
 
-### Task 10.5: Add User Feedback for Sync Operations
+### Task 10.5: Add User Feedback for Sync Operations ✅ COMPLETED
 **Effort**: 2 hours
 **Risk**: Low
 **Description**: Toast/snackbar messages for sync success/failure
 
 **Deliverable**:
-- "Budget synced successfully"
-- "Failed to sync - will retry when online"
-- "New entry from [collaborator]"
-- "Signed in as [email]"
+- ✅ "Budgets synced successfully" — BudgetListViewModel.syncBudgets() on success
+- ✅ "Failed to sync - will retry when online" — BudgetListViewModel.syncBudgets() on failure
+- ✅ "Entries synced successfully" — BudgetDetailViewModel.syncEntries() on explicit sync success
+- ✅ "New entry from [collaborator]" — RealTimeSyncManager SSE events → BudgetDetailViewModel
+- ✅ "Signed in as [email]" — SignInViewModel after successful sign-in → BudgetListScreen snackbar
+
+**Implementation**:
+- Added `ShowMessage(StringResource)` to BudgetListEvent
+- Added `ShowSuccess(StringResource)` + `ShowCollaboratorEntry(String)` to BudgetDetailEvent
+- Added `collaboratorNotifications: SharedFlow<String>` to RealTimeSyncManager
+- SignInEvent.NavigateToBudgetList carries email (empty string for offline mode)
+- BudgetListScreen.Show() accepts SnackbarHostState
+- ScreenRouting handles all new events with state-variable snackbar pattern
 
 **Validation**:
 - Messages appear at appropriate times

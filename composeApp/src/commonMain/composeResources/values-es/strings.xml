@@ -257,4 +257,11 @@
     <!-- Common UI -->
     <string name="confirmation">Confirmación</string>
     <string name="error">Error</string>
+
+    <!-- Sync Feedback -->
+    <string name="budget_synced_successfully">Presupuestos sincronizados correctamente</string>
+    <string name="entries_synced_successfully">Entradas sincronizadas correctamente</string>
+    <string name="sync_failed_retry_online">Error al sincronizar - se reintentará cuando esté en línea</string>
+    <string name="new_entry_from_collaborator">Nueva entrada de %1$s</string>
+    <string name="signed_in_as">Sesión iniciada como %1$s</string>
 </resources>

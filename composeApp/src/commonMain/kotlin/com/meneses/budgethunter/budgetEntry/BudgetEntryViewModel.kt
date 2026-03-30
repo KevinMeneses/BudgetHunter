@@ -112,10 +112,12 @@ class BudgetEntryViewModel(
             validateInvoiceFile(invoicePath)
         } catch (_: Exception) {
             _uiState.update { it.copy(isProcessingInvoice = false) }
-            _events.trySend(BudgetEntryEvent.ShowNotification(
-                message = "Something went wrong loading file, please try again",
-                isError = true
-            ))
+            _events.trySend(
+                BudgetEntryEvent.ShowNotification(
+                    message = "Something went wrong loading file, please try again",
+                    isError = true
+                )
+            )
         }
     }
 

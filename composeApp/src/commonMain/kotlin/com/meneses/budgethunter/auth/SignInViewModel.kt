@@ -74,7 +74,7 @@ class SignInViewModel(
                     }
 
                     _uiState.update { it.copy(isLoading = false) }
-                    _events.trySend(SignInEvent.NavigateToBudgetList)
+                    _events.trySend(SignInEvent.NavigateToBudgetList(currentState.email))
                 },
                 onFailure = {
                     _uiState.update {
@@ -96,7 +96,7 @@ class SignInViewModel(
         viewModelScope.launch {
             // Save offline mode preference
             preferencesManager.setOfflineModeEnabled(true)
-            _events.trySend(SignInEvent.NavigateToBudgetList)
+            _events.trySend(SignInEvent.NavigateToBudgetList(email = ""))
         }
     }
 }

@@ -14,6 +14,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import budgethunter.composeapp.generated.resources.Res
+import budgethunter.composeapp.generated.resources.new_entry_from_collaborator
+import budgethunter.composeapp.generated.resources.signed_in_as
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -62,6 +65,7 @@ fun BudgetHunterNavigation() {
         color = MaterialTheme.colorScheme.background
     ) {
         val navController = rememberNavController()
+        var signedInEmail by remember { mutableStateOf<String?>(null) }
 
         NavHost(
             navController = navController,
@@ -131,12 +135,15 @@ fun BudgetHunterNavigation() {
                 LaunchedEffect(Unit) {
                     signInViewModel.events.collect { event ->
                         when (event) {
-                            is SignInEvent.NavigateToBudgetList -> navController.navigate(
-                                route = BudgetListScreen,
-                                navOptions = navOptions {
-                                    popUpTo<SignInScreen> { inclusive = true }
-                                }
-                            )
+                            is SignInEvent.NavigateToBudgetList -> {
+                                signedInEmail = event.email
+                                navController.navigate(
+                                    route = BudgetListScreen,
+                                    navOptions = navOptions {
+                                        popUpTo<SignInScreen> { inclusive = true }
+                                    }
+                                )
+                            }
                         }
                     }
                 }
@@ -172,6 +179,8 @@ fun BudgetHunterNavigation() {
                 val budgetListViewModel: BudgetListViewModel = koinInject()
                 val uiState by budgetListViewModel.uiState.collectAsStateWithLifecycle()
                 val networkMonitor: NetworkMonitor = koinInject()
+                val snackbarHostState = remember { SnackbarHostState() }
+                var messageResource by remember { mutableStateOf<StringResource?>(null) }
 
                 LaunchedEffect(Unit) {
                     budgetListViewModel.events.collect { event ->
@@ -185,7 +194,28 @@ fun BudgetHunterNavigation() {
                                     popUpTo<BudgetListScreen> { inclusive = true }
                                 }
                             )
+                            is BudgetListEvent.ShowMessage -> messageResource = event.message
                         }
+                    }
+                }
+
+                messageResource?.let { res ->
+                    val message = stringResource(res)
+                    LaunchedEffect(res) {
+                        snackbarHostState.showSnackbar(message)
+                        messageResource = null
+                    }
+                }
+
+                signedInEmail?.let { email ->
+                    if (email.isNotBlank()) {
+                        val message = stringResource(Res.string.signed_in_as, email)
+                        LaunchedEffect(email) {
+                            snackbarHostState.showSnackbar(message)
+                            signedInEmail = null
+                        }
+                    } else {
+                        signedInEmail = null
                     }
                 }
 
@@ -193,7 +223,8 @@ fun BudgetHunterNavigation() {
                     uiState = uiState,
                     onIntent = budgetListViewModel::sendIntent,
                     showSettings = { navController.navigate(SettingsScreen) },
-                    networkMonitor = networkMonitor
+                    networkMonitor = networkMonitor,
+                    snackbarHostState = snackbarHostState
                 )
             }
 
@@ -217,6 +248,8 @@ fun BudgetHunterNavigation() {
                 val networkMonitor: NetworkMonitor = koinInject()
                 val snackbarHostState = remember { SnackbarHostState() }
                 var errorResource by remember { mutableStateOf<StringResource?>(null) }
+                var successResource by remember { mutableStateOf<StringResource?>(null) }
+                var pendingCollaboratorName by remember { mutableStateOf<String?>(null) }
 
                 LaunchedEffect(Unit) {
                     budgetDetailViewModel.events.collect { event ->
@@ -226,6 +259,8 @@ fun BudgetHunterNavigation() {
                                 BudgetEntryScreen(event.entry)
                             )
                             is BudgetDetailEvent.ShowError -> errorResource = event.message
+                            is BudgetDetailEvent.ShowSuccess -> successResource = event.message
+                            is BudgetDetailEvent.ShowCollaboratorEntry -> pendingCollaboratorName = event.collaboratorName
                         }
                     }
                 }
@@ -235,6 +270,22 @@ fun BudgetHunterNavigation() {
                     LaunchedEffect(res) {
                         snackbarHostState.showSnackbar(message)
                         errorResource = null
+                    }
+                }
+
+                successResource?.let { res ->
+                    val message = stringResource(res)
+                    LaunchedEffect(res) {
+                        snackbarHostState.showSnackbar(message)
+                        successResource = null
+                    }
+                }
+
+                pendingCollaboratorName?.let { name ->
+                    val message = stringResource(Res.string.new_entry_from_collaborator, name)
+                    LaunchedEffect(name) {
+                        snackbarHostState.showSnackbar(message)
+                        pendingCollaboratorName = null
                     }
                 }
 

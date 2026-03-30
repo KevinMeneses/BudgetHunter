@@ -12,6 +12,8 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -42,7 +44,8 @@ object BudgetListScreen {
         uiState: BudgetListState,
         onIntent: (BudgetListIntent) -> Unit,
         showSettings: () -> Unit,
-        networkMonitor: NetworkMonitor
+        networkMonitor: NetworkMonitor,
+        snackbarHostState: SnackbarHostState
     ) {
         var dropdownExpanded by remember { mutableStateOf(false) }
         val isOnline by networkMonitor.isOnline.collectAsState()
@@ -119,7 +122,8 @@ object BudgetListScreen {
                     )
                 }
             },
-            floatingActionButtonPosition = FabPosition.Center
+            floatingActionButtonPosition = FabPosition.Center,
+            snackbarHost = { SnackbarHost(snackbarHostState) }
         ) { paddingValues ->
             BudgetListContent(
                 list = uiState.budgetList,
