@@ -20,7 +20,9 @@ import kotlinx.coroutines.test.setMain
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.test.assertTrue
 
 /**
  * Unit tests for SignInViewModel event emissions.
@@ -82,9 +84,10 @@ class SignInViewModelTest {
         viewModel.sendIntent(SignInIntent.SignInClicked)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        // Then - navigation to budget list is emitted
+        // Then - navigation to budget list is emitted with the authenticated user's email
         val event = viewModel.events.first()
         assertIs<SignInEvent.NavigateToBudgetList>(event)
+        assertEquals(email, event.email)
     }
 
     // ========== continueOffline Tests ==========
@@ -98,8 +101,9 @@ class SignInViewModelTest {
         viewModel.sendIntent(SignInIntent.ContinueOfflineClicked)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        // Then - navigation to budget list is emitted even without authentication
+        // Then - navigation to budget list is emitted even without authentication, with a blank email
         val event = viewModel.events.first()
         assertIs<SignInEvent.NavigateToBudgetList>(event)
+        assertTrue(event.email.isBlank(), "Email should be blank for offline mode")
     }
 }

@@ -447,5 +447,4 @@ class AuthRepositoryTest {
         // Assert
         assertFalse(isAuthenticated)
     }
-
 }

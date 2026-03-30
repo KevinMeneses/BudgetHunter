@@ -2,6 +2,8 @@ package com.meneses.budgethunter.budgetDetail
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import budgethunter.composeapp.generated.resources.Res
+import budgethunter.composeapp.generated.resources.entries_synced_successfully
 import com.meneses.budgethunter.auth.data.AuthRepository
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailEvent
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailIntent
@@ -18,7 +20,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -53,6 +57,11 @@ class BudgetDetailViewModel(
                 }
             }
         }
+        realTimeSyncManager.collaboratorNotifications
+            .onEach { collaboratorName ->
+                _events.trySend(BudgetDetailEvent.ShowCollaboratorEntry(collaboratorName))
+            }
+            .launchIn(viewModelScope)
     }
 
     private suspend fun checkAndStartSSE(serverId: Long) {
@@ -261,7 +270,9 @@ class BudgetDetailViewModel(
             }
             try {
                 val result = budgetDetailRepository.syncEntries(budgetId, serverId)
-                if (result.isFailure && showErrors) {
+                if (result.isSuccess && showErrors) {
+                    _events.trySend(BudgetDetailEvent.ShowSuccess(Res.string.entries_synced_successfully))
+                } else if (result.isFailure && showErrors) {
                     val error = result.exceptionOrNull()
                     val apiError = error?.toApiError() ?: ApiError.Unknown
                     _events.trySend(BudgetDetailEvent.ShowError(apiError.messageResource))
