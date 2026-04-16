@@ -109,5 +109,10 @@ class BudgetDetailRepository(
 
     companion object {
         private var cachedBudgetDetail = BudgetDetail()
+
+        // For testing purposes only
+        internal fun clearCache() {
+            cachedBudgetDetail = BudgetDetail()
+        }
     }
 }
