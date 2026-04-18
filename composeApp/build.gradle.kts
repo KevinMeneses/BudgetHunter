@@ -218,8 +218,9 @@ buildkonfig {
 
     // Default config for all platforms
     defaultConfigs {
-        // Backend URL - defaults to Android emulator localhost
-        val backendUrl = props.getProperty("BACKEND_URL") ?: "http://10.0.2.2:8080"
+        // Backend URL - must be set in local.properties; no silent fallback to avoid misconfigured release builds
+        val backendUrl = props.getProperty("BACKEND_URL")
+            ?: throw GradleException("BACKEND_URL not set in local.properties")
         buildConfigField(STRING, "BACKEND_URL", backendUrl)
 
         // Debug flag - defaults to true for safety
@@ -239,7 +240,8 @@ buildkonfig {
     targetConfigs {
         // iOS uses localhost directly (simulator shares host network)
         create("ios") {
-            val backendUrl = props.getProperty("BACKEND_URL") ?: "http://localhost:8080"
+            val backendUrl = props.getProperty("BACKEND_URL")
+                ?: throw GradleException("BACKEND_URL not set in local.properties")
             buildConfigField(STRING, "BACKEND_URL", backendUrl)
         }
     }

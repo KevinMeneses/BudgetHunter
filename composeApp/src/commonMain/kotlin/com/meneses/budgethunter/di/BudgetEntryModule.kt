@@ -60,7 +60,8 @@ val budgetEntryModule = module {
         SseClient(
             httpClient = get<HttpClient>(named("AuthHttpClient")),
             baseUrl = getBaseUrl(),
-            json = get<Json>()
+            json = get<Json>(),
+            logger = get()
         )
     }
 

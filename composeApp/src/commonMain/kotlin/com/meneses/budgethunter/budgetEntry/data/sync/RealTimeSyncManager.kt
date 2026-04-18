@@ -72,7 +72,7 @@ class RealTimeSyncManager(
 
         currentJob = sseClient.subscribeToBudgetEntries(budgetServerId)
             .onEach { event -> handleBudgetEntryEvent(event) }
-            .catch { it.printStackTrace() }
+            .catch { logger.error(tag, "SSE stream error", it) }
             .launchIn(scope)
     }
 
@@ -119,10 +119,12 @@ class RealTimeSyncManager(
 
     /**
      * Stop listening for real-time updates and cleanup resources.
+     * Cancels the collection job and explicitly closes the SSE connection.
      */
     fun stopListening() {
         currentJob?.cancel()
         currentJob = null
         currentBudgetServerId = null
+        sseClient.close()
     }
 }
