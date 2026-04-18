@@ -481,8 +481,13 @@ class BudgetLocalDataSourceTest {
     fun `create stores sync fields correctly`() = runTest {
         // Given
         val budget = Budget(
-            id = 0, name = "Synced Budget", amount = 500.0, date = "2025-01-01",
-            serverId = 10L, isSynced = true, lastSyncedAt = "2025-01-01T09:00:00"
+            id = 0,
+            name = "Synced Budget",
+            amount = 500.0,
+            date = "2025-01-01",
+            serverId = 10L,
+            isSynced = true,
+            lastSyncedAt = "2025-01-01T09:00:00"
         )
 
         // When
@@ -500,8 +505,13 @@ class BudgetLocalDataSourceTest {
         // Given
         val budgetId = insertBudget(name = "Budget", amount = 1000.0, isSynced = false)
         val updatedBudget = Budget(
-            id = budgetId, name = "Budget", amount = 1000.0, date = "2025-01-01",
-            serverId = 77L, isSynced = true, lastSyncedAt = "2025-02-01T12:00:00"
+            id = budgetId,
+            name = "Budget",
+            amount = 1000.0,
+            date = "2025-01-01",
+            serverId = 77L,
+            isSynced = true,
+            lastSyncedAt = "2025-02-01T12:00:00"
         )
 
         // When

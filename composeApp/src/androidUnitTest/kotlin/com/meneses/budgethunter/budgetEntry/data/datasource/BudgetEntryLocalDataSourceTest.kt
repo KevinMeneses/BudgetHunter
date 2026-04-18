@@ -221,18 +221,24 @@ class BudgetEntryLocalDataSourceTest {
     @Test
     fun `getAllFilteredBy applies multiple filters together`() = runTest {
         insertEntry(
-            budgetId = 1, description = "Groceries",
-            type = BudgetEntry.Type.OUTCOME, category = BudgetEntry.Category.GROCERIES,
+            budgetId = 1,
+            description = "Groceries",
+            type = BudgetEntry.Type.OUTCOME,
+            category = BudgetEntry.Category.GROCERIES,
             date = "2025-01-15"
         )
         insertEntry(
-            budgetId = 1, description = "Grocery Store",
-            type = BudgetEntry.Type.INCOME, category = BudgetEntry.Category.GROCERIES,
+            budgetId = 1,
+            description = "Grocery Store",
+            type = BudgetEntry.Type.INCOME,
+            category = BudgetEntry.Category.GROCERIES,
             date = "2025-01-15"
         )
         insertEntry(
-            budgetId = 1, description = "Groceries",
-            type = BudgetEntry.Type.OUTCOME, category = BudgetEntry.Category.FOOD,
+            budgetId = 1,
+            description = "Groceries",
+            type = BudgetEntry.Type.OUTCOME,
+            category = BudgetEntry.Category.FOOD,
             date = "2025-01-15"
         )
 
@@ -262,13 +268,17 @@ class BudgetEntryLocalDataSourceTest {
     @Test
     fun `filter by multiple criteria with partial matches`() = runTest {
         insertEntry(
-            budgetId = 1, description = "Supermarket shopping",
-            type = BudgetEntry.Type.OUTCOME, category = BudgetEntry.Category.GROCERIES,
+            budgetId = 1,
+            description = "Supermarket shopping",
+            type = BudgetEntry.Type.OUTCOME,
+            category = BudgetEntry.Category.GROCERIES,
             date = "2025-01-15"
         )
         insertEntry(
-            budgetId = 1, description = "Market visit",
-            type = BudgetEntry.Type.OUTCOME, category = BudgetEntry.Category.OTHER,
+            budgetId = 1,
+            description = "Market visit",
+            type = BudgetEntry.Type.OUTCOME,
+            category = BudgetEntry.Category.OTHER,
             date = "2025-01-16"
         )
 
