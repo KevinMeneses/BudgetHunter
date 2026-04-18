@@ -132,6 +132,7 @@ kotlin {
             dependencies {
                 implementation(libs.mockk)
                 implementation(libs.androidx.datastore.preferences.core)
+                implementation(libs.sqldelight.jvm.driver)
             }
         }
     }

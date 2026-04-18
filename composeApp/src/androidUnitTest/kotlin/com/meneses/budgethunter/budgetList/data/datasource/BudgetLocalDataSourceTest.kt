@@ -385,13 +385,153 @@ class BudgetLocalDataSourceTest {
         assertEquals(null, result)
     }
 
-    // Helper function
+    // ── getByServerId tests ───────────────────────────────────────────────────
+
+    @Test
+    fun `getByServerId returns budget matching server id`() = runTest {
+        // Given
+        insertBudget(name = "Budget 1", amount = 1000.0, serverId = 55L)
+        insertBudget(name = "Budget 2", amount = 2000.0, serverId = null)
+
+        // When
+        val result = dataSource.getByServerId(55L)
+
+        // Then
+        assertEquals("Budget 1", result?.name)
+    }
+
+    @Test
+    fun `getByServerId returns null when server id not found`() = runTest {
+        // Given
+        insertBudget(name = "Budget 1", amount = 1000.0, serverId = null)
+
+        // When
+        val result = dataSource.getByServerId(9999L)
+
+        // Then
+        assertEquals(null, result)
+    }
+
+    // ── getUnsynced tests ─────────────────────────────────────────────────────
+
+    @Test
+    fun `getUnsynced returns only unsynced budgets`() = runTest {
+        // Given
+        insertBudget(name = "Unsynced Budget", amount = 1000.0, isSynced = false)
+        insertBudget(name = "Synced Budget", amount = 2000.0, isSynced = true)
+
+        // When
+        val result = dataSource.getUnsynced()
+
+        // Then
+        assertEquals(1, result.size)
+        assertEquals("Unsynced Budget", result[0].name)
+    }
+
+    @Test
+    fun `getUnsynced returns empty list when all budgets are synced`() = runTest {
+        // Given
+        insertBudget(name = "Synced 1", amount = 1000.0, isSynced = true)
+        insertBudget(name = "Synced 2", amount = 2000.0, isSynced = true)
+
+        // When
+        val result = dataSource.getUnsynced()
+
+        // Then
+        assertEquals(emptyList(), result)
+    }
+
+    // ── markAsSynced tests ────────────────────────────────────────────────────
+
+    @Test
+    fun `markAsSynced updates budget with server id and timestamp`() = runTest {
+        // Given
+        val budgetId = insertBudget(name = "Budget", amount = 1000.0, isSynced = false)
+
+        // When
+        dataSource.markAsSynced(id = budgetId, serverId = 42L, lastSyncedAt = "2025-01-15T10:00:00")
+
+        // Then
+        val allBudgets = dataSource.budgets.first()
+        assertEquals(1, allBudgets.size)
+        assertEquals(42L, allBudgets[0].serverId)
+        assertTrue(allBudgets[0].isSynced)
+        assertEquals("2025-01-15T10:00:00", allBudgets[0].lastSyncedAt)
+    }
+
+    // ── clearAllData tests ────────────────────────────────────────────────────
+
+    @Test
+    fun `clearAllData removes all budgets from database`() = runTest {
+        // Given
+        insertBudget(name = "Budget 1", amount = 1000.0)
+        insertBudget(name = "Budget 2", amount = 2000.0)
+
+        // When
+        dataSource.clearAllData()
+
+        // Then
+        val allBudgets = dataSource.budgets.first()
+        assertEquals(emptyList(), allBudgets)
+    }
+
+    // ── sync fields in create/update tests ───────────────────────────────────
+
+    @Test
+    fun `create stores sync fields correctly`() = runTest {
+        // Given
+        val budget = Budget(
+            id = 0, name = "Synced Budget", amount = 500.0, date = "2025-01-01",
+            serverId = 10L, isSynced = true, lastSyncedAt = "2025-01-01T09:00:00"
+        )
+
+        // When
+        dataSource.create(budget)
+
+        // Then
+        val result = dataSource.budgets.first()
+        assertEquals(10L, result[0].serverId)
+        assertTrue(result[0].isSynced)
+        assertEquals("2025-01-01T09:00:00", result[0].lastSyncedAt)
+    }
+
+    @Test
+    fun `update stores sync fields correctly`() = runTest {
+        // Given
+        val budgetId = insertBudget(name = "Budget", amount = 1000.0, isSynced = false)
+        val updatedBudget = Budget(
+            id = budgetId, name = "Budget", amount = 1000.0, date = "2025-01-01",
+            serverId = 77L, isSynced = true, lastSyncedAt = "2025-02-01T12:00:00"
+        )
+
+        // When
+        dataSource.update(updatedBudget)
+
+        // Then
+        val result = dataSource.budgets.first()
+        assertEquals(77L, result[0].serverId)
+        assertTrue(result[0].isSynced)
+        assertEquals("2025-02-01T12:00:00", result[0].lastSyncedAt)
+    }
+
+    // ── Helper ────────────────────────────────────────────────────────────────
+
     private fun insertBudget(
         name: String,
         amount: Double,
-        date: String = "2025-01-01"
+        date: String = "2025-01-01",
+        serverId: Long? = null,
+        isSynced: Boolean = false,
+        lastSyncedAt: String? = null
     ): Int {
-        database.budgetQueries.insert(amount = amount, name = name, date = date)
+        database.budgetQueries.insert(
+            amount = amount,
+            name = name,
+            date = date,
+            server_id = serverId,
+            is_synced = if (isSynced) 1L else 0L,
+            last_synced_at = lastSyncedAt
+        )
         return database.budgetQueries.selectLastId().executeAsOne().toInt()
     }
 }

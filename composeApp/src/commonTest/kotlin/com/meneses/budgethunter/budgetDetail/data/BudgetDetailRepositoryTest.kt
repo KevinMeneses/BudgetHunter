@@ -1,10 +1,12 @@
 package com.meneses.budgethunter.budgetDetail.data
 
 import com.meneses.budgethunter.budgetDetail.domain.BudgetDetail
+import com.meneses.budgethunter.budgetEntry.data.BudgetEntryRepository
 import com.meneses.budgethunter.budgetEntry.data.datasource.BudgetEntryLocalDataSource
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntryFilter
 import com.meneses.budgethunter.budgetList.application.DeleteBudgetUseCase
+import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.budgetList.data.datasource.BudgetLocalDataSource
 import com.meneses.budgethunter.budgetList.domain.Budget
 import io.mockk.coEvery
@@ -18,8 +20,24 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class BudgetDetailRepositoryTest {
+
+    private fun buildRepository(
+        budgetDataSource: BudgetLocalDataSource,
+        entryDataSource: BudgetEntryLocalDataSource,
+        budgetEntryRepository: BudgetEntryRepository = mockk(relaxed = true),
+        budgetRepository: BudgetRepository = mockk(relaxed = true),
+        deleteUseCase: DeleteBudgetUseCase = mockk(relaxed = true)
+    ) = BudgetDetailRepository(
+        budgetDataSource,
+        entryDataSource,
+        budgetEntryRepository,
+        budgetRepository,
+        Dispatchers.Default,
+        deleteUseCase
+    )
 
     @Test
     fun `getBudgetDetailById combines budget and entries`() = runTest {
@@ -34,13 +52,7 @@ class BudgetDetailRepositoryTest {
         val entryDataSource = mockk<BudgetEntryLocalDataSource> {
             every { selectAllByBudgetId(1L) } returns flowOf(entries)
         }
-        val deleteUseCase = mockk<DeleteBudgetUseCase>(relaxed = true)
-        val repository = BudgetDetailRepository(
-            budgetDataSource,
-            entryDataSource,
-            Dispatchers.Default,
-            deleteUseCase
-        )
+        val repository = buildRepository(budgetDataSource, entryDataSource)
 
         val result = repository.getBudgetDetailById(1).first()
 
@@ -57,13 +69,7 @@ class BudgetDetailRepositoryTest {
         val entryDataSource = mockk<BudgetEntryLocalDataSource> {
             every { selectAllByBudgetId(1L) } returns flowOf(emptyList())
         }
-        val deleteUseCase = mockk<DeleteBudgetUseCase>(relaxed = true)
-        val repository = BudgetDetailRepository(
-            budgetDataSource,
-            entryDataSource,
-            Dispatchers.Default,
-            deleteUseCase
-        )
+        val repository = buildRepository(budgetDataSource, entryDataSource)
 
         val result = repository.getBudgetDetailById(1).first()
 
@@ -73,29 +79,22 @@ class BudgetDetailRepositoryTest {
 
     @Test
     fun `getBudgetDetailById updates cache on new data`() = runTest {
-        val budget1 = Budget(id = 1, name = "Budget 1", amount = 1000.0)
-        val budget2 = Budget(id = 1, name = "Budget 1 Updated", amount = 1500.0)
+        val budget = Budget(id = 1, name = "Budget 1", amount = 1000.0)
         val entries = listOf(
             BudgetEntry(id = 1, budgetId = 1, amount = "100.0", description = "Entry 1")
         )
         val budgetDataSource = mockk<BudgetLocalDataSource> {
-            coEvery { budgets } returns flowOf(listOf(budget1))
+            coEvery { budgets } returns flowOf(listOf(budget))
         }
         val entryDataSource = mockk<BudgetEntryLocalDataSource> {
             every { selectAllByBudgetId(1L) } returns flowOf(entries)
         }
-        val deleteUseCase = mockk<DeleteBudgetUseCase>(relaxed = true)
-        val repository = BudgetDetailRepository(
-            budgetDataSource,
-            entryDataSource,
-            Dispatchers.Default,
-            deleteUseCase
-        )
+        val repository = buildRepository(budgetDataSource, entryDataSource)
 
-        val result1 = repository.getBudgetDetailById(1).first()
+        val result = repository.getBudgetDetailById(1).first()
         val cachedDetail = repository.getCachedDetail()
 
-        assertEquals(result1, cachedDetail)
+        assertEquals(result, cachedDetail)
     }
 
     @Test
@@ -112,15 +111,8 @@ class BudgetDetailRepositoryTest {
             every { selectAllByBudgetId(1L) } returns flowOf(entries)
             coEvery { getAllFilteredBy(filter) } returns entries
         }
-        val deleteUseCase = mockk<DeleteBudgetUseCase>(relaxed = true)
-        val repository = BudgetDetailRepository(
-            budgetDataSource,
-            entryDataSource,
-            Dispatchers.Default,
-            deleteUseCase
-        )
+        val repository = buildRepository(budgetDataSource, entryDataSource)
 
-        // First collect to populate cache
         repository.getBudgetDetailById(1).first()
 
         val result = repository.getAllFilteredBy(filter)
@@ -145,15 +137,8 @@ class BudgetDetailRepositoryTest {
             every { selectAllByBudgetId(1L) } returns flowOf(allEntries)
             coEvery { getAllFilteredBy(filter) } returns filteredEntries
         }
-        val deleteUseCase = mockk<DeleteBudgetUseCase>(relaxed = true)
-        val repository = BudgetDetailRepository(
-            budgetDataSource,
-            entryDataSource,
-            Dispatchers.Default,
-            deleteUseCase
-        )
+        val repository = buildRepository(budgetDataSource, entryDataSource)
 
-        // Populate cache
         repository.getBudgetDetailById(1).first()
 
         val result = repository.getAllFilteredBy(filter)
@@ -163,57 +148,94 @@ class BudgetDetailRepositoryTest {
     }
 
     @Test
-    fun `updateBudgetAmount updates budget in data source`() = runTest {
+    fun `updateBudgetAmount updates budget via BudgetRepository`() = runTest {
         val budget = Budget(id = 1, name = "Test Budget", amount = 1000.0)
-        val updatedBudget = budget.copy(amount = 1500.0)
+        val updatedBudget = budget.copy(amount = 1500.0, isSynced = false, lastSyncedAt = null)
         val budgetDataSource = mockk<BudgetLocalDataSource> {
             coEvery { budgets } returns flowOf(listOf(budget))
-            coEvery { update(updatedBudget) } returns Unit
         }
         val entryDataSource = mockk<BudgetEntryLocalDataSource> {
             every { selectAllByBudgetId(1L) } returns flowOf(emptyList())
         }
-        val deleteUseCase = mockk<DeleteBudgetUseCase>(relaxed = true)
-        val repository = BudgetDetailRepository(
-            budgetDataSource,
-            entryDataSource,
-            Dispatchers.Default,
-            deleteUseCase
-        )
+        val budgetRepository = mockk<BudgetRepository> {
+            coEvery { update(updatedBudget) } returns Unit
+        }
+        val repository = buildRepository(budgetDataSource, entryDataSource, budgetRepository = budgetRepository)
 
-        // Populate cache
         repository.getBudgetDetailById(1).first()
 
         repository.updateBudgetAmount(1500.0)
 
-        coVerify { budgetDataSource.update(updatedBudget) }
+        coVerify { budgetRepository.update(updatedBudget) }
     }
 
     @Test
     fun `updateBudgetAmount with zero amount`() = runTest {
         val budget = Budget(id = 1, name = "Test Budget", amount = 1000.0)
-        val updatedBudget = budget.copy(amount = 0.0)
+        val updatedBudget = budget.copy(amount = 0.0, isSynced = false, lastSyncedAt = null)
         val budgetDataSource = mockk<BudgetLocalDataSource> {
             coEvery { budgets } returns flowOf(listOf(budget))
-            coEvery { update(updatedBudget) } returns Unit
         }
         val entryDataSource = mockk<BudgetEntryLocalDataSource> {
             every { selectAllByBudgetId(1L) } returns flowOf(emptyList())
         }
-        val deleteUseCase = mockk<DeleteBudgetUseCase>(relaxed = true)
-        val repository = BudgetDetailRepository(
-            budgetDataSource,
-            entryDataSource,
-            Dispatchers.Default,
-            deleteUseCase
-        )
+        val budgetRepository = mockk<BudgetRepository> {
+            coEvery { update(updatedBudget) } returns Unit
+        }
+        val repository = buildRepository(budgetDataSource, entryDataSource, budgetRepository = budgetRepository)
 
-        // Populate cache
         repository.getBudgetDetailById(1).first()
 
         repository.updateBudgetAmount(0.0)
 
-        coVerify { budgetDataSource.update(updatedBudget) }
+        coVerify { budgetRepository.update(updatedBudget) }
+    }
+
+    @Test
+    fun `updateBudgetAmount with large amount`() = runTest {
+        val budget = Budget(id = 1, name = "Test Budget", amount = 1000.0)
+        val updatedBudget = budget.copy(amount = 999999.99, isSynced = false, lastSyncedAt = null)
+        val budgetDataSource = mockk<BudgetLocalDataSource> {
+            coEvery { budgets } returns flowOf(listOf(budget))
+        }
+        val entryDataSource = mockk<BudgetEntryLocalDataSource> {
+            every { selectAllByBudgetId(1L) } returns flowOf(emptyList())
+        }
+        val budgetRepository = mockk<BudgetRepository> {
+            coEvery { update(updatedBudget) } returns Unit
+        }
+        val repository = buildRepository(budgetDataSource, entryDataSource, budgetRepository = budgetRepository)
+
+        repository.getBudgetDetailById(1).first()
+
+        repository.updateBudgetAmount(999999.99)
+
+        coVerify { budgetRepository.update(updatedBudget) }
+    }
+
+    @Test
+    fun `updateBudgetAmount propagates exception from BudgetRepository`() = runTest {
+        val budget = Budget(id = 1, name = "Test Budget", amount = 1000.0)
+        val updatedBudget = budget.copy(amount = 1500.0, isSynced = false, lastSyncedAt = null)
+        val budgetDataSource = mockk<BudgetLocalDataSource> {
+            coEvery { budgets } returns flowOf(listOf(budget))
+        }
+        val entryDataSource = mockk<BudgetEntryLocalDataSource> {
+            every { selectAllByBudgetId(1L) } returns flowOf(emptyList())
+        }
+        val budgetRepository = mockk<BudgetRepository> {
+            coEvery { update(updatedBudget) } throws IllegalStateException("Update failed")
+        }
+        val repository = buildRepository(budgetDataSource, entryDataSource, budgetRepository = budgetRepository)
+
+        repository.getBudgetDetailById(1).first()
+
+        val exception = kotlin.runCatching {
+            repository.updateBudgetAmount(1500.0)
+        }.exceptionOrNull()
+
+        assertEquals("Update failed", exception?.message)
+        assertEquals(IllegalStateException::class, exception?.let { it::class })
     }
 
     @Test
@@ -228,12 +250,7 @@ class BudgetDetailRepositoryTest {
         val deleteUseCase = mockk<DeleteBudgetUseCase> {
             coEvery { execute(1L) } returns Unit
         }
-        val repository = BudgetDetailRepository(
-            budgetDataSource,
-            entryDataSource,
-            Dispatchers.Default,
-            deleteUseCase
-        )
+        val repository = buildRepository(budgetDataSource, entryDataSource, deleteUseCase = deleteUseCase)
 
         repository.deleteBudget(1)
 
@@ -241,49 +258,213 @@ class BudgetDetailRepositoryTest {
     }
 
     @Test
-    fun `deleteEntriesByIds delegates to data source`() = runTest {
-        val budget = Budget(id = 1, name = "Test Budget", amount = 1000.0)
+    fun `deleteBudget handles large budget ID`() = runTest {
+        val largeBudgetId = Int.MAX_VALUE
+        val budget = Budget(id = largeBudgetId, name = "Test Budget", amount = 1000.0)
         val budgetDataSource = mockk<BudgetLocalDataSource> {
             coEvery { budgets } returns flowOf(listOf(budget))
         }
         val entryDataSource = mockk<BudgetEntryLocalDataSource> {
-            every { selectAllByBudgetId(1L) } returns flowOf(emptyList())
-            coEvery { deleteByIds(listOf(1L, 2L, 3L)) } returns Unit
+            every { selectAllByBudgetId(largeBudgetId.toLong()) } returns flowOf(emptyList())
         }
-        val deleteUseCase = mockk<DeleteBudgetUseCase>(relaxed = true)
-        val repository = BudgetDetailRepository(
-            budgetDataSource,
-            entryDataSource,
-            Dispatchers.Default,
-            deleteUseCase
-        )
+        val deleteUseCase = mockk<DeleteBudgetUseCase> {
+            coEvery { execute(largeBudgetId.toLong()) } returns Unit
+        }
+        val repository = buildRepository(budgetDataSource, entryDataSource, deleteUseCase = deleteUseCase)
 
-        repository.deleteEntriesByIds(listOf(1, 2, 3))
+        repository.deleteBudget(largeBudgetId)
 
-        coVerify { entryDataSource.deleteByIds(listOf(1L, 2L, 3L)) }
+        coVerify { deleteUseCase.execute(largeBudgetId.toLong()) }
     }
 
     @Test
-    fun `deleteEntriesByIds handles empty list`() = runTest {
+    fun `deleteBudget propagates exception from use case`() = runTest {
+        val budgetDataSource = mockk<BudgetLocalDataSource>(relaxed = true)
+        val entryDataSource = mockk<BudgetEntryLocalDataSource>(relaxed = true)
+        val deleteUseCase = mockk<DeleteBudgetUseCase> {
+            coEvery { execute(1L) } throws RuntimeException("Delete failed")
+        }
+        val repository = buildRepository(budgetDataSource, entryDataSource, deleteUseCase = deleteUseCase)
+
+        val exception = kotlin.runCatching {
+            repository.deleteBudget(1)
+        }.exceptionOrNull()
+
+        assertEquals("Delete failed", exception?.message)
+        assertEquals(RuntimeException::class, exception?.let { it::class })
+    }
+
+    @Test
+    fun `deleteEntriesByIds delegates to BudgetEntryRepository for each entry`() = runTest {
         val budget = Budget(id = 1, name = "Test Budget", amount = 1000.0)
+        val entry1 = BudgetEntry(id = 1, budgetId = 1, amount = "100.0", description = "Entry 1")
+        val entry2 = BudgetEntry(id = 2, budgetId = 1, amount = "200.0", description = "Entry 2")
+        val entry3 = BudgetEntry(id = 3, budgetId = 1, amount = "300.0", description = "Entry 3")
+        val entries = listOf(entry1, entry2, entry3)
+
+        val budgetDataSource = mockk<BudgetLocalDataSource> {
+            coEvery { budgets } returns flowOf(listOf(budget))
+        }
+        val entryDataSource = mockk<BudgetEntryLocalDataSource> {
+            every { selectAllByBudgetId(1L) } returns flowOf(entries)
+        }
+        val budgetEntryRepository = mockk<BudgetEntryRepository> {
+            coEvery { delete(any()) } returns Unit
+        }
+        val repository = buildRepository(budgetDataSource, entryDataSource, budgetEntryRepository = budgetEntryRepository)
+
+        repository.getBudgetDetailById(1).first()
+
+        repository.deleteEntriesByIds(listOf(1, 2, 3))
+
+        coVerify { budgetEntryRepository.delete(entry1) }
+        coVerify { budgetEntryRepository.delete(entry2) }
+        coVerify { budgetEntryRepository.delete(entry3) }
+    }
+
+    @Test
+    fun `deleteEntriesByIds handles empty list without making any calls`() = runTest {
+        val budgetDataSource = mockk<BudgetLocalDataSource>(relaxed = true)
+        val entryDataSource = mockk<BudgetEntryLocalDataSource>(relaxed = true)
+        val budgetEntryRepository = mockk<BudgetEntryRepository>(relaxed = true)
+        val repository = buildRepository(budgetDataSource, entryDataSource, budgetEntryRepository = budgetEntryRepository)
+
+        repository.deleteEntriesByIds(emptyList())
+
+        coVerify(exactly = 0) { budgetEntryRepository.delete(any()) }
+        coVerify(exactly = 0) { entryDataSource.deleteByIds(any()) }
+    }
+
+    @Test
+    fun `deleteEntriesByIds falls back to local data source for IDs not in cache`() = runTest {
+        val budget = Budget(id = 1, name = "Test Budget", amount = 1000.0)
+        val entry1 = BudgetEntry(id = 1, budgetId = 1, amount = "100.0", description = "Entry 1")
+
+        val budgetDataSource = mockk<BudgetLocalDataSource> {
+            coEvery { budgets } returns flowOf(listOf(budget))
+        }
+        val entryDataSource = mockk<BudgetEntryLocalDataSource> {
+            every { selectAllByBudgetId(1L) } returns flowOf(listOf(entry1))
+            coEvery { deleteByIds(listOf(99L)) } returns Unit
+        }
+        val budgetEntryRepository = mockk<BudgetEntryRepository> {
+            coEvery { delete(any()) } returns Unit
+        }
+        val repository = buildRepository(budgetDataSource, entryDataSource, budgetEntryRepository = budgetEntryRepository)
+
+        repository.getBudgetDetailById(1).first()
+
+        // entry1 is in cache; id 99 is not
+        repository.deleteEntriesByIds(listOf(1, 99))
+
+        coVerify { budgetEntryRepository.delete(entry1) }
+        coVerify { entryDataSource.deleteByIds(listOf(99L)) }
+    }
+
+    @Test
+    fun `deleteEntriesByIds handles large list of IDs`() = runTest {
+        val budget = Budget(id = 1, name = "Test Budget", amount = 1000.0)
+        val ids = (1..100).toList()
+        val entries = ids.map { BudgetEntry(id = it, budgetId = 1, amount = "${it * 10}.0", description = "Entry $it") }
+
+        val budgetDataSource = mockk<BudgetLocalDataSource> {
+            coEvery { budgets } returns flowOf(listOf(budget))
+        }
+        val entryDataSource = mockk<BudgetEntryLocalDataSource> {
+            every { selectAllByBudgetId(1L) } returns flowOf(entries)
+        }
+        val budgetEntryRepository = mockk<BudgetEntryRepository> {
+            coEvery { delete(any()) } returns Unit
+        }
+        val repository = buildRepository(budgetDataSource, entryDataSource, budgetEntryRepository = budgetEntryRepository)
+
+        repository.getBudgetDetailById(1).first()
+
+        repository.deleteEntriesByIds(ids)
+
+        coVerify(exactly = 100) { budgetEntryRepository.delete(any()) }
+    }
+
+    @Test
+    fun `deleteEntriesByIds propagates exception from BudgetEntryRepository`() = runTest {
+        val budget = Budget(id = 1, name = "Test Budget", amount = 1000.0)
+        val entry1 = BudgetEntry(id = 1, budgetId = 1, amount = "100.0", description = "Entry 1")
+
+        val budgetDataSource = mockk<BudgetLocalDataSource> {
+            coEvery { budgets } returns flowOf(listOf(budget))
+        }
+        val entryDataSource = mockk<BudgetEntryLocalDataSource> {
+            every { selectAllByBudgetId(1L) } returns flowOf(listOf(entry1))
+        }
+        val budgetEntryRepository = mockk<BudgetEntryRepository> {
+            coEvery { delete(entry1) } throws IllegalStateException("Delete entries failed")
+        }
+        val repository = buildRepository(budgetDataSource, entryDataSource, budgetEntryRepository = budgetEntryRepository)
+
+        repository.getBudgetDetailById(1).first()
+
+        val exception = kotlin.runCatching {
+            repository.deleteEntriesByIds(listOf(1))
+        }.exceptionOrNull()
+
+        assertEquals("Delete entries failed", exception?.message)
+        assertEquals(IllegalStateException::class, exception?.let { it::class })
+    }
+
+    @Test
+    fun `syncEntries uses provided budgetId and serverId`() = runTest {
+        val budgetDataSource = mockk<BudgetLocalDataSource>(relaxed = true)
+        val entryDataSource = mockk<BudgetEntryLocalDataSource>(relaxed = true)
+        val budgetEntryRepository = mockk<BudgetEntryRepository> {
+            coEvery { sync(42, 99L) } returns Result.success(Unit)
+        }
+        val repository = buildRepository(budgetDataSource, entryDataSource, budgetEntryRepository = budgetEntryRepository)
+
+        val result = repository.syncEntries(budgetId = 42, serverId = 99L)
+
+        assertTrue(result.isSuccess)
+        coVerify { budgetEntryRepository.sync(42, 99L) }
+    }
+
+    @Test
+    fun `syncEntries uses cached budget when no parameters provided`() = runTest {
+        val budget = Budget(id = 1, name = "Test Budget", amount = 1000.0, serverId = 100L)
         val budgetDataSource = mockk<BudgetLocalDataSource> {
             coEvery { budgets } returns flowOf(listOf(budget))
         }
         val entryDataSource = mockk<BudgetEntryLocalDataSource> {
             every { selectAllByBudgetId(1L) } returns flowOf(emptyList())
-            coEvery { deleteByIds(emptyList()) } returns Unit
         }
-        val deleteUseCase = mockk<DeleteBudgetUseCase>(relaxed = true)
-        val repository = BudgetDetailRepository(
-            budgetDataSource,
-            entryDataSource,
-            Dispatchers.Default,
-            deleteUseCase
-        )
+        val budgetEntryRepository = mockk<BudgetEntryRepository> {
+            coEvery { sync(1, 100L) } returns Result.success(Unit)
+        }
+        val repository = buildRepository(budgetDataSource, entryDataSource, budgetEntryRepository = budgetEntryRepository)
 
-        repository.deleteEntriesByIds(emptyList())
+        repository.getBudgetDetailById(1).first()
 
-        coVerify { entryDataSource.deleteByIds(emptyList()) }
+        val result = repository.syncEntries()
+
+        assertTrue(result.isSuccess)
+        coVerify { budgetEntryRepository.sync(1, 100L) }
+    }
+
+    @Test
+    fun `syncEntries returns failure when cached budget has no serverId`() = runTest {
+        val budget = Budget(id = 1, name = "Test Budget", amount = 1000.0, serverId = null)
+        val budgetDataSource = mockk<BudgetLocalDataSource> {
+            coEvery { budgets } returns flowOf(listOf(budget))
+        }
+        val entryDataSource = mockk<BudgetEntryLocalDataSource> {
+            every { selectAllByBudgetId(1L) } returns flowOf(emptyList())
+        }
+        val repository = buildRepository(budgetDataSource, entryDataSource)
+
+        repository.getBudgetDetailById(1).first()
+
+        val result = repository.syncEntries()
+
+        assertTrue(result.isFailure)
+        assertEquals("Budget must sync before syncing entries", result.exceptionOrNull()?.message)
     }
 
     @Test
@@ -298,13 +479,7 @@ class BudgetDetailRepositoryTest {
         val entryDataSource = mockk<BudgetEntryLocalDataSource> {
             every { selectAllByBudgetId(1L) } returns flowOf(entries)
         }
-        val deleteUseCase = mockk<DeleteBudgetUseCase>(relaxed = true)
-        val repository = BudgetDetailRepository(
-            budgetDataSource,
-            entryDataSource,
-            Dispatchers.Default,
-            deleteUseCase
-        )
+        val repository = buildRepository(budgetDataSource, entryDataSource)
 
         val result = repository.getBudgetDetailById(1).first()
 
@@ -313,18 +488,11 @@ class BudgetDetailRepositoryTest {
 
     @Test
     fun `getCachedDetail returns default when no data collected`() = runTest {
-        // Clear the cache before testing to ensure clean state
         BudgetDetailRepository.clearCache()
 
         val budgetDataSource = mockk<BudgetLocalDataSource>(relaxed = true)
         val entryDataSource = mockk<BudgetEntryLocalDataSource>(relaxed = true)
-        val deleteUseCase = mockk<DeleteBudgetUseCase>(relaxed = true)
-        val repository = BudgetDetailRepository(
-            budgetDataSource,
-            entryDataSource,
-            Dispatchers.Default,
-            deleteUseCase
-        )
+        val repository = buildRepository(budgetDataSource, entryDataSource)
 
         val result = repository.getCachedDetail()
 
@@ -345,15 +513,8 @@ class BudgetDetailRepositoryTest {
             every { selectAllByBudgetId(1L) } returns flowOf(emptyList())
             coEvery { getAllFilteredBy(filter) } returns filteredEntries
         }
-        val deleteUseCase = mockk<DeleteBudgetUseCase>(relaxed = true)
-        val repository = BudgetDetailRepository(
-            budgetDataSource,
-            entryDataSource,
-            Dispatchers.Default,
-            deleteUseCase
-        )
+        val repository = buildRepository(budgetDataSource, entryDataSource)
 
-        // Populate cache
         repository.getBudgetDetailById(1).first()
 
         val result = repository.getAllFilteredBy(filter)
@@ -376,15 +537,8 @@ class BudgetDetailRepositoryTest {
             every { selectAllByBudgetId(1L) } returns flowOf(emptyList())
             coEvery { getAllFilteredBy(filter) } returns filteredEntries
         }
-        val deleteUseCase = mockk<DeleteBudgetUseCase>(relaxed = true)
-        val repository = BudgetDetailRepository(
-            budgetDataSource,
-            entryDataSource,
-            Dispatchers.Default,
-            deleteUseCase
-        )
+        val repository = buildRepository(budgetDataSource, entryDataSource)
 
-        // Populate cache
         repository.getBudgetDetailById(1).first()
 
         val result = repository.getAllFilteredBy(filter)
@@ -407,15 +561,8 @@ class BudgetDetailRepositoryTest {
             every { selectAllByBudgetId(1L) } returns flowOf(emptyList())
             coEvery { getAllFilteredBy(filter) } returns filteredEntries
         }
-        val deleteUseCase = mockk<DeleteBudgetUseCase>(relaxed = true)
-        val repository = BudgetDetailRepository(
-            budgetDataSource,
-            entryDataSource,
-            Dispatchers.Default,
-            deleteUseCase
-        )
+        val repository = buildRepository(budgetDataSource, entryDataSource)
 
-        // Populate cache
         repository.getBudgetDetailById(1).first()
 
         val result = repository.getAllFilteredBy(filter)
@@ -425,80 +572,26 @@ class BudgetDetailRepositoryTest {
     }
 
     @Test
-    fun `updateBudgetAmount with large amount`() = runTest {
+    fun `getAllFilteredBy propagates exception from data source`() = runTest {
         val budget = Budget(id = 1, name = "Test Budget", amount = 1000.0)
-        val updatedBudget = budget.copy(amount = 999999.99)
+        val filter = BudgetEntryFilter(category = BudgetEntry.Category.FOOD)
         val budgetDataSource = mockk<BudgetLocalDataSource> {
             coEvery { budgets } returns flowOf(listOf(budget))
-            coEvery { update(updatedBudget) } returns Unit
         }
         val entryDataSource = mockk<BudgetEntryLocalDataSource> {
             every { selectAllByBudgetId(1L) } returns flowOf(emptyList())
+            coEvery { getAllFilteredBy(filter) } throws Exception("Filter error")
         }
-        val deleteUseCase = mockk<DeleteBudgetUseCase>(relaxed = true)
-        val repository = BudgetDetailRepository(
-            budgetDataSource,
-            entryDataSource,
-            Dispatchers.Default,
-            deleteUseCase
-        )
+        val repository = buildRepository(budgetDataSource, entryDataSource)
 
-        // Populate cache
         repository.getBudgetDetailById(1).first()
 
-        repository.updateBudgetAmount(999999.99)
+        val exception = kotlin.runCatching {
+            repository.getAllFilteredBy(filter)
+        }.exceptionOrNull()
 
-        coVerify { budgetDataSource.update(updatedBudget) }
-    }
-
-    @Test
-    fun `deleteBudget handles large budget ID`() = runTest {
-        val largeBudgetId = Int.MAX_VALUE
-        val budget = Budget(id = largeBudgetId, name = "Test Budget", amount = 1000.0)
-        val budgetDataSource = mockk<BudgetLocalDataSource> {
-            coEvery { budgets } returns flowOf(listOf(budget))
-        }
-        val entryDataSource = mockk<BudgetEntryLocalDataSource> {
-            every { selectAllByBudgetId(largeBudgetId.toLong()) } returns flowOf(emptyList())
-        }
-        val deleteUseCase = mockk<DeleteBudgetUseCase> {
-            coEvery { execute(largeBudgetId.toLong()) } returns Unit
-        }
-        val repository = BudgetDetailRepository(
-            budgetDataSource,
-            entryDataSource,
-            Dispatchers.Default,
-            deleteUseCase
-        )
-
-        repository.deleteBudget(largeBudgetId)
-
-        coVerify { deleteUseCase.execute(largeBudgetId.toLong()) }
-    }
-
-    @Test
-    fun `deleteEntriesByIds handles large list of IDs`() = runTest {
-        val budget = Budget(id = 1, name = "Test Budget", amount = 1000.0)
-        val ids = (1..100).toList()
-        val longIds = ids.map { it.toLong() }
-        val budgetDataSource = mockk<BudgetLocalDataSource> {
-            coEvery { budgets } returns flowOf(listOf(budget))
-        }
-        val entryDataSource = mockk<BudgetEntryLocalDataSource> {
-            every { selectAllByBudgetId(1L) } returns flowOf(emptyList())
-            coEvery { deleteByIds(longIds) } returns Unit
-        }
-        val deleteUseCase = mockk<DeleteBudgetUseCase>(relaxed = true)
-        val repository = BudgetDetailRepository(
-            budgetDataSource,
-            entryDataSource,
-            Dispatchers.Default,
-            deleteUseCase
-        )
-
-        repository.deleteEntriesByIds(ids)
-
-        coVerify { entryDataSource.deleteByIds(longIds) }
+        assertEquals("Filter error", exception?.message)
+        assertEquals(Exception::class, exception?.let { it::class })
     }
 
     @Test
@@ -514,13 +607,7 @@ class BudgetDetailRepositoryTest {
         val entryDataSource = mockk<BudgetEntryLocalDataSource> {
             every { selectAllByBudgetId(1L) } returns flowOf(entries)
         }
-        val deleteUseCase = mockk<DeleteBudgetUseCase>(relaxed = true)
-        val repository = BudgetDetailRepository(
-            budgetDataSource,
-            entryDataSource,
-            Dispatchers.Default,
-            deleteUseCase
-        )
+        val repository = buildRepository(budgetDataSource, entryDataSource)
 
         val result = repository.getBudgetDetailById(1).first()
 
@@ -529,112 +616,6 @@ class BudgetDetailRepositoryTest {
         assertEquals(BudgetEntry.Category.TRANSPORTATION, result.entries[1].category)
     }
 
-    // Error handling tests
-    @Test
-    fun `updateBudgetAmount propagates exception from data source`() = runTest {
-        val budget = Budget(id = 1, name = "Test Budget", amount = 1000.0)
-        val updatedBudget = budget.copy(amount = 1500.0)
-        val budgetDataSource = mockk<BudgetLocalDataSource> {
-            coEvery { budgets } returns flowOf(listOf(budget))
-            coEvery { update(updatedBudget) } throws IllegalStateException("Update failed")
-        }
-        val entryDataSource = mockk<BudgetEntryLocalDataSource> {
-            every { selectAllByBudgetId(1L) } returns flowOf(emptyList())
-        }
-        val deleteUseCase = mockk<DeleteBudgetUseCase>(relaxed = true)
-        val repository = BudgetDetailRepository(
-            budgetDataSource,
-            entryDataSource,
-            Dispatchers.Default,
-            deleteUseCase
-        )
-
-        // Populate cache
-        repository.getBudgetDetailById(1).first()
-
-        val exception = kotlin.runCatching {
-            repository.updateBudgetAmount(1500.0)
-        }.exceptionOrNull()
-
-        assertEquals("Update failed", exception?.message)
-        assertEquals(IllegalStateException::class, exception?.let { it::class })
-    }
-
-    @Test
-    fun `deleteBudget propagates exception from use case`() = runTest {
-        val budgetDataSource = mockk<BudgetLocalDataSource>(relaxed = true)
-        val entryDataSource = mockk<BudgetEntryLocalDataSource>(relaxed = true)
-        val deleteUseCase = mockk<DeleteBudgetUseCase> {
-            coEvery { execute(1L) } throws RuntimeException("Delete failed")
-        }
-        val repository = BudgetDetailRepository(
-            budgetDataSource,
-            entryDataSource,
-            Dispatchers.Default,
-            deleteUseCase
-        )
-
-        val exception = kotlin.runCatching {
-            repository.deleteBudget(1)
-        }.exceptionOrNull()
-
-        assertEquals("Delete failed", exception?.message)
-        assertEquals(RuntimeException::class, exception?.let { it::class })
-    }
-
-    @Test
-    fun `deleteEntriesByIds propagates exception from data source`() = runTest {
-        val budgetDataSource = mockk<BudgetLocalDataSource>(relaxed = true)
-        val entryDataSource = mockk<BudgetEntryLocalDataSource> {
-            coEvery { deleteByIds(listOf(1L, 2L)) } throws IllegalStateException("Delete entries failed")
-        }
-        val deleteUseCase = mockk<DeleteBudgetUseCase>(relaxed = true)
-        val repository = BudgetDetailRepository(
-            budgetDataSource,
-            entryDataSource,
-            Dispatchers.Default,
-            deleteUseCase
-        )
-
-        val exception = kotlin.runCatching {
-            repository.deleteEntriesByIds(listOf(1, 2))
-        }.exceptionOrNull()
-
-        assertEquals("Delete entries failed", exception?.message)
-        assertEquals(IllegalStateException::class, exception?.let { it::class })
-    }
-
-    @Test
-    fun `getAllFilteredBy propagates exception from data source`() = runTest {
-        val budget = Budget(id = 1, name = "Test Budget", amount = 1000.0)
-        val filter = BudgetEntryFilter(category = BudgetEntry.Category.FOOD)
-        val budgetDataSource = mockk<BudgetLocalDataSource> {
-            coEvery { budgets } returns flowOf(listOf(budget))
-        }
-        val entryDataSource = mockk<BudgetEntryLocalDataSource> {
-            every { selectAllByBudgetId(1L) } returns flowOf(emptyList())
-            coEvery { getAllFilteredBy(filter) } throws Exception("Filter error")
-        }
-        val deleteUseCase = mockk<DeleteBudgetUseCase>(relaxed = true)
-        val repository = BudgetDetailRepository(
-            budgetDataSource,
-            entryDataSource,
-            Dispatchers.Default,
-            deleteUseCase
-        )
-
-        // Populate cache
-        repository.getBudgetDetailById(1).first()
-
-        val exception = kotlin.runCatching {
-            repository.getAllFilteredBy(filter)
-        }.exceptionOrNull()
-
-        assertEquals("Filter error", exception?.message)
-        assertEquals(Exception::class, exception?.let { it::class })
-    }
-
-    // Concurrent access tests for mutex behavior
     @Test
     fun `getCachedDetail can be called concurrently`() = runTest {
         val budget = Budget(id = 1, name = "Test Budget", amount = 1000.0)
@@ -644,25 +625,16 @@ class BudgetDetailRepositoryTest {
         val entryDataSource = mockk<BudgetEntryLocalDataSource> {
             every { selectAllByBudgetId(1L) } returns flowOf(emptyList())
         }
-        val deleteUseCase = mockk<DeleteBudgetUseCase>(relaxed = true)
-        val repository = BudgetDetailRepository(
-            budgetDataSource,
-            entryDataSource,
-            Dispatchers.Default,
-            deleteUseCase
-        )
+        val repository = buildRepository(budgetDataSource, entryDataSource)
 
-        // Populate cache
         repository.getBudgetDetailById(1).first()
 
-        // Call getCachedDetail concurrently multiple times
         val results = List(10) {
             async {
                 repository.getCachedDetail()
             }
         }.map { it.await() }
 
-        // All results should be identical (cache is properly synchronized)
         assertEquals(10, results.size)
         results.forEach { result ->
             assertEquals(budget, result.budget)
@@ -681,15 +653,8 @@ class BudgetDetailRepositoryTest {
         val entryDataSource = mockk<BudgetEntryLocalDataSource> {
             every { selectAllByBudgetId(1L) } returns flowOf(entries)
         }
-        val deleteUseCase = mockk<DeleteBudgetUseCase>(relaxed = true)
-        val repository = BudgetDetailRepository(
-            budgetDataSource,
-            entryDataSource,
-            Dispatchers.Default,
-            deleteUseCase
-        )
+        val repository = buildRepository(budgetDataSource, entryDataSource)
 
-        // Collect flow and verify cache is updated
         val result = repository.getBudgetDetailById(1).first()
         val cached = repository.getCachedDetail()
 
