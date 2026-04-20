@@ -95,6 +95,12 @@ class BudgetEntrySyncManager(
         budgetServerId: Long,
         localBudgetId: Int? = null
     ): SyncResult<SyncStats> = pullMutex.withLock {
+        // pullMutex prevents a duplicate-entry race condition in mergeServerEntry.
+        // mergeServerEntry uses a two-step lookup: first by serverId, then by unique fields
+        // (budgetId + amount + description + creationDate). Without this mutex, two concurrent
+        // pull calls (e.g., an SSE event arriving while a full sync is in progress) could both
+        // pass the "entry not found" check simultaneously and each insert the same entry,
+        // creating duplicates before either commit has made the row visible to the other.
         return authenticatedSync {
             // Find the local budget ID if not provided
             val budgetId = localBudgetId ?: budgetLocalDataSource

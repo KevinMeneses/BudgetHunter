@@ -78,6 +78,7 @@ class AuthRepository(
     }
 
     suspend fun signOut() = withContext(ioDispatcher) {
+        // TODO: Call server-side session invalidation endpoint once available in the backend.
         tokenStorage.clearTokens()
     }
 

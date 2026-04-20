@@ -56,6 +56,6 @@ SELECT * FROM budget_entry WHERE server_id = ?;
 selectByUniqueFields:
 SELECT * FROM budget_entry
 WHERE budget_id = :budgetId
-  AND amount = :amount
+  AND amount BETWEEN :amount - 0.001 AND :amount + 0.001
   AND description = :description
   AND creation_date = :creationDate;
