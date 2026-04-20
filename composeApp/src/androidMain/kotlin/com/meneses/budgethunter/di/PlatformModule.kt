@@ -30,6 +30,7 @@ import io.ktor.client.engine.android.Android
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.serialization.json.Json
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
@@ -56,7 +57,10 @@ val androidPlatformModule = module {
     single<NotificationManager> { AndroidNotificationManager(get<Context>()) }
     single<ShareManager> { AndroidShareManager(get<Context>()) }
     single<NetworkMonitor> {
-        AndroidNetworkMonitor(get<Context>()).apply { startMonitoring() }
+        AndroidNetworkMonitor(
+            context = get<Context>(),
+            scope = get<CoroutineScope>(named("ApplicationScope"))
+        ).apply { startMonitoring() }
     }
 
     // Keep concrete types available if needed elsewhere - use the same instance as the interface
