@@ -265,4 +265,8 @@
     <string name="new_entry_from_collaborator">Nueva entrada de %1$s</string>
     <string name="signed_in_as">Sesión iniciada como %1$s</string>
     <string name="sync_failed_background">Entrada guardada localmente. Error al sincronizar en segundo plano — se reintentará cuando esté en línea.</string>
+    <string name="amount_is_mandatory">El monto es obligatorio</string>
+    <string name="error_loading_file">Algo salió mal al cargar el archivo, por favor intenta de nuevo</string>
+    <string name="creating">Creando...</string>
+    <string name="updating">Actualizando...</string>
 </resources>

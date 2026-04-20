@@ -312,13 +312,22 @@ fun BudgetHunterNavigation() {
                 val budgetEntryViewModel: BudgetEntryViewModel = koinInject()
                 val uiState by budgetEntryViewModel.uiState.collectAsStateWithLifecycle()
                 val snackbarHostState = remember { SnackbarHostState() }
+                var pendingNotification by remember { mutableStateOf<StringResource?>(null) }
 
                 LaunchedEffect(Unit) {
                     budgetEntryViewModel.events.collect { event ->
                         when (event) {
                             is BudgetEntryEvent.NavigateBack -> navController.popBackStack()
-                            is BudgetEntryEvent.ShowNotification -> snackbarHostState.showSnackbar(event.message)
+                            is BudgetEntryEvent.ShowNotification -> pendingNotification = event.message
                         }
+                    }
+                }
+
+                pendingNotification?.let { res ->
+                    val message = stringResource(res)
+                    LaunchedEffect(res) {
+                        snackbarHostState.showSnackbar(message)
+                        pendingNotification = null
                     }
                 }
 

@@ -2,6 +2,9 @@ package com.meneses.budgethunter.budgetEntry
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import budgethunter.composeapp.generated.resources.Res
+import budgethunter.composeapp.generated.resources.amount_is_mandatory
+import budgethunter.composeapp.generated.resources.error_loading_file
 import com.meneses.budgethunter.budgetEntry.application.BudgetEntryEvent
 import com.meneses.budgethunter.budgetEntry.application.BudgetEntryIntent
 import com.meneses.budgethunter.budgetEntry.application.BudgetEntryState
@@ -114,7 +117,7 @@ class BudgetEntryViewModel(
             _uiState.update { it.copy(isProcessingInvoice = false) }
             _events.trySend(
                 BudgetEntryEvent.ShowNotification(
-                    message = "Something went wrong loading file, please try again",
+                    message = Res.string.error_loading_file,
                     isError = true
                 )
             )
@@ -191,7 +194,7 @@ class BudgetEntryViewModel(
 
     private fun showAmountError() {
         _uiState.update {
-            it.copy(emptyAmountError = "Amount is mandatory")
+            it.copy(emptyAmountError = Res.string.amount_is_mandatory)
         }
     }
 

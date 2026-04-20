@@ -84,7 +84,7 @@ data class BudgetEntryScreen(val budgetEntry: BudgetEntry) {
         ) { paddingValues ->
             BudgetEntryForm(
                 budgetEntry = uiState.budgetEntry ?: budgetEntry,
-                amountError = uiState.emptyAmountError,
+                amountError = uiState.emptyAmountError?.let { stringResource(it) },
                 isFileValid = uiState.isFileValid,
                 paddingValues = paddingValues,
                 onBudgetItemChanged = setBudgetEntry,

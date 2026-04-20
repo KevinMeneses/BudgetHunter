@@ -265,4 +265,8 @@
     <string name="new_entry_from_collaborator">New entry from %1$s</string>
     <string name="signed_in_as">Signed in as %1$s</string>
     <string name="sync_failed_background">Entry saved locally. Background sync failed — will retry when online.</string>
+    <string name="amount_is_mandatory">Amount is mandatory</string>
+    <string name="error_loading_file">Something went wrong loading file, please try again</string>
+    <string name="creating">Creating...</string>
+    <string name="updating">Updating...</string>
 </resources>

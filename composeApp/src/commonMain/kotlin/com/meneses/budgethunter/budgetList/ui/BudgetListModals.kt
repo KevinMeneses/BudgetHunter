@@ -34,9 +34,11 @@ import budgethunter.composeapp.generated.resources.enter_budget_name
 import budgethunter.composeapp.generated.resources.modify_budget_name
 import budgethunter.composeapp.generated.resources.name
 import budgethunter.composeapp.generated.resources.new_budget
+import budgethunter.composeapp.generated.resources.creating
 import budgethunter.composeapp.generated.resources.update
 import budgethunter.composeapp.generated.resources.update_budget
 import budgethunter.composeapp.generated.resources.update_budget_modal
+import budgethunter.composeapp.generated.resources.updating
 import com.meneses.budgethunter.budgetList.application.BudgetListIntent
 import org.jetbrains.compose.resources.stringResource
 import com.meneses.budgethunter.budgetList.domain.Budget
@@ -101,7 +103,7 @@ fun NewBudgetModal(
                     enabled = name.isNotBlank() && !isCreating
                 ) {
                     Text(
-                        text = if (isCreating) "Creating..." else stringResource(Res.string.create),
+                        text = if (isCreating) stringResource(Res.string.creating) else stringResource(Res.string.create),
                         fontWeight = FontWeight.Medium
                     )
                 }
@@ -191,7 +193,7 @@ fun UpdateBudgetModal(
                     enabled = name.isNotBlank() && !isUpdating
                 ) {
                     Text(
-                        text = if (isUpdating) "Updating..." else stringResource(Res.string.update),
+                        text = if (isUpdating) stringResource(Res.string.updating) else stringResource(Res.string.update),
                         fontWeight = FontWeight.Medium
                     )
                 }
