@@ -121,24 +121,24 @@ data class BudgetDetailScreen(val budget: Budget) {
         }
 
         BudgetModal(
-            show = uiState.isBudgetModalVisible,
+            show = uiState.modal == BudgetDetailState.ModalState.Budget,
             budgetAmount = currentBudget.amount,
             onIntent = onIntent
         )
 
         FilterModal(
-            show = uiState.isFilterModalVisible,
+            show = uiState.modal == BudgetDetailState.ModalState.Filter,
             filter = uiState.filter,
             onIntent = onIntent
         )
 
         DeleteBudgetConfirmationModal(
-            show = uiState.isDeleteBudgetModalVisible,
+            show = uiState.modal == BudgetDetailState.ModalState.DeleteBudget,
             onIntent = onIntent
         )
 
         DeleteEntriesConfirmationModal(
-            show = uiState.isDeleteEntriesModalVisible,
+            show = uiState.modal == BudgetDetailState.ModalState.DeleteEntries,
             onIntent = onIntent
         )
     }
