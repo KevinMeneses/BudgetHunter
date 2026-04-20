@@ -308,7 +308,7 @@ class BudgetDetailRepositoryTest {
         val entryDataSource = mockk<BudgetEntryLocalDataSource> {
             every { selectAllByBudgetId(1L) } returns flowOf(entries)
         }
-        val budgetEntryRepository = mockk<BudgetEntryRepository> {
+        val budgetEntryRepository = mockk<BudgetEntryRepository>(relaxed = true) {
             coEvery { delete(any()) } returns Unit
         }
         val repository = buildRepository(budgetDataSource, entryDataSource, budgetEntryRepository = budgetEntryRepository)
@@ -347,7 +347,7 @@ class BudgetDetailRepositoryTest {
             every { selectAllByBudgetId(1L) } returns flowOf(listOf(entry1))
             coEvery { deleteByIds(listOf(99L)) } returns Unit
         }
-        val budgetEntryRepository = mockk<BudgetEntryRepository> {
+        val budgetEntryRepository = mockk<BudgetEntryRepository>(relaxed = true) {
             coEvery { delete(any()) } returns Unit
         }
         val repository = buildRepository(budgetDataSource, entryDataSource, budgetEntryRepository = budgetEntryRepository)
@@ -373,7 +373,7 @@ class BudgetDetailRepositoryTest {
         val entryDataSource = mockk<BudgetEntryLocalDataSource> {
             every { selectAllByBudgetId(1L) } returns flowOf(entries)
         }
-        val budgetEntryRepository = mockk<BudgetEntryRepository> {
+        val budgetEntryRepository = mockk<BudgetEntryRepository>(relaxed = true) {
             coEvery { delete(any()) } returns Unit
         }
         val repository = buildRepository(budgetDataSource, entryDataSource, budgetEntryRepository = budgetEntryRepository)
@@ -396,7 +396,7 @@ class BudgetDetailRepositoryTest {
         val entryDataSource = mockk<BudgetEntryLocalDataSource> {
             every { selectAllByBudgetId(1L) } returns flowOf(listOf(entry1))
         }
-        val budgetEntryRepository = mockk<BudgetEntryRepository> {
+        val budgetEntryRepository = mockk<BudgetEntryRepository>(relaxed = true) {
             coEvery { delete(entry1) } throws IllegalStateException("Delete entries failed")
         }
         val repository = buildRepository(budgetDataSource, entryDataSource, budgetEntryRepository = budgetEntryRepository)
@@ -415,7 +415,7 @@ class BudgetDetailRepositoryTest {
     fun `syncEntries uses provided budgetId and serverId`() = runTest {
         val budgetDataSource = mockk<BudgetLocalDataSource>(relaxed = true)
         val entryDataSource = mockk<BudgetEntryLocalDataSource>(relaxed = true)
-        val budgetEntryRepository = mockk<BudgetEntryRepository> {
+        val budgetEntryRepository = mockk<BudgetEntryRepository>(relaxed = true) {
             coEvery { sync(42, 99L) } returns Result.success(Unit)
         }
         val repository = buildRepository(budgetDataSource, entryDataSource, budgetEntryRepository = budgetEntryRepository)
@@ -435,7 +435,7 @@ class BudgetDetailRepositoryTest {
         val entryDataSource = mockk<BudgetEntryLocalDataSource> {
             every { selectAllByBudgetId(1L) } returns flowOf(emptyList())
         }
-        val budgetEntryRepository = mockk<BudgetEntryRepository> {
+        val budgetEntryRepository = mockk<BudgetEntryRepository>(relaxed = true) {
             coEvery { sync(1, 100L) } returns Result.success(Unit)
         }
         val repository = buildRepository(budgetDataSource, entryDataSource, budgetEntryRepository = budgetEntryRepository)
