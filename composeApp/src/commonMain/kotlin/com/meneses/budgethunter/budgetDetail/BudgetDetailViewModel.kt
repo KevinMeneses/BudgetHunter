@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import budgethunter.composeapp.generated.resources.Res
 import budgethunter.composeapp.generated.resources.entries_synced_successfully
+import budgethunter.composeapp.generated.resources.sync_failed_background
 import com.meneses.budgethunter.auth.data.AuthRepository
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailEvent
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailIntent
@@ -61,6 +62,10 @@ class BudgetDetailViewModel(
             .onEach { collaboratorName ->
                 _events.trySend(BudgetDetailEvent.ShowCollaboratorEntry(collaboratorName))
             }
+            .launchIn(viewModelScope)
+
+        budgetDetailRepository.backgroundSyncErrors
+            .onEach { _events.trySend(BudgetDetailEvent.ShowError(Res.string.sync_failed_background)) }
             .launchIn(viewModelScope)
     }
 

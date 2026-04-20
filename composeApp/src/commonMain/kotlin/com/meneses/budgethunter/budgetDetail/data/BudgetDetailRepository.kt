@@ -26,6 +26,8 @@ class BudgetDetailRepository(
 ) {
     private val cacheMutex = Mutex()
 
+    val backgroundSyncErrors = budgetEntryRepository.backgroundSyncErrors
+
     suspend fun getCachedDetail(): BudgetDetail = cacheMutex.withLock {
         cachedBudgetDetail
     }

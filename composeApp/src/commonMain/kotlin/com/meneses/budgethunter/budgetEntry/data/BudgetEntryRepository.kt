@@ -8,6 +8,9 @@ import com.meneses.budgethunter.budgetList.data.datasource.BudgetLocalDataSource
 import com.meneses.budgethunter.commons.data.sync.Logger
 import com.meneses.budgethunter.commons.data.sync.SyncResult
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.withContext
 
 class BudgetEntryRepository(
@@ -21,6 +24,9 @@ class BudgetEntryRepository(
 ) {
     private val tag = "BudgetEntryRepository"
 
+    private val _backgroundSyncErrors = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val backgroundSyncErrors: SharedFlow<Unit> = _backgroundSyncErrors.asSharedFlow()
+
     fun getAllByBudgetId(budgetId: Long) =
         localDataSource.selectAllByBudgetId(budgetId)
 
@@ -31,6 +37,7 @@ class BudgetEntryRepository(
             val result = syncManager.syncPendingEntries(budgetEntry.budgetId)
             if (result is SyncResult.Failure) {
                 logger.warn(tag, "Background sync failed after create", result.error)
+                _backgroundSyncErrors.tryEmit(Unit)
             }
         }
     }
@@ -42,6 +49,7 @@ class BudgetEntryRepository(
             val result = syncManager.syncPendingEntries(budgetEntry.budgetId)
             if (result is SyncResult.Failure) {
                 logger.warn(tag, "Background sync failed after update", result.error)
+                _backgroundSyncErrors.tryEmit(Unit)
             }
         }
     }
