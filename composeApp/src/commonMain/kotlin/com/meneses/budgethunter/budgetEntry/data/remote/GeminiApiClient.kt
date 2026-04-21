@@ -21,6 +21,7 @@ class GeminiApiClient(
     private val logger: Logger
 ) {
     private val tag = "GeminiApiClient"
+
     /**
      * Sends an image and prompt to Gemini API and returns the extracted budget entry.
      *

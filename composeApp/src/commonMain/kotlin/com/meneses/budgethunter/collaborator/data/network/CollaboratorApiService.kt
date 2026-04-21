@@ -28,6 +28,7 @@ class CollaboratorApiService(
     private val logger: Logger
 ) {
     private val tag = "CollaboratorApiService"
+
     /**
      * Adds a collaborator to a budget.
      *
