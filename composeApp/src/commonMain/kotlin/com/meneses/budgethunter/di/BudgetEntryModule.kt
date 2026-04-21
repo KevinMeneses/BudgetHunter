@@ -81,7 +81,8 @@ val budgetEntryModule = module {
     single<CreateBudgetEntryFromImageUseCase> {
         CreateBudgetEntryFromImageUseCase(
             aiImageProcessor = get<AIImageProcessor>(),
-            ioDispatcher = get<CoroutineDispatcher>(named("IO"))
+            ioDispatcher = get<CoroutineDispatcher>(named("IO")),
+            logger = get()
         )
     }
 

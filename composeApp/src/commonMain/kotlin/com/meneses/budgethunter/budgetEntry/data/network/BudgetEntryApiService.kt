@@ -1,5 +1,6 @@
 package com.meneses.budgethunter.budgetEntry.data.network
 
+import com.meneses.budgethunter.commons.data.network.ApiEndpoints
 import com.meneses.budgethunter.commons.data.network.models.BudgetEntryResponse
 import com.meneses.budgethunter.commons.data.network.models.CreateBudgetEntryRequest
 import com.meneses.budgethunter.commons.data.network.models.UpdateBudgetEntryRequest
@@ -38,7 +39,7 @@ class BudgetEntryApiService(
         request: CreateBudgetEntryRequest
     ): Result<BudgetEntryResponse> = withContext(ioDispatcher) {
         safeApiCall {
-            httpClient.post("/api/budgets/$budgetId/entries") {
+            httpClient.post(ApiEndpoints.budgetEntries(budgetId)) {
                 contentType(ContentType.Application.Json)
                 setBody(request)
             }.body<BudgetEntryResponse>()
@@ -61,7 +62,7 @@ class BudgetEntryApiService(
         request: UpdateBudgetEntryRequest
     ): Result<BudgetEntryResponse> = withContext(ioDispatcher) {
         safeApiCall {
-            httpClient.put("/api/budgets/$budgetId/entries/$entryId") {
+            httpClient.put(ApiEndpoints.budgetEntry(budgetId, entryId)) {
                 contentType(ContentType.Application.Json)
                 setBody(request)
             }.body<BudgetEntryResponse>()
@@ -79,7 +80,7 @@ class BudgetEntryApiService(
     suspend fun getEntries(budgetId: Long): Result<List<BudgetEntryResponse>> =
         withContext(ioDispatcher) {
             safeApiCall {
-                httpClient.get("/api/budgets/$budgetId/entries")
+                httpClient.get(ApiEndpoints.budgetEntries(budgetId))
                     .body<List<BudgetEntryResponse>>()
             }
         }
@@ -98,7 +99,7 @@ class BudgetEntryApiService(
         entryId: Long
     ): Result<Unit> = withContext(ioDispatcher) {
         safeApiCall {
-            httpClient.delete("/api/budgets/$budgetId/entries/$entryId").body<Unit>()
+            httpClient.delete(ApiEndpoints.budgetEntry(budgetId, entryId)).body<Unit>()
         }
     }
 }

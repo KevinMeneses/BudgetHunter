@@ -8,8 +8,8 @@ import com.meneses.budgethunter.commons.util.toPlainString
 
 fun Budget_entry.toDomain() =
     BudgetEntry(
-        id = id.toInt(),
-        budgetId = budget_id.toInt(),
+        id = id.toInt(), // SQLite/server IDs are Long; domain model uses Int for local IDs
+        budgetId = budget_id.toInt(), // Same: SQLite Long → domain Int
         amount = amount.toPlainString(),
         description = description,
         type = type,

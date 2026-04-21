@@ -12,7 +12,7 @@ fun mapSelectAllToBudget(
     lastSyncedAt: String?,
     totalExpenses: Double
 ) = Budget(
-    id = id.toInt(),
+    id = id.toInt(), // SQLite/server IDs are Long; domain model uses Int for local IDs
     amount = amount,
     name = name,
     totalExpenses = totalExpenses,

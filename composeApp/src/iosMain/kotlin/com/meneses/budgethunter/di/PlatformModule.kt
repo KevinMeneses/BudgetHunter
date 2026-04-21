@@ -104,7 +104,8 @@ val iosPlatformModule = module {
         GeminiApiClient(
             httpClient = get<HttpClient>(),
             apiKey = get(named("GEMINI_API_KEY")),
-            json = get<Json>()
+            json = get<Json>(),
+            logger = get()
         )
     }
 
@@ -112,7 +113,8 @@ val iosPlatformModule = module {
         IosAIImageProcessor(
             geminiApiClient = get<GeminiApiClient>(),
             imageProcessor = get<ImageProcessor>(),
-            ioDispatcher = get<CoroutineDispatcher>(named("IO"))
+            ioDispatcher = get<CoroutineDispatcher>(named("IO")),
+            logger = get()
         )
     }
 }

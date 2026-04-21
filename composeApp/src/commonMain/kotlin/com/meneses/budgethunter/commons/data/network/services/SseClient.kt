@@ -1,5 +1,6 @@
 package com.meneses.budgethunter.commons.data.network.services
 
+import com.meneses.budgethunter.commons.data.network.ApiEndpoints
 import com.meneses.budgethunter.commons.data.network.models.BudgetEntryEvent
 import com.meneses.budgethunter.commons.data.sync.Logger
 import io.ktor.client.HttpClient
@@ -43,7 +44,7 @@ class SseClient(
     fun subscribeToBudgetEntries(budgetServerId: Long): Flow<BudgetEntryEvent> = flow {
         subscriptionJob = currentCoroutineContext()[Job]
         try {
-            val url = "$baseUrl/api/budgets/$budgetServerId/entries/stream"
+            val url = "$baseUrl${ApiEndpoints.budgetEntriesStream(budgetServerId)}"
             httpClient.serverSentEvents(urlString = url) {
                 incoming.collect { event ->
                     try {

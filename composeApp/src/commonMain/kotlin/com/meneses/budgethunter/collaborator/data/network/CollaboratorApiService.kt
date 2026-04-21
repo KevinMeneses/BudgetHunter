@@ -1,9 +1,11 @@
 package com.meneses.budgethunter.collaborator.data.network
 
+import com.meneses.budgethunter.commons.data.network.ApiEndpoints
 import com.meneses.budgethunter.commons.data.network.models.AddCollaboratorRequest
 import com.meneses.budgethunter.commons.data.network.models.CollaboratorResponse
 import com.meneses.budgethunter.commons.data.network.models.UserInfo
 import com.meneses.budgethunter.commons.data.network.safeApiCall
+import com.meneses.budgethunter.commons.data.sync.Logger
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.delete
@@ -22,8 +24,10 @@ import kotlinx.coroutines.withContext
  */
 class CollaboratorApiService(
     private val httpClient: HttpClient,
-    private val ioDispatcher: CoroutineDispatcher
+    private val ioDispatcher: CoroutineDispatcher,
+    private val logger: Logger
 ) {
+    private val tag = "CollaboratorApiService"
     /**
      * Adds a collaborator to a budget.
      *
@@ -37,13 +41,13 @@ class CollaboratorApiService(
         budgetId: Long,
         request: AddCollaboratorRequest
     ): Result<CollaboratorResponse> = withContext(ioDispatcher) {
-        println("CollaboratorApiService: Adding collaborator to budget $budgetId with request: $request")
+        logger.debug(tag, "Adding collaborator to budget $budgetId with request: $request")
         safeApiCall {
-            httpClient.post("/api/budgets/$budgetId/collaborators") {
+            httpClient.post(ApiEndpoints.budgetCollaborators(budgetId)) {
                 contentType(ContentType.Application.Json)
                 setBody(request)
             }.body<CollaboratorResponse>().also {
-                println("CollaboratorApiService: Successfully added collaborator: $it")
+                logger.debug(tag, "Successfully added collaborator: $it")
             }
         }
     }
@@ -58,11 +62,11 @@ class CollaboratorApiService(
      */
     suspend fun getCollaborators(budgetId: Long): Result<List<UserInfo>> =
         withContext(ioDispatcher) {
-            println("CollaboratorApiService: Fetching collaborators for budget $budgetId")
+            logger.debug(tag, "Fetching collaborators for budget $budgetId")
             safeApiCall {
-                httpClient.get("/api/budgets/$budgetId/collaborators")
+                httpClient.get(ApiEndpoints.budgetCollaborators(budgetId))
                     .body<List<UserInfo>>()
-                    .also { println("CollaboratorApiService: Successfully fetched ${it.size} collaborators") }
+                    .also { logger.debug(tag, "Successfully fetched ${it.size} collaborators") }
             }
         }
 
@@ -79,11 +83,11 @@ class CollaboratorApiService(
         budgetId: Long,
         email: String
     ): Result<Unit> = withContext(ioDispatcher) {
-        println("CollaboratorApiService: Removing collaborator $email from budget $budgetId")
+        logger.debug(tag, "Removing collaborator $email from budget $budgetId")
         safeApiCall {
             val encodedEmail = email.encodeURLPath()
-            httpClient.delete("/api/budgets/$budgetId/collaborators/$encodedEmail")
-            println("CollaboratorApiService: Successfully removed collaborator: $email")
+            httpClient.delete(ApiEndpoints.budgetCollaborator(budgetId, encodedEmail))
+            logger.debug(tag, "Successfully removed collaborator: $email")
         }
     }
 }

@@ -3,6 +3,7 @@ package com.meneses.budgethunter.commons.data.network
 import com.meneses.budgethunter.auth.data.TokenStorage
 import com.meneses.budgethunter.commons.data.network.models.AuthResponse
 import com.meneses.budgethunter.commons.data.network.models.RefreshTokenRequest
+import com.meneses.budgethunter.commons.data.sync.Logger as AppLogger
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.auth.Auth
@@ -22,6 +23,8 @@ import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
+private const val TAG = "HttpClient"
+
 fun createHttpClient(
     baseUrl: String,
     tokenStorage: TokenStorage,
@@ -29,7 +32,8 @@ fun createHttpClient(
         ignoreUnknownKeys = true
         isLenient = true
         encodeDefaults = true
-    }
+    },
+    appLogger: AppLogger
 ): HttpClient {
     return HttpClient {
         install(ContentNegotiation) {
@@ -53,24 +57,24 @@ fun createHttpClient(
                     val refreshToken = tokenStorage.getRefreshToken()
 
                     if (authToken != null && refreshToken != null) {
-                        println("HttpClient: Loaded tokens from storage")
+                        appLogger.debug(TAG, "Loaded tokens from storage")
                         BearerTokens(
                             accessToken = authToken,
                             refreshToken = refreshToken
                         )
                     } else {
-                        println("HttpClient: No tokens available in storage")
+                        appLogger.debug(TAG, "No tokens available in storage")
                         null
                     }
                 }
 
                 refreshTokens {
                     // This is called when a 401 response is received
-                    println("HttpClient: Refreshing tokens due to 401 response")
+                    appLogger.debug(TAG, "Refreshing tokens due to 401 response")
 
                     val currentRefreshToken = tokenStorage.getRefreshToken()
                     if (currentRefreshToken == null) {
-                        println("HttpClient: No refresh token available, cannot refresh")
+                        appLogger.warn(TAG, "No refresh token available, cannot refresh")
                         // Clear tokens and force re-login
                         tokenStorage.clearTokens()
                         return@refreshTokens null
@@ -89,7 +93,7 @@ fun createHttpClient(
                         }
 
                         // Make the refresh token request
-                        val response = refreshClient.post("/api/users/refresh_token") {
+                        val response = refreshClient.post(ApiEndpoints.REFRESH_TOKEN) {
                             setBody(RefreshTokenRequest(currentRefreshToken))
                         }
 
@@ -99,7 +103,7 @@ fun createHttpClient(
                         tokenStorage.saveAuthToken(authResponse.authToken)
                         tokenStorage.saveRefreshToken(authResponse.refreshToken)
 
-                        println("HttpClient: Token refresh successful")
+                        appLogger.debug(TAG, "Token refresh successful")
 
                         // Close the temporary client
                         refreshClient.close()
@@ -110,7 +114,7 @@ fun createHttpClient(
                             refreshToken = authResponse.refreshToken
                         )
                     } catch (e: Exception) {
-                        println("HttpClient: Token refresh failed: ${e.message}")
+                        appLogger.warn(TAG, "Token refresh failed", e)
                         // Clear tokens on refresh failure to force re-login
                         tokenStorage.clearTokens()
                         null
@@ -120,9 +124,9 @@ fun createHttpClient(
                 sendWithoutRequest { request ->
                     // Send tokens with all requests except auth endpoints
                     val path = request.url.toString()
-                    !path.contains("/api/users/sign_in") &&
-                        !path.contains("/api/users/sign_up") &&
-                        !path.contains("/api/users/refresh_token")
+                    !path.contains(ApiEndpoints.SIGN_IN) &&
+                        !path.contains(ApiEndpoints.SIGN_UP) &&
+                        !path.contains(ApiEndpoints.REFRESH_TOKEN)
                 }
             }
         }

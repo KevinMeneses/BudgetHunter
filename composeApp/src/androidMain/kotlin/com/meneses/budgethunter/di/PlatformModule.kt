@@ -69,7 +69,10 @@ val androidPlatformModule = module {
 
     // AI and Image Processing - Android specific
     single<ImageProcessor> {
-        ImageProcessor(get<Context>().contentResolver)
+        ImageProcessor(
+            contentResolver = get<Context>().contentResolver,
+            logger = get()
+        )
     }
 
     // HTTP Client for AI API calls (using Android engine)
@@ -91,7 +94,8 @@ val androidPlatformModule = module {
         GeminiApiClient(
             httpClient = get<HttpClient>(),
             apiKey = get(named("GEMINI_API_KEY")),
-            json = get<Json>()
+            json = get<Json>(),
+            logger = get()
         )
     }
 
@@ -99,7 +103,8 @@ val androidPlatformModule = module {
         AndroidAIImageProcessor(
             geminiApiClient = get<GeminiApiClient>(),
             imageProcessor = get<ImageProcessor>(),
-            ioDispatcher = get<CoroutineDispatcher>(named("IO"))
+            ioDispatcher = get<CoroutineDispatcher>(named("IO")),
+            logger = get()
         )
     }
 }

@@ -3,6 +3,7 @@ package com.meneses.budgethunter.budgetEntry.application
 import com.meneses.budgethunter.budgetEntry.domain.AIImageProcessor
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.budgetEntry.domain.ImageData
+import com.meneses.budgethunter.commons.data.sync.Logger
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
@@ -16,8 +17,10 @@ import kotlinx.datetime.toLocalDateTime
  */
 class CreateBudgetEntryFromImageUseCase(
     private val aiImageProcessor: AIImageProcessor,
-    private val ioDispatcher: CoroutineDispatcher
+    private val ioDispatcher: CoroutineDispatcher,
+    private val logger: Logger
 ) {
+    private val tag = "CreateBudgetEntryFromImageUseCase"
 
     /**
      * AI prompt preserved from the original Android implementation.
@@ -64,8 +67,8 @@ class CreateBudgetEntryFromImageUseCase(
                 budgetEntry
             }
         } catch (e: Exception) {
-            // Log error in debug mode but return original budget entry to maintain user experience
-            println("KMP AI Image Processing Error: ${e.message}")
+            // Return original budget entry to maintain user experience
+            logger.warn(tag, "AI image processing error", e)
             budgetEntry
         }
     }

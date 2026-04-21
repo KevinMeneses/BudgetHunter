@@ -14,6 +14,7 @@ import com.meneses.budgethunter.budgetList.application.DeleteBudgetUseCase
 import com.meneses.budgethunter.budgetList.application.DuplicateBudgetUseCase
 import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.budgetList.domain.Budget
+import com.meneses.budgethunter.commons.data.sync.Logger
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,8 +28,10 @@ class BudgetListViewModel(
     private val duplicateBudgetUseCase: DuplicateBudgetUseCase,
     private val deleteBudgetUseCase: DeleteBudgetUseCase,
     private val authRepository: AuthRepository,
-    private val signOutUseCase: SignOutUseCase
+    private val signOutUseCase: SignOutUseCase,
+    private val logger: Logger
 ) : ViewModel() {
+    private val tag = "BudgetListViewModel"
     val uiState get() = _uiState.asStateFlow()
     private val _uiState = MutableStateFlow(BudgetListState())
 
@@ -89,7 +92,7 @@ class BudgetListViewModel(
             budgetRepository.sync()
             _events.trySend(BudgetListEvent.ShowMessage(Res.string.budget_synced_successfully))
         } catch (e: Exception) {
-            println("BudgetListViewModel: Sync failed - ${e.message}")
+            logger.warn(tag, "Sync failed", e)
             _events.trySend(BudgetListEvent.ShowMessage(Res.string.sync_failed_retry_online))
         } finally {
             // Small delay to ensure PullToRefreshBox can process the state change

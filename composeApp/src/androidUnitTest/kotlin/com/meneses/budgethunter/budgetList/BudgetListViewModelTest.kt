@@ -8,6 +8,7 @@ import com.meneses.budgethunter.budgetList.application.DeleteBudgetUseCase
 import com.meneses.budgethunter.budgetList.application.DuplicateBudgetUseCase
 import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.budgetList.domain.Budget
+import com.meneses.budgethunter.commons.data.sync.NoOpLogger
 import io.mockk.coEvery
 import io.mockk.coJustRun
 import io.mockk.mockk
@@ -61,7 +62,8 @@ class BudgetListViewModelTest {
             duplicateBudgetUseCase = duplicateBudgetUseCase,
             deleteBudgetUseCase = deleteBudgetUseCase,
             authRepository = authRepository,
-            signOutUseCase = signOutUseCase
+            signOutUseCase = signOutUseCase,
+            logger = NoOpLogger()
         )
     }
 

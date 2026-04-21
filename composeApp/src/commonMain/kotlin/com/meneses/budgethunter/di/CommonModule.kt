@@ -66,7 +66,8 @@ val commonModule = module {
     single<ValidateFilePathUseCase> {
         ValidateFilePathUseCase(
             fileManager = get(),
-            ioDispatcher = get(named("IO"))
+            ioDispatcher = get(named("IO")),
+            logger = get()
         )
     }
 }

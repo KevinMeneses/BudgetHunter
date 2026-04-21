@@ -2,6 +2,7 @@ package com.meneses.budgethunter.budgetEntry.domain
 
 import com.meneses.budgethunter.budgetEntry.data.ImageProcessor
 import com.meneses.budgethunter.budgetEntry.data.remote.GeminiApiClient
+import com.meneses.budgethunter.commons.data.sync.Logger
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
@@ -17,8 +18,10 @@ import platform.UIKit.UIImageJPEGRepresentation
 class IosAIImageProcessor(
     private val geminiApiClient: GeminiApiClient,
     private val imageProcessor: ImageProcessor,
-    private val ioDispatcher: CoroutineDispatcher
+    private val ioDispatcher: CoroutineDispatcher,
+    private val logger: Logger
 ) : AIImageProcessor {
+    private val tag = "IosAIImageProcessor"
 
     @OptIn(ExperimentalForeignApi::class)
     override suspend fun processImage(imageData: ImageData, prompt: String): BudgetEntry? = withContext(ioDispatcher) {
@@ -34,8 +37,7 @@ class IosAIImageProcessor(
             // Use shared Gemini API client
             geminiApiClient.extractBudgetEntryFromImage(base64Image, prompt)
         } catch (e: Exception) {
-            println("iOS AI Image Processing Error: ${e.message}")
-            e.printStackTrace()
+            logger.error(tag, "AI image processing error", e)
             null
         }
     }

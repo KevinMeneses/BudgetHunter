@@ -11,14 +11,17 @@ import android.os.ParcelFileDescriptor
 import androidx.core.graphics.createBitmap
 import androidx.core.net.toUri
 import com.meneses.budgethunter.budgetEntry.domain.ImageData
+import com.meneses.budgethunter.commons.data.sync.Logger
 
 /**
  * Android-specific implementation of ImageProcessor.
  * Handles Android Bitmap creation from URIs and PDF processing.
  */
 actual class ImageProcessor(
-    private val contentResolver: ContentResolver
+    private val contentResolver: ContentResolver,
+    private val logger: Logger
 ) {
+    private val tag = "ImageProcessor"
 
     actual fun getImageFromUri(imageData: ImageData): Any? {
         return try {
@@ -28,7 +31,7 @@ actual class ImageProcessor(
                 processRegularImageFromUri(imageData)
             }
         } catch (e: Exception) {
-            println("Android Image Processing Error: ${e.message}")
+            logger.warn(tag, "Image processing error", e)
             null
         }
     }
@@ -41,7 +44,7 @@ actual class ImageProcessor(
 
             getBitmapFromPDFFileDescriptor(descriptor)
         } catch (e: Exception) {
-            println("Android PDF Processing Error: ${e.message}")
+            logger.warn(tag, "PDF processing error", e)
             null
         }
     }
@@ -53,7 +56,7 @@ actual class ImageProcessor(
                 BitmapFactory.decodeStream(inputStream)
             }
         } catch (e: Exception) {
-            println("Android Regular Image Processing Error: ${e.message}")
+            logger.warn(tag, "Regular image processing error", e)
             null
         }
     }

@@ -97,6 +97,6 @@ class BudgetEntryRepository(
             }
         }
 
-        localDataSource.delete(budgetEntry.id.toLong())
+        localDataSource.delete(budgetEntry.id.toLong()) // Domain Int → SQLite Long for query parameter
     }
 }

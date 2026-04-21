@@ -1,5 +1,6 @@
 package com.meneses.budgethunter.budgetEntry.data.remote
 
+import com.meneses.budgethunter.commons.data.sync.NoOpLogger
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -62,7 +63,8 @@ class GeminiApiClientTest {
         val apiClient = GeminiApiClient(
             httpClient = httpClient,
             apiKey = "test-api-key",
-            json = json
+            json = json,
+            logger = NoOpLogger()
         )
 
         // Act
@@ -113,7 +115,8 @@ class GeminiApiClientTest {
         val apiClient = GeminiApiClient(
             httpClient = httpClient,
             apiKey = "test-api-key",
-            json = json
+            json = json,
+            logger = NoOpLogger()
         )
 
         // Act
@@ -164,7 +167,8 @@ class GeminiApiClientTest {
         val apiClient = GeminiApiClient(
             httpClient = httpClient,
             apiKey = "test-api-key",
-            json = json
+            json = json,
+            logger = NoOpLogger()
         )
 
         // Act
@@ -209,7 +213,8 @@ class GeminiApiClientTest {
         val apiClient = GeminiApiClient(
             httpClient = httpClient,
             apiKey = "test-api-key",
-            json = json
+            json = json,
+            logger = NoOpLogger()
         )
 
         // Act
@@ -253,7 +258,8 @@ class GeminiApiClientTest {
         val apiClient = GeminiApiClient(
             httpClient = httpClient,
             apiKey = "test-api-key",
-            json = json
+            json = json,
+            logger = NoOpLogger()
         )
 
         // Act
@@ -289,7 +295,8 @@ class GeminiApiClientTest {
         val apiClient = GeminiApiClient(
             httpClient = httpClient,
             apiKey = "invalid-api-key",
-            json = json
+            json = json,
+            logger = NoOpLogger()
         )
 
         // Act
@@ -337,7 +344,8 @@ class GeminiApiClientTest {
         val apiClient = GeminiApiClient(
             httpClient = httpClient,
             apiKey = "test-api-key",
-            json = json
+            json = json,
+            logger = NoOpLogger()
         )
 
         // Act
@@ -377,7 +385,8 @@ class GeminiApiClientTest {
         val apiClient = GeminiApiClient(
             httpClient = httpClient,
             apiKey = testApiKey,
-            json = json
+            json = json,
+            logger = NoOpLogger()
         )
 
         // Act
@@ -421,7 +430,8 @@ class GeminiApiClientTest {
         val apiClient = GeminiApiClient(
             httpClient = httpClient,
             apiKey = "test-api-key",
-            json = json
+            json = json,
+            logger = NoOpLogger()
         )
 
         // Act

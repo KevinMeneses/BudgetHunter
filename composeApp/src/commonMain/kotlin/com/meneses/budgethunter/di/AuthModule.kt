@@ -25,7 +25,8 @@ val authModule = module {
         createHttpClient(
             baseUrl = getBaseUrl(),
             tokenStorage = get<TokenStorage>(),
-            json = get<Json>()
+            json = get<Json>(),
+            appLogger = get()
         )
     }
 

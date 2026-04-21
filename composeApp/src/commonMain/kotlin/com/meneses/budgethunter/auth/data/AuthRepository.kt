@@ -1,5 +1,6 @@
 package com.meneses.budgethunter.auth.data
 
+import com.meneses.budgethunter.commons.data.network.ApiEndpoints
 import com.meneses.budgethunter.commons.data.network.models.AuthResponse
 import com.meneses.budgethunter.commons.data.network.models.RefreshTokenRequest
 import com.meneses.budgethunter.commons.data.network.models.SignInRequest
@@ -24,7 +25,7 @@ class AuthRepository(
         password: String
     ): Result<SignUpResponse> = withContext(ioDispatcher) {
         try {
-            val response = httpClient.post("/api/users/sign_up") {
+            val response = httpClient.post(ApiEndpoints.SIGN_UP) {
                 setBody(SignUpRequest(email, name, password))
             }
             val signUpResponse = response.body<SignUpResponse>()
@@ -42,7 +43,7 @@ class AuthRepository(
         password: String
     ): Result<AuthResponse> = withContext(ioDispatcher) {
         try {
-            val response = httpClient.post("/api/users/sign_in") {
+            val response = httpClient.post(ApiEndpoints.SIGN_IN) {
                 setBody(SignInRequest(email, password))
             }
             val authResponse = response.body<AuthResponse>()
@@ -62,7 +63,7 @@ class AuthRepository(
             val currentRefreshToken = tokenStorage.getRefreshToken()
                 ?: return@withContext Result.failure(Exception("No refresh token available"))
 
-            val response = httpClient.post("/api/users/refresh_token") {
+            val response = httpClient.post(ApiEndpoints.REFRESH_TOKEN) {
                 setBody(RefreshTokenRequest(currentRefreshToken))
             }
             val authResponse = response.body<AuthResponse>()

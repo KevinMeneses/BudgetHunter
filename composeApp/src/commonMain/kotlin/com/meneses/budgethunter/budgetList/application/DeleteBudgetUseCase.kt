@@ -11,7 +11,7 @@ class DeleteBudgetUseCase(
     private val ioDispatcher: CoroutineDispatcher
 ) {
     suspend fun execute(budgetId: Long) = withContext(ioDispatcher) {
-        budgetRepository.delete(budgetId.toInt())
+        budgetRepository.delete(budgetId.toInt()) // UI passes Long; local delete uses domain Int ID
         entriesLocalDataSource.deleteAllByBudgetId(budgetId)
     }
 }

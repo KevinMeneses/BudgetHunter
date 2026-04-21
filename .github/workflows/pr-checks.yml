@@ -10,8 +10,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Create local.properties
-        run: echo "BACKEND_URL=${{ secrets.BACKEND_URL_PROD }}" >> local.properties
+      - name: Setup local.properties
+        uses: ./.github/actions/setup-local-properties
+        with:
+          backend_url: ${{ secrets.BACKEND_URL_PROD }}
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
@@ -35,8 +37,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Create local.properties
-        run: echo "BACKEND_URL=${{ secrets.BACKEND_URL_PROD }}" >> local.properties
+      - name: Setup local.properties
+        uses: ./.github/actions/setup-local-properties
+        with:
+          backend_url: ${{ secrets.BACKEND_URL_PROD }}
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
@@ -52,8 +56,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Create local.properties
-        run: echo "BACKEND_URL=${{ secrets.BACKEND_URL_PROD }}" >> local.properties
+      - name: Setup local.properties
+        uses: ./.github/actions/setup-local-properties
+        with:
+          backend_url: ${{ secrets.BACKEND_URL_PROD }}
       - name: Setup Java
         uses: actions/setup-java@v4
         with:

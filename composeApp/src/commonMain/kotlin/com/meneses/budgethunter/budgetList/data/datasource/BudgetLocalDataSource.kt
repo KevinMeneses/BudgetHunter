@@ -66,14 +66,14 @@ class BudgetLocalDataSource(
             savedId = queries
                 .selectLastId()
                 .executeAsOne()
-                .toInt()
+                .toInt() // SQLite lastInsertRowId is Long; domain model uses Int for local IDs
         }
 
         return budget.copy(id = savedId)
     }
 
     fun update(budget: Budget) = queries.update(
-        id = budget.id.toLong(),
+        id = budget.id.toLong(), // Domain Int → SQLite Long for query parameter
         amount = budget.amount,
         name = budget.name,
         date = budget.date,
@@ -85,7 +85,7 @@ class BudgetLocalDataSource(
     fun markAsSynced(id: Int, serverId: Long, lastSyncedAt: String) = queries.markAsSynced(
         server_id = serverId,
         last_synced_at = lastSyncedAt,
-        id = id.toLong()
+        id = id.toLong() // Domain Int → SQLite Long for query parameter
     )
 
     fun delete(id: Long) = queries.delete(id)

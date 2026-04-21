@@ -1,6 +1,7 @@
 package com.meneses.budgethunter.budgetEntry.data.remote
 
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
+import com.meneses.budgethunter.commons.data.sync.Logger
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.post
@@ -16,8 +17,10 @@ import kotlinx.serialization.json.Json
 class GeminiApiClient(
     private val httpClient: HttpClient,
     private val apiKey: String,
-    private val json: Json
+    private val json: Json,
+    private val logger: Logger
 ) {
+    private val tag = "GeminiApiClient"
     /**
      * Sends an image and prompt to Gemini API and returns the extracted budget entry.
      *
@@ -72,8 +75,7 @@ class GeminiApiClient(
                 null
             }
         } catch (e: Exception) {
-            println("Gemini API Error: ${e.message}")
-            e.printStackTrace()
+            logger.error(tag, "Gemini API error", e)
             null
         }
     }

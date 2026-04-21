@@ -13,7 +13,8 @@ val collaboratorModule = module {
     single<CollaboratorApiService> {
         CollaboratorApiService(
             httpClient = get<HttpClient>(named("AuthHttpClient")),
-            ioDispatcher = get<CoroutineDispatcher>(named("IO"))
+            ioDispatcher = get<CoroutineDispatcher>(named("IO")),
+            logger = get()
         )
     }
 
