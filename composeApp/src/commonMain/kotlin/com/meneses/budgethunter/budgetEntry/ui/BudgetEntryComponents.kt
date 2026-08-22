@@ -37,7 +37,6 @@ import budgethunter.composeapp.generated.resources.description
 import budgethunter.composeapp.generated.resources.entry_date
 import budgethunter.composeapp.generated.resources.amount_placeholder
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
-import com.meneses.budgethunter.budgetEntry.domain.toStringResource
 import com.meneses.budgethunter.commons.ui.OutlinedDropdown
 import com.meneses.budgethunter.commons.ui.SimpleDatePickerDialog
 import com.meneses.budgethunter.commons.ui.ThousandSeparatorTransformation

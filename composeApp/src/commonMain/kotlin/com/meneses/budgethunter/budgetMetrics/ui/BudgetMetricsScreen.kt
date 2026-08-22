@@ -11,7 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import budgethunter.composeapp.generated.resources.Res
 import budgethunter.composeapp.generated.resources.come_back
-import com.meneses.budgethunter.budgetEntry.domain.toStringResource
+import com.meneses.budgethunter.budgetEntry.ui.toStringResource
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.budgetMetrics.application.BudgetMetricsState
 import com.meneses.budgethunter.commons.ui.AppBar
