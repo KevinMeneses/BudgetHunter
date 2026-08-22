@@ -1,11 +1,16 @@
 package com.meneses.budgethunter.auth.data
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import com.meneses.budgethunter.commons.data.network.ApiEndpoints
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
+import io.ktor.client.plugins.auth.Auth
+import io.ktor.client.plugins.auth.providers.BearerTokens
+import io.ktor.client.plugins.auth.providers.bearer
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
+import io.ktor.client.request.get
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.HttpHeaders
@@ -42,6 +47,81 @@ class AuthRepositoryTest {
             produceFile = { "test-${Uuid.random()}.preferences_pb".toPath() }
         )
         return TokenStorage(testDataStore)
+    }
+
+    /**
+     * Regression test: Ktor's BearerAuthProvider caches the result of `loadTokens` in memory and
+     * only reloads it after a 401. Signing in as a different user while the previous token is
+     * still valid used to keep sending the previous user's token, so the server answered with the
+     * previous user's data.
+     */
+    @Test
+    fun `signIn drops the cached bearer token so later requests use the new session`() = runTest {
+        // Arrange: storage already holds a previous, still-valid session
+        val tokenStorage = createTestTokenStorage()
+        tokenStorage.saveAuthToken("token-user-a")
+        tokenStorage.saveRefreshToken("refresh-user-a")
+
+        val sentAuthorizationHeaders = mutableListOf<String?>()
+
+        val mockEngine = MockEngine { request ->
+            sentAuthorizationHeaders += request.headers[HttpHeaders.Authorization]
+            val body = if (request.url.encodedPath == ApiEndpoints.SIGN_IN) {
+                """
+                {
+                  "authToken": "token-user-b",
+                  "refreshToken": "refresh-user-b",
+                  "email": "b@b.com",
+                  "name": "b"
+                }
+                """
+            } else {
+                "[]"
+            }
+            respond(
+                content = body,
+                status = HttpStatusCode.OK,
+                headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+            )
+        }
+
+        val httpClient = HttpClient(mockEngine) {
+            install(ContentNegotiation) {
+                json(this@AuthRepositoryTest.json)
+            }
+            install(Auth) {
+                bearer {
+                    loadTokens {
+                        val authToken = tokenStorage.getAuthToken()
+                        val refreshToken = tokenStorage.getRefreshToken()
+                        if (authToken != null && refreshToken != null) {
+                            BearerTokens(authToken, refreshToken)
+                        } else {
+                            null
+                        }
+                    }
+                    sendWithoutRequest { !it.url.toString().contains(ApiEndpoints.SIGN_IN) }
+                }
+            }
+            defaultRequest {
+                url("http://localhost:8080")
+                contentType(ContentType.Application.Json)
+            }
+        }
+
+        val repository = AuthRepository(httpClient, tokenStorage, Dispatchers.Unconfined)
+
+        // Warm up the provider cache with user A's token
+        httpClient.get(ApiEndpoints.BUDGETS)
+        assertEquals("Bearer token-user-a", sentAuthorizationHeaders.last())
+
+        // Act: sign in as user B and hit an authenticated endpoint again
+        val result = repository.signIn(email = "b@b.com", password = "password123")
+        httpClient.get(ApiEndpoints.BUDGETS)
+
+        // Assert
+        assertTrue(result.isSuccess)
+        assertEquals("Bearer token-user-b", sentAuthorizationHeaders.last())
     }
 
     /**

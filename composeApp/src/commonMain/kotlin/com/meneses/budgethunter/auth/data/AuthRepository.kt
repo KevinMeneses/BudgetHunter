@@ -8,6 +8,8 @@ import com.meneses.budgethunter.commons.data.network.models.SignUpRequest
 import com.meneses.budgethunter.commons.data.network.models.SignUpResponse
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.plugins.auth.authProvider
+import io.ktor.client.plugins.auth.providers.BearerAuthProvider
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import kotlinx.coroutines.CoroutineDispatcher
@@ -51,6 +53,7 @@ class AuthRepository(
             // Store tokens on successful sign in
             tokenStorage.saveAuthToken(authResponse.authToken)
             tokenStorage.saveRefreshToken(authResponse.refreshToken)
+            invalidateCachedBearerToken()
 
             Result.success(authResponse)
         } catch (e: Exception) {
@@ -71,6 +74,7 @@ class AuthRepository(
             // Store new tokens (token rotation)
             tokenStorage.saveAuthToken(authResponse.authToken)
             tokenStorage.saveRefreshToken(authResponse.refreshToken)
+            invalidateCachedBearerToken()
 
             Result.success(authResponse)
         } catch (e: Exception) {
@@ -81,9 +85,22 @@ class AuthRepository(
     suspend fun signOut() = withContext(ioDispatcher) {
         // TODO: Call server-side session invalidation endpoint once available in the backend.
         tokenStorage.clearTokens()
+        invalidateCachedBearerToken()
     }
 
     suspend fun isAuthenticated(): Boolean = withContext(ioDispatcher) {
         tokenStorage.getAuthToken() != null
+    }
+
+    /**
+     * Drops the token cached in memory by Ktor's [BearerAuthProvider].
+     *
+     * The provider only calls `loadTokens` once and reuses the result until a 401 triggers a
+     * refresh, so writing to [TokenStorage] is not enough: without this call the client keeps
+     * sending the previous session's token, which makes the server answer with the *previous
+     * user's* data after switching accounts.
+     */
+    private fun invalidateCachedBearerToken() {
+        httpClient.authProvider<BearerAuthProvider>()?.clearToken()
     }
 }
