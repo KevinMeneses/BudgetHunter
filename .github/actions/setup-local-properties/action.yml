@@ -16,6 +16,6 @@ runs:
     - name: Create local.properties
       shell: bash
       run: |
-        echo "sdk.dir=$ANDROID_HOME" >> local.properties
+        echo "sdk.dir=$ANDROID_HOME" > local.properties
         echo "BACKEND_URL=${{ inputs.backend_url }}" >> local.properties
         echo "GEMINI_API_KEY=${{ inputs.gemini_api_key }}" >> local.properties
