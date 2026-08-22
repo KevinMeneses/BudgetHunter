@@ -119,12 +119,11 @@ class RealTimeSyncManager(
 
     /**
      * Stop listening for real-time updates and cleanup resources.
-     * Cancels the collection job and explicitly closes the SSE connection.
+     * Cancels the collection job, which terminates the SSE connection.
      */
     fun stopListening() {
         currentJob?.cancel()
         currentJob = null
         currentBudgetServerId = null
-        sseClient.close()
     }
 }
