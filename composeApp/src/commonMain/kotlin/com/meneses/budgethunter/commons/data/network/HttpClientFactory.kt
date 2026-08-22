@@ -6,6 +6,7 @@ import com.meneses.budgethunter.commons.data.network.models.RefreshTokenRequest
 import com.meneses.budgethunter.commons.data.sync.Logger as AppLogger
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.auth.Auth
 import io.ktor.client.plugins.auth.providers.BearerTokens
 import io.ktor.client.plugins.auth.providers.bearer
@@ -48,6 +49,11 @@ fun createHttpClient(
 
         // Install SSE plugin for Server-Sent Events support
         install(SSE)
+
+        // Required so individual requests can override the engine's timeouts. Long-lived SSE
+        // streams disable the socket timeout entirely; see SseClient.subscribeToBudgetEntries.
+        // Installing it without values keeps the engine defaults for every other request.
+        install(HttpTimeout)
 
         // Install Auth plugin with Bearer token and automatic refresh
         install(Auth) {

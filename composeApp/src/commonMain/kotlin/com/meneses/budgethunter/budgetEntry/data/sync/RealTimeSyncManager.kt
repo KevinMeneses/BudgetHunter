@@ -7,15 +7,18 @@ import com.meneses.budgethunter.commons.data.network.models.BudgetEntryEvent
 import com.meneses.budgethunter.commons.data.network.services.SseClient
 import com.meneses.budgethunter.commons.data.sync.Logger
 import com.meneses.budgethunter.commons.data.sync.SyncResult
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.withContext
 
 /**
@@ -56,6 +59,10 @@ class RealTimeSyncManager(
      * Establishes an SSE connection and updates local database when events arrive.
      * If already listening to a different budget, stops the current connection first.
      *
+     * The connection is re-established automatically with exponential backoff whenever the
+     * stream fails, so a dropped connection does not silently disable real-time updates for
+     * the rest of the session. Only cancelling the job (see [stopListening]) ends it.
+     *
      * @param budgetServerId Server-side ID of the budget to listen for updates
      */
     fun startListening(budgetServerId: Long) {
@@ -72,8 +79,31 @@ class RealTimeSyncManager(
 
         currentJob = sseClient.subscribeToBudgetEntries(budgetServerId)
             .onEach { event -> handleBudgetEntryEvent(event) }
+            .retryWhen { cause, attempt -> reconnectAfterBackoff(cause, attempt) }
             .catch { logger.error(tag, "SSE stream error", it) }
             .launchIn(scope)
+    }
+
+    /**
+     * Decides whether a failed SSE stream should be re-established, waiting first.
+     *
+     * Cancellation must propagate untouched, otherwise [stopListening] would be unable to end
+     * the stream. Any other failure is transient from the client's point of view (server
+     * restart, connectivity loss, proxy dropping the connection), so it is retried forever with
+     * a delay that doubles up to [MAX_RECONNECT_DELAY_MS].
+     *
+     * @return true to resubscribe, false to let the failure reach the collector
+     */
+    private suspend fun reconnectAfterBackoff(cause: Throwable, attempt: Long): Boolean {
+        if (cause is CancellationException) return false
+
+        val backoffMultiplier = 1L shl attempt.coerceAtMost(MAX_BACKOFF_EXPONENT).toInt()
+        val delayMillis = (INITIAL_RECONNECT_DELAY_MS * backoffMultiplier)
+            .coerceAtMost(MAX_RECONNECT_DELAY_MS)
+
+        logger.warn(tag, "SSE stream dropped, reconnecting in ${delayMillis}ms (attempt ${attempt + 1})", cause)
+        delay(delayMillis)
+        return true
     }
 
     /**
@@ -125,5 +155,11 @@ class RealTimeSyncManager(
         currentJob?.cancel()
         currentJob = null
         currentBudgetServerId = null
+    }
+
+    private companion object {
+        const val INITIAL_RECONNECT_DELAY_MS = 1_000L
+        const val MAX_RECONNECT_DELAY_MS = 60_000L
+        const val MAX_BACKOFF_EXPONENT = 6L
     }
 }

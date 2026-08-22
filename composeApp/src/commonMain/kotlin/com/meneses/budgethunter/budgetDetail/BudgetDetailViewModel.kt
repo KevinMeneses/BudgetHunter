@@ -43,6 +43,16 @@ class BudgetDetailViewModel(
 
     private var hasTriggeredInitialSync = false
 
+    /**
+     * Whether this ViewModel is the one that asked [realTimeSyncManager] to listen.
+     *
+     * The manager is an application-scoped singleton shared by every instance of this screen, so
+     * a ViewModel that never started it must not stop it: the initial [BudgetDetailState] has no
+     * `serverId` yet, and tearing the stream down on that first emission would kill a healthy
+     * connection owned by a previous instance and force a reconnect.
+     */
+    private var ownsRealTimeSync = false
+
     init {
         checkAuthState()
         viewModelScope.launch {
@@ -53,8 +63,8 @@ class BudgetDetailViewModel(
                 if (serverId != null) {
                     // Only start SSE if the budget has collaborators
                     checkAndStartSSE(serverId)
-                } else {
-                    realTimeSyncManager.stopListening()
+                } else if (ownsRealTimeSync) {
+                    stopRealTimeSync()
                 }
             }
         }
@@ -75,14 +85,20 @@ class BudgetDetailViewModel(
 
         if (hasCollaborators) {
             realTimeSyncManager.startListening(serverId)
-        } else {
-            realTimeSyncManager.stopListening()
+            ownsRealTimeSync = true
+        } else if (ownsRealTimeSync) {
+            stopRealTimeSync()
         }
+    }
+
+    private fun stopRealTimeSync() {
+        realTimeSyncManager.stopListening()
+        ownsRealTimeSync = false
     }
 
     override fun onCleared() {
         super.onCleared()
-        realTimeSyncManager.stopListening()
+        if (ownsRealTimeSync) stopRealTimeSync()
     }
 
     fun sendIntent(intent: BudgetDetailIntent) {
