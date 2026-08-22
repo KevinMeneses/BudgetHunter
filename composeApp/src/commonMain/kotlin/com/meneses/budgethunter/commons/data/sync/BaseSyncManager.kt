@@ -2,6 +2,9 @@ package com.meneses.budgethunter.commons.data.sync
 
 import com.meneses.budgethunter.auth.data.AuthRepository
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 
 /**
@@ -74,12 +77,16 @@ abstract class BaseSyncManager(
         items: List<T>,
         itemIdentifier: (T) -> String,
         syncOperation: suspend (T) -> Result<Unit>
-    ): SyncStats {
+    ): SyncStats = coroutineScope {
+        val results = items.map { item ->
+            async { item to syncOperation(item) }
+        }.awaitAll()
+
         val errors = mutableListOf<SyncError>()
         var synced = 0
 
-        items.forEach { item ->
-            syncOperation(item).fold(
+        results.forEach { (item, result) ->
+            result.fold(
                 onSuccess = {
                     synced++
                     logger.debug(logTag, "Successfully synced ${itemIdentifier(item)}")
@@ -91,7 +98,7 @@ abstract class BaseSyncManager(
             )
         }
 
-        return SyncStats(
+        SyncStats(
             totalItems = items.size,
             syncedItems = synced,
             failedItems = errors.size,
