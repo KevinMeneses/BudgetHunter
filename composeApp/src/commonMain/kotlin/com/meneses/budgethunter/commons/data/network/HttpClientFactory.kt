@@ -33,7 +33,8 @@ fun createHttpClient(
         isLenient = true
         encodeDefaults = true
     },
-    appLogger: AppLogger
+    appLogger: AppLogger,
+    logLevel: LogLevel
 ): HttpClient {
     return HttpClient {
         install(ContentNegotiation) {
@@ -42,7 +43,7 @@ fun createHttpClient(
 
         install(Logging) {
             logger = Logger.SIMPLE
-            level = LogLevel.ALL
+            level = logLevel
         }
 
         // Install SSE plugin for Server-Sent Events support
@@ -80,18 +81,17 @@ fun createHttpClient(
                         return@refreshTokens null
                     }
 
-                    try {
-                        // Create a simple HTTP client for the refresh call (without auth to avoid recursion)
-                        val refreshClient = HttpClient {
-                            install(ContentNegotiation) {
-                                json(json)
-                            }
-                            defaultRequest {
-                                url(baseUrl)
-                                contentType(ContentType.Application.Json)
-                            }
+                    // Create a simple HTTP client for the refresh call (without auth to avoid recursion)
+                    val refreshClient = HttpClient {
+                        install(ContentNegotiation) {
+                            json(json)
                         }
-
+                        defaultRequest {
+                            url(baseUrl)
+                            contentType(ContentType.Application.Json)
+                        }
+                    }
+                    try {
                         // Make the refresh token request
                         val response = refreshClient.post(ApiEndpoints.REFRESH_TOKEN) {
                             setBody(RefreshTokenRequest(currentRefreshToken))
@@ -105,9 +105,6 @@ fun createHttpClient(
 
                         appLogger.debug(TAG, "Token refresh successful")
 
-                        // Close the temporary client
-                        refreshClient.close()
-
                         // Return new tokens to retry the original request
                         BearerTokens(
                             accessToken = authResponse.authToken,
@@ -118,6 +115,8 @@ fun createHttpClient(
                         // Clear tokens on refresh failure to force re-login
                         tokenStorage.clearTokens()
                         null
+                    } finally {
+                        refreshClient.close()
                     }
                 }
 

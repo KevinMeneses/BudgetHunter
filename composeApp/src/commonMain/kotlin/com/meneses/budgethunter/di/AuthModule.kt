@@ -2,6 +2,7 @@ package com.meneses.budgethunter.di
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import com.meneses.budgethunter.BuildKonfig
 import com.meneses.budgethunter.auth.SignInViewModel
 import com.meneses.budgethunter.auth.SignUpViewModel
 import com.meneses.budgethunter.auth.application.SignOutUseCase
@@ -10,6 +11,7 @@ import com.meneses.budgethunter.auth.data.TokenStorage
 import com.meneses.budgethunter.commons.data.network.createHttpClient
 import com.meneses.budgethunter.commons.data.network.getBaseUrl
 import io.ktor.client.HttpClient
+import io.ktor.client.plugins.logging.LogLevel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.serialization.json.Json
 import org.koin.core.qualifier.named
@@ -26,7 +28,8 @@ val authModule = module {
             baseUrl = getBaseUrl(),
             tokenStorage = get<TokenStorage>(),
             json = get<Json>(),
-            appLogger = get()
+            appLogger = get(),
+            logLevel = if (BuildKonfig.DEBUG) LogLevel.ALL else LogLevel.NONE
         )
     }
 

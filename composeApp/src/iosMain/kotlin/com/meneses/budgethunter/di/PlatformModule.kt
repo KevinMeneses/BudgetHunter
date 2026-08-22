@@ -70,7 +70,7 @@ val iosPlatformModule = module {
     single<NotificationManager> { IOSBridge.notificationManager }
     single<ShareManager> { IOSBridge.shareManager }
     single<NetworkMonitor> {
-        IosNetworkMonitor().apply { startMonitoring() }
+        IosNetworkMonitor(logger = get()).apply { startMonitoring() }
     }
 
     single<ImageProcessor> {
