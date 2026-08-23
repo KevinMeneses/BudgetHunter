@@ -16,10 +16,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -36,49 +38,64 @@ import androidx.compose.ui.unit.dp
 import budgethunter.composeapp.generated.resources.Res
 import budgethunter.composeapp.generated.resources.budget_options
 import budgethunter.composeapp.generated.resources.created
-import com.meneses.budgethunter.budgetList.application.BudgetListEvent
+import com.meneses.budgethunter.budgetList.application.BudgetListIntent
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.commons.ui.CompottiePlaceholder
 import com.meneses.budgethunter.commons.ui.LoadingScreen
+import com.meneses.budgethunter.commons.ui.OfflineBanner
+import com.meneses.budgethunter.commons.ui.SyncStatusIndicator
 import com.meneses.budgethunter.commons.util.toCurrency
 import com.meneses.budgethunter.theme.AppColors
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BudgetListContent(
     list: List<Budget>,
     isLoading: Boolean,
+    isSyncing: Boolean,
+    isOnline: Boolean,
     paddingValues: PaddingValues,
-    onEvent: (BudgetListEvent) -> Unit
+    onIntent: (BudgetListIntent) -> Unit
 ) {
     if (isLoading) {
         LoadingScreen()
     } else {
-        LazyColumn(
+        PullToRefreshBox(
+            isRefreshing = isSyncing,
+            onRefresh = { BudgetListIntent.SyncBudgets.run(onIntent) },
             modifier = Modifier
                 .padding(paddingValues)
                 .fillMaxSize()
-                .padding(horizontal = 20.dp)
-                .padding(top = 5.dp)
-                .padding(bottom = 90.dp),
-            verticalArrangement = if (list.isEmpty()) Arrangement.Center else Arrangement.Top
         ) {
-            if (list.isEmpty()) {
-                item {
-                    CompottiePlaceholder(
-                        fileName = "empty_state.json",
-                        modifier = Modifier.fillMaxSize()
-                    )
-                }
-            } else {
-                items(list.size) {
-                    Spacer(Modifier.size(10.dp))
-                    BudgetItem(
-                        budget = list[it],
-                        onEvent = onEvent
-                    )
-                    Spacer(modifier = Modifier.size(10.dp))
+            Column {
+                OfflineBanner(isOffline = !isOnline)
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 20.dp)
+                        .padding(top = 5.dp)
+                        .padding(bottom = 90.dp),
+                    verticalArrangement = if (list.isEmpty()) Arrangement.Center else Arrangement.Top
+                ) {
+                    if (list.isEmpty()) {
+                        item {
+                            CompottiePlaceholder(
+                                fileName = "empty_state.json",
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
+                    } else {
+                        items(list.size) {
+                            Spacer(Modifier.size(10.dp))
+                            BudgetItem(
+                                budget = list[it],
+                                onIntent = onIntent
+                            )
+                            Spacer(modifier = Modifier.size(10.dp))
+                        }
+                    }
                 }
             }
         }
@@ -88,7 +105,7 @@ fun BudgetListContent(
 @Composable
 private fun BudgetItem(
     budget: Budget,
-    onEvent: (BudgetListEvent) -> Unit
+    onIntent: (BudgetListIntent) -> Unit
 ) {
     Card(
         colors = CardDefaults.cardColors(
@@ -100,9 +117,9 @@ private fun BudgetItem(
             defaultElevation = 4.dp
         ),
         onClick = {
-            BudgetListEvent
+            BudgetListIntent
                 .OpenBudget(budget)
-                .run(onEvent)
+                .run(onIntent)
         }
     ) {
         Row(
@@ -149,6 +166,13 @@ private fun BudgetItem(
                 }
             }
 
+            SyncStatusIndicator(
+                isSynced = budget.isSynced,
+                modifier = Modifier
+                    .padding(end = 8.dp)
+                    .size(20.dp)
+            )
+
             var dropdownExpanded by remember {
                 mutableStateOf(false)
             }
@@ -166,19 +190,19 @@ private fun BudgetItem(
                         dropdownExpanded = dropdownExpanded,
                         onDismiss = { dropdownExpanded = false },
                         onUpdateClick = {
-                            BudgetListEvent
+                            BudgetListIntent
                                 .ToggleUpdateModal(budget)
-                                .run(onEvent)
+                                .run(onIntent)
                         },
                         onDuplicateClick = {
-                            BudgetListEvent
+                            BudgetListIntent
                                 .DuplicateBudget(budget)
-                                .run(onEvent)
+                                .run(onIntent)
                         },
                         onDeleteClick = {
-                            BudgetListEvent
+                            BudgetListIntent
                                 .DeleteBudget(budget.id.toLong())
-                                .run(onEvent)
+                                .run(onIntent)
                         }
                     )
                 }

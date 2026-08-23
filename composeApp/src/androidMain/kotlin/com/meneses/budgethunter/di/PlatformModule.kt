@@ -14,11 +14,13 @@ import com.meneses.budgethunter.commons.data.FileManager
 import com.meneses.budgethunter.commons.data.createDatabase
 import com.meneses.budgethunter.commons.platform.AndroidCameraManager
 import com.meneses.budgethunter.commons.platform.AndroidFilePickerManager
+import com.meneses.budgethunter.commons.platform.AndroidNetworkMonitor
 import com.meneses.budgethunter.commons.platform.AndroidNotificationManager
 import com.meneses.budgethunter.commons.platform.AndroidShareManager
 import com.meneses.budgethunter.commons.platform.AppUpdateManager
 import com.meneses.budgethunter.commons.platform.CameraManager
 import com.meneses.budgethunter.commons.platform.FilePickerManager
+import com.meneses.budgethunter.commons.platform.NetworkMonitor
 import com.meneses.budgethunter.commons.platform.NotificationManager
 import com.meneses.budgethunter.commons.platform.PermissionsManager
 import com.meneses.budgethunter.commons.platform.ShareManager
@@ -28,6 +30,7 @@ import io.ktor.client.engine.android.Android
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.serialization.json.Json
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
@@ -53,6 +56,12 @@ val androidPlatformModule = module {
     single<AppUpdateManager> { AppUpdateManager(get<Context>()) }
     single<NotificationManager> { AndroidNotificationManager(get<Context>()) }
     single<ShareManager> { AndroidShareManager(get<Context>()) }
+    single<NetworkMonitor> {
+        AndroidNetworkMonitor(
+            context = get<Context>(),
+            scope = get<CoroutineScope>(named("ApplicationScope"))
+        ).apply { startMonitoring() }
+    }
 
     // Keep concrete types available if needed elsewhere - use the same instance as the interface
     single<AndroidCameraManager> { get<CameraManager>() as AndroidCameraManager }
@@ -60,7 +69,10 @@ val androidPlatformModule = module {
 
     // AI and Image Processing - Android specific
     single<ImageProcessor> {
-        ImageProcessor(get<Context>().contentResolver)
+        ImageProcessor(
+            contentResolver = get<Context>().contentResolver,
+            logger = get()
+        )
     }
 
     // HTTP Client for AI API calls (using Android engine)
@@ -82,7 +94,8 @@ val androidPlatformModule = module {
         GeminiApiClient(
             httpClient = get<HttpClient>(),
             apiKey = get(named("GEMINI_API_KEY")),
-            json = get<Json>()
+            json = get<Json>(),
+            logger = get()
         )
     }
 
@@ -90,7 +103,8 @@ val androidPlatformModule = module {
         AndroidAIImageProcessor(
             geminiApiClient = get<GeminiApiClient>(),
             imageProcessor = get<ImageProcessor>(),
-            ioDispatcher = get<CoroutineDispatcher>(named("IO"))
+            ioDispatcher = get<CoroutineDispatcher>(named("IO")),
+            logger = get()
         )
     }
 }

@@ -1,4 +1,7 @@
+import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.BOOLEAN
+import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.STRING
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSetTree
 import java.util.Properties
 
@@ -9,6 +12,7 @@ plugins {
     alias(libs.plugins.compose.multiplatform)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.sqldelight)
+    alias(libs.plugins.buildkonfig)
     alias(libs.plugins.ksp)
     id("kotlin-parcelize")
     alias(libs.plugins.jacoco)
@@ -22,8 +26,10 @@ kotlin {
             sourceSetTree.set(KotlinSourceSetTree.test)
         }
         compilations.all {
-            kotlinOptions {
-                jvmTarget = "17"
+            compileTaskProvider.configure {
+                compilerOptions {
+                    jvmTarget.set(JvmTarget.JVM_17)
+                }
             }
         }
     }
@@ -58,6 +64,8 @@ kotlin {
             implementation(libs.bundles.ktor)
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.kotlinx.json)
+            implementation(libs.ktor.client.auth)
+            // SSE support is built into ktor-client-core in 3.x+
 
             // Database (common parts only)
             implementation(libs.sqldelight.coroutines.extensions)
@@ -99,6 +107,9 @@ kotlin {
 
             // Ktor Android engine for HTTP calls
             implementation(libs.ktor.client.android)
+
+            // Security (Android only)
+            implementation(libs.androidx.security.crypto)
         }
 
         iosMain.dependencies {
@@ -115,7 +126,14 @@ kotlin {
             implementation(libs.ktor.client.mock)
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.kotlinx.json)
-            implementation(libs.mockk)
+        }
+
+        val androidUnitTest by getting {
+            dependencies {
+                implementation(libs.mockk)
+                implementation(libs.androidx.datastore.preferences.core)
+                implementation(libs.sqldelight.jvm.driver)
+            }
         }
     }
 }
@@ -188,14 +206,56 @@ sqldelight {
     }
 }
 
+buildkonfig {
+    packageName = "com.meneses.budgethunter"
+
+    // Load properties from local.properties
+    val props = Properties()
+    val propsFile = rootProject.file("local.properties")
+    if (propsFile.exists()) {
+        props.load(propsFile.inputStream())
+    }
+
+    // Default config for all platforms
+    defaultConfigs {
+        // Backend URL - must be set in local.properties; no silent fallback to avoid misconfigured release builds
+        val backendUrl = props.getProperty("BACKEND_URL")
+            ?: throw GradleException("BACKEND_URL not set in local.properties")
+        buildConfigField(STRING, "BACKEND_URL", backendUrl)
+
+        // Debug flag - defaults to true for safety
+        buildConfigField(BOOLEAN, "DEBUG", "true")
+    }
+
+    // Build type specific configs
+    defaultConfigs("debug") {
+        buildConfigField(BOOLEAN, "DEBUG", "true")
+    }
+
+    defaultConfigs("release") {
+        buildConfigField(BOOLEAN, "DEBUG", "false")
+    }
+
+    // Platform-specific overrides
+    targetConfigs {
+        // iOS uses localhost directly (simulator shares host network)
+        create("ios") {
+            val backendUrl = props.getProperty("BACKEND_URL")
+                ?: throw GradleException("BACKEND_URL not set in local.properties")
+            buildConfigField(STRING, "BACKEND_URL", backendUrl)
+        }
+    }
+}
+
 dependencies {
     add("kspCommonMainMetadata", libs.koin.ksp.compiler)
     debugImplementation(libs.bundles.test.debug)
     runtimeOnly(libs.slf4j.simple)
-    testImplementation(libs.mockk)
-    testImplementation(kotlin("test"))
-    testImplementation(libs.kotlinx.coroutines.test)
-    testImplementation(libs.sqldelight.jvm.driver)
+
+    // Android unit test dependencies for integration tests
+    testImplementation(libs.robolectric)
+    testImplementation(libs.sqldelight.android.driver)
+    testImplementation(libs.androidx.core)
 }
 
 // Jacoco configuration for code coverage
@@ -241,9 +301,10 @@ tasks.register<JacocoReport>("testDebugUnitTestCoverage") {
 configure<org.jlleitschuh.gradle.ktlint.KtlintExtension> {
     version.set("0.49.1")
     filter {
-        exclude("**/generated/**")
-        exclude("**/build/**")
-        exclude("**/build/generated/**")
-        exclude { it.file.absolutePath.contains("/build/generated/") }
+        exclude { projectFilePath ->
+            val path = projectFilePath.file.absolutePath
+            path.contains("/composeApp/build/buildkonfig/") ||
+                path.contains("/composeApp/build/generated/")
+        }
     }
 }

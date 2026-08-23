@@ -9,7 +9,11 @@ data class BudgetListState(
     val addModalVisibility: Boolean = false,
     val budgetToUpdate: Budget? = null,
     val filter: BudgetFilter? = null,
-    val navigateToBudget: Budget? = null,
     val isSearchMode: Boolean = false,
-    val searchQuery: String = ""
+    val searchQuery: String = "",
+    val isAuthenticated: Boolean = false,
+    val isSyncing: Boolean = false,
+    val isSigningOut: Boolean = false,
+    val isCreatingBudget: Boolean = false,
+    val isUpdatingBudget: Boolean = false
 )

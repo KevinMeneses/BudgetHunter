@@ -21,6 +21,7 @@
     <string name="back">Back</string>
     <string name="search">Search</string>
     <string name="close">Close</string>
+    <string name="dismiss">Dismiss</string>
     
     <!-- Navigation & Screens -->
     <string name="budgets">Budgets</string>
@@ -59,6 +60,7 @@
     <!-- Budget Fields -->
     <string name="name">Name</string>
     <string name="amount">Amount</string>
+    <string name="amount_placeholder">0.00</string>
     <string name="description">Description</string>
     <string name="no_description">No description</string>
     <string name="date">Date</string>
@@ -103,6 +105,7 @@
     <string name="join_collaboration_title">Join Collaboration</string>
     <string name="enter_collaboration_code">Enter the collaboration code:</string>
     <string name="code">Code</string>
+    <string name="manage_collaborators">Collaborate</string>
     
     <!-- Invoices & Attachments -->
     <string name="attach_invoice">Attach receipt</string>
@@ -125,6 +128,11 @@
     <string name="ignore_transaction">Ignore</string>
     <string name="transaction_added">Transaction added successfully</string>
     <string name="transaction_failed">Error adding transaction</string>
+    <string name="transaction_added_message">Transaction for %1$s was detected</string>
+    <string name="transaction_failed_message">No bank configuration found for this SMS</string>
+    <string name="transaction_error">Transaction error</string>
+    <string name="transaction_error_message">Error processing SMS: %1$s</string>
+    <string name="sms_transaction_from_bank">Transaction from %1$s</string>
     
     <!-- Bank Settings -->
     <string name="default_budget">Default budget</string>
@@ -199,4 +207,66 @@
     <string name="file_exists_cannot_load">The file exists but cannot be loaded.</string>
     <string name="replace_file">Replace File</string>
     <string name="file_missing">File missing - %1$s</string>
+
+    <!-- Authentication -->
+    <string name="sign_in">Sign In</string>
+    <string name="sign_up">Sign Up</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="confirm_password">Confirm Password</string>
+    <string name="welcome_to_budget_hunter">Welcome to BudgetHunter</string>
+    <string name="create_account">Create Account</string>
+    <string name="dont_have_account">Don't have an account? Sign Up</string>
+    <string name="already_have_account">Already have an account? Sign In</string>
+    <string name="hide_password">Hide password</string>
+    <string name="show_password">Show password</string>
+
+    <!-- Auth Errors -->
+    <string name="error_email_required">Email is required</string>
+    <string name="error_name_required">Name is required</string>
+    <string name="error_password_required">Password is required</string>
+    <string name="error_confirm_password_required">Please confirm your password</string>
+    <string name="error_passwords_do_not_match">Passwords do not match</string>
+    <string name="error_password_too_short">Password must be at least 6 characters</string>
+    <string name="error_sign_in_failed">Sign in failed. Please check your credentials and try again.</string>
+    <string name="error_sign_up_failed">Sign up failed. Please try again later.</string>
+
+    <!-- API Errors -->
+    <string name="error_unauthorized">Session expired. Please sign in again.</string>
+    <string name="error_forbidden">You don\'t have permission to perform this action.</string>
+    <string name="error_not_found">The requested resource was not found.</string>
+    <string name="error_conflict">This item has been modified by another user. Please refresh and try again.</string>
+    <string name="error_server">Server error. Please try again later.</string>
+    <string name="error_timeout">Request timed out. Please try again.</string>
+    <string name="error_parse">Failed to process server response. Please try again.</string>
+    <string name="error_unknown">An unexpected error occurred. Please try again.</string>
+
+    <!-- Offline Mode -->
+    <string name="continue_offline">Continue Offline</string>
+    <string name="offline_mode_description">Use the app without an account. Your data will be stored locally on this device only.</string>
+
+    <!-- Sign Out -->
+    <string name="sign_out">Sign Out</string>
+    <string name="sign_out_confirmation">Are you sure you want to sign out?</string>
+
+    <!-- Sync Status -->
+    <string name="synced">Synced</string>
+    <string name="pending_sync">Pending sync</string>
+    <string name="offline_banner_message">Offline - Changes will sync when online</string>
+
+    <!-- Common UI -->
+    <string name="confirmation">Confirmation</string>
+    <string name="error">Error</string>
+
+    <!-- Sync Feedback -->
+    <string name="budget_synced_successfully">Budgets synced successfully</string>
+    <string name="entries_synced_successfully">Entries synced successfully</string>
+    <string name="sync_failed_retry_online">Failed to sync - will retry when online</string>
+    <string name="new_entry_from_collaborator">New entry from %1$s</string>
+    <string name="signed_in_as">Signed in as %1$s</string>
+    <string name="sync_failed_background">Entry saved locally. Background sync failed — will retry when online.</string>
+    <string name="amount_is_mandatory">Amount is mandatory</string>
+    <string name="error_loading_file">Something went wrong loading file, please try again</string>
+    <string name="creating">Creating...</string>
+    <string name="updating">Updating...</string>
 </resources>

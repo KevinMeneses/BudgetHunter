@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import android.util.Base64
 import com.meneses.budgethunter.budgetEntry.data.ImageProcessor
 import com.meneses.budgethunter.budgetEntry.data.remote.GeminiApiClient
+import com.meneses.budgethunter.commons.data.sync.Logger
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
@@ -15,8 +16,10 @@ import java.io.ByteArrayOutputStream
 class AndroidAIImageProcessor(
     private val geminiApiClient: GeminiApiClient,
     private val imageProcessor: ImageProcessor,
-    private val ioDispatcher: CoroutineDispatcher
+    private val ioDispatcher: CoroutineDispatcher,
+    private val logger: Logger
 ) : AIImageProcessor {
+    private val tag = "AndroidAIImageProcessor"
 
     override suspend fun processImage(imageData: ImageData, prompt: String): BudgetEntry? = withContext(ioDispatcher) {
         try {
@@ -33,8 +36,7 @@ class AndroidAIImageProcessor(
             // Use shared Gemini API client
             geminiApiClient.extractBudgetEntryFromImage(base64Image, prompt)
         } catch (e: Exception) {
-            println("Android AI Image Processing Error: ${e.message}")
-            e.printStackTrace()
+            logger.error(tag, "AI image processing error", e)
             null
         }
     }

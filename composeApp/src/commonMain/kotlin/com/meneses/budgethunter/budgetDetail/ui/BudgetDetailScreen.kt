@@ -10,7 +10,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -19,10 +19,11 @@ import budgethunter.composeapp.generated.resources.Res
 import budgethunter.composeapp.generated.resources.add_transaction
 import budgethunter.composeapp.generated.resources.back_content_description
 import budgethunter.composeapp.generated.resources.open_menu
-import com.meneses.budgethunter.budgetDetail.application.BudgetDetailEvent
+import com.meneses.budgethunter.budgetDetail.application.BudgetDetailIntent
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailState
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.budgetList.domain.Budget
+import com.meneses.budgethunter.commons.platform.NetworkMonitor
 import com.meneses.budgethunter.commons.ui.AppBar
 import kotlinx.serialization.Serializable
 import org.jetbrains.compose.resources.stringResource
@@ -33,37 +34,37 @@ data class BudgetDetailScreen(val budget: Budget) {
     @Composable
     fun Show(
         uiState: BudgetDetailState,
-        onEvent: (BudgetDetailEvent) -> Unit,
+        onIntent: (BudgetDetailIntent) -> Unit,
+        snackbarHostState: SnackbarHostState,
         goBack: () -> Unit,
-        showBudgetEntry: (BudgetEntry) -> Unit,
         showBudgetMetrics: (Budget) -> Unit,
-        showSettings: () -> Unit
+        showSettings: () -> Unit,
+        showCollaborators: (Long, String) -> Unit,
+        networkMonitor: NetworkMonitor
     ) {
-        val snackBarHostState = remember { SnackbarHostState() }
         var dropdownExpanded by remember { mutableStateOf(false) }
+        val currentBudget = uiState.budgetDetail.budget
+        val isBudgetSynced = currentBudget.serverId != null
+        val isOnline by networkMonitor.isOnline.collectAsState()
 
         DisposableEffect(Unit) {
             if (uiState.budgetDetail.budget.id != budget.id) {
-                BudgetDetailEvent
+                BudgetDetailIntent
                     .SetBudget(budget)
-                    .run(onEvent)
+                    .run(onIntent)
             }
 
-            BudgetDetailEvent
+            BudgetDetailIntent
                 .GetBudgetDetail
-                .run(onEvent)
+                .run(onIntent)
 
-            onDispose {
-                BudgetDetailEvent
-                    .ClearNavigation
-                    .run(onEvent)
-            }
+            onDispose { }
         }
 
         Scaffold(
             topBar = {
                 AppBar(
-                    title = uiState.budgetDetail.budget.name,
+                    title = currentBudget.name,
                     leftButtonIcon = Icons.AutoMirrored.Filled.ArrowBack,
                     leftButtonDescription = stringResource(Res.string.back_content_description),
                     secondRightButtonIcon = Icons.Default.Add,
@@ -72,10 +73,10 @@ data class BudgetDetailScreen(val budget: Budget) {
                     rightButtonDescription = stringResource(Res.string.open_menu),
                     onLeftButtonClick = goBack,
                     onSecondRightButtonClick = {
-                        val budgetEntry = BudgetEntry(budgetId = uiState.budgetDetail.budget.id)
-                        BudgetDetailEvent
+                        val budgetEntry = BudgetEntry(budgetId = currentBudget.id)
+                        BudgetDetailIntent
                             .ShowEntry(budgetEntry)
-                            .run(onEvent)
+                            .run(onIntent)
                     },
                     onRightButtonClick = {
                         dropdownExpanded = true
@@ -86,60 +87,59 @@ data class BudgetDetailScreen(val budget: Budget) {
                             expanded = dropdownExpanded,
                             onDismiss = { dropdownExpanded = false },
                             onFilterClick = {
-                                BudgetDetailEvent
+                                BudgetDetailIntent
                                     .ToggleFilterModal(true)
-                                    .run(onEvent)
+                                    .run(onIntent)
                             },
-                            onMetricsClick = { showBudgetMetrics(budget) },
+                            onMetricsClick = { showBudgetMetrics(currentBudget) },
                             onDeleteClick = {
-                                BudgetDetailEvent
+                                BudgetDetailIntent
                                     .ToggleDeleteBudgetModal(true)
-                                    .run(onEvent)
+                                    .run(onIntent)
                             },
-                            onSettingsClick = showSettings
+                            onSettingsClick = showSettings,
+                            showCollaboratorsOption = isBudgetSynced,
+                            onCollaboratorsClick = {
+                                currentBudget.serverId?.let { serverId ->
+                                    showCollaborators(serverId, currentBudget.name)
+                                }
+                            }
                         )
                     }
                 )
             },
             snackbarHost = {
-                SnackbarHost(hostState = snackBarHostState)
+                SnackbarHost(hostState = snackbarHostState)
             }
         ) { paddingValues ->
             BudgetDetailContent(
                 paddingValues = paddingValues,
+                isOnline = if (uiState.isAuthenticated) isOnline else true,
                 uiState = uiState,
-                onEvent = onEvent
+                onIntent = onIntent
             )
         }
 
         BudgetModal(
-            show = uiState.isBudgetModalVisible,
-            budgetAmount = uiState.budgetDetail.budget.amount,
-            onEvent = onEvent
+            show = uiState.modal == BudgetDetailState.ModalState.Budget,
+            budgetAmount = currentBudget.amount,
+            onIntent = onIntent
         )
 
         FilterModal(
-            show = uiState.isFilterModalVisible,
+            show = uiState.modal == BudgetDetailState.ModalState.Filter,
             filter = uiState.filter,
-            onEvent = onEvent
+            onIntent = onIntent
         )
 
         DeleteBudgetConfirmationModal(
-            show = uiState.isDeleteBudgetModalVisible,
-            onEvent = onEvent
+            show = uiState.modal == BudgetDetailState.ModalState.DeleteBudget,
+            onIntent = onIntent
         )
 
         DeleteEntriesConfirmationModal(
-            show = uiState.isDeleteEntriesModalVisible,
-            onEvent = onEvent
+            show = uiState.modal == BudgetDetailState.ModalState.DeleteEntries,
+            onIntent = onIntent
         )
-
-        LaunchedEffect(key1 = uiState.goBack) {
-            if (uiState.goBack) goBack()
-        }
-
-        LaunchedEffect(key1 = uiState.showEntry) {
-            uiState.showEntry?.let { showBudgetEntry(it) }
-        }
     }
 }

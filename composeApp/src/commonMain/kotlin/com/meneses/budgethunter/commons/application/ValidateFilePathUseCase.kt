@@ -1,6 +1,7 @@
 package com.meneses.budgethunter.commons.application
 
 import com.meneses.budgethunter.commons.data.FileManager
+import com.meneses.budgethunter.commons.data.sync.Logger
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 
@@ -10,8 +11,10 @@ import kotlinx.coroutines.withContext
  */
 class ValidateFilePathUseCase(
     private val fileManager: FileManager,
-    private val ioDispatcher: CoroutineDispatcher
+    private val ioDispatcher: CoroutineDispatcher,
+    private val logger: Logger
 ) {
+    private val tag = "ValidateFilePathUseCase"
 
     suspend fun execute(filePath: String?): String? = withContext(ioDispatcher) {
         if (filePath.isNullOrEmpty()) return@withContext null
@@ -20,11 +23,11 @@ class ValidateFilePathUseCase(
             if (fileManager.fileExists(filePath)) {
                 filePath
             } else {
-                println("ValidateFilePathUseCase: File not found: $filePath")
+                logger.warn(tag, "File not found: $filePath")
                 null
             }
         } catch (e: Exception) {
-            println("ValidateFilePathUseCase: Error validating file path: ${e.message}")
+            logger.warn(tag, "Error validating file path", e)
             null
         }
     }

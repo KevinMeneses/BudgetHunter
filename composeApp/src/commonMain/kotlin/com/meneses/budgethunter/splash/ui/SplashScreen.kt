@@ -15,11 +15,10 @@ import androidx.compose.ui.unit.sp
 import budgethunter.composeapp.generated.resources.Res
 import budgethunter.composeapp.generated.resources.budget_hunter
 import budgethunter.composeapp.generated.resources.wait_for_update
-import com.meneses.budgethunter.splash.application.SplashEvent
+import com.meneses.budgethunter.splash.application.SplashIntent
 import com.meneses.budgethunter.splash.application.SplashState
 import com.meneses.budgethunter.theme.AppColors
 import com.meneses.budgethunter.theme.Typography
-import kotlinx.coroutines.delay
 import kotlinx.serialization.Serializable
 import org.jetbrains.compose.resources.stringResource
 
@@ -28,9 +27,12 @@ object SplashScreen {
     @Composable
     fun Show(
         uiState: SplashState,
-        onEvent: (SplashEvent) -> Unit,
-        showBudgetList: () -> Unit
+        onIntent: (SplashIntent) -> Unit
     ) {
+        LaunchedEffect(Unit) {
+            onIntent(SplashIntent.VerifyUpdate)
+        }
+
         Box(
             modifier = Modifier.fillMaxSize()
         ) {
@@ -51,15 +53,6 @@ object SplashScreen {
                     text = stringResource(Res.string.wait_for_update),
                     fontSize = 16.sp
                 )
-            }
-        }
-
-        LaunchedEffect(uiState.navigate) {
-            if (!uiState.navigate) {
-                onEvent(SplashEvent.VerifyUpdate)
-            } else {
-                delay(200)
-                showBudgetList()
             }
         }
     }

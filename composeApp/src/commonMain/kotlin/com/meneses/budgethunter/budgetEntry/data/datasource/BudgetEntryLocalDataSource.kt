@@ -63,7 +63,13 @@ class BudgetEntryLocalDataSource(
         type = budgetEntry.type,
         category = budgetEntry.category,
         date = budgetEntry.date,
-        invoice = budgetEntry.invoice
+        invoice = budgetEntry.invoice,
+        server_id = budgetEntry.serverId,
+        is_synced = if (budgetEntry.isSynced) 1L else 0L,
+        created_by_email = budgetEntry.createdByEmail,
+        updated_by_email = budgetEntry.updatedByEmail,
+        creation_date = budgetEntry.creationDate,
+        modification_date = budgetEntry.modificationDate
     )
 
     fun update(budgetEntry: BudgetEntry) = queries.update(
@@ -74,12 +80,47 @@ class BudgetEntryLocalDataSource(
         type = budgetEntry.type,
         category = budgetEntry.category,
         date = budgetEntry.date,
-        invoice = budgetEntry.invoice
+        invoice = budgetEntry.invoice,
+        server_id = budgetEntry.serverId,
+        is_synced = if (budgetEntry.isSynced) 1L else 0L,
+        created_by_email = budgetEntry.createdByEmail,
+        updated_by_email = budgetEntry.updatedByEmail,
+        creation_date = budgetEntry.creationDate,
+        modification_date = budgetEntry.modificationDate
     )
 
     fun deleteByIds(list: List<Long>) =
         queries.deleteByIds(list)
 
+    fun delete(id: Long) =
+        queries.deleteByIds(listOf(id))
+
     fun deleteAllByBudgetId(budgetId: Long) =
         queries.deleteAllByBudgetId(budgetId)
+
+    fun clearAllData() = queries.deleteAll()
+
+    suspend fun selectByServerId(serverId: Long) = cacheMutex.withLock {
+        queries.selectByServerId(serverId).executeAsOneOrNull()
+    }
+
+    fun getUnsynced(localBudgetId: Int): List<BudgetEntry> {
+        return queries.selectUnsyncedByBudgetId(localBudgetId.toLong())
+            .executeAsList()
+            .toDomain()
+    }
+
+    suspend fun selectByUniqueFields(
+        budgetId: Long,
+        amount: Double,
+        description: String,
+        creationDate: String
+    ) = cacheMutex.withLock {
+        queries.selectByUniqueFields(
+            budgetId = budgetId,
+            amount = amount,
+            description = description,
+            creationDate = creationDate
+        ).executeAsOneOrNull()
+    }
 }

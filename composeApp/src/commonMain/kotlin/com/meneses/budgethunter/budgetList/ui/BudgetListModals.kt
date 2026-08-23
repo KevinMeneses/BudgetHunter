@@ -34,10 +34,12 @@ import budgethunter.composeapp.generated.resources.enter_budget_name
 import budgethunter.composeapp.generated.resources.modify_budget_name
 import budgethunter.composeapp.generated.resources.name
 import budgethunter.composeapp.generated.resources.new_budget
+import budgethunter.composeapp.generated.resources.creating
 import budgethunter.composeapp.generated.resources.update
 import budgethunter.composeapp.generated.resources.update_budget
 import budgethunter.composeapp.generated.resources.update_budget_modal
-import com.meneses.budgethunter.budgetList.application.BudgetListEvent
+import budgethunter.composeapp.generated.resources.updating
+import com.meneses.budgethunter.budgetList.application.BudgetListIntent
 import org.jetbrains.compose.resources.stringResource
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.commons.EMPTY
@@ -45,7 +47,8 @@ import com.meneses.budgethunter.commons.EMPTY
 @Composable
 fun NewBudgetModal(
     show: Boolean,
-    onEvent: (BudgetListEvent) -> Unit
+    onIntent: (BudgetListIntent) -> Unit,
+    isCreating: Boolean = false
 ) {
     if (show) {
         var name by remember {
@@ -54,9 +57,9 @@ fun NewBudgetModal(
 
         val onDismiss = remember {
             fun() {
-                BudgetListEvent
+                BudgetListIntent
                     .ToggleAddModal(false)
-                    .run(onEvent)
+                    .run(onIntent)
             }
         }
 
@@ -82,6 +85,7 @@ fun NewBudgetModal(
                         value = name,
                         onValueChange = { name = it },
                         label = { Text(text = stringResource(Res.string.name)) },
+                        enabled = !isCreating,
                         keyboardOptions = KeyboardOptions(
                             capitalization = KeyboardCapitalization.Words
                         )
@@ -93,19 +97,22 @@ fun NewBudgetModal(
                     onClick = {
                         if (name.isBlank()) return@TextButton
                         val budget = Budget(name = name)
-                        BudgetListEvent.CreateBudget(budget).run(onEvent)
+                        BudgetListIntent.CreateBudget(budget).run(onIntent)
                         onDismiss()
                     },
-                    enabled = name.isNotBlank()
+                    enabled = name.isNotBlank() && !isCreating
                 ) {
                     Text(
-                        text = stringResource(Res.string.create),
+                        text = if (isCreating) stringResource(Res.string.creating) else stringResource(Res.string.create),
                         fontWeight = FontWeight.Medium
                     )
                 }
             },
             dismissButton = {
-                TextButton(onClick = onDismiss) {
+                TextButton(
+                    onClick = onDismiss,
+                    enabled = !isCreating
+                ) {
                     Text(
                         text = stringResource(Res.string.cancel),
                         fontWeight = FontWeight.Medium
@@ -119,7 +126,8 @@ fun NewBudgetModal(
 @Composable
 fun UpdateBudgetModal(
     budget: Budget?,
-    onEvent: (BudgetListEvent) -> Unit
+    onIntent: (BudgetListIntent) -> Unit,
+    isUpdating: Boolean = false
 ) {
     if (budget != null) {
         var name by remember {
@@ -128,9 +136,9 @@ fun UpdateBudgetModal(
 
         val onDismiss = remember {
             fun() {
-                BudgetListEvent
+                BudgetListIntent
                     .ToggleUpdateModal(null)
-                    .run(onEvent)
+                    .run(onIntent)
             }
         }
 
@@ -167,6 +175,7 @@ fun UpdateBudgetModal(
                         value = name,
                         onValueChange = { name = it },
                         label = { Text(text = stringResource(Res.string.name)) },
+                        enabled = !isUpdating,
                         keyboardOptions = KeyboardOptions(
                             capitalization = KeyboardCapitalization.Words
                         )
@@ -178,19 +187,22 @@ fun UpdateBudgetModal(
                     onClick = {
                         if (name.isBlank()) return@TextButton
                         val updatedBudget = budget.copy(name = name)
-                        BudgetListEvent.UpdateBudget(updatedBudget).run(onEvent)
+                        BudgetListIntent.UpdateBudget(updatedBudget).run(onIntent)
                         onDismiss()
                     },
-                    enabled = name.isNotBlank()
+                    enabled = name.isNotBlank() && !isUpdating
                 ) {
                     Text(
-                        text = stringResource(Res.string.update),
+                        text = if (isUpdating) stringResource(Res.string.updating) else stringResource(Res.string.update),
                         fontWeight = FontWeight.Medium
                     )
                 }
             },
             dismissButton = {
-                TextButton(onClick = onDismiss) {
+                TextButton(
+                    onClick = onDismiss,
+                    enabled = !isUpdating
+                ) {
                     Text(
                         text = stringResource(Res.string.cancel),
                         fontWeight = FontWeight.Medium

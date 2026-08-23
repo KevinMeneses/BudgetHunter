@@ -43,10 +43,19 @@ class PreferencesManager(private val preferences: DataStore<Preferences>) {
         preferences.edit { it[KEY_AI_PROCESSING_ENABLED] = value }
     }
 
+    suspend fun isOfflineModeEnabled() = preferences.data
+        .map { it[KEY_OFFLINE_MODE_ENABLED] }
+        .firstOrNull() == true
+
+    suspend fun setOfflineModeEnabled(value: Boolean) {
+        preferences.edit { it[KEY_OFFLINE_MODE_ENABLED] = value }
+    }
+
     companion object {
         private val KEY_SMS_READING_ENABLED = booleanPreferencesKey("sms_reading_enabled")
         private val KEY_DEFAULT_BUDGET_ID = intPreferencesKey("default_budget_id")
         private val KEY_SELECTED_BANK_IDS = stringSetPreferencesKey("selected_bank_ids")
         private val KEY_AI_PROCESSING_ENABLED = booleanPreferencesKey("ai_processing_enabled")
+        private val KEY_OFFLINE_MODE_ENABLED = booleanPreferencesKey("offline_mode_enabled")
     }
 }

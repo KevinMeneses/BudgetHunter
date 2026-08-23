@@ -1,18 +1,11 @@
 *.iml
 .gradle
 /local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
 /build
 /captures
 .externalNativeBuild
 .cxx
 local.properties
-/CLAUDE.md
 
 # KMP specific
 .kotlin/
@@ -30,7 +23,18 @@ Thumbs.db
 *.temp
 
 # IDE files
-/.idea/
+# Shared project settings are versioned, per-user state is not. Note this excludes the
+# *contents* of .idea rather than the directory itself: with `/.idea/` git would not
+# descend into it and the negations below could never match.
+/.idea/*
+!/.idea/.gitignore
+!/.idea/codeStyles/
+!/.idea/inspectionProfiles/
+!/.idea/AndroidProjectSystem.xml
+!/.idea/kotlinc.xml
+!/.idea/migrations.xml
+!/.idea/runConfigurations.xml
+!/.idea/vcs.xml
 *.iws
 
 # Build outputs

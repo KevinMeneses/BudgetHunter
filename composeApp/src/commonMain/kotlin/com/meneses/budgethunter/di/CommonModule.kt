@@ -1,9 +1,15 @@
 package com.meneses.budgethunter.di
 
+import com.meneses.budgethunter.BuildKonfig
 import com.meneses.budgethunter.budgetList.data.adapter.categoryAdapter
 import com.meneses.budgethunter.budgetList.data.adapter.typeAdapter
 import com.meneses.budgethunter.commons.application.ValidateFilePathUseCase
 import com.meneses.budgethunter.commons.data.PreferencesManager
+import com.meneses.budgethunter.commons.data.sync.ConsoleLogger
+import com.meneses.budgethunter.commons.data.sync.Logger
+import com.meneses.budgethunter.commons.data.sync.NoOpLogger
+import com.meneses.budgethunter.commons.resources.StringResourceProviderImpl
+import com.meneses.budgethunter.commons.resources.StringResourceProvider
 import com.meneses.budgethunter.db.BudgetEntryQueries
 import com.meneses.budgethunter.db.BudgetQueries
 import com.meneses.budgethunter.db.Budget_entry
@@ -32,6 +38,10 @@ val commonModule = module {
         CoroutineScope(get<CoroutineDispatcher>(named("IO")))
     }
 
+    single<CoroutineScope>(named("ApplicationScope")) {
+        CoroutineScope(get<CoroutineDispatcher>(named("IO")))
+    }
+
     single<CoroutineDispatcher>(named("Default")) { Dispatchers.Default }
 
     single<Json> {
@@ -43,10 +53,21 @@ val commonModule = module {
 
     single<PreferencesManager> { PreferencesManager(get()) }
 
+    single<StringResourceProvider> { StringResourceProviderImpl() }
+
+    single<Logger> {
+        if (BuildKonfig.DEBUG) {
+            ConsoleLogger()
+        } else {
+            NoOpLogger()
+        }
+    }
+
     single<ValidateFilePathUseCase> {
         ValidateFilePathUseCase(
             fileManager = get(),
-            ioDispatcher = get(named("IO"))
+            ioDispatcher = get(named("IO")),
+            logger = get()
         )
     }
 }

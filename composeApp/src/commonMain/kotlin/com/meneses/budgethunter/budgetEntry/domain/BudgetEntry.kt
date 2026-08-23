@@ -1,10 +1,10 @@
 package com.meneses.budgethunter.budgetEntry.domain
 
 import com.meneses.budgethunter.commons.EMPTY
-import kotlinx.serialization.Serializable
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import kotlinx.serialization.Serializable
 
 @Serializable
 data class BudgetEntry(
@@ -16,7 +16,13 @@ data class BudgetEntry(
     val category: Category = Category.OTHER,
     val date: String = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date.toString(),
     val invoice: String? = null,
-    val isSelected: Boolean = false
+    val isSelected: Boolean = false,
+    val serverId: Long? = null,
+    val isSynced: Boolean = false,
+    val createdByEmail: String? = null,
+    val updatedByEmail: String? = null,
+    val creationDate: String? = null,
+    val modificationDate: String? = null
 ) {
     @Serializable
     enum class Type {
@@ -54,30 +60,5 @@ data class BudgetEntry(
             Category.TAXES,
             Category.OTHER
         )
-    }
-}
-
-// TODO: get the real string resources not just hardcoded strings
-fun BudgetEntry.Type.toStringResource(): String {
-    return when (this) {
-        BudgetEntry.Type.OUTCOME -> "Outcome"
-        BudgetEntry.Type.INCOME -> "Income"
-    }
-}
-
-// TODO: get the real string resources not just hardcoded strings
-fun BudgetEntry.Category.toStringResource(): String {
-    return when (this) {
-        BudgetEntry.Category.FOOD -> "Food"
-        BudgetEntry.Category.GROCERIES -> "Groceries"
-        BudgetEntry.Category.SELF_CARE -> "Self Care"
-        BudgetEntry.Category.TRANSPORTATION -> "Transportation"
-        BudgetEntry.Category.HOUSEHOLD_ITEMS -> "Household Items"
-        BudgetEntry.Category.SERVICES -> "Services"
-        BudgetEntry.Category.EDUCATION -> "Education"
-        BudgetEntry.Category.HEALTH -> "Health"
-        BudgetEntry.Category.LEISURE -> "Leisure"
-        BudgetEntry.Category.TAXES -> "Taxes"
-        BudgetEntry.Category.OTHER -> "Other"
     }
 }

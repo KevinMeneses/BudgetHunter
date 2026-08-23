@@ -15,8 +15,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -28,10 +27,11 @@ import budgethunter.composeapp.generated.resources.budgets
 import budgethunter.composeapp.generated.resources.create_new_budget
 import budgethunter.composeapp.generated.resources.open_menu
 import budgethunter.composeapp.generated.resources.search
-import com.meneses.budgethunter.budgetList.application.BudgetListEvent
+import com.meneses.budgethunter.budgetList.application.BudgetListIntent
 import com.meneses.budgethunter.budgetList.application.BudgetListState
-import com.meneses.budgethunter.budgetList.domain.Budget
+import com.meneses.budgethunter.commons.platform.NetworkMonitor
 import com.meneses.budgethunter.commons.ui.AppBar
+import com.meneses.budgethunter.commons.ui.LoadingOverlay
 import com.meneses.budgethunter.commons.ui.dashedBorder
 import com.meneses.budgethunter.theme.AppColors
 import kotlinx.serialization.Serializable
@@ -42,12 +42,13 @@ object BudgetListScreen {
     @Composable
     fun Show(
         uiState: BudgetListState,
-        onEvent: (BudgetListEvent) -> Unit,
-        showBudgetDetail: (Budget) -> Unit,
-        showSettings: () -> Unit
+        onIntent: (BudgetListIntent) -> Unit,
+        showSettings: () -> Unit,
+        networkMonitor: NetworkMonitor,
+        snackbarHostState: SnackbarHostState
     ) {
-        val snackBarHostState = remember { SnackbarHostState() }
         var dropdownExpanded by remember { mutableStateOf(false) }
+        val isOnline by networkMonitor.isOnline.collectAsState()
 
         Scaffold(
             topBar = {
@@ -55,14 +56,14 @@ object BudgetListScreen {
                     SearchAppBar(
                         searchQuery = uiState.searchQuery,
                         onSearchQueryChange = { query ->
-                            BudgetListEvent
+                            BudgetListIntent
                                 .UpdateSearchQuery(query)
-                                .run(onEvent)
+                                .run(onIntent)
                         },
                         onBackClick = {
-                            BudgetListEvent
+                            BudgetListIntent
                                 .ToggleSearchMode(false)
-                                .run(onEvent)
+                                .run(onIntent)
                         }
                     )
                 } else {
@@ -73,9 +74,9 @@ object BudgetListScreen {
                         leftButtonDescription = stringResource(Res.string.search),
                         rightButtonDescription = stringResource(Res.string.open_menu),
                         onLeftButtonClick = {
-                            BudgetListEvent
+                            BudgetListIntent
                                 .ToggleSearchMode(true)
-                                .run(onEvent)
+                                .run(onIntent)
                         },
                         onRightButtonClick = {
                             dropdownExpanded = true
@@ -85,14 +86,14 @@ object BudgetListScreen {
                             BudgetListMenu(
                                 expanded = dropdownExpanded,
                                 onDismiss = { dropdownExpanded = false },
-                                onSettingsClick = showSettings
+                                onSettingsClick = showSettings,
+                                isAuthenticated = uiState.isAuthenticated,
+                                onSignOutClick = { BudgetListIntent.SignOut.run(onIntent) },
+                                onSignInClick = { BudgetListIntent.SignIn.run(onIntent) }
                             )
                         }
                     )
                 }
-            },
-            snackbarHost = {
-                SnackbarHost(hostState = snackBarHostState)
             },
             floatingActionButton = {
                 FloatingActionButton(
@@ -109,9 +110,9 @@ object BudgetListScreen {
                     shape = AbsoluteRoundedCornerShape(10.dp),
                     elevation = FloatingActionButtonDefaults.elevation(5.dp),
                     onClick = {
-                        BudgetListEvent
+                        BudgetListIntent
                             .ToggleAddModal(true)
-                            .run(onEvent)
+                            .run(onIntent)
                     }
                 ) {
                     Icon(
@@ -121,36 +122,33 @@ object BudgetListScreen {
                     )
                 }
             },
-            floatingActionButtonPosition = FabPosition.Center
+            floatingActionButtonPosition = FabPosition.Center,
+            snackbarHost = { SnackbarHost(snackbarHostState) }
         ) { paddingValues ->
             BudgetListContent(
                 list = uiState.budgetList,
                 isLoading = uiState.isLoading,
+                isSyncing = uiState.isSyncing,
+                isOnline = if (uiState.isAuthenticated) isOnline else true,
                 paddingValues = paddingValues,
-                onEvent = onEvent
+                onIntent = onIntent
             )
         }
 
         NewBudgetModal(
             show = uiState.addModalVisibility,
-            onEvent = onEvent
+            onIntent = onIntent,
+            isCreating = uiState.isCreatingBudget
         )
 
         UpdateBudgetModal(
             budget = uiState.budgetToUpdate,
-            onEvent = onEvent
+            onIntent = onIntent,
+            isUpdating = uiState.isUpdatingBudget
         )
 
-        LaunchedEffect(key1 = uiState.navigateToBudget) {
-            uiState.navigateToBudget?.let { showBudgetDetail(it) }
-        }
-
-        DisposableEffect(key1 = Unit) {
-            onDispose {
-                BudgetListEvent
-                    .ClearNavigation
-                    .run(onEvent)
-            }
+        if (uiState.isSigningOut) {
+            LoadingOverlay()
         }
     }
 }

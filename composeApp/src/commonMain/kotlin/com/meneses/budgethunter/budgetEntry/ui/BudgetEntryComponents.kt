@@ -35,8 +35,8 @@ import budgethunter.composeapp.generated.resources.category
 import budgethunter.composeapp.generated.resources.date
 import budgethunter.composeapp.generated.resources.description
 import budgethunter.composeapp.generated.resources.entry_date
+import budgethunter.composeapp.generated.resources.amount_placeholder
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
-import com.meneses.budgethunter.budgetEntry.domain.toStringResource
 import com.meneses.budgethunter.commons.ui.OutlinedDropdown
 import com.meneses.budgethunter.commons.ui.SimpleDatePickerDialog
 import com.meneses.budgethunter.commons.ui.ThousandSeparatorTransformation
@@ -85,7 +85,7 @@ fun AmountField(
         },
         modifier = Modifier.width(TextFieldDefaults.MinWidth),
         label = { Text(text = stringResource(Res.string.amount)) },
-        placeholder = { Text(text = "0.00") },
+        placeholder = { Text(text = stringResource(Res.string.amount_placeholder)) },
         prefix = { Text(text = "$") },
         visualTransformation = ThousandSeparatorTransformation(),
         keyboardOptions = KeyboardOptions(

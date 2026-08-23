@@ -2,27 +2,52 @@ package com.meneses.budgethunter.budgetList
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.meneses.budgethunter.auth.application.SignOutUseCase
+import com.meneses.budgethunter.auth.data.AuthRepository
+import budgethunter.composeapp.generated.resources.Res
+import budgethunter.composeapp.generated.resources.budget_synced_successfully
+import budgethunter.composeapp.generated.resources.sync_failed_retry_online
 import com.meneses.budgethunter.budgetList.application.BudgetListEvent
+import com.meneses.budgethunter.budgetList.application.BudgetListIntent
 import com.meneses.budgethunter.budgetList.application.BudgetListState
 import com.meneses.budgethunter.budgetList.application.DeleteBudgetUseCase
 import com.meneses.budgethunter.budgetList.application.DuplicateBudgetUseCase
 import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.budgetList.domain.Budget
+import com.meneses.budgethunter.commons.data.sync.Logger
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class BudgetListViewModel(
     private val budgetRepository: BudgetRepository,
     private val duplicateBudgetUseCase: DuplicateBudgetUseCase,
-    private val deleteBudgetUseCase: DeleteBudgetUseCase
+    private val deleteBudgetUseCase: DeleteBudgetUseCase,
+    private val authRepository: AuthRepository,
+    private val signOutUseCase: SignOutUseCase,
+    private val logger: Logger
 ) : ViewModel() {
+    private val tag = "BudgetListViewModel"
     val uiState get() = _uiState.asStateFlow()
     private val _uiState = MutableStateFlow(BudgetListState())
 
+    private val _events = Channel<BudgetListEvent>(Channel.BUFFERED)
+    val events = _events.receiveAsFlow()
+
     init {
         collectBudgetList()
+        checkAuthState()
+    }
+
+    private fun checkAuthState() {
+        viewModelScope.launch {
+            val isAuthenticated = authRepository.isAuthenticated()
+            _uiState.update { it.copy(isAuthenticated = isAuthenticated) }
+        }
     }
 
     private fun collectBudgetList() {
@@ -43,19 +68,36 @@ class BudgetListViewModel(
         }
     }
 
-    fun sendEvent(event: BudgetListEvent) {
-        when (event) {
-            is BudgetListEvent.CreateBudget -> createBudget(event.budget)
-            is BudgetListEvent.UpdateBudget -> updateBudget(event.budget)
-            is BudgetListEvent.DuplicateBudget -> duplicateBudget(event.budget)
-            is BudgetListEvent.DeleteBudget -> deleteBudget(event.budgetId)
-            is BudgetListEvent.OpenBudget -> openBudget(event.budget)
-            is BudgetListEvent.ToggleAddModal -> setAddModalVisibility(event.isVisible)
-            is BudgetListEvent.ToggleUpdateModal -> setUpdateModalVisibility(event.budget)
-            is BudgetListEvent.ToggleSearchMode -> setSearchMode(event.isSearchMode)
-            is BudgetListEvent.UpdateSearchQuery -> updateSearchQuery(event.query)
-            is BudgetListEvent.ClearFilter -> clearFilter()
-            is BudgetListEvent.ClearNavigation -> clearNavigation()
+    fun sendIntent(intent: BudgetListIntent) {
+        when (intent) {
+            is BudgetListIntent.CreateBudget -> createBudget(intent.budget)
+            is BudgetListIntent.UpdateBudget -> updateBudget(intent.budget)
+            is BudgetListIntent.DuplicateBudget -> duplicateBudget(intent.budget)
+            is BudgetListIntent.DeleteBudget -> deleteBudget(intent.budgetId)
+            is BudgetListIntent.OpenBudget -> openBudget(intent.budget)
+            is BudgetListIntent.ToggleAddModal -> setAddModalVisibility(intent.isVisible)
+            is BudgetListIntent.ToggleUpdateModal -> setUpdateModalVisibility(intent.budget)
+            is BudgetListIntent.ToggleSearchMode -> setSearchMode(intent.isSearchMode)
+            is BudgetListIntent.UpdateSearchQuery -> updateSearchQuery(intent.query)
+            is BudgetListIntent.ClearFilter -> clearFilter()
+            is BudgetListIntent.SignOut -> signOut()
+            is BudgetListIntent.SignIn -> signIn()
+            is BudgetListIntent.SyncBudgets -> syncBudgets()
+        }
+    }
+
+    private fun syncBudgets() = viewModelScope.launch {
+        _uiState.update { it.copy(isSyncing = true) }
+        try {
+            budgetRepository.sync()
+            _events.trySend(BudgetListEvent.ShowMessage(Res.string.budget_synced_successfully))
+        } catch (e: Exception) {
+            logger.warn(tag, "Sync failed", e)
+            _events.trySend(BudgetListEvent.ShowMessage(Res.string.sync_failed_retry_online))
+        } finally {
+            // Small delay to ensure PullToRefreshBox can process the state change
+            delay(100)
+            _uiState.update { it.copy(isSyncing = false) }
         }
     }
 
@@ -68,16 +110,31 @@ class BudgetListViewModel(
     }
 
     private fun createBudget(budget: Budget) = viewModelScope.launch {
-        val budgetSaved = budgetRepository.create(budget)
-        openBudget(budgetSaved)
+        _uiState.update { it.copy(isCreatingBudget = true) }
+        try {
+            val budgetSaved = budgetRepository.create(budget)
+            openBudget(budgetSaved)
+        } finally {
+            _uiState.update { it.copy(isCreatingBudget = false) }
+        }
     }
 
     private fun updateBudget(budget: Budget) = viewModelScope.launch {
-        budgetRepository.update(budget)
+        _uiState.update { it.copy(isUpdatingBudget = true) }
+        try {
+            // Mark as unsynced so it will be pushed to server
+            val budgetToUpdate = budget.copy(
+                isSynced = false,
+                lastSyncedAt = null
+            )
+            budgetRepository.update(budgetToUpdate)
+        } finally {
+            _uiState.update { it.copy(isUpdatingBudget = false) }
+        }
     }
 
     private fun openBudget(budget: Budget) =
-        _uiState.update { it.copy(navigateToBudget = budget) }
+        _events.trySend(BudgetListEvent.NavigateToBudget(budget))
 
     private fun clearFilter() {
         viewModelScope.launch {
@@ -85,9 +142,6 @@ class BudgetListViewModel(
             _uiState.update { it.copy(budgetList = budgetList, filter = null) }
         }
     }
-
-    private fun clearNavigation() =
-        _uiState.update { it.copy(navigateToBudget = null) }
 
     private fun setAddModalVisibility(visible: Boolean) =
         _uiState.update { it.copy(addModalVisibility = visible) }
@@ -134,5 +188,22 @@ class BudgetListViewModel(
                 currentState.copy(budgetList = filteredList)
             }
         }
+    }
+
+    private fun signOut() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isSigningOut = true) }
+            try {
+                signOutUseCase.execute()
+                _uiState.update { it.copy(isAuthenticated = false) }
+                _events.trySend(BudgetListEvent.NavigateToSignIn)
+            } finally {
+                _uiState.update { it.copy(isSigningOut = false) }
+            }
+        }
+    }
+
+    private fun signIn() {
+        _events.trySend(BudgetListEvent.NavigateToSignIn)
     }
 }

@@ -7,7 +7,10 @@ import com.meneses.budgethunter.budgetList.application.DeleteBudgetUseCase
 import com.meneses.budgethunter.budgetList.application.DuplicateBudgetUseCase
 import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.budgetList.data.datasource.BudgetLocalDataSource
+import com.meneses.budgethunter.budgetList.data.network.BudgetApiService
+import com.meneses.budgethunter.budgetList.data.sync.BudgetSyncManager
 import com.meneses.budgethunter.db.BudgetQueries
+import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineDispatcher
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
@@ -18,8 +21,32 @@ val budgetListModule = module {
         BudgetLocalDataSource(get<BudgetQueries>(), get<CoroutineDispatcher>(named("IO")))
     }
 
+    single<BudgetApiService> {
+        BudgetApiService(
+            httpClient = get<HttpClient>(named("AuthHttpClient")),
+            ioDispatcher = get<CoroutineDispatcher>(named("IO"))
+        )
+    }
+
+    single<BudgetSyncManager> {
+        BudgetSyncManager(
+            localDataSource = get<BudgetLocalDataSource>(),
+            budgetApiService = get<BudgetApiService>(),
+            authRepository = get(),
+            ioDispatcher = get<CoroutineDispatcher>(named("IO")),
+            logger = get()
+        )
+    }
+
     single<BudgetRepository> {
-        BudgetRepository(get<BudgetLocalDataSource>(), get<CoroutineDispatcher>(named("IO")))
+        BudgetRepository(
+            localDataSource = get<BudgetLocalDataSource>(),
+            budgetSyncManager = get<BudgetSyncManager>(),
+            budgetApiService = get<BudgetApiService>(),
+            authRepository = get(),
+            ioDispatcher = get<CoroutineDispatcher>(named("IO")),
+            logger = get()
+        )
     }
 
     single<DuplicateBudgetUseCase> {
@@ -32,7 +59,7 @@ val budgetListModule = module {
 
     single<DeleteBudgetUseCase> {
         DeleteBudgetUseCase(
-            get<BudgetLocalDataSource>(),
+            get<BudgetRepository>(),
             get<BudgetEntryLocalDataSource>(),
             get<CoroutineDispatcher>(named("IO"))
         )
@@ -40,9 +67,12 @@ val budgetListModule = module {
 
     factory<BudgetListViewModel> {
         BudgetListViewModel(
-            get<BudgetRepository>(),
-            get<DuplicateBudgetUseCase>(),
-            get<DeleteBudgetUseCase>()
+            budgetRepository = get<BudgetRepository>(),
+            duplicateBudgetUseCase = get<DuplicateBudgetUseCase>(),
+            deleteBudgetUseCase = get<DeleteBudgetUseCase>(),
+            authRepository = get(),
+            signOutUseCase = get(),
+            logger = get()
         )
     }
 }

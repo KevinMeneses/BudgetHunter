@@ -4,6 +4,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -17,7 +19,7 @@ import budgethunter.composeapp.generated.resources.new_registry
 import budgethunter.composeapp.generated.resources.save_entry
 import budgethunter.composeapp.generated.resources.unsaved_changes_confirmation_message
 import budgethunter.composeapp.generated.resources.update_registry
-import com.meneses.budgethunter.budgetEntry.application.BudgetEntryEvent
+import com.meneses.budgethunter.budgetEntry.application.BudgetEntryIntent
 import com.meneses.budgethunter.budgetEntry.application.BudgetEntryState
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.commons.ui.AppBar
@@ -32,26 +34,26 @@ data class BudgetEntryScreen(val budgetEntry: BudgetEntry) {
     @Composable
     fun Show(
         uiState: BudgetEntryState,
-        onEvent: (BudgetEntryEvent) -> Unit,
-        goBack: () -> Unit
+        onIntent: (BudgetEntryIntent) -> Unit,
+        snackbarHostState: SnackbarHostState
     ) {
         val onBack = remember {
             fun() {
-                BudgetEntryEvent
+                BudgetEntryIntent
                     .ValidateChanges(budgetEntry)
-                    .run(onEvent)
+                    .run(onIntent)
             }
         }
 
         val setBudgetEntry = remember {
             fun(budgetEntry: BudgetEntry) {
-                BudgetEntryEvent
+                BudgetEntryIntent
                     .SetBudgetEntry(budgetEntry)
-                    .run(onEvent)
+                    .run(onIntent)
             }
         }
 
-        LaunchedEffect(Unit) {
+        LaunchedEffect(budgetEntry.id) {
             if (uiState.budgetEntry?.id != budgetEntry.id) {
                 setBudgetEntry(budgetEntry)
             }
@@ -70,25 +72,28 @@ data class BudgetEntryScreen(val budgetEntry: BudgetEntry) {
                     rightButtonDescription = stringResource(Res.string.save_entry),
                     onLeftButtonClick = onBack,
                     onRightButtonClick = {
-                        BudgetEntryEvent
+                        BudgetEntryIntent
                             .SaveBudgetEntry
-                            .run(onEvent)
+                            .run(onIntent)
                     }
                 )
+            },
+            snackbarHost = {
+                SnackbarHost(hostState = snackbarHostState)
             }
         ) { paddingValues ->
             BudgetEntryForm(
                 budgetEntry = uiState.budgetEntry ?: budgetEntry,
-                amountError = uiState.emptyAmountError,
+                amountError = uiState.emptyAmountError?.let { stringResource(it) },
                 isFileValid = uiState.isFileValid,
                 paddingValues = paddingValues,
                 onBudgetItemChanged = setBudgetEntry,
                 onInvoiceFieldClick = {
                     if (uiState.budgetEntry?.invoice == null) {
-                        BudgetEntryEvent.ToggleAttachInvoiceModal(true)
+                        BudgetEntryIntent.ToggleAttachInvoiceModal(true)
                     } else {
-                        BudgetEntryEvent.ToggleShowInvoiceModal(true)
-                    }.run(onEvent)
+                        BudgetEntryIntent.ToggleShowInvoiceModal(true)
+                    }.run(onIntent)
                 }
             )
         }
@@ -105,33 +110,37 @@ data class BudgetEntryScreen(val budgetEntry: BudgetEntry) {
             LoadingOverlay()
         }
 
+        if (uiState.isSaving) {
+            LoadingOverlay()
+        }
+
         ConfirmationModal(
             show = uiState.isDiscardChangesModalVisible,
             message = stringResource(Res.string.unsaved_changes_confirmation_message),
             confirmButtonText = stringResource(Res.string.discard),
             cancelButtonText = stringResource(Res.string.come_back),
             onDismiss = {
-                BudgetEntryEvent
+                BudgetEntryIntent
                     .HideDiscardChangesModal
-                    .run(onEvent)
+                    .run(onIntent)
             },
             onConfirm = {
-                BudgetEntryEvent.DiscardChanges
-                    .run(onEvent)
+                BudgetEntryIntent.DiscardChanges
+                    .run(onIntent)
             }
         )
 
         FileNotFoundModal(
             show = uiState.shouldShowFileNotFoundModal(),
             onDismiss = {
-                BudgetEntryEvent
+                BudgetEntryIntent
                     .ToggleShowInvoiceModal(false)
-                    .run(onEvent)
+                    .run(onIntent)
             },
             onReattach = {
-                BudgetEntryEvent
+                BudgetEntryIntent
                     .UpdateInvoice
-                    .run(onEvent)
+                    .run(onIntent)
             }
         )
 
@@ -144,24 +153,24 @@ data class BudgetEntryScreen(val budgetEntry: BudgetEntry) {
                 show = uiState.shouldShowInvoiceDisplayModal(),
                 validatedFilePath = validatedPath,
                 onDismiss = {
-                    BudgetEntryEvent
+                    BudgetEntryIntent
                         .ToggleShowInvoiceModal(false)
-                        .run(onEvent)
+                        .run(onIntent)
                 },
                 onEdit = {
-                    BudgetEntryEvent
+                    BudgetEntryIntent
                         .UpdateInvoice
-                        .run(onEvent)
+                        .run(onIntent)
                 },
                 onShare = {
-                    BudgetEntryEvent
+                    BudgetEntryIntent
                         .ShareFile(validatedPath)
-                        .run(onEvent)
+                        .run(onIntent)
                 },
                 onDelete = {
-                    BudgetEntryEvent
+                    BudgetEntryIntent
                         .DeleteAttachedInvoice
-                        .run(onEvent)
+                        .run(onIntent)
                 },
                 onError = {
                     isFileLoadable = false
@@ -174,9 +183,9 @@ data class BudgetEntryScreen(val budgetEntry: BudgetEntry) {
                     isFileLoadable = true
                 },
                 onReplace = {
-                    BudgetEntryEvent
+                    BudgetEntryIntent
                         .UpdateInvoice
-                        .run(onEvent)
+                        .run(onIntent)
                 }
             )
         }
@@ -184,30 +193,18 @@ data class BudgetEntryScreen(val budgetEntry: BudgetEntry) {
         AttachInvoiceModal(
             show = uiState.isAttachInvoiceModalVisible,
             onDismiss = {
-                BudgetEntryEvent
+                BudgetEntryIntent
                     .ToggleAttachInvoiceModal(false)
-                    .run(onEvent)
+                    .run(onIntent)
             },
             onTakePhoto = {
-                BudgetEntryEvent.TakePhoto.run(onEvent)
+                BudgetEntryIntent.TakePhoto.run(onIntent)
             },
             onSelectFile = {
-                BudgetEntryEvent.PickFile.run(onEvent)
+                BudgetEntryIntent.PickFile.run(onIntent)
             }
         )
 
-        if (uiState.attachInvoiceError != null) {
-            LaunchedEffect(uiState.attachInvoiceError) {
-                BudgetEntryEvent
-                    .ShowNotification(uiState.attachInvoiceError, isError = true)
-                    .run(onEvent)
-            }
-        }
-
         PlatformBackHandler(enabled = true, onBack = onBack)
-
-        LaunchedEffect(key1 = uiState.goBack) {
-            if (uiState.goBack) goBack()
-        }
     }
 }

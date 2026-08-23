@@ -17,6 +17,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -29,10 +31,13 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -57,13 +62,15 @@ import budgethunter.composeapp.generated.resources.description
 import budgethunter.composeapp.generated.resources.no_description
 import budgethunter.composeapp.generated.resources.selected_entries
 import budgethunter.composeapp.generated.resources.total_outcomes
-import com.meneses.budgethunter.budgetDetail.application.BudgetDetailEvent
+import com.meneses.budgethunter.budgetDetail.application.BudgetDetailIntent
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailState
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.commons.EMPTY
 import com.meneses.budgethunter.commons.ui.CompottiePlaceholder
 import com.meneses.budgethunter.commons.ui.DefDivider
 import com.meneses.budgethunter.commons.ui.LoadingScreen
+import com.meneses.budgethunter.commons.ui.OfflineBanner
+import com.meneses.budgethunter.commons.ui.SyncStatusIndicator
 import com.meneses.budgethunter.commons.util.toCurrency
 import com.meneses.budgethunter.theme.AppColors
 import com.meneses.budgethunter.theme.green_success
@@ -73,62 +80,62 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun BudgetDetailContent(
     paddingValues: PaddingValues,
+    isOnline: Boolean,
     uiState: BudgetDetailState,
-    onEvent: (BudgetDetailEvent) -> Unit
+    onIntent: (BudgetDetailIntent) -> Unit
 ) {
     val onBudgetClick = remember {
-        fun() { onEvent(BudgetDetailEvent.ToggleBudgetModal(true)) }
+        fun() { onIntent(BudgetDetailIntent.ToggleBudgetModal(true)) }
     }
 
     if (uiState.isLoading) {
         LoadingScreen()
     } else {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(
-                    vertical = 15.dp,
-                    horizontal = 20.dp
-                ),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceBetween
-        ) {
-            Column(
-                modifier = Modifier.weight(0.9f, true)
+        Column(modifier = Modifier.padding(paddingValues)) {
+            OfflineBanner(isOffline = !isOnline)
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(
+                        vertical = 15.dp,
+                        horizontal = 20.dp
+                    )
             ) {
-                BudgetSection(
-                    amount = uiState.budgetDetail.budget.amount,
-                    onClick = onBudgetClick
-                )
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column(
+                        modifier = Modifier.weight(0.9f, true)
+                    ) {
+                        BudgetSection(
+                            amount = uiState.budgetDetail.budget.amount,
+                            onClick = onBudgetClick
+                        )
 
-                Spacer(modifier = Modifier.height(20.dp))
+                        Spacer(modifier = Modifier.height(20.dp))
 
-                if (uiState.budgetDetail.entries.isEmpty()) {
-                    CompottiePlaceholder(
-                        fileName = "empty_list.json",
-                        modifier = Modifier
-                            .padding(vertical = 40.dp)
-                            .weight(0.8f, true)
-                    )
-                } else {
-                    ListSection(
-                        budgetEntries = uiState.budgetDetail.entries,
-                        isSelectionActive = uiState.isSelectionActive,
-                        listOrder = uiState.listOrder,
-                        onEvent = onEvent
-                    )
-                }
+                        ListSection(
+                            budgetEntries = uiState.budgetDetail.entries,
+                            isSelectionActive = uiState.isSelectionActive,
+                            listOrder = uiState.listOrder,
+                            isSyncing = uiState.isSyncingEntries,
+                            onRefresh = { BudgetDetailIntent.SyncEntries.run(onIntent) },
+                            onIntent = onIntent
+                        )
 
-                Spacer(modifier = Modifier.height(20.dp))
+                        Spacer(modifier = Modifier.height(20.dp))
 
-                if (!uiState.isSelectionActive) {
-                    BalanceSection(
-                        budgetEntries = uiState.budgetDetail.entries,
-                        budgetAmount = uiState.budgetDetail.budget.amount
-                    )
-                } else {
-                    DeleteButton(onEvent)
+                        if (!uiState.isSelectionActive) {
+                            BalanceSection(
+                                budgetEntries = uiState.budgetDetail.entries,
+                                budgetAmount = uiState.budgetDetail.budget.amount
+                            )
+                        } else {
+                            DeleteButton(onIntent)
+                        }
+                    }
                 }
             }
         }
@@ -176,13 +183,15 @@ fun BudgetSection(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 private fun ColumnScope.ListSection(
     budgetEntries: List<BudgetEntry>,
     isSelectionActive: Boolean,
     listOrder: BudgetDetailState.ListOrder,
-    onEvent: (BudgetDetailEvent) -> Unit
+    isSyncing: Boolean,
+    onRefresh: () -> Unit,
+    onIntent: (BudgetDetailIntent) -> Unit
 ) {
     var showDate by remember {
         mutableStateOf(false)
@@ -190,168 +199,252 @@ private fun ColumnScope.ListSection(
 
     val onSelectAllItems = remember {
         fun(isActive: Boolean) {
-            onEvent(BudgetDetailEvent.ToggleAllEntriesSelection(isActive))
+            onIntent(BudgetDetailIntent.ToggleAllEntriesSelection(isActive))
         }
     }
 
-    Card(
-        modifier = Modifier.weight(0.8f, true),
-        colors = CardDefaults.elevatedCardColors(
-            containerColor = AppColors.background,
-            contentColor = AppColors.onBackground
-        )
+    PullToRefreshBox(
+        isRefreshing = isSyncing,
+        onRefresh = onRefresh,
+        modifier = Modifier
+            .weight(0.8f, true)
+            .fillMaxWidth()
     ) {
-        LazyColumn(
-            modifier = Modifier.padding(horizontal = 10.dp)
+        Card(
+            modifier = Modifier.fillMaxSize(),
+            colors = CardDefaults.elevatedCardColors(
+                containerColor = AppColors.background,
+                contentColor = AppColors.onBackground
+            )
         ) {
-            if (isSelectionActive) stickyHeader {
-                val onCloseSelection = remember {
-                    fun() { onEvent(BudgetDetailEvent.ToggleSelectionState(false)) }
-                }
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(AppColors.background),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Checkbox(
-                        checked = budgetEntries.all { it.isSelected },
-                        onCheckedChange = onSelectAllItems
-                    )
-                    val selectedEntries = budgetEntries.count { it.isSelected }.toString()
-                    Text(
-                        text = stringResource(Res.string.selected_entries, selectedEntries),
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    IconButton(
-                        modifier = Modifier.offset(10.dp),
-                        onClick = onCloseSelection
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = stringResource(Res.string.close_entries_selection_mode)
-                        )
-                    }
-                }
-                DefDivider()
-            } else stickyHeader {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(AppColors.background),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    val headerText: StringResource =
-                        if (showDate) Res.string.date
-                        else Res.string.description
-
-                    TextButton(
-                        modifier = Modifier.offset((-10).dp),
-                        onClick = {
-                            showDate = !showDate
+            LazyColumn(
+                modifier = Modifier.padding(horizontal = 10.dp)
+            ) {
+                if (budgetEntries.isEmpty()) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 60.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CompottiePlaceholder(
+                                fileName = "empty_list.json",
+                                modifier = Modifier.fillMaxWidth()
+                            )
                         }
-                    ) {
-                        Text(
-                            text = stringResource(headerText),
-                            color = AppColors.onPrimaryContainer,
-                            fontWeight = FontWeight.SemiBold
-                        )
                     }
-
-                    val orderIcon = when (listOrder) {
-                        BudgetDetailState.ListOrder.DEFAULT -> Icons.AutoMirrored.Filled.List
-                        BudgetDetailState.ListOrder.AMOUNT_ASCENDANT -> Icons.Default.KeyboardArrowDown
-                        BudgetDetailState.ListOrder.AMOUNT_DESCENDANT -> Icons.Default.KeyboardArrowUp
-                    }
-
-                    IconButton(
-                        modifier = Modifier.offset(x = 10.dp),
-                        onClick = {
-                            onEvent(BudgetDetailEvent.SortList)
+                } else {
+                    if (isSelectionActive) stickyHeader {
+                        val onCloseSelection = remember {
+                            fun() { onIntent(BudgetDetailIntent.ToggleSelectionState(false)) }
                         }
-                    ) {
-                        Icon(
-                            imageVector = orderIcon,
-                            contentDescription = stringResource(Res.string.budget_list_icon_description)
-                        )
-                    }
-                }
-                DefDivider()
-            }
-
-            items(budgetEntries.size) { index ->
-                val budgetItem = budgetEntries[index]
-
-                val onItemClick = {
-                    onEvent(
-                        if (!isSelectionActive) BudgetDetailEvent.ShowEntry(budgetItem)
-                        else BudgetDetailEvent.ToggleSelectEntry(index, !budgetItem.isSelected)
-                    )
-                }
-
-                val onLongClick = remember {
-                    fun() { onEvent(BudgetDetailEvent.ToggleSelectionState(true)) }
-                }
-
-                val onItemChecked = fun(isChecked: Boolean) {
-                    onEvent(BudgetDetailEvent.ToggleSelectEntry(index, isChecked))
-                }
-
-                Row(
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .combinedClickable(
-                            onClick = onItemClick,
-                            onLongClick = {
-                                onLongClick()
-                                onItemChecked(true)
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(AppColors.background),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Checkbox(
+                                checked = budgetEntries.all { it.isSelected },
+                                onCheckedChange = onSelectAllItems
+                            )
+                            val selectedEntries = budgetEntries.count { it.isSelected }.toString()
+                            Text(
+                                text = stringResource(Res.string.selected_entries, selectedEntries),
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            IconButton(
+                                modifier = Modifier.offset(10.dp),
+                                onClick = onCloseSelection
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = stringResource(Res.string.close_entries_selection_mode)
+                                )
                             }
-                        )
-                        .padding(vertical = if (isSelectionActive) 0.dp else 13.6.dp)
-                ) {
-                    if (isSelectionActive) Checkbox(
-                        checked = budgetItem.isSelected,
-                        onCheckedChange = onItemChecked
-                    )
+                        }
+                        DefDivider()
+                    } else stickyHeader {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(AppColors.background),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            val headerText: StringResource =
+                                if (showDate) Res.string.date
+                                else Res.string.description
 
-                    val budgetItemText =
-                        if (showDate) budgetItem.date
-                        else budgetItem.description
+                            TextButton(
+                                modifier = Modifier.offset((-10).dp),
+                                onClick = {
+                                    showDate = !showDate
+                                }
+                            ) {
+                                Text(
+                                    text = stringResource(headerText),
+                                    color = AppColors.onPrimaryContainer,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
 
-                    Text(
-                        text = budgetItemText
-                            .takeIf { it.isNotBlank() }
-                            ?: stringResource(Res.string.no_description),
-                        modifier = Modifier.weight(0.65f),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                SyncStatusIndicator(
+                                    isSynced = budgetEntries.all { it.isSynced },
+                                    modifier = Modifier
+                                        .padding(end = 4.dp)
+                                        .size(18.dp)
+                                )
 
-                    val operatorSign: String
-                    val color: Color
+                                val orderIcon = when (listOrder) {
+                                    BudgetDetailState.ListOrder.DEFAULT -> Icons.AutoMirrored.Filled.List
+                                    BudgetDetailState.ListOrder.AMOUNT_ASCENDANT -> Icons.Default.KeyboardArrowDown
+                                    BudgetDetailState.ListOrder.AMOUNT_DESCENDANT -> Icons.Default.KeyboardArrowUp
+                                }
 
-                    if (budgetItem.type == BudgetEntry.Type.OUTCOME) {
-                        operatorSign = "-"
-                        color = AppColors.error
-                    } else {
-                        operatorSign = "+"
-                        color = green_success
+                                IconButton(
+                                    modifier = Modifier.offset(x = 10.dp),
+                                    onClick = {
+                                        onIntent(BudgetDetailIntent.SortList)
+                                    }
+                                ) {
+                                    Icon(
+                                        imageVector = orderIcon,
+                                        contentDescription = stringResource(Res.string.budget_list_icon_description)
+                                    )
+                                }
+                            }
+                        }
+                        DefDivider()
                     }
 
-                    Text(
-                        text = operatorSign + budgetItem.amount.toCurrency(),
-                        color = color,
-                        modifier = Modifier.weight(0.3f),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        textAlign = TextAlign.End
-                    )
+                    items(budgetEntries.size) { index ->
+                        val budgetItem = budgetEntries[index]
+
+                        val onItemClick = {
+                            onIntent(
+                                if (!isSelectionActive) BudgetDetailIntent.ShowEntry(budgetItem)
+                                else BudgetDetailIntent.ToggleSelectEntry(index, !budgetItem.isSelected)
+                            )
+                        }
+
+                        val onLongClick = remember {
+                            fun() { onIntent(BudgetDetailIntent.ToggleSelectionState(true)) }
+                        }
+
+                        val onItemChecked = fun(isChecked: Boolean) {
+                            onIntent(BudgetDetailIntent.ToggleSelectEntry(index, isChecked))
+                        }
+
+                        Row(
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .combinedClickable(
+                                    onClick = onItemClick,
+                                    onLongClick = {
+                                        onLongClick()
+                                        onItemChecked(true)
+                                    }
+                                )
+                                .padding(vertical = if (isSelectionActive) 8.dp else 13.6.dp)
+                        ) {
+                            if (isSelectionActive) {
+                                Checkbox(
+                                    checked = budgetItem.isSelected,
+                                    onCheckedChange = onItemChecked
+                                )
+                            }
+
+                            val primaryText = if (showDate) {
+                                budgetItem.date
+                            } else {
+                                val description = budgetItem.description
+                                if (description.isNotBlank()) description else stringResource(Res.string.no_description)
+                            }
+                            val secondaryText = if (showDate) {
+                                budgetItem.description.takeIf { it.isNotBlank() }
+                            } else {
+                                budgetItem.date
+                            }
+
+                            Column(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .padding(end = 12.dp)
+                            ) {
+                                Text(
+                                    text = primaryText,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                secondaryText?.let {
+                                    Text(
+                                        text = it,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = AppColors.onSecondaryContainer,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                                if (!budgetItem.isSynced) {
+                                    Text(
+                                        text = "Pending sync",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = AppColors.error
+                                    )
+                                }
+                                budgetItem.createdByEmail?.takeIf { it.isNotBlank() }?.let {
+                                    Text(
+                                        text = "Created by $it",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = AppColors.onSecondaryContainer,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                                budgetItem.updatedByEmail?.takeIf { it.isNotBlank() }?.let {
+                                    Text(
+                                        text = "Updated by $it",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = AppColors.onSecondaryContainer,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                            }
+
+                            val operatorSign: String
+                            val color: Color
+
+                            if (budgetItem.type == BudgetEntry.Type.OUTCOME) {
+                                operatorSign = "-"
+                                color = AppColors.error
+                            } else {
+                                operatorSign = "+"
+                                color = green_success
+                            }
+
+                            Text(
+                                text = operatorSign + budgetItem.amount.toCurrency(),
+                                color = color,
+                                modifier = Modifier.widthIn(min = 72.dp),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                textAlign = TextAlign.End
+                            )
+                        }
+                        if (index != budgetEntries.size - 1) {
+                            DefDivider()
+                        }
+                    }
                 }
-                if (index != budgetEntries.size - 1) DefDivider()
             }
         }
     }
@@ -409,10 +502,10 @@ fun BalanceSection(
 
 @Composable
 private fun DeleteButton(
-    onEvent: (BudgetDetailEvent) -> Unit
+    onIntent: (BudgetDetailIntent) -> Unit
 ) {
     val onClick = remember {
-        fun() { onEvent(BudgetDetailEvent.ToggleDeleteEntriesModal(true)) }
+        fun() { onIntent(BudgetDetailIntent.ToggleDeleteEntriesModal(true)) }
     }
     Box(
         modifier = Modifier

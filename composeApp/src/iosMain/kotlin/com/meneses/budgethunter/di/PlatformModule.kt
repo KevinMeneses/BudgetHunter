@@ -13,6 +13,8 @@ import com.meneses.budgethunter.commons.data.createDatabase
 import com.meneses.budgethunter.commons.platform.AppUpdateManager
 import com.meneses.budgethunter.commons.platform.CameraManager
 import com.meneses.budgethunter.commons.platform.FilePickerManager
+import com.meneses.budgethunter.commons.platform.IosNetworkMonitor
+import com.meneses.budgethunter.commons.platform.NetworkMonitor
 import com.meneses.budgethunter.commons.platform.NotificationManager
 import com.meneses.budgethunter.commons.platform.PermissionsManager
 import com.meneses.budgethunter.commons.platform.ShareManager
@@ -67,6 +69,9 @@ val iosPlatformModule = module {
     single<AppUpdateManager> { AppUpdateManager() }
     single<NotificationManager> { IOSBridge.notificationManager }
     single<ShareManager> { IOSBridge.shareManager }
+    single<NetworkMonitor> {
+        IosNetworkMonitor(logger = get()).apply { startMonitoring() }
+    }
 
     single<ImageProcessor> {
         ImageProcessor()
@@ -99,7 +104,8 @@ val iosPlatformModule = module {
         GeminiApiClient(
             httpClient = get<HttpClient>(),
             apiKey = get(named("GEMINI_API_KEY")),
-            json = get<Json>()
+            json = get<Json>(),
+            logger = get()
         )
     }
 
@@ -107,7 +113,8 @@ val iosPlatformModule = module {
         IosAIImageProcessor(
             geminiApiClient = get<GeminiApiClient>(),
             imageProcessor = get<ImageProcessor>(),
-            ioDispatcher = get<CoroutineDispatcher>(named("IO"))
+            ioDispatcher = get<CoroutineDispatcher>(named("IO")),
+            logger = get()
         )
     }
 }

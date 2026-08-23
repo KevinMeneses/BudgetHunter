@@ -21,6 +21,7 @@
     <string name="back">Atrás</string>
     <string name="search">Buscar</string>
     <string name="close">Cerrar</string>
+    <string name="dismiss">Descartar</string>
     
     <!-- Navigation & Screens -->
     <string name="budgets">Presupuestos</string>
@@ -59,6 +60,7 @@
     <!-- Budget Fields -->
     <string name="name">Nombre</string>
     <string name="amount">Monto</string>
+    <string name="amount_placeholder">0.00</string>
     <string name="description">Descripcion</string>
     <string name="no_description">Sin descripcion</string>
     <string name="date">Fecha</string>
@@ -103,6 +105,7 @@
     <string name="join_collaboration_title">Unirse a Colaboración</string>
     <string name="enter_collaboration_code">Ingresa el código de colaboración:</string>
     <string name="code">Código</string>
+    <string name="manage_collaborators">Colaborar</string>
     
     <!-- Invoices & Attachments -->
     <string name="attach_invoice">Adjuntar comprobante</string>
@@ -125,6 +128,11 @@
     <string name="ignore_transaction">Ignorar</string>
     <string name="transaction_added">Transacción agregada exitosamente</string>
     <string name="transaction_failed">Error al agregar transacción</string>
+    <string name="transaction_added_message">Se detectó una transacción por %1$s</string>
+    <string name="transaction_failed_message">No se encontró configuración bancaria para este SMS</string>
+    <string name="transaction_error">Error de transacción</string>
+    <string name="transaction_error_message">Error procesando SMS: %1$s</string>
+    <string name="sms_transaction_from_bank">Transacción de %1$s</string>
     
     <!-- Bank Settings -->
     <string name="default_budget">Presupuesto por defecto</string>
@@ -199,4 +207,66 @@
     <string name="file_exists_cannot_load">El archivo existe pero no se puede cargar.</string>
     <string name="replace_file">Reemplazar Archivo</string>
     <string name="file_missing">Archivo faltante - %1$s</string>
+
+    <!-- Authentication -->
+    <string name="sign_in">Iniciar Sesión</string>
+    <string name="sign_up">Registrarse</string>
+    <string name="email">Correo Electrónico</string>
+    <string name="password">Contraseña</string>
+    <string name="confirm_password">Confirmar Contraseña</string>
+    <string name="welcome_to_budget_hunter">Bienvenido a BudgetHunter</string>
+    <string name="create_account">Crear Cuenta</string>
+    <string name="dont_have_account">¿No tienes cuenta? Regístrate</string>
+    <string name="already_have_account">¿Ya tienes cuenta? Inicia Sesión</string>
+    <string name="hide_password">Ocultar contraseña</string>
+    <string name="show_password">Mostrar contraseña</string>
+
+    <!-- Auth Errors -->
+    <string name="error_email_required">El correo electrónico es obligatorio</string>
+    <string name="error_name_required">El nombre es obligatorio</string>
+    <string name="error_password_required">La contraseña es obligatoria</string>
+    <string name="error_confirm_password_required">Por favor confirma tu contraseña</string>
+    <string name="error_passwords_do_not_match">Las contraseñas no coinciden</string>
+    <string name="error_password_too_short">La contraseña debe tener al menos 6 caracteres</string>
+    <string name="error_sign_in_failed">Error al iniciar sesión. Por favor verifica tus credenciales e intenta nuevamente.</string>
+    <string name="error_sign_up_failed">Error al registrarse. Por favor intenta más tarde.</string>
+
+    <!-- API Errors -->
+    <string name="error_unauthorized">Sesión expirada. Por favor inicia sesión nuevamente.</string>
+    <string name="error_forbidden">No tienes permiso para realizar esta acción.</string>
+    <string name="error_not_found">El recurso solicitado no fue encontrado.</string>
+    <string name="error_conflict">Este elemento ha sido modificado por otro usuario. Por favor actualiza e intenta nuevamente.</string>
+    <string name="error_server">Error del servidor. Por favor intenta más tarde.</string>
+    <string name="error_timeout">Se agotó el tiempo de espera. Por favor intenta nuevamente.</string>
+    <string name="error_parse">Error al procesar la respuesta del servidor. Por favor intenta nuevamente.</string>
+    <string name="error_unknown">Ocurrió un error inesperado. Por favor intenta nuevamente.</string>
+
+    <!-- Offline Mode -->
+    <string name="continue_offline">Continuar Sin Conexión</string>
+    <string name="offline_mode_description">Usa la aplicación sin una cuenta. Tus datos se guardarán localmente solo en este dispositivo.</string>
+
+    <!-- Sign Out -->
+    <string name="sign_out">Cerrar Sesión</string>
+    <string name="sign_out_confirmation">¿Estás seguro de que quieres cerrar sesión?</string>
+
+    <!-- Sync Status -->
+    <string name="synced">Sincronizado</string>
+    <string name="pending_sync">Sincronización pendiente</string>
+    <string name="offline_banner_message">Sin conexión - Los cambios se sincronizarán cuando estés en línea</string>
+
+    <!-- Common UI -->
+    <string name="confirmation">Confirmación</string>
+    <string name="error">Error</string>
+
+    <!-- Sync Feedback -->
+    <string name="budget_synced_successfully">Presupuestos sincronizados correctamente</string>
+    <string name="entries_synced_successfully">Entradas sincronizadas correctamente</string>
+    <string name="sync_failed_retry_online">Error al sincronizar - se reintentará cuando esté en línea</string>
+    <string name="new_entry_from_collaborator">Nueva entrada de %1$s</string>
+    <string name="signed_in_as">Sesión iniciada como %1$s</string>
+    <string name="sync_failed_background">Entrada guardada localmente. Error al sincronizar en segundo plano — se reintentará cuando esté en línea.</string>
+    <string name="amount_is_mandatory">El monto es obligatorio</string>
+    <string name="error_loading_file">Algo salió mal al cargar el archivo, por favor intenta de nuevo</string>
+    <string name="creating">Creando...</string>
+    <string name="updating">Actualizando...</string>
 </resources>

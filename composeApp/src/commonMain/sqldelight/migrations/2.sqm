@@ -1,0 +1,6 @@
+ALTER TABLE budget_entry ADD COLUMN server_id INTEGER;
+ALTER TABLE budget_entry ADD COLUMN is_synced INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE budget_entry ADD COLUMN created_by_email TEXT;
+ALTER TABLE budget_entry ADD COLUMN updated_by_email TEXT;
+ALTER TABLE budget_entry ADD COLUMN creation_date TEXT;
+ALTER TABLE budget_entry ADD COLUMN modification_date TEXT;

@@ -7,13 +7,19 @@ import org.koin.dsl.module
 
 val smsModule = module {
 
-    single { SmsMapper(preferencesManager = get()) }
+    single {
+        SmsMapper(
+            preferencesManager = get(),
+            stringResourceProvider = get()
+        )
+    }
 
     single<SmsService> {
         ProcessSmsUseCase(
             smsMapper = get(),
             budgetEntryRepository = get(),
-            notificationManager = get()
+            notificationManager = get(),
+            stringResourceProvider = get()
         )
     }
 }

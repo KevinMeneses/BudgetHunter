@@ -36,6 +36,12 @@ class BudgetLocalDataSource(
         cachedList.firstOrNull { it.id == id }
     }
 
+    fun getByServerId(serverId: Long): Budget? =
+        queries.selectByServerId(serverId, ::mapSelectAllToBudget).executeAsOneOrNull()
+
+    fun getUnsynced(): List<Budget> =
+        queries.selectUnsynced(::mapSelectAllToBudget).executeAsList()
+
     suspend fun getAllFilteredBy(filter: BudgetFilter): List<Budget> = cacheMutex.withLock {
         cachedList.filter {
             if (filter.name.isNullOrBlank()) true
@@ -51,24 +57,38 @@ class BudgetLocalDataSource(
             queries.insert(
                 name = budget.name,
                 amount = budget.amount,
-                date = budget.date
+                date = budget.date,
+                server_id = budget.serverId,
+                is_synced = if (budget.isSynced) 1L else 0L,
+                last_synced_at = budget.lastSyncedAt
             )
 
             savedId = queries
                 .selectLastId()
                 .executeAsOne()
-                .toInt()
+                .toInt() // SQLite lastInsertRowId is Long; domain model uses Int for local IDs
         }
 
         return budget.copy(id = savedId)
     }
 
     fun update(budget: Budget) = queries.update(
-        id = budget.id.toLong(),
+        id = budget.id.toLong(), // Domain Int → SQLite Long for query parameter
         amount = budget.amount,
         name = budget.name,
-        date = budget.date
+        date = budget.date,
+        server_id = budget.serverId,
+        is_synced = if (budget.isSynced) 1L else 0L,
+        last_synced_at = budget.lastSyncedAt
+    )
+
+    fun markAsSynced(id: Int, serverId: Long, lastSyncedAt: String) = queries.markAsSynced(
+        server_id = serverId,
+        last_synced_at = lastSyncedAt,
+        id = id.toLong() // Domain Int → SQLite Long for query parameter
     )
 
     fun delete(id: Long) = queries.delete(id)
+
+    fun clearAllData() = queries.deleteAll()
 }

@@ -8,6 +8,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
+import budgethunter.composeapp.generated.resources.Res
+import budgethunter.composeapp.generated.resources.confirmation
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun ConfirmationModal(
@@ -15,7 +18,7 @@ fun ConfirmationModal(
     message: String,
     confirmButtonText: String,
     cancelButtonText: String,
-    title: String = "Confirmation", // Make title configurable for KMP
+    title: String? = null, // Make title configurable for KMP
     onDismiss: () -> Unit,
     onConfirm: () -> Unit
 ) {
@@ -24,7 +27,7 @@ fun ConfirmationModal(
             onDismissRequest = onDismiss,
             title = {
                 Text(
-                    text = title,
+                    text = title ?: stringResource(Res.string.confirmation),
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary

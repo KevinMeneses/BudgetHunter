@@ -1,0 +1,120 @@
+package com.meneses.budgethunter.auth
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import budgethunter.composeapp.generated.resources.Res
+import budgethunter.composeapp.generated.resources.error_confirm_password_required
+import budgethunter.composeapp.generated.resources.error_email_required
+import budgethunter.composeapp.generated.resources.error_name_required
+import budgethunter.composeapp.generated.resources.error_password_required
+import budgethunter.composeapp.generated.resources.error_password_too_short
+import budgethunter.composeapp.generated.resources.error_passwords_do_not_match
+import budgethunter.composeapp.generated.resources.error_sign_up_failed
+import com.meneses.budgethunter.auth.application.SignUpEvent
+import com.meneses.budgethunter.auth.application.SignUpIntent
+import com.meneses.budgethunter.auth.application.SignUpState
+import com.meneses.budgethunter.auth.data.AuthRepository
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+
+class SignUpViewModel(
+    private val authRepository: AuthRepository
+) : ViewModel() {
+
+    val uiState get() = _uiState.asStateFlow()
+    private val _uiState = MutableStateFlow(SignUpState())
+
+    private val _events = Channel<SignUpEvent>(Channel.BUFFERED)
+    val events = _events.receiveAsFlow()
+
+    fun sendIntent(intent: SignUpIntent) {
+        when (intent) {
+            is SignUpIntent.EmailChanged -> updateEmail(intent.email)
+            is SignUpIntent.NameChanged -> updateName(intent.name)
+            is SignUpIntent.PasswordChanged -> updatePassword(intent.password)
+            is SignUpIntent.ConfirmPasswordChanged -> updateConfirmPassword(intent.confirmPassword)
+            is SignUpIntent.SignUpClicked -> signUp()
+            is SignUpIntent.DismissError -> dismissError()
+            is SignUpIntent.NavigateBack -> _events.trySend(SignUpEvent.NavigateToSignIn)
+        }
+    }
+
+    private fun updateEmail(email: String) {
+        _uiState.update { it.copy(email = email) }
+    }
+
+    private fun updateName(name: String) {
+        _uiState.update { it.copy(name = name) }
+    }
+
+    private fun updatePassword(password: String) {
+        _uiState.update { it.copy(password = password) }
+    }
+
+    private fun updateConfirmPassword(confirmPassword: String) {
+        _uiState.update { it.copy(confirmPassword = confirmPassword) }
+    }
+
+    private fun signUp() {
+        val currentState = _uiState.value
+
+        // Validation
+        when {
+            currentState.email.isBlank() -> {
+                _uiState.update { it.copy(error = Res.string.error_email_required) }
+                return
+            }
+            currentState.name.isBlank() -> {
+                _uiState.update { it.copy(error = Res.string.error_name_required) }
+                return
+            }
+            currentState.password.isBlank() -> {
+                _uiState.update { it.copy(error = Res.string.error_password_required) }
+                return
+            }
+            currentState.confirmPassword.isBlank() -> {
+                _uiState.update { it.copy(error = Res.string.error_confirm_password_required) }
+                return
+            }
+            currentState.password != currentState.confirmPassword -> {
+                _uiState.update { it.copy(error = Res.string.error_passwords_do_not_match) }
+                return
+            }
+            currentState.password.length < 6 -> {
+                _uiState.update { it.copy(error = Res.string.error_password_too_short) }
+                return
+            }
+        }
+
+        _uiState.update { it.copy(isLoading = true, error = null) }
+
+        viewModelScope.launch {
+            authRepository.signUp(
+                email = currentState.email,
+                name = currentState.name,
+                password = currentState.password
+            ).fold(
+                onSuccess = {
+                    _uiState.update { it.copy(isLoading = false) }
+                    _events.trySend(SignUpEvent.NavigateToSignIn)
+                },
+                onFailure = {
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            error = Res.string.error_sign_up_failed
+                        )
+                    }
+                }
+            )
+        }
+    }
+
+    private fun dismissError() {
+        _uiState.update { it.copy(error = null) }
+    }
+}
