@@ -13,6 +13,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.meneses.budgethunter.MainActivity
+import java.util.concurrent.atomic.AtomicInteger
 
 class AndroidNotificationManager(
     private val context: Context
@@ -37,6 +38,10 @@ class AndroidNotificationManager(
         try {
             createNotificationChannel()
 
+            // Every notification gets its own id so a new one stacks instead of
+            // replacing the previous transaction the user has not read yet
+            val notificationId = nextNotificationId()
+
             // Create intent to open the app when notification is tapped
             val intent = Intent(context, MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
@@ -44,21 +49,23 @@ class AndroidNotificationManager(
 
             val pendingIntent = PendingIntent.getActivity(
                 context,
-                999,
+                notificationId,
                 intent,
-                PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
 
             val notificationBuilder = NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(android.R.drawable.ic_dialog_info) // TODO: Use app icon when available
                 .setContentTitle(title)
                 .setContentText(message)
+                .setStyle(NotificationCompat.BigTextStyle().bigText(message))
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setAutoCancel(true)
+                .setGroup(NOTIFICATION_GROUP)
                 .setContentIntent(pendingIntent)
 
             with(NotificationManagerCompat.from(context)) {
-                notify(INFO_NOTIFICATION_ID, notificationBuilder.build())
+                notify(notificationId, notificationBuilder.build())
             }
         } catch (_: SecurityException) {
             // Fall back to Toast if notification fails
@@ -78,8 +85,14 @@ class AndroidNotificationManager(
         notificationManager.createNotificationChannel(channel)
     }
 
+    private fun nextNotificationId(): Int =
+        NOTIFICATION_ID_BASE + notificationCounter.getAndIncrement().mod(MAX_STACKED_NOTIFICATIONS)
+
     companion object {
         private const val CHANNEL_ID = "sms_transactions"
-        private const val INFO_NOTIFICATION_ID = 1002
+        private const val NOTIFICATION_GROUP = "com.meneses.budgethunter.SMS_TRANSACTIONS"
+        private const val NOTIFICATION_ID_BASE = 1002
+        private const val MAX_STACKED_NOTIFICATIONS = 50
+        private val notificationCounter = AtomicInteger(0)
     }
 }
