@@ -128,11 +128,16 @@
     <string name="ignore_transaction">Ignore</string>
     <string name="transaction_added">Transaction added successfully</string>
     <string name="transaction_failed">Error adding transaction</string>
-    <string name="transaction_added_message">Transaction for %1$s was detected</string>
-    <string name="transaction_failed_message">No bank configuration found for this SMS</string>
+    <string name="transaction_added_message">An expense of %1$s was registered</string>
+    <string name="transaction_income_added_message">An income of %1$s was registered</string>
+    <string name="transaction_failed_message">The amount could not be read from the bank message</string>
     <string name="transaction_error">Transaction error</string>
     <string name="transaction_error_message">Error processing SMS: %1$s</string>
     <string name="sms_transaction_from_bank">Transaction from %1$s</string>
+    <string name="transaction_no_budget">No default budget</string>
+    <string name="transaction_no_budget_message">Set a default budget to register transactions automatically</string>
+    <string name="transaction_unrecognized">Bank message not recognized</string>
+    <string name="transaction_unrecognized_message">This message could not be read, review it and add it manually: %1$s</string>
     
     <!-- Bank Settings -->
     <string name="default_budget">Default budget</string>

@@ -34,12 +34,16 @@ class SmsBroadcastReceiver : BroadcastReceiver(), KoinComponent {
 
             if (selectedBankConfigs.isEmpty()) return@launch
 
-            val messages = Telephony.Sms.Intents.getMessagesFromIntent(intent)
-            messages?.forEach { smsMessage ->
-                val sender = smsMessage.originatingAddress
-                val messageBody = smsMessage.messageBody.orEmpty()
-                processSmsMessage(messageBody, sender, selectedBankConfigs)
-            }
+            val messages = Telephony.Sms.Intents.getMessagesFromIntent(intent) ?: return@launch
+
+            // A message longer than a single SMS arrives split in several parts. Each part on its
+            // own is unreadable, so the parts of every sender are joined back into one message.
+            messages
+                .groupBy { it.originatingAddress }
+                .forEach { (sender, parts) ->
+                    val messageBody = parts.joinToString(separator = "") { it.messageBody.orEmpty() }
+                    processSmsMessage(messageBody, sender, selectedBankConfigs)
+                }
         }
     }
 

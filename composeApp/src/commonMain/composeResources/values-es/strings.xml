@@ -128,11 +128,16 @@
     <string name="ignore_transaction">Ignorar</string>
     <string name="transaction_added">Transacción agregada exitosamente</string>
     <string name="transaction_failed">Error al agregar transacción</string>
-    <string name="transaction_added_message">Se detectó una transacción por %1$s</string>
-    <string name="transaction_failed_message">No se encontró configuración bancaria para este SMS</string>
+    <string name="transaction_added_message">Se registró un gasto por %1$s</string>
+    <string name="transaction_income_added_message">Se registró un ingreso por %1$s</string>
+    <string name="transaction_failed_message">No se pudo leer el monto del mensaje del banco</string>
     <string name="transaction_error">Error de transacción</string>
     <string name="transaction_error_message">Error procesando SMS: %1$s</string>
     <string name="sms_transaction_from_bank">Transacción de %1$s</string>
+    <string name="transaction_no_budget">Sin presupuesto por defecto</string>
+    <string name="transaction_no_budget_message">Configura un presupuesto por defecto para registrar las transacciones automáticamente</string>
+    <string name="transaction_unrecognized">Mensaje del banco no reconocido</string>
+    <string name="transaction_unrecognized_message">No se pudo interpretar este mensaje, revísalo y agrégalo manualmente: %1$s</string>
     
     <!-- Bank Settings -->
     <string name="default_budget">Presupuesto por defecto</string>
