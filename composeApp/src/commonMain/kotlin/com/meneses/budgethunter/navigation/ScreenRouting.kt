@@ -124,7 +124,7 @@ fun BudgetHunterNavigation() {
                 )
             }
 
-            composable<SignInScreen> {
+            composable<SignInScreen> { backStackEntry ->
                 val signInViewModel: SignInViewModel = koinInject()
                 val uiState by signInViewModel.uiState.collectAsStateWithLifecycle()
 
@@ -151,20 +151,20 @@ fun BudgetHunterNavigation() {
                 SignInScreen.Show(
                     uiState = uiState,
                     onIntent = signInViewModel::sendIntent,
-                    navigateToSignUp = { navController.navigate(SignUpScreen) },
+                    navigateToSignUp = { navController.navigateOnce(SignUpScreen) },
                     canNavigateBack = cameFromSignUp,
-                    onNavigateBack = { navController.popBackStack() }
+                    onNavigateBack = { navController.popBackStackOnce(backStackEntry) }
                 )
             }
 
-            composable<SignUpScreen> {
+            composable<SignUpScreen> { backStackEntry ->
                 val signUpViewModel: SignUpViewModel = koinInject()
                 val uiState by signUpViewModel.uiState.collectAsStateWithLifecycle()
 
                 LaunchedEffect(Unit) {
                     signUpViewModel.events.collect { event ->
                         when (event) {
-                            is SignUpEvent.NavigateToSignIn -> navController.popBackStack()
+                            is SignUpEvent.NavigateToSignIn -> navController.popBackStackOnce(backStackEntry)
                         }
                     }
                 }
@@ -185,7 +185,7 @@ fun BudgetHunterNavigation() {
                 LaunchedEffect(Unit) {
                     budgetListViewModel.events.collect { event ->
                         when (event) {
-                            is BudgetListEvent.NavigateToBudget -> navController.navigate(
+                            is BudgetListEvent.NavigateToBudget -> navController.navigateOnce(
                                 BudgetDetailScreen(event.budget)
                             )
                             is BudgetListEvent.NavigateToSignIn -> navController.navigate(
@@ -222,20 +222,20 @@ fun BudgetHunterNavigation() {
                 BudgetListScreen.Show(
                     uiState = uiState,
                     onIntent = budgetListViewModel::sendIntent,
-                    showSettings = { navController.navigate(SettingsScreen) },
+                    showSettings = { navController.navigateOnce(SettingsScreen) },
                     networkMonitor = networkMonitor,
                     snackbarHostState = snackbarHostState
                 )
             }
 
-            composable<SettingsScreen> {
+            composable<SettingsScreen> { backStackEntry ->
                 val settingsViewModel: SettingsViewModel = koinInject()
                 val uiState by settingsViewModel.uiState.collectAsStateWithLifecycle()
 
                 SettingsScreen.Show(
                     uiState = uiState,
                     onIntent = settingsViewModel::sendIntent,
-                    goBack = { navController.popBackStack() }
+                    goBack = { navController.popBackStackOnce(backStackEntry) }
                 )
             }
 
@@ -254,8 +254,8 @@ fun BudgetHunterNavigation() {
                 LaunchedEffect(Unit) {
                     budgetDetailViewModel.events.collect { event ->
                         when (event) {
-                            is BudgetDetailEvent.NavigateBack -> navController.popBackStack()
-                            is BudgetDetailEvent.ShowEntry -> navController.navigate(
+                            is BudgetDetailEvent.NavigateBack -> navController.popBackStackOnce(backStackEntry)
+                            is BudgetDetailEvent.ShowEntry -> navController.navigateOnce(
                                 BudgetEntryScreen(event.entry)
                             )
                             is BudgetDetailEvent.ShowError -> errorResource = event.message
@@ -293,13 +293,13 @@ fun BudgetHunterNavigation() {
                     uiState = uiState,
                     onIntent = budgetDetailViewModel::sendIntent,
                     snackbarHostState = snackbarHostState,
-                    goBack = { navController.popBackStack() },
+                    goBack = { navController.popBackStackOnce(backStackEntry) },
                     showBudgetMetrics = { budget ->
-                        navController.navigate(BudgetMetricsScreen(budget))
+                        navController.navigateOnce(BudgetMetricsScreen(budget))
                     },
-                    showSettings = { navController.navigate(SettingsScreen) },
+                    showSettings = { navController.navigateOnce(SettingsScreen) },
                     showCollaborators = { serverId, budgetName ->
-                        navController.navigate(CollaboratorsScreen(serverId, budgetName))
+                        navController.navigateOnce(CollaboratorsScreen(serverId, budgetName))
                     },
                     networkMonitor = networkMonitor
                 )
@@ -317,7 +317,7 @@ fun BudgetHunterNavigation() {
                 LaunchedEffect(Unit) {
                     budgetEntryViewModel.events.collect { event ->
                         when (event) {
-                            is BudgetEntryEvent.NavigateBack -> navController.popBackStack()
+                            is BudgetEntryEvent.NavigateBack -> navController.popBackStackOnce(backStackEntry)
                             is BudgetEntryEvent.ShowNotification -> pendingNotification = event.message
                         }
                     }
@@ -347,7 +347,7 @@ fun BudgetHunterNavigation() {
 
                 budgetMetricsRoute.Show(
                     uiState = uiState,
-                    goBack = { navController.popBackStack() }
+                    goBack = { navController.popBackStackOnce(backStackEntry) }
                 )
             }
 
@@ -372,7 +372,7 @@ fun BudgetHunterNavigation() {
                     uiState = uiState,
                     onIntent = collaboratorsViewModel::sendIntent,
                     snackbarHostState = snackbarHostState,
-                    goBack = { navController.popBackStack() }
+                    goBack = { navController.popBackStackOnce(backStackEntry) }
                 )
             }
         }
