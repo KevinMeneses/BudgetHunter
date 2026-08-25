@@ -347,6 +347,7 @@ fun BudgetHunterNavigation() {
 
                 budgetMetricsRoute.Show(
                     uiState = uiState,
+                    onIntent = budgetMetricsViewModel::sendIntent,
                     goBack = { navController.popBackStackOnce(backStackEntry) }
                 )
             }

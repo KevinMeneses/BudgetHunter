@@ -294,4 +294,10 @@
     <string name="creating">Creando...</string>
     <string name="updating">Actualizando...</string>
 
+    <!-- Metrics -->
+    <string name="metrics_expenses">Gastos</string>
+    <string name="metrics_incomes">Ingresos</string>
+    <string name="metrics_total">Total</string>
+    <string name="metrics_empty_title">Todavía no hay nada que mostrar</string>
+    <string name="metrics_empty_message">Agrega entradas a este presupuesto para ver cómo se distribuyen por categoría</string>
 </resources>

@@ -9,24 +9,29 @@ class GetTotalsPerCategoryUseCase(
     private val budgetEntryLocalDataSource: BudgetEntryLocalDataSource,
     private val defaultDispatcher: CoroutineDispatcher
 ) {
-    suspend fun execute(): Map<BudgetEntry.Category, Double> = withContext(defaultDispatcher) {
-        val categories = BudgetEntry
-            .getCategories()
-            .map { it }
-            .associateWith { 0.0 }
-            .toMutableMap()
+    /**
+     * Totals per category for one kind of entry only: expenses and incomes are read as
+     * separate charts, so mixing them would make both of them wrong.
+     */
+    suspend fun execute(type: BudgetEntry.Type): Map<BudgetEntry.Category, Double> =
+        withContext(defaultDispatcher) {
+            val categories = BudgetEntry
+                .getCategories()
+                .associateWith { 0.0 }
+                .toMutableMap()
 
-        budgetEntryLocalDataSource
-            .getAllCached()
-            .forEach {
-                val previousAmount = categories[it.category] ?: 0.0
-                val amountToAdd = it.amount.toDoubleOrNull() ?: 0.0
-                categories[it.category] = previousAmount + amountToAdd
-            }
+            budgetEntryLocalDataSource
+                .getAllCached()
+                .filter { it.type == type }
+                .forEach {
+                    val previousAmount = categories[it.category] ?: 0.0
+                    val amountToAdd = it.amount.toDoubleOrNull() ?: 0.0
+                    categories[it.category] = previousAmount + amountToAdd
+                }
 
-        return@withContext categories.entries
-            .filter { it.value != 0.0 }
-            .sortedByDescending { it.value }
-            .associate { it.key to it.value }
-    }
+            return@withContext categories.entries
+                .filter { it.value != 0.0 }
+                .sortedByDescending { it.value }
+                .associate { it.key to it.value }
+        }
 }
