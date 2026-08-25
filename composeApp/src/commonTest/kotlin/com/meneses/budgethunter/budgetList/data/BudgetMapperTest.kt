@@ -18,7 +18,8 @@ class BudgetMapperTest {
             serverId = null,
             isSynced = 0L,
             lastSyncedAt = null,
-            totalExpenses = 250.50
+            totalExpenses = 250.50,
+            totalIncomes = 400.0
         )
 
         assertEquals(1, budget.id)
@@ -26,6 +27,7 @@ class BudgetMapperTest {
         assertEquals("Test Budget", budget.name)
         assertEquals("2024-01-15", budget.date)
         assertEquals(250.50, budget.totalExpenses)
+        assertEquals(400.0, budget.totalIncomes)
         assertNull(budget.serverId)
         assertFalse(budget.isSynced)
         assertNull(budget.lastSyncedAt)
@@ -41,7 +43,8 @@ class BudgetMapperTest {
             serverId = null,
             isSynced = 0L,
             lastSyncedAt = null,
-            totalExpenses = 0.0
+            totalExpenses = 0.0,
+            totalIncomes = 0.0
         )
 
         assertEquals(999, budget.id)
@@ -57,7 +60,8 @@ class BudgetMapperTest {
             serverId = null,
             isSynced = 0L,
             lastSyncedAt = null,
-            totalExpenses = 0.0
+            totalExpenses = 0.0,
+            totalIncomes = 0.0
         )
 
         assertEquals(0, budget.id)
@@ -75,7 +79,8 @@ class BudgetMapperTest {
             serverId = null,
             isSynced = 0L,
             lastSyncedAt = null,
-            totalExpenses = 500000.50
+            totalExpenses = 500000.50,
+            totalIncomes = 0.0
         )
 
         assertEquals(Long.MAX_VALUE.toInt(), budget.id)
@@ -93,7 +98,8 @@ class BudgetMapperTest {
             serverId = null,
             isSynced = 0L,
             lastSyncedAt = null,
-            totalExpenses = -100.0
+            totalExpenses = -100.0,
+            totalIncomes = 0.0
         )
 
         assertEquals(-100.0, budget.totalExpenses)
@@ -109,7 +115,8 @@ class BudgetMapperTest {
             serverId = null,
             isSynced = 0L,
             lastSyncedAt = null,
-            totalExpenses = 0.0
+            totalExpenses = 0.0,
+            totalIncomes = 0.0
         )
 
         assertEquals("", budget.name)
@@ -126,7 +133,8 @@ class BudgetMapperTest {
             serverId = null,
             isSynced = 0L,
             lastSyncedAt = null,
-            totalExpenses = 0.0
+            totalExpenses = 0.0,
+            totalIncomes = 0.0
         )
 
         assertEquals("Budget with \$pecial Ch@racters & Symbols!", budget.name)
@@ -142,7 +150,8 @@ class BudgetMapperTest {
             serverId = null,
             isSynced = 0L,
             lastSyncedAt = null,
-            totalExpenses = 67.891234
+            totalExpenses = 67.891234,
+            totalIncomes = 0.0
         )
 
         assertEquals(123.456789, budget.amount)
@@ -159,7 +168,8 @@ class BudgetMapperTest {
             serverId = 42L,
             isSynced = 1L,
             lastSyncedAt = null,
-            totalExpenses = 0.0
+            totalExpenses = 0.0,
+            totalIncomes = 0.0
         )
 
         assertEquals(42L, budget.serverId)
@@ -175,7 +185,8 @@ class BudgetMapperTest {
             serverId = 10L,
             isSynced = 1L,
             lastSyncedAt = "2024-06-01T10:00:00",
-            totalExpenses = 0.0
+            totalExpenses = 0.0,
+            totalIncomes = 0.0
         )
 
         assertTrue(budget.isSynced)
@@ -192,7 +203,8 @@ class BudgetMapperTest {
             serverId = null,
             isSynced = 0L,
             lastSyncedAt = null,
-            totalExpenses = 0.0
+            totalExpenses = 0.0,
+            totalIncomes = 0.0
         )
 
         assertFalse(budget.isSynced)

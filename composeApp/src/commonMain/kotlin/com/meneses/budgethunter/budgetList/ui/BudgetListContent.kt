@@ -1,10 +1,13 @@
 package com.meneses.budgethunter.budgetList.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -46,6 +49,7 @@ import com.meneses.budgethunter.commons.ui.OfflineBanner
 import com.meneses.budgethunter.commons.ui.SyncStatusIndicator
 import com.meneses.budgethunter.commons.util.toCurrency
 import com.meneses.budgethunter.theme.AppColors
+import com.meneses.budgethunter.theme.green_success
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
 
@@ -208,6 +212,50 @@ private fun BudgetItem(
                 }
             )
         }
+
+        SpendingBar(budget)
+    }
+}
+
+/** Barely there on purpose: it is a hint, not another number to read. */
+private const val SPENDING_BAR_ALPHA = 0.99f
+
+/**
+ * Thin bar pinned to the bottom edge of the card: the red side is how much of the available
+ * money is already spent, the green side is what is left.
+ */
+@Composable
+private fun SpendingBar(budget: Budget) {
+    val spentFraction = when {
+        budget.totalAvailable > 0 -> (budget.totalExpenses / budget.totalAvailable)
+            .coerceIn(0.0, 1.0)
+            .toFloat()
+        budget.totalExpenses > 0 -> 1f
+        else -> 0f
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(4.dp)
+    ) {
+        if (spentFraction > 0f) {
+            Box(
+                modifier = Modifier
+                    .weight(spentFraction)
+                    .fillMaxHeight()
+                    .background(AppColors.error.copy(alpha = SPENDING_BAR_ALPHA))
+            )
+        }
+
+        if (spentFraction < 1f) {
+            Box(
+                modifier = Modifier
+                    .weight(1f - spentFraction)
+                    .fillMaxHeight()
+                    .background(green_success.copy(alpha = SPENDING_BAR_ALPHA))
+            )
+        }
     }
 }
 
@@ -234,7 +282,7 @@ private fun getExpensesWithBoldSlash(budget: Budget): AnnotatedString {
                 fontSize = MaterialTheme.typography.bodySmall.fontSize
             )
         ) {
-            append(budget.amount.toCurrency())
+            append(budget.totalAvailable.toCurrency())
         }
     }
 }
