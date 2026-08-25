@@ -1,10 +1,12 @@
 package com.meneses.budgethunter.budgetMetrics
 
-import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
+import com.meneses.budgethunter.budgetMetrics.application.BudgetMetricsIntent
 import com.meneses.budgethunter.budgetMetrics.application.BudgetMetricsState
 import com.meneses.budgethunter.budgetMetrics.application.GetTotalsPerCategoryUseCase
+import com.meneses.budgethunter.budgetMetrics.domain.CategoryMetric
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -17,38 +19,40 @@ class BudgetMetricsViewModel(
     val uiState = _uiState.asStateFlow()
 
     init {
-        getMetrics()
+        getMetrics(_uiState.value.selectedType)
     }
 
-    private fun getMetrics() {
+    fun sendIntent(intent: BudgetMetricsIntent) {
+        when (intent) {
+            is BudgetMetricsIntent.SelectType -> selectType(intent.type)
+        }
+    }
+
+    private fun selectType(type: BudgetEntry.Type) {
+        if (type == _uiState.value.selectedType) return
+        _uiState.update { it.copy(selectedType = type) }
+        getMetrics(type)
+    }
+
+    private fun getMetrics(type: BudgetEntry.Type) {
         viewModelScope.launch {
-            val totalsPerCategory = getTotalsPerCategoryUseCase.execute()
+            val totalsPerCategory = getTotalsPerCategoryUseCase.execute(type)
             val total = totalsPerCategory.values.sum()
-            val percentages = totalsPerCategory.map { ((it.value * 100) / total) }
+
+            val categoryMetrics = totalsPerCategory.map { (category, amount) ->
+                CategoryMetric(
+                    category = category,
+                    amount = amount,
+                    percentage = if (total == 0.0) 0.0 else (amount * 100) / total
+                )
+            }
 
             _uiState.update {
                 it.copy(
-                    metricsData = totalsPerCategory,
-                    percentages = percentages,
-                    chartColors = getChartColors()
-                        .take(totalsPerCategory.size)
+                    categoryMetrics = categoryMetrics,
+                    total = total
                 )
             }
         }
     }
-
-    private fun getChartColors() =
-        listOf(
-            Color.Black,
-            Color.LightGray,
-            Color.Red,
-            Color.Blue,
-            Color.Cyan,
-            Color.Gray,
-            Color.Green,
-            Color.Magenta,
-            Color.Yellow,
-            Color.DarkGray,
-            Color.White
-        )
 }

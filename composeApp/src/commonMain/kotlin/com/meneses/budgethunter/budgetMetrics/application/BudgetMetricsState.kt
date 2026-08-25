@@ -1,10 +1,10 @@
 package com.meneses.budgethunter.budgetMetrics.application
 
-import androidx.compose.ui.graphics.Color
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
+import com.meneses.budgethunter.budgetMetrics.domain.CategoryMetric
 
 data class BudgetMetricsState(
-    val metricsData: Map<BudgetEntry.Category, Double> = emptyMap(),
-    val percentages: List<Double> = listOf(),
-    val chartColors: List<Color> = emptyList()
+    val selectedType: BudgetEntry.Type = BudgetEntry.Type.OUTCOME,
+    val categoryMetrics: List<CategoryMetric> = emptyList(),
+    val total: Double = 0.0
 )

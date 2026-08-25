@@ -347,6 +347,7 @@ fun BudgetHunterNavigation() {
 
                 budgetMetricsRoute.Show(
                     uiState = uiState,
+                    onIntent = budgetMetricsViewModel::sendIntent,
                     goBack = { navController.popBackStackOnce(backStackEntry) }
                 )
             }
@@ -358,13 +359,19 @@ fun BudgetHunterNavigation() {
                 )
                 val uiState by collaboratorsViewModel.uiState.collectAsStateWithLifecycle()
                 val snackbarHostState = remember { SnackbarHostState() }
+                var pendingEvent by remember { mutableStateOf<CollaboratorsEvent?>(null) }
 
                 LaunchedEffect(Unit) {
                     collaboratorsViewModel.events.collect { event ->
-                        when (event) {
-                            is CollaboratorsEvent.ShowError -> snackbarHostState.showSnackbar(event.message)
-                            is CollaboratorsEvent.ShowSuccess -> snackbarHostState.showSnackbar(event.message)
-                        }
+                        pendingEvent = event
+                    }
+                }
+
+                pendingEvent?.let { event ->
+                    val message = stringResource(event.message, *event.formatArgs.toTypedArray())
+                    LaunchedEffect(event) {
+                        snackbarHostState.showSnackbar(message)
+                        pendingEvent = null
                     }
                 }
 

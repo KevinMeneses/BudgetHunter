@@ -1,5 +1,13 @@
 package com.meneses.budgethunter.collaborator
 
+import budgethunter.composeapp.generated.resources.Res
+import budgethunter.composeapp.generated.resources.collaborator_added_successfully
+import budgethunter.composeapp.generated.resources.collaborator_removed_successfully
+import budgethunter.composeapp.generated.resources.email_cannot_be_empty
+import budgethunter.composeapp.generated.resources.failed_to_add_collaborator
+import budgethunter.composeapp.generated.resources.failed_to_load_collaborators
+import budgethunter.composeapp.generated.resources.failed_to_remove_collaborator
+import budgethunter.composeapp.generated.resources.invalid_email_address
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.meneses.budgethunter.collaborator.application.CollaboratorsEvent
@@ -50,9 +58,7 @@ class CollaboratorsViewModel(
                 .onFailure { error ->
                     _uiState.update { it.copy(isLoading = false) }
                     _events.trySend(
-                        CollaboratorsEvent.ShowError(
-                            error.message ?: "Failed to load collaborators"
-                        )
+                        CollaboratorsEvent.ShowError(Res.string.failed_to_load_collaborators)
                     )
                 }
         }
@@ -64,13 +70,13 @@ class CollaboratorsViewModel(
 
     private fun addCollaborator(email: String) {
         if (email.isBlank()) {
-            _events.trySend(CollaboratorsEvent.ShowError("Email cannot be empty"))
+            _events.trySend(CollaboratorsEvent.ShowError(Res.string.email_cannot_be_empty))
             return
         }
 
         // Basic email validation
         if (!email.contains("@") || !email.contains(".")) {
-            _events.trySend(CollaboratorsEvent.ShowError("Please enter a valid email address"))
+            _events.trySend(CollaboratorsEvent.ShowError(Res.string.invalid_email_address))
             return
         }
 
@@ -87,7 +93,8 @@ class CollaboratorsViewModel(
                     }
                     _events.trySend(
                         CollaboratorsEvent.ShowSuccess(
-                            "Successfully added ${response.collaboratorName} to ${response.budgetName}"
+                            message = Res.string.collaborator_added_successfully,
+                            formatArgs = listOf(response.collaboratorName, response.budgetName)
                         )
                     )
                     // Reload collaborators to show the new one
@@ -96,9 +103,7 @@ class CollaboratorsViewModel(
                 .onFailure { error ->
                     _uiState.update { it.copy(isAddingCollaborator = false) }
                     _events.trySend(
-                        CollaboratorsEvent.ShowError(
-                            error.message ?: "Failed to add collaborator"
-                        )
+                        CollaboratorsEvent.ShowError(Res.string.failed_to_add_collaborator)
                     )
                 }
         }
@@ -122,7 +127,8 @@ class CollaboratorsViewModel(
                     }
                     _events.trySend(
                         CollaboratorsEvent.ShowSuccess(
-                            "Successfully removed $email from collaborators"
+                            message = Res.string.collaborator_removed_successfully,
+                            formatArgs = listOf(email)
                         )
                     )
                     // Reload collaborators to reflect the removal
@@ -131,9 +137,7 @@ class CollaboratorsViewModel(
                 .onFailure { error ->
                     _uiState.update { it.copy(isRemovingCollaborator = false) }
                     _events.trySend(
-                        CollaboratorsEvent.ShowError(
-                            error.message ?: "Failed to remove collaborator"
-                        )
+                        CollaboratorsEvent.ShowError(Res.string.failed_to_remove_collaborator)
                     )
                 }
         }

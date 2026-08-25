@@ -106,6 +106,25 @@
     <string name="enter_collaboration_code">Ingresa el código de colaboración:</string>
     <string name="code">Código</string>
     <string name="manage_collaborators">Colaborar</string>
+    <string name="collaborators_title">Colaboradores - %1$s</string>
+    <string name="add_collaborator">Agregar colaborador</string>
+    <string name="add_collaborator_message">Ingresa el correo de la persona que quieres agregar como colaborador:</string>
+    <string name="collaborator_email_placeholder">colaborador@ejemplo.com</string>
+    <string name="add">Agregar</string>
+    <string name="adding">Agregando...</string>
+    <string name="remove_collaborator">Quitar colaborador</string>
+    <string name="remove_collaborator_confirmation_message">¿Seguro que quieres quitar a %1$s de los colaboradores? Ya no tendrá acceso a este presupuesto.</string>
+    <string name="remove">Quitar</string>
+    <string name="removing">Quitando...</string>
+    <string name="no_collaborators_yet">Aún no hay colaboradores</string>
+    <string name="add_collaborators_description">Agrega colaboradores para compartir este presupuesto</string>
+    <string name="collaborator_added_successfully">%1$s fue agregado a %2$s</string>
+    <string name="collaborator_removed_successfully">%1$s fue quitado de los colaboradores</string>
+    <string name="failed_to_load_collaborators">No se pudieron cargar los colaboradores</string>
+    <string name="failed_to_add_collaborator">No se pudo agregar el colaborador</string>
+    <string name="failed_to_remove_collaborator">No se pudo quitar el colaborador</string>
+    <string name="email_cannot_be_empty">El correo no puede estar vacío</string>
+    <string name="invalid_email_address">Ingresa un correo válido</string>
     
     <!-- Invoices & Attachments -->
     <string name="attach_invoice">Adjuntar comprobante</string>
@@ -274,4 +293,11 @@
     <string name="error_loading_file">Algo salió mal al cargar el archivo, por favor intenta de nuevo</string>
     <string name="creating">Creando...</string>
     <string name="updating">Actualizando...</string>
+
+    <!-- Metrics -->
+    <string name="metrics_expenses">Gastos</string>
+    <string name="metrics_incomes">Ingresos</string>
+    <string name="metrics_total">Total</string>
+    <string name="metrics_empty_title">Todavía no hay nada que mostrar</string>
+    <string name="metrics_empty_message">Agrega entradas a este presupuesto para ver cómo se distribuyen por categoría</string>
 </resources>

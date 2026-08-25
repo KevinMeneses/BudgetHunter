@@ -1,5 +1,9 @@
 package com.meneses.budgethunter.collaborator
 
+import budgethunter.composeapp.generated.resources.Res
+import budgethunter.composeapp.generated.resources.collaborator_added_successfully
+import budgethunter.composeapp.generated.resources.failed_to_add_collaborator
+import budgethunter.composeapp.generated.resources.failed_to_load_collaborators
 import com.meneses.budgethunter.collaborator.application.CollaboratorsEvent
 import com.meneses.budgethunter.collaborator.application.CollaboratorsIntent
 import com.meneses.budgethunter.collaborator.data.CollaboratorRepository
@@ -17,8 +21,8 @@ import kotlinx.coroutines.test.setMain
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertIs
-import kotlin.test.assertTrue
 
 /**
  * Unit tests for CollaboratorsViewModel event emissions.
@@ -67,10 +71,10 @@ class CollaboratorsViewModelTest {
         viewModel.sendIntent(CollaboratorsIntent.LoadCollaborators)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        // Then - a ShowError event is emitted with the error message
+        // Then - a ShowError event is emitted with the localized error message
         val event = viewModel.events.first()
         assertIs<CollaboratorsEvent.ShowError>(event)
-        assertTrue(event.message.isNotBlank())
+        assertEquals(Res.string.failed_to_load_collaborators, event.message)
     }
 
     // ========== addCollaborator success Tests ==========
@@ -99,10 +103,11 @@ class CollaboratorsViewModelTest {
         viewModel.sendIntent(CollaboratorsIntent.AddCollaborator("friend@example.com"))
         testDispatcher.scheduler.advanceUntilIdle()
 
-        // Then - a ShowSuccess event is emitted
+        // Then - a ShowSuccess event is emitted with the names to fill the message in
         val event = viewModel.events.first()
         assertIs<CollaboratorsEvent.ShowSuccess>(event)
-        assertTrue(event.message.contains("Friend") || event.message.contains("My Budget"))
+        assertEquals(Res.string.collaborator_added_successfully, event.message)
+        assertEquals(listOf("Friend", "My Budget"), event.formatArgs)
     }
 
     // ========== addCollaborator failure Tests ==========
@@ -119,9 +124,9 @@ class CollaboratorsViewModelTest {
         viewModel.sendIntent(CollaboratorsIntent.AddCollaborator("unknown@example.com"))
         testDispatcher.scheduler.advanceUntilIdle()
 
-        // Then - a ShowError event is emitted
+        // Then - a ShowError event is emitted with the localized error message
         val event = viewModel.events.first()
         assertIs<CollaboratorsEvent.ShowError>(event)
-        assertTrue(event.message.isNotBlank())
+        assertEquals(Res.string.failed_to_add_collaborator, event.message)
     }
 }
