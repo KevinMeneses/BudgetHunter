@@ -42,7 +42,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import budgethunter.composeapp.generated.resources.Res
+import budgethunter.composeapp.generated.resources.add
+import budgethunter.composeapp.generated.resources.add_collaborator
+import budgethunter.composeapp.generated.resources.add_collaborator_message
+import budgethunter.composeapp.generated.resources.add_collaborators_description
+import budgethunter.composeapp.generated.resources.adding
 import budgethunter.composeapp.generated.resources.back_content_description
+import budgethunter.composeapp.generated.resources.cancel
+import budgethunter.composeapp.generated.resources.collaborator_email_placeholder
+import budgethunter.composeapp.generated.resources.collaborators_title
+import budgethunter.composeapp.generated.resources.email
+import budgethunter.composeapp.generated.resources.no_collaborators_yet
+import budgethunter.composeapp.generated.resources.remove
+import budgethunter.composeapp.generated.resources.remove_collaborator
+import budgethunter.composeapp.generated.resources.remove_collaborator_confirmation_message
+import budgethunter.composeapp.generated.resources.removing
 import com.meneses.budgethunter.collaborator.application.CollaboratorsIntent
 import com.meneses.budgethunter.collaborator.application.CollaboratorsState
 import com.meneses.budgethunter.commons.data.network.models.UserInfo
@@ -78,7 +92,7 @@ data class CollaboratorsScreen(
         Scaffold(
             topBar = {
                 AppBar(
-                    title = "Collaborators - $budgetName",
+                    title = stringResource(Res.string.collaborators_title, budgetName),
                     leftButtonIcon = Icons.AutoMirrored.Filled.ArrowBack,
                     leftButtonDescription = stringResource(Res.string.back_content_description),
                     onLeftButtonClick = goBack
@@ -91,7 +105,7 @@ data class CollaboratorsScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Add,
-                            contentDescription = "Add collaborator"
+                            contentDescription = stringResource(Res.string.add_collaborator)
                         )
                     }
                 }
@@ -166,12 +180,12 @@ private fun CollaboratorsContent(
                         modifier = Modifier.padding(16.dp)
                     )
                     Text(
-                        text = "No collaborators yet",
+                        text = stringResource(Res.string.no_collaborators_yet),
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = "Add collaborators to share this budget",
+                        text = stringResource(Res.string.add_collaborators_description),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -240,7 +254,7 @@ private fun CollaboratorCard(
             ) {
                 Icon(
                     imageVector = Icons.Default.Delete,
-                    contentDescription = "Remove collaborator",
+                    contentDescription = stringResource(Res.string.remove_collaborator),
                     tint = MaterialTheme.colorScheme.error
                 )
             }
@@ -261,18 +275,18 @@ private fun AddCollaboratorDialog(
 
     AlertDialog(
         onDismissRequest = { if (!isLoading) onDismiss() },
-        title = { Text("Add Collaborator") },
+        title = { Text(stringResource(Res.string.add_collaborator)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    text = "Enter the email address of the person you want to add as a collaborator:",
+                    text = stringResource(Res.string.add_collaborator_message),
                     style = MaterialTheme.typography.bodyMedium
                 )
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
-                    label = { Text("Email") },
-                    placeholder = { Text("collaborator@example.com") },
+                    label = { Text(stringResource(Res.string.email)) },
+                    placeholder = { Text(stringResource(Res.string.collaborator_email_placeholder)) },
                     singleLine = true,
                     enabled = !isLoading,
                     modifier = Modifier.fillMaxWidth()
@@ -289,7 +303,7 @@ private fun AddCollaboratorDialog(
                         modifier = Modifier.padding(end = 8.dp)
                     )
                 }
-                Text(if (isLoading) "Adding..." else "Add")
+                Text(stringResource(if (isLoading) Res.string.adding else Res.string.add))
             }
         },
         dismissButton = {
@@ -297,7 +311,7 @@ private fun AddCollaboratorDialog(
                 onClick = onDismiss,
                 enabled = !isLoading
             ) {
-                Text("Cancel")
+                Text(stringResource(Res.string.cancel))
             }
         }
     )
@@ -315,10 +329,10 @@ private fun RemoveCollaboratorConfirmationDialog(
 ) {
     AlertDialog(
         onDismissRequest = { if (!isLoading) onDismiss() },
-        title = { Text("Remove Collaborator") },
+        title = { Text(stringResource(Res.string.remove_collaborator)) },
         text = {
             Text(
-                text = "Are you sure you want to remove $email from the collaborators? They will no longer have access to this budget.",
+                text = stringResource(Res.string.remove_collaborator_confirmation_message, email),
                 style = MaterialTheme.typography.bodyMedium
             )
         },
@@ -336,7 +350,7 @@ private fun RemoveCollaboratorConfirmationDialog(
                         color = MaterialTheme.colorScheme.onError
                     )
                 }
-                Text(if (isLoading) "Removing..." else "Remove")
+                Text(stringResource(if (isLoading) Res.string.removing else Res.string.remove))
             }
         },
         dismissButton = {
@@ -344,7 +358,7 @@ private fun RemoveCollaboratorConfirmationDialog(
                 onClick = onDismiss,
                 enabled = !isLoading
             ) {
-                Text("Cancel")
+                Text(stringResource(Res.string.cancel))
             }
         }
     )
