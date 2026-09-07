@@ -9,6 +9,7 @@ struct iOSApp: App {
         IOSBridge.Companion.shared.filePickerManager = IOSFilePickerManager()
         IOSBridge.Companion.shared.shareManager = IOSShareManager()
         IOSBridge.Companion.shared.notificationManager = IOSNotificationManager()
+        IOSBridge.Companion.shared.keychainStore = IOSKeychainStore()
     }
 
     var body: some Scene {

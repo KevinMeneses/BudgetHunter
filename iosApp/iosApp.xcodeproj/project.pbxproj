@@ -12,6 +12,7 @@
 		2152FB042600AC8F00CF470E /* iOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* iOSApp.swift */; };
 		24BAC3E72E85FDE7009584F1 /* IOSShareManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24BAC3E62E85FDE7009584F1 /* IOSShareManager.swift */; };
 		24BAC3E92E860B20009584F1 /* IOSNotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24BAC3E82E860B20009584F1 /* IOSNotificationManager.swift */; };
+		24BAC3FA2E860B20009584F1 /* IOSKeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24BAC3FB2E860B20009584F1 /* IOSKeychainStore.swift */; };
 		3CC2ECF63D184BD7B9459B8F /* IOSCameraManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56C2619B9E644D8F950C014E /* IOSCameraManager.swift */; };
 		4AA3ECF63D184BD7B9459C8F /* IOSFilePickerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67C2619B9E644D8F950C015E /* IOSFilePickerManager.swift */; };
 		7555FF83242A565900829871 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7555FF82242A565900829871 /* ContentView.swift */; };
@@ -40,6 +41,7 @@
 		2152FB032600AC8F00CF470E /* iOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSApp.swift; sourceTree = "<group>"; };
 		24BAC3E62E85FDE7009584F1 /* IOSShareManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSShareManager.swift; sourceTree = "<group>"; };
 		24BAC3E82E860B20009584F1 /* IOSNotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSNotificationManager.swift; sourceTree = "<group>"; };
+		24BAC3FB2E860B20009584F1 /* IOSKeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSKeychainStore.swift; sourceTree = "<group>"; };
 		24BAC3EA2E8CDAA9009584F1 /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
 		56C2619B9E644D8F950C014E /* IOSCameraManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSCameraManager.swift; sourceTree = "<group>"; };
 		67C2619B9E644D8F950C015E /* IOSFilePickerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSFilePickerManager.swift; sourceTree = "<group>"; };
@@ -95,6 +97,7 @@
 			isa = PBXGroup;
 			children = (
 				24BAC3E82E860B20009584F1 /* IOSNotificationManager.swift */,
+				24BAC3FB2E860B20009584F1 /* IOSKeychainStore.swift */,
 				058557BA273AAA24004C7B11 /* Assets.xcassets */,
 				2152FB032600AC8F00CF470E /* iOSApp.swift */,
 				56C2619B9E644D8F950C014E /* IOSCameraManager.swift */,
@@ -223,6 +226,7 @@
 				24BAC3E72E85FDE7009584F1 /* IOSShareManager.swift in Sources */,
 				7555FF83242A565900829871 /* ContentView.swift in Sources */,
 				24BAC3E92E860B20009584F1 /* IOSNotificationManager.swift in Sources */,
+				24BAC3FA2E860B20009584F1 /* IOSKeychainStore.swift in Sources */,
 				4AA3ECF63D184BD7B9459C8F /* IOSFilePickerManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

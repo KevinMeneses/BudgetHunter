@@ -1,7 +1,5 @@
 package com.meneses.budgethunter.di
 
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
 import com.meneses.budgethunter.BuildKonfig
 import com.meneses.budgethunter.auth.SignInViewModel
 import com.meneses.budgethunter.auth.SignUpViewModel
@@ -19,10 +17,6 @@ import org.koin.dsl.module
 
 val authModule = module {
 
-    single<TokenStorage> {
-        TokenStorage(get<DataStore<Preferences>>())
-    }
-
     single<HttpClient>(named("AuthHttpClient")) {
         createHttpClient(
             baseUrl = getBaseUrl(),
@@ -37,7 +31,8 @@ val authModule = module {
         AuthRepository(
             httpClient = get<HttpClient>(named("AuthHttpClient")),
             tokenStorage = get<TokenStorage>(),
-            ioDispatcher = get<CoroutineDispatcher>(named("IO"))
+            ioDispatcher = get<CoroutineDispatcher>(named("IO")),
+            logger = get()
         )
     }
 

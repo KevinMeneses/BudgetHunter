@@ -5,6 +5,8 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import com.meneses.budgethunter.BuildConfig
+import com.meneses.budgethunter.auth.data.AndroidSecureTokenStorage
+import com.meneses.budgethunter.auth.data.TokenStorage
 import com.meneses.budgethunter.budgetEntry.data.ImageProcessor
 import com.meneses.budgethunter.budgetEntry.data.remote.GeminiApiClient
 import com.meneses.budgethunter.budgetEntry.domain.AIImageProcessor
@@ -46,6 +48,11 @@ val androidPlatformModule = module {
     // DataStore for preferences
     single<DataStore<Preferences>> {
         get<Context>().dataStore
+    }
+
+    // Secure token storage backed by EncryptedSharedPreferences
+    single<TokenStorage> {
+        AndroidSecureTokenStorage(get<Context>(), get())
     }
 
     // Platform-specific managers

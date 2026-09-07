@@ -6,6 +6,7 @@ import com.meneses.budgethunter.commons.data.network.models.RefreshTokenRequest
 import com.meneses.budgethunter.commons.data.network.models.SignInRequest
 import com.meneses.budgethunter.commons.data.network.models.SignUpRequest
 import com.meneses.budgethunter.commons.data.network.models.SignUpResponse
+import com.meneses.budgethunter.commons.data.sync.Logger
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.auth.authProvider
@@ -18,7 +19,8 @@ import kotlinx.coroutines.withContext
 class AuthRepository(
     private val httpClient: HttpClient,
     private val tokenStorage: TokenStorage,
-    private val ioDispatcher: CoroutineDispatcher
+    private val ioDispatcher: CoroutineDispatcher,
+    private val logger: Logger
 ) {
 
     suspend fun signUp(
@@ -36,6 +38,7 @@ class AuthRepository(
             // User must sign in separately to get tokens
             Result.success(signUpResponse)
         } catch (e: Exception) {
+            logger.warn(TAG, "Sign up failed", e)
             Result.failure(e)
         }
     }
@@ -57,6 +60,9 @@ class AuthRepository(
 
             Result.success(authResponse)
         } catch (e: Exception) {
+            // Includes the writes to TokenStorage: a keychain or keystore that refuses to store
+            // the session shows up as a plain "sign in failed", so name the cause in the log.
+            logger.warn(TAG, "Sign in failed", e)
             Result.failure(e)
         }
     }
@@ -78,6 +84,7 @@ class AuthRepository(
 
             Result.success(authResponse)
         } catch (e: Exception) {
+            logger.warn(TAG, "Token refresh failed", e)
             Result.failure(e)
         }
     }
@@ -89,7 +96,14 @@ class AuthRepository(
     }
 
     suspend fun isAuthenticated(): Boolean = withContext(ioDispatcher) {
-        tokenStorage.getAuthToken() != null
+        try {
+            tokenStorage.getAuthToken() != null
+        } catch (e: Exception) {
+            // Asked from the splash screen, where an exception would take the whole app down.
+            // Treating an unreadable session as "not signed in" sends the user to sign in again.
+            logger.warn(TAG, "Could not read the stored session", e)
+            false
+        }
     }
 
     /**
@@ -102,5 +116,9 @@ class AuthRepository(
      */
     private fun invalidateCachedBearerToken() {
         httpClient.authProvider<BearerAuthProvider>()?.clearToken()
+    }
+
+    private companion object {
+        const val TAG = "AuthRepository"
     }
 }
