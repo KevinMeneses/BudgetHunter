@@ -3,10 +3,14 @@ package com.meneses.budgethunter.auth
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import budgethunter.composeapp.generated.resources.Res
+import budgethunter.composeapp.generated.resources.error_google_no_account
+import budgethunter.composeapp.generated.resources.error_google_sign_in_failed
 import budgethunter.composeapp.generated.resources.error_sign_in_failed
+import com.meneses.budgethunter.auth.application.GoogleAuthOutcome
 import com.meneses.budgethunter.auth.application.SignInEvent
 import com.meneses.budgethunter.auth.application.SignInIntent
 import com.meneses.budgethunter.auth.application.SignInState
+import com.meneses.budgethunter.auth.application.SignInWithGoogleUseCase
 import com.meneses.budgethunter.auth.data.AuthRepository
 import com.meneses.budgethunter.budgetEntry.data.BudgetEntrySyncManager
 import com.meneses.budgethunter.budgetList.data.BudgetRepository
@@ -17,16 +21,20 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.StringResource
 
 class SignInViewModel(
     private val authRepository: AuthRepository,
     private val preferencesManager: PreferencesManager,
     private val budgetRepository: BudgetRepository,
-    private val budgetEntrySyncManager: BudgetEntrySyncManager
+    private val budgetEntrySyncManager: BudgetEntrySyncManager,
+    private val signInWithGoogleUseCase: SignInWithGoogleUseCase
 ) : ViewModel() {
 
     val uiState get() = _uiState.asStateFlow()
-    private val _uiState = MutableStateFlow(SignInState())
+    private val _uiState = MutableStateFlow(
+        SignInState(isGoogleAvailable = signInWithGoogleUseCase.isAvailable)
+    )
 
     private val _events = Channel<SignInEvent>(Channel.BUFFERED)
     val events = _events.receiveAsFlow()
@@ -36,6 +44,7 @@ class SignInViewModel(
             is SignInIntent.EmailChanged -> updateEmail(intent.email)
             is SignInIntent.PasswordChanged -> updatePassword(intent.password)
             is SignInIntent.SignInClicked -> signIn()
+            is SignInIntent.GoogleSignInClicked -> signInWithGoogle()
             is SignInIntent.DismissError -> dismissError()
             is SignInIntent.ContinueOfflineClicked -> continueOffline()
         }
@@ -73,8 +82,7 @@ class SignInViewModel(
                         budgetEntrySyncManager.syncAllBudgetsEntries()
                     }
 
-                    _uiState.update { it.copy(isLoading = false) }
-                    _events.trySend(SignInEvent.NavigateToBudgetList(currentState.email))
+                    onAuthenticated(currentState.email)
                 },
                 onFailure = {
                     _uiState.update {
@@ -86,6 +94,30 @@ class SignInViewModel(
                 }
             )
         }
+    }
+
+    private fun signInWithGoogle() {
+        _uiState.update { it.copy(isLoading = true, error = null) }
+
+        viewModelScope.launch {
+            when (val outcome = signInWithGoogleUseCase.execute()) {
+                is GoogleAuthOutcome.Success -> onAuthenticated(outcome.email)
+                // Dismissing the account picker is the most common way out of this flow.
+                // Showing an error for it would make the screen feel broken.
+                GoogleAuthOutcome.Cancelled -> _uiState.update { it.copy(isLoading = false) }
+                GoogleAuthOutcome.NoGoogleAccount -> showError(Res.string.error_google_no_account)
+                GoogleAuthOutcome.Failed -> showError(Res.string.error_google_sign_in_failed)
+            }
+        }
+    }
+
+    private fun onAuthenticated(email: String) {
+        _uiState.update { it.copy(isLoading = false) }
+        _events.trySend(SignInEvent.NavigateToBudgetList(email))
+    }
+
+    private fun showError(error: StringResource) {
+        _uiState.update { it.copy(isLoading = false, error = error) }
     }
 
     private fun dismissError() {

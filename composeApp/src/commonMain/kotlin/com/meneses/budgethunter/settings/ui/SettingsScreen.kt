@@ -17,6 +17,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.Settings
@@ -57,6 +58,10 @@ import budgethunter.composeapp.generated.resources.banks_selected
 import budgethunter.composeapp.generated.resources.no_banks_selected
 import com.meneses.budgethunter.commons.ui.AppBar
 import com.meneses.budgethunter.commons.util.Platform
+import budgethunter.composeapp.generated.resources.account
+import budgethunter.composeapp.generated.resources.change_password
+import budgethunter.composeapp.generated.resources.set_password
+import budgethunter.composeapp.generated.resources.set_password_description
 import com.meneses.budgethunter.settings.application.SettingsIntent
 import com.meneses.budgethunter.settings.application.SettingsState
 import kotlinx.serialization.Serializable
@@ -110,6 +115,17 @@ object SettingsScreen {
                     }
                 )
 
+                if (uiState.isSignedIn) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    HorizontalDivider()
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                    AccountSection(
+                        hasPassword = uiState.hasPassword,
+                        onManagePassword = { onIntent(SettingsIntent.ShowPasswordDialog) }
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(16.dp))
                 HorizontalDivider()
 
@@ -138,6 +154,19 @@ object SettingsScreen {
                 onDismiss = { onIntent(SettingsIntent.HideBankSelector) },
                 onBanksSelected = { banks ->
                     onIntent(SettingsIntent.SetSelectedBanks(banks))
+                }
+            )
+        }
+
+        // Password Modal
+        if (uiState.isPasswordDialogVisible) {
+            PasswordModal(
+                hasPassword = uiState.hasPassword,
+                isSaving = uiState.isSavingPassword,
+                error = uiState.passwordError,
+                onDismiss = { onIntent(SettingsIntent.HidePasswordDialog) },
+                onSave = { current, new ->
+                    onIntent(SettingsIntent.SavePassword(current, new))
                 }
             )
         }
@@ -326,6 +355,43 @@ object SettingsScreen {
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+            }
+        }
+    }
+
+    @Composable
+    private fun AccountSection(
+        hasPassword: Boolean,
+        onManagePassword: () -> Unit
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                Text(
+                    text = stringResource(Res.string.account),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                SettingItem(
+                    icon = Icons.Default.Lock,
+                    title = stringResource(
+                        if (hasPassword) Res.string.change_password else Res.string.set_password
+                    ),
+                    subtitle = stringResource(Res.string.set_password_description),
+                    showButton = true,
+                    onButtonClick = onManagePassword
+                )
             }
         }
     }

@@ -4,6 +4,7 @@ import com.meneses.budgethunter.auth.data.AuthRepository
 import com.meneses.budgethunter.budgetEntry.data.BudgetEntryRepository
 import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.commons.data.PreferencesManager
+import com.meneses.budgethunter.commons.platform.GoogleSignInManager
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 
@@ -17,19 +18,22 @@ import kotlinx.coroutines.withContext
  * 1. Clear all local budget data
  * 2. Clear all local budget entry data
  * 3. Clear authentication tokens
- * 4. Disable offline mode preference
+ * 4. Forget the cached Google credential
+ * 5. Disable offline mode preference
  */
 class SignOutUseCase(
     private val authRepository: AuthRepository,
     private val budgetRepository: BudgetRepository,
     private val budgetEntryRepository: BudgetEntryRepository,
     private val preferencesManager: PreferencesManager,
+    private val googleSignInManager: GoogleSignInManager,
     private val ioDispatcher: CoroutineDispatcher
 ) {
     /**
      * Execute sign-out flow:
      * - Clear all local data (budgets and entries)
      * - Clear authentication tokens
+     * - Forget the cached Google credential
      * - Disable offline mode
      */
     suspend fun execute() = withContext(ioDispatcher) {
@@ -39,6 +43,10 @@ class SignOutUseCase(
 
         // Clear tokens
         authRepository.signOut()
+
+        // Without this the platform keeps auto-selecting the last Google account, so the user
+        // could never sign back in as somebody else.
+        googleSignInManager.signOut()
 
         // Disable offline mode when signing out
         preferencesManager.setOfflineModeEnabled(false)

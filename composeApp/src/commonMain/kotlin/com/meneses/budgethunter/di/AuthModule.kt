@@ -3,11 +3,13 @@ package com.meneses.budgethunter.di
 import com.meneses.budgethunter.BuildKonfig
 import com.meneses.budgethunter.auth.SignInViewModel
 import com.meneses.budgethunter.auth.SignUpViewModel
+import com.meneses.budgethunter.auth.application.SignInWithGoogleUseCase
 import com.meneses.budgethunter.auth.application.SignOutUseCase
 import com.meneses.budgethunter.auth.data.AuthRepository
 import com.meneses.budgethunter.auth.data.TokenStorage
 import com.meneses.budgethunter.commons.data.network.createHttpClient
 import com.meneses.budgethunter.commons.data.network.getBaseUrl
+import kotlinx.coroutines.CoroutineScope
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.logging.LogLevel
 import kotlinx.coroutines.CoroutineDispatcher
@@ -42,7 +44,18 @@ val authModule = module {
             budgetRepository = get(),
             budgetEntryRepository = get(),
             preferencesManager = get(),
+            googleSignInManager = get(),
             ioDispatcher = get<CoroutineDispatcher>(named("IO"))
+        )
+    }
+
+    single<SignInWithGoogleUseCase> {
+        SignInWithGoogleUseCase(
+            googleSignInManager = get(),
+            authRepository = get<AuthRepository>(),
+            budgetRepository = get(),
+            budgetEntrySyncManager = get(),
+            applicationScope = get<CoroutineScope>(named("ApplicationScope"))
         )
     }
 
@@ -51,11 +64,15 @@ val authModule = module {
             authRepository = get<AuthRepository>(),
             preferencesManager = get(),
             budgetRepository = get(),
-            budgetEntrySyncManager = get()
+            budgetEntrySyncManager = get(),
+            signInWithGoogleUseCase = get()
         )
     }
 
     factory<SignUpViewModel> {
-        SignUpViewModel(get<AuthRepository>())
+        SignUpViewModel(
+            authRepository = get<AuthRepository>(),
+            signInWithGoogleUseCase = get()
+        )
     }
 }

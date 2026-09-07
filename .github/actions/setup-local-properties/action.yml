@@ -9,6 +9,10 @@ inputs:
     description: Gemini API key (required for release builds)
     required: false
     default: ''
+  google_server_client_id:
+    description: Google OAuth web client id, used as serverClientId for Sign in with Google
+    required: false
+    default: ''
 
 runs:
   using: composite
@@ -19,3 +23,4 @@ runs:
         echo "sdk.dir=$ANDROID_HOME" > local.properties
         echo "BACKEND_URL=${{ inputs.backend_url }}" >> local.properties
         echo "GEMINI_API_KEY=${{ inputs.gemini_api_key }}" >> local.properties
+        echo "GOOGLE_SERVER_CLIENT_ID=${{ inputs.google_server_client_id }}" >> local.properties

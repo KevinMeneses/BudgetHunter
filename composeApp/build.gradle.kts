@@ -110,6 +110,9 @@ kotlin {
 
             // Security (Android only)
             implementation(libs.androidx.security.crypto)
+
+            // Google Sign-In via Credential Manager
+            implementation(libs.bundles.google.signin)
         }
 
         iosMain.dependencies {
@@ -222,6 +225,12 @@ buildkonfig {
         val backendUrl = props.getProperty("BACKEND_URL")
             ?: throw GradleException("BACKEND_URL not set in local.properties")
         buildConfigField(STRING, "BACKEND_URL", backendUrl)
+
+        // Google OAuth web client id, used as serverClientId so the ID token is minted for our
+        // backend. Not a secret - it ships inside the app by design. Defaults to empty rather
+        // than failing the build: a checkout without it still builds, and the app just hides the
+        // Google button (see GoogleSignInManager.isAvailable).
+        buildConfigField(STRING, "GOOGLE_SERVER_CLIENT_ID", props.getProperty("GOOGLE_SERVER_CLIENT_ID") ?: "")
 
         // Debug flag - defaults to true for safety
         buildConfigField(BOOLEAN, "DEBUG", "true")

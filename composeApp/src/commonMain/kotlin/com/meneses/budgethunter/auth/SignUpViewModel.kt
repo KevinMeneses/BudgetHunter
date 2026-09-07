@@ -5,11 +5,15 @@ import androidx.lifecycle.viewModelScope
 import budgethunter.composeapp.generated.resources.Res
 import budgethunter.composeapp.generated.resources.error_confirm_password_required
 import budgethunter.composeapp.generated.resources.error_email_required
+import budgethunter.composeapp.generated.resources.error_google_no_account
+import budgethunter.composeapp.generated.resources.error_google_sign_in_failed
 import budgethunter.composeapp.generated.resources.error_name_required
 import budgethunter.composeapp.generated.resources.error_password_required
 import budgethunter.composeapp.generated.resources.error_password_too_short
 import budgethunter.composeapp.generated.resources.error_passwords_do_not_match
 import budgethunter.composeapp.generated.resources.error_sign_up_failed
+import com.meneses.budgethunter.auth.application.GoogleAuthOutcome
+import com.meneses.budgethunter.auth.application.SignInWithGoogleUseCase
 import com.meneses.budgethunter.auth.application.SignUpEvent
 import com.meneses.budgethunter.auth.application.SignUpIntent
 import com.meneses.budgethunter.auth.application.SignUpState
@@ -20,13 +24,17 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.StringResource
 
 class SignUpViewModel(
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val signInWithGoogleUseCase: SignInWithGoogleUseCase
 ) : ViewModel() {
 
     val uiState get() = _uiState.asStateFlow()
-    private val _uiState = MutableStateFlow(SignUpState())
+    private val _uiState = MutableStateFlow(
+        SignUpState(isGoogleAvailable = signInWithGoogleUseCase.isAvailable)
+    )
 
     private val _events = Channel<SignUpEvent>(Channel.BUFFERED)
     val events = _events.receiveAsFlow()
@@ -38,6 +46,7 @@ class SignUpViewModel(
             is SignUpIntent.PasswordChanged -> updatePassword(intent.password)
             is SignUpIntent.ConfirmPasswordChanged -> updateConfirmPassword(intent.confirmPassword)
             is SignUpIntent.SignUpClicked -> signUp()
+            is SignUpIntent.GoogleSignUpClicked -> signUpWithGoogle()
             is SignUpIntent.DismissError -> dismissError()
             is SignUpIntent.NavigateBack -> _events.trySend(SignUpEvent.NavigateToSignIn)
         }
@@ -112,6 +121,28 @@ class SignUpViewModel(
                 }
             )
         }
+    }
+
+    private fun signUpWithGoogle() {
+        _uiState.update { it.copy(isLoading = true, error = null) }
+
+        viewModelScope.launch {
+            when (val outcome = signInWithGoogleUseCase.execute()) {
+                // The server creates the account on first use, so signing up through Google
+                // leaves the user signed in - there is no sign-in step to send them back to.
+                is GoogleAuthOutcome.Success -> {
+                    _uiState.update { it.copy(isLoading = false) }
+                    _events.trySend(SignUpEvent.NavigateToBudgetList(outcome.email))
+                }
+                GoogleAuthOutcome.Cancelled -> _uiState.update { it.copy(isLoading = false) }
+                GoogleAuthOutcome.NoGoogleAccount -> showError(Res.string.error_google_no_account)
+                GoogleAuthOutcome.Failed -> showError(Res.string.error_google_sign_in_failed)
+            }
+        }
+    }
+
+    private fun showError(error: StringResource) {
+        _uiState.update { it.copy(isLoading = false, error = error) }
     }
 
     private fun dismissError() {

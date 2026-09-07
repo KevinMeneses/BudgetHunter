@@ -254,6 +254,23 @@
     <string name="error_password_too_short">La contraseña debe tener al menos 6 caracteres</string>
     <string name="error_sign_in_failed">Error al iniciar sesión. Por favor verifica tus credenciales e intenta nuevamente.</string>
     <string name="error_sign_up_failed">Error al registrarse. Por favor intenta más tarde.</string>
+    <string name="error_google_sign_in_failed">No se pudo iniciar sesión con Google. Por favor intenta nuevamente.</string>
+    <string name="error_google_no_account">No hay cuentas de Google en este dispositivo. Agrega una e intenta nuevamente.</string>
+    <string name="error_current_password_incorrect">La contraseña actual no es correcta.</string>
+
+    <!-- Google Sign-In -->
+    <string name="sign_in_with_google">Continuar con Google</string>
+
+    <!-- Account -->
+    <string name="account">Cuenta</string>
+
+    <!-- Password -->
+    <string name="set_password">Establecer contraseña</string>
+    <string name="change_password">Cambiar contraseña</string>
+    <string name="current_password">Contraseña actual</string>
+    <string name="new_password">Nueva contraseña</string>
+    <string name="set_password_description">Agrega una contraseña para poder iniciar sesión también con tu correo.</string>
+    <string name="password_updated">Contraseña actualizada</string>
 
     <!-- API Errors -->
     <string name="error_unauthorized">Sesión expirada. Por favor inicia sesión nuevamente.</string>

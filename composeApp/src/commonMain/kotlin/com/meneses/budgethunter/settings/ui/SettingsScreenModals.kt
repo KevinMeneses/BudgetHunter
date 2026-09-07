@@ -1,6 +1,24 @@
 package com.meneses.budgethunter.settings.ui
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+import budgethunter.composeapp.generated.resources.change_password
+import budgethunter.composeapp.generated.resources.current_password
+import budgethunter.composeapp.generated.resources.hide_password
+import budgethunter.composeapp.generated.resources.new_password
+import budgethunter.composeapp.generated.resources.save
+import budgethunter.composeapp.generated.resources.set_password
+import budgethunter.composeapp.generated.resources.set_password_description
+import budgethunter.composeapp.generated.resources.show_password
+import org.jetbrains.compose.resources.StringResource
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -188,5 +206,111 @@ fun ManualPermissionDialog(
             }
         },
         properties = DialogProperties(dismissOnBackPress = true, dismissOnClickOutside = true)
+    )
+}
+
+/**
+ * Sets a first password, or replaces an existing one.
+ *
+ * [hasPassword] decides both the wording and whether the current-password field appears: an
+ * account created through Google has none, and asking for one it never had would be a dead end.
+ */
+@Composable
+fun PasswordModal(
+    hasPassword: Boolean,
+    isSaving: Boolean,
+    error: StringResource?,
+    onDismiss: () -> Unit,
+    onSave: (currentPassword: String, newPassword: String) -> Unit
+) {
+    var currentPassword by remember { mutableStateOf("") }
+    var newPassword by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = stringResource(
+                    if (hasPassword) Res.string.change_password else Res.string.set_password
+                )
+            )
+        },
+        text = {
+            Column {
+                if (!hasPassword) {
+                    Text(
+                        text = stringResource(Res.string.set_password_description),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+
+                if (hasPassword) {
+                    OutlinedTextField(
+                        value = currentPassword,
+                        onValueChange = { currentPassword = it },
+                        label = { Text(stringResource(Res.string.current_password)) },
+                        modifier = Modifier.fillMaxWidth(),
+                        visualTransformation = PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        singleLine = true
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
+
+                OutlinedTextField(
+                    value = newPassword,
+                    onValueChange = { newPassword = it },
+                    label = { Text(stringResource(Res.string.new_password)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    visualTransformation = if (passwordVisible) {
+                        VisualTransformation.None
+                    } else {
+                        PasswordVisualTransformation()
+                    },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    trailingIcon = {
+                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                            Icon(
+                                imageVector = if (passwordVisible) {
+                                    Icons.Default.Visibility
+                                } else {
+                                    Icons.Default.VisibilityOff
+                                },
+                                contentDescription = stringResource(
+                                    if (passwordVisible) Res.string.hide_password else Res.string.show_password
+                                )
+                            )
+                        }
+                    },
+                    singleLine = true
+                )
+
+                error?.let {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = stringResource(it),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onSave(currentPassword, newPassword) },
+                enabled = !isSaving &&
+                    newPassword.isNotBlank() &&
+                    (!hasPassword || currentPassword.isNotBlank())
+            ) {
+                Text(stringResource(Res.string.save))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(Res.string.cancel))
+            }
+        }
     )
 }

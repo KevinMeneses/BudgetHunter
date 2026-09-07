@@ -127,9 +127,13 @@ fun createHttpClient(
                 }
 
                 sendWithoutRequest { request ->
-                    // Send tokens with all requests except auth endpoints
+                    // Send tokens with all requests except auth endpoints.
+                    // SIGN_IN_WITH_GOOGLE is listed on its own even though the SIGN_IN check
+                    // already matches it as a substring today: that coupling is invisible and
+                    // would break the moment either constant is reworded.
                     val path = request.url.toString()
                     !path.contains(ApiEndpoints.SIGN_IN) &&
+                        !path.contains(ApiEndpoints.SIGN_IN_WITH_GOOGLE) &&
                         !path.contains(ApiEndpoints.SIGN_UP) &&
                         !path.contains(ApiEndpoints.REFRESH_TOKEN)
                 }

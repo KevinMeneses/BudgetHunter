@@ -1,13 +1,19 @@
 package com.meneses.budgethunter.auth
 
+import budgethunter.composeapp.generated.resources.Res
+import budgethunter.composeapp.generated.resources.error_google_no_account
+import budgethunter.composeapp.generated.resources.error_google_sign_in_failed
+import com.meneses.budgethunter.auth.application.GoogleAuthOutcome
 import com.meneses.budgethunter.auth.application.SignInEvent
 import com.meneses.budgethunter.auth.application.SignInIntent
+import com.meneses.budgethunter.auth.application.SignInWithGoogleUseCase
 import com.meneses.budgethunter.auth.data.AuthRepository
 import com.meneses.budgethunter.budgetEntry.data.BudgetEntrySyncManager
 import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.commons.data.PreferencesManager
 import com.meneses.budgethunter.commons.data.network.models.AuthResponse
 import io.mockk.coEvery
+import io.mockk.every
 import io.mockk.coJustRun
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
@@ -40,6 +46,7 @@ class SignInViewModelTest {
     private val preferencesManager = mockk<PreferencesManager>(relaxed = true)
     private val budgetRepository = mockk<BudgetRepository>(relaxed = true)
     private val budgetEntrySyncManager = mockk<BudgetEntrySyncManager>(relaxed = true)
+    private val signInWithGoogleUseCase = mockk<SignInWithGoogleUseCase>(relaxed = true)
 
     // System under test
     private lateinit var viewModel: SignInViewModel
@@ -47,11 +54,13 @@ class SignInViewModelTest {
     @BeforeTest
     fun setup() {
         Dispatchers.setMain(testDispatcher)
+        every { signInWithGoogleUseCase.isAvailable } returns true
         viewModel = SignInViewModel(
             authRepository = authRepository,
             preferencesManager = preferencesManager,
             budgetRepository = budgetRepository,
-            budgetEntrySyncManager = budgetEntrySyncManager
+            budgetEntrySyncManager = budgetEntrySyncManager,
+            signInWithGoogleUseCase = signInWithGoogleUseCase
         )
     }
 
@@ -105,5 +114,86 @@ class SignInViewModelTest {
         val event = viewModel.events.first()
         assertIs<SignInEvent.NavigateToBudgetList>(event)
         assertTrue(event.email.isBlank(), "Email should be blank for offline mode")
+    }
+
+    // ========== Google sign in Tests ==========
+
+    @Test
+    fun `google sign in success emits NavigateToBudgetList with the server email`() = runTest {
+        // Given - the user never typed an email, so it has to come from the response
+        coEvery { signInWithGoogleUseCase.execute() } returns
+            GoogleAuthOutcome.Success("google-user@example.com")
+
+        // When
+        viewModel.sendIntent(SignInIntent.GoogleSignInClicked)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then
+        val event = viewModel.events.first()
+        assertIs<SignInEvent.NavigateToBudgetList>(event)
+        assertEquals("google-user@example.com", event.email)
+    }
+
+    @Test
+    fun `google sign in cancellation clears loading without an error`() = runTest {
+        // Given - dismissing the account picker is the most common outcome of this flow
+        coEvery { signInWithGoogleUseCase.execute() } returns GoogleAuthOutcome.Cancelled
+
+        // When
+        viewModel.sendIntent(SignInIntent.GoogleSignInClicked)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then - showing a red error card here would make the screen feel broken
+        val state = viewModel.uiState.value
+        assertEquals(false, state.isLoading)
+        assertEquals(null, state.error)
+    }
+
+    @Test
+    fun `google sign in without a device account reports a distinct error`() = runTest {
+        // Given
+        coEvery { signInWithGoogleUseCase.execute() } returns GoogleAuthOutcome.NoGoogleAccount
+
+        // When
+        viewModel.sendIntent(SignInIntent.GoogleSignInClicked)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then - "add a Google account" is actionable in a way "sign in failed" is not
+        val state = viewModel.uiState.value
+        assertEquals(false, state.isLoading)
+        assertEquals(Res.string.error_google_no_account, state.error)
+    }
+
+    @Test
+    fun `google sign in rejected by the backend surfaces a failure`() = runTest {
+        // Given
+        coEvery { signInWithGoogleUseCase.execute() } returns GoogleAuthOutcome.Failed
+
+        // When
+        viewModel.sendIntent(SignInIntent.GoogleSignInClicked)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then
+        val state = viewModel.uiState.value
+        assertEquals(false, state.isLoading)
+        assertEquals(Res.string.error_google_sign_in_failed, state.error)
+    }
+
+    @Test
+    fun `google button is hidden when no client id was configured`() {
+        // Given - a build without GOOGLE_SERVER_CLIENT_ID
+        every { signInWithGoogleUseCase.isAvailable } returns false
+
+        // When
+        val viewModel = SignInViewModel(
+            authRepository = authRepository,
+            preferencesManager = preferencesManager,
+            budgetRepository = budgetRepository,
+            budgetEntrySyncManager = budgetEntrySyncManager,
+            signInWithGoogleUseCase = signInWithGoogleUseCase
+        )
+
+        // Then
+        assertEquals(false, viewModel.uiState.value.isGoogleAvailable)
     }
 }
