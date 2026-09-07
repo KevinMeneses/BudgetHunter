@@ -3,6 +3,8 @@ package com.meneses.budgethunter.di
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
+import com.meneses.budgethunter.auth.data.IosSecureTokenStorage
+import com.meneses.budgethunter.auth.data.TokenStorage
 import com.meneses.budgethunter.budgetEntry.data.ImageProcessor
 import com.meneses.budgethunter.budgetEntry.data.remote.GeminiApiClient
 import com.meneses.budgethunter.budgetEntry.domain.AIImageProcessor
@@ -39,6 +41,11 @@ val iosPlatformModule = module {
     // Provide the database using iOS-specific factory
     single<Database> {
         DatabaseFactory().createDatabase()
+    }
+
+    // Secure token storage backed by the iOS Keychain (native Swift impl via IOSBridge)
+    single<TokenStorage> {
+        IosSecureTokenStorage(IOSBridge.keychainStore)
     }
 
     single<DataStore<Preferences>> {

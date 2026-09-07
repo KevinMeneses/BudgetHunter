@@ -1,7 +1,7 @@
 package com.meneses.budgethunter.auth.data
 
-import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import com.meneses.budgethunter.commons.data.network.ApiEndpoints
+import com.meneses.budgethunter.commons.data.sync.NoOpLogger
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -20,15 +20,12 @@ import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
-import okio.Path.Companion.toPath
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 
 /**
  * Comprehensive unit tests for AuthRepository.
@@ -41,12 +38,17 @@ class AuthRepositoryTest {
         isLenient = true
     }
 
-    @OptIn(ExperimentalUuidApi::class)
-    private fun createTestTokenStorage(): TokenStorage {
-        val testDataStore = PreferenceDataStoreFactory.createWithPath(
-            produceFile = { "test-${Uuid.random()}.preferences_pb".toPath() }
-        )
-        return TokenStorage(testDataStore)
+    private fun createTestTokenStorage(): TokenStorage = FakeTokenStorage()
+
+    private class FakeTokenStorage : TokenStorage {
+        private var authToken: String? = null
+        private var refreshToken: String? = null
+
+        override suspend fun saveAuthToken(token: String) { authToken = token }
+        override suspend fun getAuthToken(): String? = authToken
+        override suspend fun saveRefreshToken(token: String) { refreshToken = token }
+        override suspend fun getRefreshToken(): String? = refreshToken
+        override suspend fun clearTokens() { authToken = null; refreshToken = null }
     }
 
     /**
@@ -109,7 +111,7 @@ class AuthRepositoryTest {
             }
         }
 
-        val repository = AuthRepository(httpClient, tokenStorage, Dispatchers.Unconfined)
+        val repository = AuthRepository(httpClient, tokenStorage, Dispatchers.Unconfined, NoOpLogger())
 
         // Warm up the provider cache with user A's token
         httpClient.get(ApiEndpoints.BUDGETS)
@@ -156,7 +158,7 @@ class AuthRepositoryTest {
         }
 
         val tokenStorage = createTestTokenStorage()
-        val repository = AuthRepository(httpClient, tokenStorage, Dispatchers.Unconfined)
+        val repository = AuthRepository(httpClient, tokenStorage, Dispatchers.Unconfined, NoOpLogger())
 
         // Act
         val result = repository.signUp(
@@ -198,7 +200,7 @@ class AuthRepositoryTest {
         }
 
         val tokenStorage = createTestTokenStorage()
-        val repository = AuthRepository(httpClient, tokenStorage, Dispatchers.Unconfined)
+        val repository = AuthRepository(httpClient, tokenStorage, Dispatchers.Unconfined, NoOpLogger())
 
         // Act
         val result = repository.signUp(
@@ -245,7 +247,7 @@ class AuthRepositoryTest {
         }
 
         val tokenStorage = createTestTokenStorage()
-        val repository = AuthRepository(httpClient, tokenStorage, Dispatchers.Unconfined)
+        val repository = AuthRepository(httpClient, tokenStorage, Dispatchers.Unconfined, NoOpLogger())
 
         // Act
         val result = repository.signIn(
@@ -292,7 +294,7 @@ class AuthRepositoryTest {
         }
 
         val tokenStorage = createTestTokenStorage()
-        val repository = AuthRepository(httpClient, tokenStorage, Dispatchers.Unconfined)
+        val repository = AuthRepository(httpClient, tokenStorage, Dispatchers.Unconfined, NoOpLogger())
 
         // Act
         val result = repository.signIn(
@@ -344,7 +346,7 @@ class AuthRepositoryTest {
         // Set initial refresh token
         tokenStorage.saveRefreshToken("old-refresh-token-456")
 
-        val repository = AuthRepository(httpClient, tokenStorage, Dispatchers.Unconfined)
+        val repository = AuthRepository(httpClient, tokenStorage, Dispatchers.Unconfined, NoOpLogger())
 
         // Act
         val result = repository.refreshToken()
@@ -384,7 +386,7 @@ class AuthRepositoryTest {
         val tokenStorage = createTestTokenStorage()
         // No refresh token stored
 
-        val repository = AuthRepository(httpClient, tokenStorage, Dispatchers.Unconfined)
+        val repository = AuthRepository(httpClient, tokenStorage, Dispatchers.Unconfined, NoOpLogger())
 
         // Act
         val result = repository.refreshToken()
@@ -421,7 +423,7 @@ class AuthRepositoryTest {
         val tokenStorage = createTestTokenStorage()
         tokenStorage.saveRefreshToken("invalid-refresh-token")
 
-        val repository = AuthRepository(httpClient, tokenStorage, Dispatchers.Unconfined)
+        val repository = AuthRepository(httpClient, tokenStorage, Dispatchers.Unconfined, NoOpLogger())
 
         // Act
         val result = repository.refreshToken()
@@ -454,7 +456,7 @@ class AuthRepositoryTest {
         tokenStorage.saveAuthToken("auth-token-123")
         tokenStorage.saveRefreshToken("refresh-token-456")
 
-        val repository = AuthRepository(httpClient, tokenStorage, Dispatchers.Unconfined)
+        val repository = AuthRepository(httpClient, tokenStorage, Dispatchers.Unconfined, NoOpLogger())
 
         // Act
         repository.signOut()
@@ -487,7 +489,7 @@ class AuthRepositoryTest {
         val tokenStorage = createTestTokenStorage()
         tokenStorage.saveAuthToken("auth-token-123")
 
-        val repository = AuthRepository(httpClient, tokenStorage, Dispatchers.Unconfined)
+        val repository = AuthRepository(httpClient, tokenStorage, Dispatchers.Unconfined, NoOpLogger())
 
         // Act
         val isAuthenticated = repository.isAuthenticated()
@@ -519,7 +521,7 @@ class AuthRepositoryTest {
         val tokenStorage = createTestTokenStorage()
         // No auth token stored
 
-        val repository = AuthRepository(httpClient, tokenStorage, Dispatchers.Unconfined)
+        val repository = AuthRepository(httpClient, tokenStorage, Dispatchers.Unconfined, NoOpLogger())
 
         // Act
         val isAuthenticated = repository.isAuthenticated()
