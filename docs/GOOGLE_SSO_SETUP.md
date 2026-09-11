@@ -182,9 +182,14 @@ Si no lo creas, CI no falla — el secret llega vacío y la app se construye sin
 
 El backend vive en el repo aparte: `~/Documents/BudgetHunter/BudgetHunterBackend`.
 
-**No edites el `.env` del droplet a mano.** `deploy.sh` copia tu `.env` local encima del que está
-en el servidor (`cp .env deploy-package/.env` y luego `scp`), así que cualquier cambio hecho
-directamente allá se pierde en el siguiente despliegue. El archivo que mandas es el local.
+**No edites el `.env` del droplet a mano.** `deploy.sh` sube tu `.env` local y sobrescribe el del
+servidor, así que cualquier cambio hecho directamente allá se pierde en el siguiente despliegue. El
+archivo que editas es el local.
+
+> Hasta septiembre de 2026 esto no era cierto: el script preparaba el `.env` pero lo subía con
+> `scp -r deploy-package/*`, que no incluye archivos ocultos, así que nunca llegaba. El servidor
+> conservaba una copia puesta a mano tiempo atrás. Corregido en `1f6f861`; si trabajas con una
+> versión anterior del script, revisa que el `.env` del servidor tenga la variable.
 
 ### 7.1 Editar el `.env` local
 
@@ -242,6 +247,13 @@ volver a correrlo no hace daño.
 
 Toma el `SERVER_IP` de `.env.server`, compila, sube el jar junto con tu `.env`, levanta los
 contenedores y verifica `/actuator/health` — primero dentro del servidor y luego por HTTPS.
+
+Comprueba que la variable llegó de verdad al contenedor, no solo al archivo:
+
+```bash
+ssh $SERVER_USER@$SERVER_IP \
+  "cd /opt/budgethunter && docker compose exec -T backend printenv GOOGLE_OAUTH_CLIENT_IDS"
+```
 
 ### 7.4 Comprobar que quedó configurado
 
