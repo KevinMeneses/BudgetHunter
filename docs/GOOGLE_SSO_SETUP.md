@@ -8,7 +8,7 @@ Al terminar vas a tener **un valor** que copiar en dos lugares:
 
 | Valor | Dónde va |
 |---|---|
-| **Web client ID** | `local.properties` de la app (`GOOGLE_SERVER_CLIENT_ID`) y `.env` del servidor (`GOOGLE_OAUTH_CLIENT_IDS`) |
+| **Web client ID** | `local.properties` de la app (`GOOGLE_SERVER_CLIENT_ID`) y `.env` **local** del backend (`GOOGLE_OAUTH_CLIENT_IDS`), que `deploy.sh` sube al servidor |
 
 Los otros dos clientes (Android e iOS) no se copian a ningún archivo: solo tienen que existir para
 que Google reconozca la app que hace la llamada.
@@ -180,35 +180,90 @@ Si no lo creas, CI no falla — el secret llega vacío y la app se construye sin
 
 ## 7. Poner el Web client ID en el backend
 
-### Desarrollo local
+El backend vive en el repo aparte: `~/Documents/BudgetHunter/BudgetHunterBackend`.
 
-```bash
-cd ~/Documents/BudgetHunter/BudgetHunterBackend
-GOOGLE_OAUTH_CLIENT_IDS=123456789012-abc...apps.googleusercontent.com \
-  ./gradlew bootRun --args='--spring.profiles.active=debug'
-```
+**No edites el `.env` del droplet a mano.** `deploy.sh` copia tu `.env` local encima del que está
+en el servidor (`cp .env deploy-package/.env` y luego `scp`), así que cualquier cambio hecho
+directamente allá se pierde en el siguiente despliegue. El archivo que mandas es el local.
 
-### Servidor
+### 7.1 Editar el `.env` local
 
-En `/opt/budgethunter/.env` del droplet, agrega:
+Abre `~/Documents/BudgetHunter/BudgetHunterBackend/.env` y agrega **una sola línea**:
 
-```
+```properties
 GOOGLE_OAUTH_CLIENT_IDS=123456789012-abc...apps.googleusercontent.com
 ```
 
-Y **antes** de desplegar el jar nuevo, corre la migración:
+⚠️ Una línea literal: **sin comillas, sin barra invertida al final, sin comandos pegados**. Docker
+Compose lee este archivo como pares clave/valor, no como script de shell — una `\` al final se
+vuelve parte del client ID y el token deja de validar.
+
+Verifica que quedó bien formado:
 
 ```bash
-docker compose exec -T postgres psql -U budgethunter_user -d budgethunter \
+cd ~/Documents/BudgetHunter/BudgetHunterBackend
+grep -c '^GOOGLE_OAUTH_CLIENT_IDS=[0-9]\{6,\}-[a-z0-9]\{10,\}\.apps\.googleusercontent\.com$' .env
+```
+
+Debe imprimir `1`. Si imprime `0`, algo sobra o falta en la línea.
+
+### 7.2 Correr la migración en el servidor
+
+Antes de desplegar el jar nuevo. `deploy.sh` no corre migraciones y el paquete que sube no incluye
+`database/migrations/`, así que el SQL se envía por `ssh` desde tu máquina:
+
+```bash
+cd ~/Documents/BudgetHunter/BudgetHunterBackend
+source .env.server   # trae SERVER_IP y SERVER_USER
+
+ssh $SERVER_USER@$SERVER_IP \
+  "cd /opt/budgethunter && docker compose exec -T postgres psql -U budgethunter_user -d budgethunter" \
   < database/migrations/001_add_google_sso.sql
 ```
 
-> El orden importa. Producción arranca con `spring.jpa.hibernate.ddl-auto=validate`: si el jar
-> nuevo se levanta contra el esquema viejo, la validación falla y el contenedor entra en bucle de
-> reinicio.
+Debe responder con `BEGIN`, tres `ALTER TABLE`, `CREATE INDEX` y `COMMIT`. Confirma el resultado:
 
-Si dejas `GOOGLE_OAUTH_CLIENT_IDS` vacío, el resto del backend funciona normal y solo el endpoint
-de Google responde 401 — el arranque no se rompe.
+```bash
+ssh $SERVER_USER@$SERVER_IP \
+  "cd /opt/budgethunter && docker compose exec -T postgres psql -U budgethunter_user -d budgethunter \
+   -c '\\d users'"
+```
+
+Deben aparecer `google_subject` y `auth_provider`, y `password` **sin** `not null`.
+
+El script es idempotente (`ADD COLUMN IF NOT EXISTS`, `CREATE UNIQUE INDEX IF NOT EXISTS`), así que
+volver a correrlo no hace daño.
+
+### 7.3 Desplegar
+
+```bash
+./deploy.sh
+```
+
+Toma el `SERVER_IP` de `.env.server`, compila, sube el jar junto con tu `.env`, levanta los
+contenedores y verifica `/actuator/health` — primero dentro del servidor y luego por HTTPS.
+
+### 7.4 Comprobar que quedó configurado
+
+Un token basura debe dar **401**, no 500 ni 404:
+
+```bash
+curl -s -o /dev/null -w '%{http_code}\n' \
+  -X POST https://budgethunter.duckdns.org/api/users/sign_in_with_google \
+  -H 'Content-Type: application/json' \
+  -d '{"idToken":"basura"}'
+```
+
+- `401` → todo bien, el endpoint existe y está rechazando como debe.
+- `404` → el jar desplegado es el viejo; el despliegue no pasó.
+- `500` → revisa los logs: `ssh $SERVER_USER@$SERVER_IP 'cd /opt/budgethunter && docker compose logs backend --tail=50'`
+
+> El mensaje del 401 distingue los dos casos: `"Invalid Google ID token"` significa que la
+> configuración está bien y el token simplemente no sirve; `"Google sign in is not configured"`
+> significa que `GOOGLE_OAUTH_CLIENT_IDS` llegó vacío.
+
+Si dejas la variable vacía, el resto del backend funciona normal y solo este endpoint responde 401
+— el arranque no se rompe.
 
 ---
 
