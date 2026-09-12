@@ -2,6 +2,10 @@ package com.meneses.budgethunter.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import budgethunter.composeapp.generated.resources.Res
+import budgethunter.composeapp.generated.resources.error_current_password_incorrect
+import budgethunter.composeapp.generated.resources.error_password_too_short
+import com.meneses.budgethunter.auth.data.AuthRepository
 import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.commons.data.PreferencesManager
@@ -17,7 +21,8 @@ import kotlinx.coroutines.launch
 class SettingsViewModel(
     private val preferencesManager: PreferencesManager,
     private val budgetRepository: BudgetRepository,
-    private val permissionsManager: PermissionsManager
+    private val permissionsManager: PermissionsManager,
+    private val authRepository: AuthRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsState())
@@ -25,6 +30,7 @@ class SettingsViewModel(
 
     init {
         loadSettings()
+        loadAccount()
     }
 
     fun sendIntent(intent: SettingsIntent) {
@@ -40,6 +46,9 @@ class SettingsViewModel(
             is SettingsIntent.ShowManualPermissionDialog -> showManualPermissionDialog()
             is SettingsIntent.HideManualPermissionDialog -> hideManualPermissionDialog()
             is SettingsIntent.OpenAppSettings -> openAppSettings()
+            is SettingsIntent.ShowPasswordDialog -> showPasswordDialog()
+            is SettingsIntent.HidePasswordDialog -> hidePasswordDialog()
+            is SettingsIntent.SavePassword -> savePassword(intent.currentPassword, intent.newPassword)
         }
     }
 
@@ -143,8 +152,74 @@ class SettingsViewModel(
         _uiState.update { it.copy(isManualPermissionDialogVisible = false) }
     }
 
+    /**
+     * Asks the server whether this account has a password.
+     *
+     * Deliberately a live call rather than something cached at sign in: the answer can change on
+     * another device, and a stale "no password" would offer to set one that already exists.
+     */
+    private fun loadAccount() {
+        viewModelScope.launch {
+            if (!authRepository.isAuthenticated()) return@launch
+
+            authRepository.getCurrentUser().onSuccess { user ->
+                _uiState.update { it.copy(isSignedIn = true, hasPassword = user.hasPassword) }
+            }
+        }
+    }
+
+    private fun showPasswordDialog() {
+        _uiState.update { it.copy(isPasswordDialogVisible = true, passwordError = null) }
+    }
+
+    private fun hidePasswordDialog() {
+        _uiState.update {
+            it.copy(isPasswordDialogVisible = false, passwordError = null, isSavingPassword = false)
+        }
+    }
+
+    private fun savePassword(currentPassword: String, newPassword: String) {
+        if (newPassword.length < MIN_PASSWORD_LENGTH) {
+            _uiState.update { it.copy(passwordError = Res.string.error_password_too_short) }
+            return
+        }
+
+        _uiState.update { it.copy(isSavingPassword = true, passwordError = null) }
+
+        viewModelScope.launch {
+            authRepository.setPassword(
+                // An account without one has no current password to send, and the server does not
+                // ask for it in that case.
+                currentPassword = currentPassword.takeIf { _uiState.value.hasPassword },
+                newPassword = newPassword
+            ).fold(
+                onSuccess = {
+                    _uiState.update {
+                        it.copy(
+                            isPasswordDialogVisible = false,
+                            isSavingPassword = false,
+                            hasPassword = true
+                        )
+                    }
+                },
+                onFailure = {
+                    _uiState.update {
+                        it.copy(
+                            isSavingPassword = false,
+                            passwordError = Res.string.error_current_password_incorrect
+                        )
+                    }
+                }
+            )
+        }
+    }
+
     private fun openAppSettings() {
         permissionsManager.openAppSettings()
         hideManualPermissionDialog()
+    }
+
+    private companion object {
+        const val MIN_PASSWORD_LENGTH = 6
     }
 }

@@ -1,5 +1,6 @@
 package com.meneses.budgethunter.di
 
+import com.meneses.budgethunter.auth.data.AuthRepository
 import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.commons.data.PreferencesManager
 import com.meneses.budgethunter.commons.platform.PermissionsManager
@@ -12,7 +13,8 @@ val settingsModule = module {
         SettingsViewModel(
             preferencesManager = get<PreferencesManager>(),
             budgetRepository = get<BudgetRepository>(),
-            permissionsManager = get<PermissionsManager>()
+            permissionsManager = get<PermissionsManager>(),
+            authRepository = get<AuthRepository>()
         )
     }
 }

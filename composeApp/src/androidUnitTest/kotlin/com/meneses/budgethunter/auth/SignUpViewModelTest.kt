@@ -1,10 +1,13 @@
 package com.meneses.budgethunter.auth
 
+import com.meneses.budgethunter.auth.application.GoogleAuthOutcome
+import com.meneses.budgethunter.auth.application.SignInWithGoogleUseCase
 import com.meneses.budgethunter.auth.application.SignUpEvent
 import com.meneses.budgethunter.auth.application.SignUpIntent
 import com.meneses.budgethunter.auth.data.AuthRepository
 import com.meneses.budgethunter.commons.data.network.models.SignUpResponse
 import io.mockk.coEvery
+import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -17,6 +20,8 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertIs
+import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
 /**
  * Unit tests for SignUpViewModel event emissions.
@@ -31,6 +36,7 @@ class SignUpViewModelTest {
 
     // Mocks
     private val authRepository = mockk<AuthRepository>(relaxed = true)
+    private val signInWithGoogleUseCase = mockk<SignInWithGoogleUseCase>(relaxed = true)
 
     // System under test
     private lateinit var viewModel: SignUpViewModel
@@ -38,7 +44,11 @@ class SignUpViewModelTest {
     @BeforeTest
     fun setup() {
         Dispatchers.setMain(testDispatcher)
-        viewModel = SignUpViewModel(authRepository = authRepository)
+        every { signInWithGoogleUseCase.isAvailable } returns true
+        viewModel = SignUpViewModel(
+            authRepository = authRepository,
+            signInWithGoogleUseCase = signInWithGoogleUseCase
+        )
     }
 
     @AfterTest
@@ -73,5 +83,38 @@ class SignUpViewModelTest {
         // Then - the user is redirected to sign-in to authenticate with the new account
         val event = viewModel.events.first()
         assertIs<SignUpEvent.NavigateToSignIn>(event)
+    }
+
+    // ========== Google sign up Tests ==========
+
+    @Test
+    fun `google sign up success emits NavigateToBudgetList event`() = runTest {
+        // Given - the server creates the account and returns a session
+        coEvery { signInWithGoogleUseCase.execute() } returns
+            GoogleAuthOutcome.Success("google-user@example.com")
+
+        // When
+        viewModel.sendIntent(SignUpIntent.GoogleSignUpClicked)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then - signing up with Google leaves the user signed in, so there is no sign-in step
+        val event = viewModel.events.first()
+        assertIs<SignUpEvent.NavigateToBudgetList>(event)
+        assertEquals("google-user@example.com", event.email)
+    }
+
+    @Test
+    fun `google sign up cancellation clears loading without an error`() = runTest {
+        // Given - the user dismisses the account picker
+        coEvery { signInWithGoogleUseCase.execute() } returns GoogleAuthOutcome.Cancelled
+
+        // When
+        viewModel.sendIntent(SignUpIntent.GoogleSignUpClicked)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then - backing out is not a failure and must not show one
+        val state = viewModel.uiState.value
+        assertEquals(false, state.isLoading)
+        assertNull(state.error)
     }
 }

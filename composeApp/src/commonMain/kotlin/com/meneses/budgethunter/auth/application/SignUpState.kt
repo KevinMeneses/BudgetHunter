@@ -8,5 +8,7 @@ data class SignUpState(
     val password: String = "",
     val confirmPassword: String = "",
     val isLoading: Boolean = false,
-    val error: StringResource? = null
+    val error: StringResource? = null,
+    /** False when the app was built without a Google client id, which hides the button. */
+    val isGoogleAvailable: Boolean = false
 )

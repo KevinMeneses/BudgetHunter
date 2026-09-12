@@ -5,6 +5,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import com.meneses.budgethunter.BuildConfig
+import com.meneses.budgethunter.BuildKonfig
 import com.meneses.budgethunter.auth.data.AndroidSecureTokenStorage
 import com.meneses.budgethunter.auth.data.TokenStorage
 import com.meneses.budgethunter.budgetEntry.data.ImageProcessor
@@ -16,12 +17,14 @@ import com.meneses.budgethunter.commons.data.FileManager
 import com.meneses.budgethunter.commons.data.createDatabase
 import com.meneses.budgethunter.commons.platform.AndroidCameraManager
 import com.meneses.budgethunter.commons.platform.AndroidFilePickerManager
+import com.meneses.budgethunter.commons.platform.AndroidGoogleSignInManager
 import com.meneses.budgethunter.commons.platform.AndroidNetworkMonitor
 import com.meneses.budgethunter.commons.platform.AndroidNotificationManager
 import com.meneses.budgethunter.commons.platform.AndroidShareManager
 import com.meneses.budgethunter.commons.platform.AppUpdateManager
 import com.meneses.budgethunter.commons.platform.CameraManager
 import com.meneses.budgethunter.commons.platform.FilePickerManager
+import com.meneses.budgethunter.commons.platform.GoogleSignInManager
 import com.meneses.budgethunter.commons.platform.NetworkMonitor
 import com.meneses.budgethunter.commons.platform.NotificationManager
 import com.meneses.budgethunter.commons.platform.PermissionsManager
@@ -70,9 +73,19 @@ val androidPlatformModule = module {
         ).apply { startMonitoring() }
     }
 
+    single<GoogleSignInManager> {
+        AndroidGoogleSignInManager(
+            context = get<Context>(),
+            serverClientId = BuildKonfig.GOOGLE_SERVER_CLIENT_ID,
+            scope = get<CoroutineScope>(named("ApplicationScope")),
+            logger = get()
+        )
+    }
+
     // Keep concrete types available if needed elsewhere - use the same instance as the interface
     single<AndroidCameraManager> { get<CameraManager>() as AndroidCameraManager }
     single<AndroidFilePickerManager> { get<FilePickerManager>() as AndroidFilePickerManager }
+    single<AndroidGoogleSignInManager> { get<GoogleSignInManager>() as AndroidGoogleSignInManager }
 
     // AI and Image Processing - Android specific
     single<ImageProcessor> {

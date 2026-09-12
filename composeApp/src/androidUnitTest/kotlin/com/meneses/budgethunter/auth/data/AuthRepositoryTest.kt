@@ -529,4 +529,112 @@ class AuthRepositoryTest {
         // Assert
         assertFalse(isAuthenticated)
     }
+
+    // ========== Google sign in ==========
+
+    private fun simpleClient(mockEngine: MockEngine) = HttpClient(mockEngine) {
+        install(ContentNegotiation) {
+            json(this@AuthRepositoryTest.json)
+        }
+        defaultRequest {
+            url("http://localhost:8080")
+            contentType(ContentType.Application.Json)
+        }
+    }
+
+    @Test
+    fun `signInWithGoogle posts the id token and stores the session`() = runTest {
+        // Arrange
+        val tokenStorage = createTestTokenStorage()
+        val requestedPaths = mutableListOf<String>()
+        var sentBody: String? = null
+
+        val mockEngine = MockEngine { request ->
+            requestedPaths += request.url.encodedPath
+            sentBody = (request.body as io.ktor.http.content.TextContent).text
+            respond(
+                content = """
+                {
+                  "authToken": "google-auth-token",
+                  "refreshToken": "google-refresh-token",
+                  "email": "google@example.com",
+                  "name": "Google User"
+                }
+                """,
+                status = HttpStatusCode.OK,
+                headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+            )
+        }
+
+        val repository = AuthRepository(
+            simpleClient(mockEngine),
+            tokenStorage,
+            Dispatchers.Unconfined,
+            NoOpLogger()
+        )
+
+        // Act
+        val result = repository.signInWithGoogle("an-id-token")
+
+        // Assert
+        assertTrue(result.isSuccess)
+        assertEquals("google@example.com", result.getOrNull()?.email)
+        assertEquals(ApiEndpoints.SIGN_IN_WITH_GOOGLE, requestedPaths.single())
+        assertTrue(sentBody!!.contains("an-id-token"))
+        // Both halves of the session have to land, or the next 401 has nothing to refresh with.
+        assertEquals("google-auth-token", tokenStorage.getAuthToken())
+        assertEquals("google-refresh-token", tokenStorage.getRefreshToken())
+    }
+
+    @Test
+    fun `signInWithGoogle returns failure and stores nothing when the server rejects the token`() = runTest {
+        // Arrange
+        val tokenStorage = createTestTokenStorage()
+        val mockEngine = MockEngine {
+            respond(
+                content = """{"status":401,"message":"Invalid Google ID token"}""",
+                status = HttpStatusCode.Unauthorized,
+                headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+            )
+        }
+
+        val repository = AuthRepository(
+            simpleClient(mockEngine),
+            tokenStorage,
+            Dispatchers.Unconfined,
+            NoOpLogger()
+        )
+
+        // Act
+        val result = repository.signInWithGoogle("a-rejected-token")
+
+        // Assert - a rejected sign in must not leave a half-written session behind
+        assertTrue(result.isFailure)
+        assertNull(tokenStorage.getAuthToken())
+        assertNull(tokenStorage.getRefreshToken())
+    }
+
+    @Test
+    fun `setPassword omits the current password when the account has none`() = runTest {
+        // Arrange
+        var sentBody: String? = null
+        val mockEngine = MockEngine { request ->
+            sentBody = (request.body as io.ktor.http.content.TextContent).text
+            respond(content = "", status = HttpStatusCode.NoContent)
+        }
+
+        val repository = AuthRepository(
+            simpleClient(mockEngine),
+            createTestTokenStorage(),
+            Dispatchers.Unconfined,
+            NoOpLogger()
+        )
+
+        // Act
+        val result = repository.setPassword(currentPassword = null, newPassword = "newPassword")
+
+        // Assert
+        assertTrue(result.isSuccess)
+        assertTrue(sentBody!!.contains("newPassword"))
+    }
 }

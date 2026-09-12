@@ -165,6 +165,17 @@ fun BudgetHunterNavigation() {
                     signUpViewModel.events.collect { event ->
                         when (event) {
                             is SignUpEvent.NavigateToSignIn -> navController.popBackStackOnce(backStackEntry)
+                            is SignUpEvent.NavigateToBudgetList -> {
+                                signedInEmail = event.email
+                                navController.navigate(
+                                    route = BudgetListScreen,
+                                    navOptions = navOptions {
+                                        // Clear the whole auth stack: signing up with Google
+                                        // already leaves the user signed in.
+                                        popUpTo<SignInScreen> { inclusive = true }
+                                    }
+                                )
+                            }
                         }
                     }
                 }

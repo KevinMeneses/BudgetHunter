@@ -2,7 +2,10 @@ package com.meneses.budgethunter.auth.data
 
 import com.meneses.budgethunter.commons.data.network.ApiEndpoints
 import com.meneses.budgethunter.commons.data.network.models.AuthResponse
+import com.meneses.budgethunter.commons.data.network.models.CurrentUser
+import com.meneses.budgethunter.commons.data.network.models.GoogleSignInRequest
 import com.meneses.budgethunter.commons.data.network.models.RefreshTokenRequest
+import com.meneses.budgethunter.commons.data.network.models.SetPasswordRequest
 import com.meneses.budgethunter.commons.data.network.models.SignInRequest
 import com.meneses.budgethunter.commons.data.network.models.SignUpRequest
 import com.meneses.budgethunter.commons.data.network.models.SignUpResponse
@@ -11,6 +14,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.auth.authProvider
 import io.ktor.client.plugins.auth.providers.BearerAuthProvider
+import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import kotlinx.coroutines.CoroutineDispatcher
@@ -53,10 +57,7 @@ class AuthRepository(
             }
             val authResponse = response.body<AuthResponse>()
 
-            // Store tokens on successful sign in
-            tokenStorage.saveAuthToken(authResponse.authToken)
-            tokenStorage.saveRefreshToken(authResponse.refreshToken)
-            invalidateCachedBearerToken()
+            persistSession(authResponse)
 
             Result.success(authResponse)
         } catch (e: Exception) {
@@ -77,14 +78,65 @@ class AuthRepository(
             }
             val authResponse = response.body<AuthResponse>()
 
-            // Store new tokens (token rotation)
-            tokenStorage.saveAuthToken(authResponse.authToken)
-            tokenStorage.saveRefreshToken(authResponse.refreshToken)
-            invalidateCachedBearerToken()
+            // Token rotation: the server issues a new refresh token with every exchange.
+            persistSession(authResponse)
 
             Result.success(authResponse)
         } catch (e: Exception) {
             logger.warn(TAG, "Token refresh failed", e)
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Exchanges a Google ID token for a session.
+     *
+     * The server creates the account on first use and links it to an existing password account
+     * with the same verified email, so this one call covers both signing up and signing in.
+     */
+    suspend fun signInWithGoogle(idToken: String): Result<AuthResponse> = withContext(ioDispatcher) {
+        try {
+            val response = httpClient.post(ApiEndpoints.SIGN_IN_WITH_GOOGLE) {
+                setBody(GoogleSignInRequest(idToken))
+            }
+            val authResponse = response.body<AuthResponse>()
+
+            persistSession(authResponse)
+
+            Result.success(authResponse)
+        } catch (e: Exception) {
+            logger.warn(TAG, "Google sign in failed", e)
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getCurrentUser(): Result<CurrentUser> = withContext(ioDispatcher) {
+        try {
+            Result.success(httpClient.get(ApiEndpoints.ME).body<CurrentUser>())
+        } catch (e: Exception) {
+            logger.warn(TAG, "Could not load the current user", e)
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Sets or replaces the account password.
+     *
+     * [currentPassword] is null for an account that has none yet — the one created through Google
+     * sign in. Asking for a password the user never chose would be a dead end, and the session
+     * token already proves who they are.
+     */
+    suspend fun setPassword(
+        currentPassword: String?,
+        newPassword: String
+    ): Result<Unit> = withContext(ioDispatcher) {
+        try {
+            httpClient.post(ApiEndpoints.PASSWORD) {
+                setBody(SetPasswordRequest(currentPassword, newPassword))
+            }.body<Unit>()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            logger.warn(TAG, "Could not set the password", e)
             Result.failure(e)
         }
     }
@@ -104,6 +156,18 @@ class AuthRepository(
             logger.warn(TAG, "Could not read the stored session", e)
             false
         }
+    }
+
+    /**
+     * Stores a freshly issued session.
+     *
+     * Every sign-in path goes through here so none of them can forget the cache invalidation
+     * below, which is what keeps a switched account from seeing the previous user's data.
+     */
+    private suspend fun persistSession(authResponse: AuthResponse) {
+        tokenStorage.saveAuthToken(authResponse.authToken)
+        tokenStorage.saveRefreshToken(authResponse.refreshToken)
+        invalidateCachedBearerToken()
     }
 
     /**
