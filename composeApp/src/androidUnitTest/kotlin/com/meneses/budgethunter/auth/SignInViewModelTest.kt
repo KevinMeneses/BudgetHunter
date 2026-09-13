@@ -13,6 +13,7 @@ import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.commons.data.PreferencesManager
 import com.meneses.budgethunter.commons.data.network.models.AuthResponse
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.coJustRun
 import io.mockk.mockk
@@ -195,5 +196,19 @@ class SignInViewModelTest {
 
         // Then
         assertEquals(false, viewModel.uiState.value.isGoogleAvailable)
+    }
+
+    @Test
+    fun `a second google tap while one is in flight does not start another sign in`() = runTest {
+        // Given - the first sign in has not finished yet
+        coEvery { signInWithGoogleUseCase.execute() } returns GoogleAuthOutcome.Cancelled
+
+        // When - the button is tapped twice before the first one completes
+        viewModel.sendIntent(SignInIntent.GoogleSignInClicked)
+        viewModel.sendIntent(SignInIntent.GoogleSignInClicked)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then - only one flow reaches the platform; a second one would orphan the first
+        coVerify(exactly = 1) { signInWithGoogleUseCase.execute() }
     }
 }

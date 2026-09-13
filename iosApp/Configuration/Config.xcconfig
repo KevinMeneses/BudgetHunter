@@ -30,3 +30,11 @@ ENABLE_PREVIEWS = YES
 
 // Run Path
 LD_RUNPATH_SEARCH_PATHS = $(inherited) @executable_path/Frameworks
+
+// Google Sign-In
+// iOS OAuth client id from Google Cloud Console, and the same id reversed for the URL scheme the
+// sign-in sheet returns through (com.googleusercontent.apps.<rest-of-id>). Neither is a secret.
+// Leave both empty to build without the Google button. Values go without quotes; xcconfig treats
+// "//" as the start of a comment, which is fine here because neither value contains it.
+GOOGLE_IOS_CLIENT_ID =
+GOOGLE_REVERSED_CLIENT_ID =

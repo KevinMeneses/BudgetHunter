@@ -7,6 +7,7 @@ import com.meneses.budgethunter.auth.application.SignUpIntent
 import com.meneses.budgethunter.auth.data.AuthRepository
 import com.meneses.budgethunter.commons.data.network.models.SignUpResponse
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
@@ -116,5 +117,19 @@ class SignUpViewModelTest {
         val state = viewModel.uiState.value
         assertEquals(false, state.isLoading)
         assertNull(state.error)
+    }
+
+    @Test
+    fun `a second google tap while one is in flight does not start another sign in`() = runTest {
+        // Given - the first sign in has not finished yet
+        coEvery { signInWithGoogleUseCase.execute() } returns GoogleAuthOutcome.Cancelled
+
+        // When - the button is tapped twice before the first one completes
+        viewModel.sendIntent(SignUpIntent.GoogleSignUpClicked)
+        viewModel.sendIntent(SignUpIntent.GoogleSignUpClicked)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then - only one flow reaches the platform; a second one would orphan the first
+        coVerify(exactly = 1) { signInWithGoogleUseCase.execute() }
     }
 }
