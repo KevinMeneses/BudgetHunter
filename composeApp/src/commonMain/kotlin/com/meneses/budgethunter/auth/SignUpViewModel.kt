@@ -124,6 +124,11 @@ class SignUpViewModel(
     }
 
     private fun signUpWithGoogle() {
+        // A second tap can land before Compose recomposes the button as disabled. The platform SDKs
+        // do not queue concurrent sign-ins: on iOS the first flow's completion is simply dropped,
+        // which would leave its coroutine suspended forever and the spinner stuck on screen.
+        if (_uiState.value.isLoading) return
+
         _uiState.update { it.copy(isLoading = true, error = null) }
 
         viewModelScope.launch {

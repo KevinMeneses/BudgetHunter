@@ -2,6 +2,7 @@ package com.meneses.budgethunter.di
 
 import com.meneses.budgethunter.commons.platform.CameraManager
 import com.meneses.budgethunter.commons.platform.FilePickerManager
+import com.meneses.budgethunter.commons.platform.GoogleSignInManager
 import com.meneses.budgethunter.commons.platform.KeychainStore
 import com.meneses.budgethunter.commons.platform.NotificationManager
 import com.meneses.budgethunter.commons.platform.ShareManager
@@ -13,5 +14,6 @@ class IOSBridge {
         lateinit var shareManager: ShareManager
         lateinit var notificationManager: NotificationManager
         lateinit var keychainStore: KeychainStore
+        lateinit var googleSignInManager: GoogleSignInManager
     }
 }

@@ -16,7 +16,6 @@ import com.meneses.budgethunter.commons.platform.AppUpdateManager
 import com.meneses.budgethunter.commons.platform.CameraManager
 import com.meneses.budgethunter.commons.platform.FilePickerManager
 import com.meneses.budgethunter.commons.platform.GoogleSignInManager
-import com.meneses.budgethunter.commons.platform.IosGoogleSignInManager
 import com.meneses.budgethunter.commons.platform.IosNetworkMonitor
 import com.meneses.budgethunter.commons.platform.NetworkMonitor
 import com.meneses.budgethunter.commons.platform.NotificationManager
@@ -81,7 +80,7 @@ val iosPlatformModule = module {
     single<NetworkMonitor> {
         IosNetworkMonitor(logger = get()).apply { startMonitoring() }
     }
-    single<GoogleSignInManager> { IosGoogleSignInManager() }
+    single<GoogleSignInManager> { IOSBridge.googleSignInManager }
 
     single<ImageProcessor> {
         ImageProcessor()

@@ -10,8 +10,8 @@ Al terminar vas a tener **un valor** que copiar en dos lugares:
 |---|---|
 | **Web client ID** | `local.properties` de la app (`GOOGLE_SERVER_CLIENT_ID`) y `.env` **local** del backend (`GOOGLE_OAUTH_CLIENT_IDS`), que `deploy.sh` sube al servidor |
 
-Los otros dos clientes (Android e iOS) no se copian a ningún archivo: solo tienen que existir para
-que Google reconozca la app que hace la llamada.
+El cliente Android no se copia a ningún archivo: solo tiene que existir para que Google reconozca la
+app. El de iOS sí se usa — va en la configuración de Xcode y en la lista del backend (sección 5).
 
 Tiempo aproximado: 15 minutos.
 
@@ -135,21 +135,60 @@ SHA1: A1:B2:C3:D4:E5:F6:...
 
 ---
 
-## 5. Crear el iOS client ID (solo para la Fase 4)
+## 5. iOS
 
-Si por ahora solo vas a probar en Android, sáltate este paso.
+El SDK de Google ya está agregado al proyecto Xcode por Swift Package Manager; lo que falta son
+tus valores. Sin ellos la app compila igual y el botón simplemente no aparece en iOS.
+
+### 5.1 Crear el iOS client ID
 
 1. **Google Auth Platform → Clients** → **Create client**.
 2. **Application type**: **iOS**.
 3. **Name**: `BudgetHunter iOS`.
 4. **Bundle ID**: `com.meneses.budgethunter`
-5. **Create**.
-6. Guarda el **Client ID** y el **iOS URL scheme** (el *reversed client ID*,
-   `com.googleusercontent.apps.123456789012-...`). Los dos hacen falta al agregar el SDK en Xcode.
+5. **Create**, y copia el **Client ID**.
 
-> El token que emite el SDK de iOS lleva el **iOS client ID** en su campo `aud`, no el web. Por eso
-> el backend acepta una **lista** de audiencias: cuando llegue la Fase 4 hay que agregar este
-> client ID a `GOOGLE_OAUTH_CLIENT_IDS`, separado por coma.
+### 5.2 Ponerlo en la app
+
+Edita `iosApp/Config.xcconfig` (está en `.gitignore`; es el que usa la configuración Debug y el
+mismo donde ya tienes `GEMINI_API_KEY`):
+
+```
+GOOGLE_IOS_CLIENT_ID = 123456789012-abcdef.apps.googleusercontent.com
+GOOGLE_REVERSED_CLIENT_ID = com.googleusercontent.apps.123456789012-abcdef
+```
+
+El segundo es el mismo ID **al revés**: quita `.apps.googleusercontent.com` del final y ponle
+`com.googleusercontent.apps.` delante. Es el esquema de URL por el que la hoja de Google le
+devuelve el control a la app; si está mal, el login se abre pero nunca termina.
+
+⚠️ Sin comillas. En un `.xcconfig`, `//` inicia un comentario — no afecta a estos valores porque
+ninguno lo contiene, pero no pegues URLs completas.
+
+> La configuración **Release** lee `iosApp/Configuration/Config.xcconfig` (el commiteado), que
+> trae las dos claves vacías. Es el mismo arreglo que ya tiene `GEMINI_API_KEY`: para compilar
+> Release con Google habría que poner los valores también ahí.
+
+### 5.3 Agregarlo al backend
+
+El token que emite el SDK de iOS lleva el **iOS client ID** en `aud`, no el web. Agrégalo a la
+lista en el `.env` **local** del backend, separado por coma:
+
+```
+GOOGLE_OAUTH_CLIENT_IDS=<web-client-id>,<ios-client-id>
+```
+
+y despliega con `./deploy.sh`. Sin este paso, iOS abre la hoja de Google, elige cuenta, y el
+backend rechaza el token con 401 — que parece un problema de Google y no lo es.
+
+> No configuramos `GIDServerClientID`. Hay ambigüedad sobre si cambia el `aud` del token en iOS,
+> pero como el backend acepta ambos IDs, el token valida en cualquiera de los dos casos.
+
+### 5.4 Probar
+
+Abre `iosApp/iosApp.xcodeproj` en Xcode (la primera vez descarga el paquete de Google; necesita
+red) y corre en un simulador. El botón "Continuar con Google" debe aparecer; si no, el
+`GOOGLE_IOS_CLIENT_ID` no llegó o no tiene forma de client ID.
 
 ---
 
@@ -312,6 +351,9 @@ Con el backend local corriendo y `BACKEND_URL=http://10.0.2.2:8080` en `local.pr
 | El backend responde 401 con un token que parece válido | `GOOGLE_OAUTH_CLIENT_IDS` vacío, o no coincide con el web client ID |
 | "Funcionaba y dejó de funcionar de repente" | Tras varios descartes seguidos del selector, Google impone un enfriamiento de 24 h. Limpia los datos de Play Services o cambia de cuenta en el emulador |
 | El backend no arranca tras desplegar | Falta correr `001_add_google_sso.sql` |
+| **iOS:** el botón no aparece | `GOOGLE_IOS_CLIENT_ID` vacío o sin la forma `….apps.googleusercontent.com` en `iosApp/Config.xcconfig` |
+| **iOS:** la hoja de Google abre pero nunca vuelve a la app | `GOOGLE_REVERSED_CLIENT_ID` mal invertido |
+| **iOS:** eliges cuenta y el backend responde 401 | El iOS client ID no está en `GOOGLE_OAUTH_CLIENT_IDS` del backend |
 
 ---
 
