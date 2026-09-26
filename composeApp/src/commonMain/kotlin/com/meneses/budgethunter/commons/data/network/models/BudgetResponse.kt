@@ -6,5 +6,6 @@ import kotlinx.serialization.Serializable
 data class BudgetResponse(
     val id: Long,
     val name: String,
-    val amount: Double
+    val amount: Double,
+    val date: String? = null
 )

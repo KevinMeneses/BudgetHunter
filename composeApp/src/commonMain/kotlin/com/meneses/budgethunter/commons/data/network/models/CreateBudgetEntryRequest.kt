@@ -7,5 +7,6 @@ data class CreateBudgetEntryRequest(
     val amount: Double,
     val description: String,
     val category: String,
-    val type: String
+    val type: String,
+    val date: String? = null
 )

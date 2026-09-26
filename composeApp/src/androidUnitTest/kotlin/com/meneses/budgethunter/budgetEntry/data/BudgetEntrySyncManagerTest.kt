@@ -19,6 +19,7 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import io.mockk.verifyOrder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.runTest
 import kotlin.test.BeforeTest
@@ -142,7 +143,7 @@ class BudgetEntrySyncManagerTest {
             modificationDate = "2024-01-01"
         )
         coEvery {
-            apiService.createEntry(101, CreateBudgetEntryRequest(50.0, "Entry 1", "OTHER", "OUTCOME"))
+            apiService.createEntry(101, CreateBudgetEntryRequest(50.0, "Entry 1", "OTHER", "OUTCOME", date = entry1.date))
         } returns Result.success(response1)
 
         val response2 = BudgetEntryResponse(
@@ -158,7 +159,7 @@ class BudgetEntrySyncManagerTest {
             modificationDate = "2024-01-01"
         )
         coEvery {
-            apiService.createEntry(101, CreateBudgetEntryRequest(75.0, "Entry 2", "OTHER", "OUTCOME"))
+            apiService.createEntry(101, CreateBudgetEntryRequest(75.0, "Entry 2", "OTHER", "OUTCOME", date = entry2.date))
         } returns Result.success(response2)
 
         every { entryLocalDataSource.update(any()) } returns Unit
@@ -206,7 +207,7 @@ class BudgetEntrySyncManagerTest {
             modificationDate = "2024-01-02"
         )
         coEvery {
-            apiService.updateEntry(101, 201, UpdateBudgetEntryRequest(60.0, "Updated Entry", "OTHER", "OUTCOME"))
+            apiService.updateEntry(101, 201, UpdateBudgetEntryRequest(60.0, "Updated Entry", "OTHER", "OUTCOME", date = entry.date))
         } returns Result.success(response)
 
         every { entryLocalDataSource.update(any()) } returns Unit
@@ -239,14 +240,14 @@ class BudgetEntrySyncManagerTest {
             updatedByEmail = null, creationDate = "2024-01-01", modificationDate = "2024-01-01"
         )
         coEvery {
-            apiService.createEntry(101, CreateBudgetEntryRequest(50.0, "Entry 1", "OTHER", "OUTCOME"))
+            apiService.createEntry(101, CreateBudgetEntryRequest(50.0, "Entry 1", "OTHER", "OUTCOME", date = entry1.date))
         } returns Result.success(response1)
         every { entryLocalDataSource.update(match { it.id == 1 }) } returns Unit
 
         // Second entry fails
         val networkError = Exception("Network error")
         coEvery {
-            apiService.createEntry(101, CreateBudgetEntryRequest(75.0, "Entry 2", "OTHER", "OUTCOME"))
+            apiService.createEntry(101, CreateBudgetEntryRequest(75.0, "Entry 2", "OTHER", "OUTCOME", date = entry2.date))
         } returns Result.failure(networkError)
 
         // When
@@ -450,7 +451,7 @@ class BudgetEntrySyncManagerTest {
             updatedByEmail = null, creationDate = "2024-01-01", modificationDate = "2024-01-01"
         )
         coEvery {
-            apiService.createEntry(101, CreateBudgetEntryRequest(50.0, "Local Entry", "OTHER", "OUTCOME"))
+            apiService.createEntry(101, CreateBudgetEntryRequest(50.0, "Local Entry", "OTHER", "OUTCOME", date = localEntry.date))
         } returns Result.success(createResponse)
         every { entryLocalDataSource.update(any()) } returns Unit
 
@@ -584,5 +585,300 @@ class BudgetEntrySyncManagerTest {
 
         // Verify budget 2 was synced even though budget 1 failed
         coVerify { apiService.getEntries(102) }
+    }
+
+    // ========== Entry date field push/pull tests ==========
+
+    @Test
+    fun `pushNewEntry sends date when creating a new entry`() = runTest {
+        // Given - User is authenticated with synced parent budget and a new entry
+        coEvery { authRepository.isAuthenticated() } returns true
+        val syncedBudget = Budget(id = 1, name = "Budget", amount = 1000.0, serverId = 101)
+        coEvery { budgetLocalDataSource.getById(1) } returns syncedBudget
+
+        val entry = BudgetEntry(
+            id = 1,
+            budgetId = 1,
+            amount = "50.0",
+            description = "Entry 1",
+            date = "2026-01-15",
+            serverId = null
+        )
+        every { entryLocalDataSource.getUnsynced(1) } returns listOf(entry)
+
+        val response = BudgetEntryResponse(
+            id = 201, budgetId = 101, amount = 50.0, description = "Entry 1",
+            category = "OTHER", type = "OUTCOME", date = "2026-01-15",
+            createdByEmail = "user@test.com", updatedByEmail = null,
+            creationDate = "2024-01-01", modificationDate = "2024-01-01"
+        )
+        coEvery {
+            apiService.createEntry(101, CreateBudgetEntryRequest(50.0, "Entry 1", "OTHER", "OUTCOME", date = "2026-01-15"))
+        } returns Result.success(response)
+        every { entryLocalDataSource.update(any()) } returns Unit
+
+        // When
+        val result = syncManager.syncPendingEntries(budgetId = 1)
+
+        // Then
+        assertIs<SyncResult.Success<SyncStats>>(result)
+        coVerify {
+            apiService.createEntry(101, CreateBudgetEntryRequest(50.0, "Entry 1", "OTHER", "OUTCOME", date = "2026-01-15"))
+        }
+    }
+
+    @Test
+    fun `pushUpdatedEntry sends date when updating an existing entry`() = runTest {
+        // Given - User is authenticated with synced parent budget and an already-synced entry
+        coEvery { authRepository.isAuthenticated() } returns true
+        val syncedBudget = Budget(id = 1, name = "Budget", amount = 1000.0, serverId = 101)
+        coEvery { budgetLocalDataSource.getById(1) } returns syncedBudget
+
+        val entry = BudgetEntry(
+            id = 1,
+            budgetId = 1,
+            amount = "60.0",
+            description = "Updated Entry",
+            date = "2026-02-20",
+            serverId = 201
+        )
+        every { entryLocalDataSource.getUnsynced(1) } returns listOf(entry)
+
+        val response = BudgetEntryResponse(
+            id = 201, budgetId = 101, amount = 60.0, description = "Updated Entry",
+            category = "OTHER", type = "OUTCOME", date = "2026-02-20",
+            createdByEmail = "user@test.com", updatedByEmail = "user@test.com",
+            creationDate = "2024-01-01", modificationDate = "2024-01-02"
+        )
+        coEvery {
+            apiService.updateEntry(101, 201, UpdateBudgetEntryRequest(60.0, "Updated Entry", "OTHER", "OUTCOME", date = "2026-02-20"))
+        } returns Result.success(response)
+        every { entryLocalDataSource.update(any()) } returns Unit
+
+        // When
+        val result = syncManager.syncPendingEntries(budgetId = 1)
+
+        // Then
+        assertIs<SyncResult.Success<SyncStats>>(result)
+        coVerify {
+            apiService.updateEntry(101, 201, UpdateBudgetEntryRequest(60.0, "Updated Entry", "OTHER", "OUTCOME", date = "2026-02-20"))
+        }
+    }
+
+    @Test
+    fun `pullEntriesFromServer stores server date for a brand new entry`() = runTest {
+        // Given - Server returns a new entry with a date
+        coEvery { authRepository.isAuthenticated() } returns true
+
+        val serverEntry = BudgetEntryResponse(
+            id = 201, budgetId = 101, amount = 50.0, description = "Server Entry",
+            category = "FOOD", type = "OUTCOME", date = "2026-03-10",
+            createdByEmail = "user@test.com", updatedByEmail = null,
+            creationDate = "2026-03-10T10:00:00.000000", modificationDate = "2026-03-10T10:00:00.000000"
+        )
+        coEvery { apiService.getEntries(101) } returns Result.success(listOf(serverEntry))
+        coEvery { entryLocalDataSource.selectByServerId(201) } returns null
+        coEvery { entryLocalDataSource.selectByUniqueFields(any(), any(), any(), any()) } returns null
+        every { entryLocalDataSource.create(any()) } returns Unit
+
+        // When
+        val result = syncManager.pullEntriesFromServer(budgetServerId = 101, localBudgetId = 1)
+
+        // Then
+        assertIs<SyncResult.Success<SyncStats>>(result)
+        verify {
+            entryLocalDataSource.create(match { it.date == "2026-03-10" && it.serverId == 201L })
+        }
+    }
+
+    @Test
+    fun `pullEntriesFromServer derives date from creation date for a new entry with no server date`() = runTest {
+        // Given - Server returns a legacy entry (older backend) with no date of its own
+        coEvery { authRepository.isAuthenticated() } returns true
+
+        val serverEntry = BudgetEntryResponse(
+            id = 201, budgetId = 101, amount = 50.0, description = "Legacy Entry",
+            category = "FOOD", type = "OUTCOME", date = null,
+            createdByEmail = "user@test.com", updatedByEmail = null,
+            creationDate = "2026-09-10T21:48:21.123456", modificationDate = "2026-09-10T21:48:21.123456"
+        )
+        coEvery { apiService.getEntries(101) } returns Result.success(listOf(serverEntry))
+        coEvery { entryLocalDataSource.selectByServerId(201) } returns null
+        coEvery { entryLocalDataSource.selectByUniqueFields(any(), any(), any(), any()) } returns null
+        every { entryLocalDataSource.create(any()) } returns Unit
+
+        // When
+        val result = syncManager.pullEntriesFromServer(budgetServerId = 101, localBudgetId = 1)
+
+        // Then
+        assertIs<SyncResult.Success<SyncStats>>(result)
+        verify {
+            entryLocalDataSource.create(match { it.date == "2026-09-10" })
+        }
+    }
+
+    @Test
+    fun `pullEntriesFromServer adopts server date for an existing synced entry`() = runTest {
+        // Given - Existing entry is already synced, so the server's date wins
+        coEvery { authRepository.isAuthenticated() } returns true
+
+        val serverEntry = BudgetEntryResponse(
+            id = 201, budgetId = 101, amount = 60.0, description = "Updated Description",
+            category = "FOOD", type = "OUTCOME", date = "2026-05-01",
+            createdByEmail = "user@test.com", updatedByEmail = "user@test.com",
+            creationDate = "2024-01-01", modificationDate = "2024-01-02"
+        )
+        coEvery { apiService.getEntries(101) } returns Result.success(listOf(serverEntry))
+
+        val existingDbEntry = mockk<Budget_entry> {
+            every { id } returns 1
+            every { budget_id } returns 1
+            every { amount } returns 50.0
+            every { description } returns "Old Description"
+            every { type } returns BudgetEntry.Type.OUTCOME
+            every { category } returns BudgetEntry.Category.OTHER
+            every { date } returns "2024-01-01"
+            every { invoice } returns null
+            every { server_id } returns 201
+            every { is_synced } returns 1L
+            every { created_by_email } returns "user@test.com"
+            every { updated_by_email } returns null
+            every { creation_date } returns "2024-01-01"
+            every { modification_date } returns "2024-01-01"
+        }
+        coEvery { entryLocalDataSource.selectByServerId(201) } returns existingDbEntry
+        every { entryLocalDataSource.update(any()) } returns Unit
+
+        // When
+        val result = syncManager.pullEntriesFromServer(budgetServerId = 101, localBudgetId = 1)
+
+        // Then
+        assertIs<SyncResult.Success<SyncStats>>(result)
+        verify {
+            entryLocalDataSource.update(match { it.date == "2026-05-01" })
+        }
+    }
+
+    @Test
+    fun `pullEntriesFromServer keeps local date for a synced existing entry when server date is null`() = runTest {
+        // Given - Existing, synced entry; server has no date (legacy row)
+        coEvery { authRepository.isAuthenticated() } returns true
+
+        val serverEntry = BudgetEntryResponse(
+            id = 201, budgetId = 101, amount = 60.0, description = "Updated Description",
+            category = "FOOD", type = "OUTCOME", date = null,
+            createdByEmail = "user@test.com", updatedByEmail = "user@test.com",
+            creationDate = "2024-01-01", modificationDate = "2024-01-02"
+        )
+        coEvery { apiService.getEntries(101) } returns Result.success(listOf(serverEntry))
+
+        val existingDbEntry = mockk<Budget_entry> {
+            every { id } returns 1
+            every { budget_id } returns 1
+            every { amount } returns 50.0
+            every { description } returns "Old Description"
+            every { type } returns BudgetEntry.Type.OUTCOME
+            every { category } returns BudgetEntry.Category.OTHER
+            every { date } returns "2024-01-01"
+            every { invoice } returns null
+            every { server_id } returns 201
+            every { is_synced } returns 1L
+            every { created_by_email } returns "user@test.com"
+            every { updated_by_email } returns null
+            every { creation_date } returns "2024-01-01"
+            every { modification_date } returns "2024-01-01"
+        }
+        coEvery { entryLocalDataSource.selectByServerId(201) } returns existingDbEntry
+        every { entryLocalDataSource.update(any()) } returns Unit
+
+        // When
+        val result = syncManager.pullEntriesFromServer(budgetServerId = 101, localBudgetId = 1)
+
+        // Then
+        assertIs<SyncResult.Success<SyncStats>>(result)
+        verify {
+            entryLocalDataSource.update(match { it.date == "2024-01-01" })
+        }
+    }
+
+    @Test
+    fun `pullEntriesFromServer keeps local date for an unsynced existing entry even when server sends a different date`() = runTest {
+        // Given - Local entry hasn't been pushed yet, so it's considered newer than the server's copy
+        coEvery { authRepository.isAuthenticated() } returns true
+
+        val serverEntry = BudgetEntryResponse(
+            id = 201, budgetId = 101, amount = 60.0, description = "Updated Description",
+            category = "FOOD", type = "OUTCOME", date = "2026-05-01",
+            createdByEmail = "user@test.com", updatedByEmail = "user@test.com",
+            creationDate = "2024-01-01", modificationDate = "2024-01-02"
+        )
+        coEvery { apiService.getEntries(101) } returns Result.success(listOf(serverEntry))
+
+        val existingDbEntry = mockk<Budget_entry> {
+            every { id } returns 1
+            every { budget_id } returns 1
+            every { amount } returns 50.0
+            every { description } returns "Old Description"
+            every { type } returns BudgetEntry.Type.OUTCOME
+            every { category } returns BudgetEntry.Category.OTHER
+            every { date } returns "2024-01-01"
+            every { invoice } returns null
+            every { server_id } returns 201
+            every { is_synced } returns 0L
+            every { created_by_email } returns "user@test.com"
+            every { updated_by_email } returns null
+            every { creation_date } returns "2024-01-01"
+            every { modification_date } returns "2024-01-01"
+        }
+        coEvery { entryLocalDataSource.selectByServerId(201) } returns existingDbEntry
+        every { entryLocalDataSource.update(any()) } returns Unit
+
+        // When
+        val result = syncManager.pullEntriesFromServer(budgetServerId = 101, localBudgetId = 1)
+
+        // Then
+        assertIs<SyncResult.Success<SyncStats>>(result)
+        verify {
+            entryLocalDataSource.update(match { it.date == "2024-01-01" })
+        }
+    }
+
+    @Test
+    fun `pullEntriesFromServer merges server entries in ascending server id order`() = runTest {
+        // Given - Server returns entries out of order by id
+        coEvery { authRepository.isAuthenticated() } returns true
+
+        val serverEntryHigh = BudgetEntryResponse(
+            id = 203, budgetId = 101, amount = 30.0, description = "Entry C",
+            category = "OTHER", type = "OUTCOME", createdByEmail = "user@test.com",
+            updatedByEmail = null, creationDate = "2024-01-03", modificationDate = "2024-01-03"
+        )
+        val serverEntryLow = BudgetEntryResponse(
+            id = 201, budgetId = 101, amount = 10.0, description = "Entry A",
+            category = "OTHER", type = "OUTCOME", createdByEmail = "user@test.com",
+            updatedByEmail = null, creationDate = "2024-01-01", modificationDate = "2024-01-01"
+        )
+        val serverEntryMid = BudgetEntryResponse(
+            id = 202, budgetId = 101, amount = 20.0, description = "Entry B",
+            category = "OTHER", type = "OUTCOME", createdByEmail = "user@test.com",
+            updatedByEmail = null, creationDate = "2024-01-02", modificationDate = "2024-01-02"
+        )
+        coEvery { apiService.getEntries(101) } returns Result.success(
+            listOf(serverEntryHigh, serverEntryLow, serverEntryMid)
+        )
+        coEvery { entryLocalDataSource.selectByServerId(any()) } returns null
+        coEvery { entryLocalDataSource.selectByUniqueFields(any(), any(), any(), any()) } returns null
+        every { entryLocalDataSource.create(any()) } returns Unit
+
+        // When
+        val result = syncManager.pullEntriesFromServer(budgetServerId = 101, localBudgetId = 1)
+
+        // Then
+        assertIs<SyncResult.Success<SyncStats>>(result)
+        verifyOrder {
+            entryLocalDataSource.create(match { it.serverId == 201L })
+            entryLocalDataSource.create(match { it.serverId == 202L })
+            entryLocalDataSource.create(match { it.serverId == 203L })
+        }
     }
 }

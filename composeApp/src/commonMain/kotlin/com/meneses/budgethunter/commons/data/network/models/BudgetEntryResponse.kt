@@ -10,6 +10,7 @@ data class BudgetEntryResponse(
     val description: String,
     val category: String,
     val type: String,
+    val date: String? = null,
     val createdByEmail: String,
     val updatedByEmail: String?,
     val creationDate: String,
