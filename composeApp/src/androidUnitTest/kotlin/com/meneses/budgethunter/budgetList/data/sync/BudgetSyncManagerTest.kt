@@ -10,11 +10,13 @@ import com.meneses.budgethunter.commons.data.sync.Logger
 import com.meneses.budgethunter.commons.data.sync.SyncException
 import com.meneses.budgethunter.commons.data.sync.SyncResult
 import com.meneses.budgethunter.commons.data.sync.SyncStats
+import com.meneses.budgethunter.commons.util.today
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import io.mockk.verifyOrder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.runTest
 import kotlin.test.BeforeTest
@@ -92,11 +94,11 @@ class BudgetSyncManagerTest {
 
         // API calls succeed
         coEvery {
-            apiService.createBudget(CreateBudgetRequest("Budget 1", 1000.0))
+            apiService.createBudget(CreateBudgetRequest("Budget 1", 1000.0, date = budget1.date))
         } returns Result.success(BudgetResponse(id = 101, name = "Budget 1", amount = 1000.0))
 
         coEvery {
-            apiService.createBudget(CreateBudgetRequest("Budget 2", 2000.0))
+            apiService.createBudget(CreateBudgetRequest("Budget 2", 2000.0, date = budget2.date))
         } returns Result.success(BudgetResponse(id = 102, name = "Budget 2", amount = 2000.0))
 
         // Local updates succeed
@@ -130,19 +132,19 @@ class BudgetSyncManagerTest {
 
         // First budget succeeds
         coEvery {
-            apiService.createBudget(CreateBudgetRequest("Budget 1", 1000.0))
+            apiService.createBudget(CreateBudgetRequest("Budget 1", 1000.0, date = budget1.date))
         } returns Result.success(BudgetResponse(id = 101, name = "Budget 1", amount = 1000.0))
         every { localDataSource.markAsSynced(1, 101, any()) } returns Unit
 
         // Second budget fails
         val networkError = Exception("Network error")
         coEvery {
-            apiService.createBudget(CreateBudgetRequest("Budget 2", 2000.0))
+            apiService.createBudget(CreateBudgetRequest("Budget 2", 2000.0, date = budget2.date))
         } returns Result.failure(networkError)
 
         // Third budget succeeds
         coEvery {
-            apiService.createBudget(CreateBudgetRequest("Budget 3", 3000.0))
+            apiService.createBudget(CreateBudgetRequest("Budget 3", 3000.0, date = budget3.date))
         } returns Result.success(BudgetResponse(id = 103, name = "Budget 3", amount = 3000.0))
         every { localDataSource.markAsSynced(3, 103, any()) } returns Unit
 
@@ -319,7 +321,7 @@ class BudgetSyncManagerTest {
         val localBudget = Budget(id = 1, name = "Local Budget", amount = 1000.0)
         every { localDataSource.getUnsynced() } returns listOf(localBudget)
         coEvery {
-            apiService.createBudget(CreateBudgetRequest("Local Budget", 1000.0))
+            apiService.createBudget(CreateBudgetRequest("Local Budget", 1000.0, date = localBudget.date))
         } returns Result.success(BudgetResponse(id = 101, name = "Local Budget", amount = 1000.0))
         every { localDataSource.markAsSynced(1, 101, any()) } returns Unit
 
@@ -390,13 +392,13 @@ class BudgetSyncManagerTest {
         every { localDataSource.getUnsynced() } returns listOf(budget1, budget2)
 
         coEvery {
-            apiService.createBudget(CreateBudgetRequest("Budget 1", 1000.0))
+            apiService.createBudget(CreateBudgetRequest("Budget 1", 1000.0, date = budget1.date))
         } returns Result.success(BudgetResponse(id = 101, name = "Budget 1", amount = 1000.0))
         every { localDataSource.markAsSynced(1, 101, any()) } returns Unit
 
         val networkError = Exception("Network error")
         coEvery {
-            apiService.createBudget(CreateBudgetRequest("Budget 2", 2000.0))
+            apiService.createBudget(CreateBudgetRequest("Budget 2", 2000.0, date = budget2.date))
         } returns Result.failure(networkError)
 
         // Pull phase: success
@@ -414,5 +416,213 @@ class BudgetSyncManagerTest {
         assertEquals(2, result.data.syncedItems) // 1 pushed + 1 pulled
         assertEquals(1, result.data.failedItems) // 1 failed push
         assertEquals(1, result.data.errors.size)
+    }
+
+    // ========== Budget date field push/pull tests ==========
+
+    @Test
+    fun `syncSingleBudget sends date when creating a new budget`() = runTest {
+        // Given - User is authenticated with an unsynced new budget
+        coEvery { authRepository.isAuthenticated() } returns true
+
+        val budget = Budget(id = 1, name = "Budget 1", amount = 1000.0, date = "2026-01-15")
+        every { localDataSource.getUnsynced() } returns listOf(budget)
+
+        coEvery {
+            apiService.createBudget(CreateBudgetRequest("Budget 1", 1000.0, date = "2026-01-15"))
+        } returns Result.success(BudgetResponse(id = 101, name = "Budget 1", amount = 1000.0, date = "2026-01-15"))
+        every { localDataSource.markAsSynced(1, 101, any()) } returns Unit
+
+        // When
+        val result = syncManager.syncPendingBudgets()
+
+        // Then
+        assertIs<SyncResult.Success<SyncStats>>(result)
+        coVerify {
+            apiService.createBudget(CreateBudgetRequest("Budget 1", 1000.0, date = "2026-01-15"))
+        }
+    }
+
+    @Test
+    fun `syncSingleBudget sends date when updating an existing budget`() = runTest {
+        // Given - User is authenticated with an unsynced budget that already has a serverId
+        coEvery { authRepository.isAuthenticated() } returns true
+
+        val budget = Budget(
+            id = 1,
+            name = "Budget 1",
+            amount = 1000.0,
+            date = "2026-02-20",
+            serverId = 101
+        )
+        every { localDataSource.getUnsynced() } returns listOf(budget)
+
+        coEvery {
+            apiService.updateBudget(101, CreateBudgetRequest("Budget 1", 1000.0, date = "2026-02-20"))
+        } returns Result.success(BudgetResponse(id = 101, name = "Budget 1", amount = 1000.0, date = "2026-02-20"))
+        every { localDataSource.markAsSynced(1, 101, any()) } returns Unit
+
+        // When
+        val result = syncManager.syncPendingBudgets()
+
+        // Then
+        assertIs<SyncResult.Success<SyncStats>>(result)
+        coVerify {
+            apiService.updateBudget(101, CreateBudgetRequest("Budget 1", 1000.0, date = "2026-02-20"))
+        }
+    }
+
+    @Test
+    fun `pullBudgetsFromServer stores server date for a brand new budget`() = runTest {
+        // Given - Server returns a budget with a date, not present locally
+        coEvery { authRepository.isAuthenticated() } returns true
+
+        val serverBudget = BudgetResponse(id = 101, name = "Server Budget", amount = 1500.0, date = "2026-03-10")
+        coEvery { apiService.getBudgets() } returns Result.success(listOf(serverBudget))
+        every { localDataSource.getByServerId(101) } returns null
+        every { localDataSource.create(any()) } returns Budget()
+
+        // When
+        val result = syncManager.pullBudgetsFromServer()
+
+        // Then
+        assertIs<SyncResult.Success<SyncStats>>(result)
+        verify {
+            localDataSource.create(match { it.date == "2026-03-10" && it.serverId == 101L })
+        }
+    }
+
+    @Test
+    fun `pullBudgetsFromServer falls back to today for a new budget with no server date`() = runTest {
+        // Given - Server returns a legacy budget with no date (older backend)
+        coEvery { authRepository.isAuthenticated() } returns true
+
+        val serverBudget = BudgetResponse(id = 101, name = "Legacy Budget", amount = 1500.0, date = null)
+        coEvery { apiService.getBudgets() } returns Result.success(listOf(serverBudget))
+        every { localDataSource.getByServerId(101) } returns null
+        every { localDataSource.create(any()) } returns Budget()
+
+        // When
+        val result = syncManager.pullBudgetsFromServer()
+
+        // Then
+        assertIs<SyncResult.Success<SyncStats>>(result)
+        verify {
+            localDataSource.create(match { it.date == today() })
+        }
+    }
+
+    @Test
+    fun `pullBudgetsFromServer adopts server date for an existing synced budget`() = runTest {
+        // Given - Existing local budget is already synced, so the server's date wins
+        coEvery { authRepository.isAuthenticated() } returns true
+
+        val serverBudget = BudgetResponse(id = 101, name = "Updated Name", amount = 1500.0, date = "2026-05-01")
+        coEvery { apiService.getBudgets() } returns Result.success(listOf(serverBudget))
+
+        val existingBudget = Budget(
+            id = 1,
+            name = "Old Name",
+            amount = 1000.0,
+            date = "2026-01-01",
+            serverId = 101,
+            isSynced = true
+        )
+        every { localDataSource.getByServerId(101) } returns existingBudget
+        every { localDataSource.update(any()) } returns Unit
+
+        // When
+        val result = syncManager.pullBudgetsFromServer()
+
+        // Then
+        assertIs<SyncResult.Success<SyncStats>>(result)
+        verify {
+            localDataSource.update(match { it.date == "2026-05-01" })
+        }
+    }
+
+    @Test
+    fun `pullBudgetsFromServer keeps local date for a synced existing budget when server date is null`() = runTest {
+        // Given - Existing, synced local budget; server has no date (legacy row)
+        coEvery { authRepository.isAuthenticated() } returns true
+
+        val serverBudget = BudgetResponse(id = 101, name = "Updated Name", amount = 1500.0, date = null)
+        coEvery { apiService.getBudgets() } returns Result.success(listOf(serverBudget))
+
+        val existingBudget = Budget(
+            id = 1,
+            name = "Old Name",
+            amount = 1000.0,
+            date = "2026-01-01",
+            serverId = 101,
+            isSynced = true
+        )
+        every { localDataSource.getByServerId(101) } returns existingBudget
+        every { localDataSource.update(any()) } returns Unit
+
+        // When
+        val result = syncManager.pullBudgetsFromServer()
+
+        // Then
+        assertIs<SyncResult.Success<SyncStats>>(result)
+        verify {
+            localDataSource.update(match { it.date == "2026-01-01" })
+        }
+    }
+
+    @Test
+    fun `pullBudgetsFromServer keeps local date for an unsynced existing budget even when server sends a different date`() = runTest {
+        // Given - Local budget hasn't been pushed yet, so it's considered newer than the server's copy
+        coEvery { authRepository.isAuthenticated() } returns true
+
+        val serverBudget = BudgetResponse(id = 101, name = "Updated Name", amount = 1500.0, date = "2026-05-01")
+        coEvery { apiService.getBudgets() } returns Result.success(listOf(serverBudget))
+
+        val existingBudget = Budget(
+            id = 1,
+            name = "Old Name",
+            amount = 1000.0,
+            date = "2026-01-01",
+            serverId = 101,
+            isSynced = false
+        )
+        every { localDataSource.getByServerId(101) } returns existingBudget
+        every { localDataSource.update(any()) } returns Unit
+
+        // When
+        val result = syncManager.pullBudgetsFromServer()
+
+        // Then
+        assertIs<SyncResult.Success<SyncStats>>(result)
+        verify {
+            localDataSource.update(match { it.date == "2026-01-01" })
+        }
+    }
+
+    @Test
+    fun `pullBudgetsFromServer merges server budgets in ascending server id order`() = runTest {
+        // Given - Server returns budgets out of order by id
+        coEvery { authRepository.isAuthenticated() } returns true
+
+        val serverBudgetHigh = BudgetResponse(id = 103, name = "Budget C", amount = 3000.0)
+        val serverBudgetLow = BudgetResponse(id = 101, name = "Budget A", amount = 1000.0)
+        val serverBudgetMid = BudgetResponse(id = 102, name = "Budget B", amount = 2000.0)
+        coEvery { apiService.getBudgets() } returns Result.success(
+            listOf(serverBudgetHigh, serverBudgetLow, serverBudgetMid)
+        )
+
+        every { localDataSource.getByServerId(any()) } returns null
+        every { localDataSource.create(any()) } returns Budget()
+
+        // When
+        val result = syncManager.pullBudgetsFromServer()
+
+        // Then
+        assertIs<SyncResult.Success<SyncStats>>(result)
+        verifyOrder {
+            localDataSource.create(match { it.serverId == 101L })
+            localDataSource.create(match { it.serverId == 102L })
+            localDataSource.create(match { it.serverId == 103L })
+        }
     }
 }

@@ -43,8 +43,8 @@
     <string name="duplicate">Duplicar</string>
     <string name="no_budgets_yet">No hay presupuestos aún</string>
     <string name="create_first_budget">Crea tu primer presupuesto para comenzar</string>
-    <string name="enter_budget_name">Ingresa el nombre para tu nuevo presupuesto:</string>
-    <string name="modify_budget_name">Modifica el nombre del presupuesto:</string>
+    <string name="enter_budget_details">Ingresa el nombre y la fecha de tu nuevo presupuesto:</string>
+    <string name="modify_budget_details">Modifica el nombre y la fecha del presupuesto:</string>
     <string name="no_budgets_available">No hay presupuestos disponibles para seleccionar.</string>
     
     <!-- Budget Entry Management -->
@@ -64,6 +64,7 @@
     <string name="description">Descripcion</string>
     <string name="no_description">Sin descripcion</string>
     <string name="date">Fecha</string>
+    <string name="creation_date">Fecha de creación</string>
     <string name="category">Categoría</string>
     <string name="frequency">Frecuencia</string>
     <string name="start_date">Fecha de inicio</string>

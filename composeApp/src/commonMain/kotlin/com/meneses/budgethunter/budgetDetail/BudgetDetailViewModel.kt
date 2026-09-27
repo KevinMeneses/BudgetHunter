@@ -151,7 +151,9 @@ class BudgetDetailViewModel(
 
             BudgetDetailState.ListOrder.AMOUNT_DESCENDANT -> {
                 newOrder = BudgetDetailState.ListOrder.DEFAULT
-                orderedEntries = currentState.budgetDetail.entries.sortedByDescending { it.id }
+                orderedEntries = currentState.budgetDetail.entries.sortedWith(
+                    compareByDescending<BudgetEntry> { it.date }.thenByDescending { it.id }
+                )
             }
         }
 

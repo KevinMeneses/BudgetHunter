@@ -3,6 +3,7 @@ package com.meneses.budgethunter.budgetList.ui
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -30,8 +31,9 @@ import androidx.compose.ui.window.DialogProperties
 import budgethunter.composeapp.generated.resources.Res
 import budgethunter.composeapp.generated.resources.cancel
 import budgethunter.composeapp.generated.resources.create
-import budgethunter.composeapp.generated.resources.enter_budget_name
-import budgethunter.composeapp.generated.resources.modify_budget_name
+import budgethunter.composeapp.generated.resources.creation_date
+import budgethunter.composeapp.generated.resources.enter_budget_details
+import budgethunter.composeapp.generated.resources.modify_budget_details
 import budgethunter.composeapp.generated.resources.name
 import budgethunter.composeapp.generated.resources.new_budget
 import budgethunter.composeapp.generated.resources.creating
@@ -42,7 +44,9 @@ import budgethunter.composeapp.generated.resources.updating
 import com.meneses.budgethunter.budgetList.application.BudgetListIntent
 import org.jetbrains.compose.resources.stringResource
 import com.meneses.budgethunter.budgetList.domain.Budget
+import com.meneses.budgethunter.budgetEntry.ui.DateField
 import com.meneses.budgethunter.commons.EMPTY
+import com.meneses.budgethunter.commons.util.today
 
 @Composable
 fun NewBudgetModal(
@@ -53,6 +57,10 @@ fun NewBudgetModal(
     if (show) {
         var name by remember {
             mutableStateOf(EMPTY)
+        }
+
+        var date by remember {
+            mutableStateOf(today())
         }
 
         val onDismiss = remember {
@@ -76,7 +84,7 @@ fun NewBudgetModal(
             text = {
                 Column {
                     Text(
-                        text = stringResource(Res.string.enter_budget_name),
+                        text = stringResource(Res.string.enter_budget_details),
                         fontSize = 14.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(bottom = 16.dp)
@@ -90,13 +98,19 @@ fun NewBudgetModal(
                             capitalization = KeyboardCapitalization.Words
                         )
                     )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    DateField(
+                        date = date,
+                        label = stringResource(Res.string.creation_date),
+                        onDateSelected = { date = it }
+                    )
                 }
             },
             confirmButton = {
                 TextButton(
                     onClick = {
                         if (name.isBlank()) return@TextButton
-                        val budget = Budget(name = name)
+                        val budget = Budget(name = name, date = date)
                         BudgetListIntent.CreateBudget(budget).run(onIntent)
                         onDismiss()
                     },
@@ -134,6 +148,10 @@ fun UpdateBudgetModal(
             mutableStateOf(budget.name)
         }
 
+        var date by remember {
+            mutableStateOf(budget.date)
+        }
+
         val onDismiss = remember {
             fun() {
                 BudgetListIntent
@@ -166,7 +184,7 @@ fun UpdateBudgetModal(
             text = {
                 Column {
                     Text(
-                        text = stringResource(Res.string.modify_budget_name),
+                        text = stringResource(Res.string.modify_budget_details),
                         fontSize = 14.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(bottom = 16.dp)
@@ -180,13 +198,19 @@ fun UpdateBudgetModal(
                             capitalization = KeyboardCapitalization.Words
                         )
                     )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    DateField(
+                        date = date,
+                        label = stringResource(Res.string.creation_date),
+                        onDateSelected = { date = it }
+                    )
                 }
             },
             confirmButton = {
                 TextButton(
                     onClick = {
                         if (name.isBlank()) return@TextButton
-                        val updatedBudget = budget.copy(name = name)
+                        val updatedBudget = budget.copy(name = name, date = date)
                         BudgetListIntent.UpdateBudget(updatedBudget).run(onIntent)
                         onDismiss()
                     },

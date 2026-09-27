@@ -16,7 +16,7 @@ SELECT
 FROM budget b
 LEFT JOIN budget_entry be ON b.id = be.budget_id
 GROUP BY b.id, b.amount, b.name, b.date, b.server_id, b.is_synced, b.last_synced_at
-ORDER BY b.id DESC;
+ORDER BY b.date DESC, b.id DESC;
 
 insert:
 INSERT INTO budget (amount, name, date, server_id, is_synced, last_synced_at)
@@ -46,7 +46,7 @@ FROM budget b
 LEFT JOIN budget_entry be ON b.id = be.budget_id
 WHERE b.is_synced = 0
 GROUP BY b.id, b.amount, b.name, b.date, b.server_id, b.is_synced, b.last_synced_at
-ORDER BY b.id DESC;
+ORDER BY b.date DESC, b.id DESC;
 
 markAsSynced:
 UPDATE budget

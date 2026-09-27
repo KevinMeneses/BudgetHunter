@@ -11,7 +11,9 @@ import com.meneses.budgethunter.commons.data.sync.Logger
 import com.meneses.budgethunter.commons.data.sync.SyncException
 import com.meneses.budgethunter.commons.data.sync.SyncResult
 import com.meneses.budgethunter.commons.data.sync.SyncStats
+import com.meneses.budgethunter.commons.util.toCalendarDate
 import com.meneses.budgethunter.commons.util.toPlainString
+import com.meneses.budgethunter.commons.util.today
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -122,7 +124,8 @@ class BudgetEntrySyncManager(
 
                     // Use aggregateSync to merge each entry and track partial failures
                     aggregateSync(
-                        items = serverEntries,
+                        // Oldest first, so the local auto-increment ids follow the creation order
+                        items = serverEntries.sortedBy { it.id },
                         itemIdentifier = { entry -> "ServerEntry(id=${entry.id}, desc='${entry.description}')" },
                         syncOperation = { entry -> mergeServerEntry(budgetId, entry) }
                     )
@@ -294,12 +297,20 @@ class BudgetEntrySyncManager(
         }
 
         if (existingEntry != null) {
+            // An entry still waiting to be pushed keeps its own date, since the local copy is the
+            // newer one. Otherwise the server wins, falling back to the local date for entries the
+            // server stored before it kept a date of its own.
+            val date =
+                if (!existingEntry.isSynced) existingEntry.date
+                else serverEntry.date ?: existingEntry.date
+
             // Update existing entry with server data
             val updatedEntry = existingEntry.copy(
                 amount = serverEntry.amount.toPlainString(),
                 description = serverEntry.description,
                 category = serverEntry.category.toBudgetEntryCategory(),
                 type = serverEntry.type.toBudgetEntryType(),
+                date = date,
                 isSynced = true,
                 serverId = serverEntry.id,
                 createdByEmail = serverEntry.createdByEmail,
@@ -316,6 +327,9 @@ class BudgetEntrySyncManager(
                 description = serverEntry.description,
                 type = serverEntry.type.toBudgetEntryType(),
                 category = serverEntry.category.toBudgetEntryCategory(),
+                date = serverEntry.date
+                    ?: serverEntry.creationDate.toCalendarDate()
+                    ?: today(),
                 serverId = serverEntry.id,
                 isSynced = true,
                 createdByEmail = serverEntry.createdByEmail,
@@ -338,6 +352,7 @@ class BudgetEntrySyncManager(
             description = response.description,
             category = response.category.toBudgetEntryCategory(),
             type = response.type.toBudgetEntryType(),
+            date = response.date ?: localEntry.date,
             serverId = response.id,
             isSynced = true,
             createdByEmail = response.createdByEmail,

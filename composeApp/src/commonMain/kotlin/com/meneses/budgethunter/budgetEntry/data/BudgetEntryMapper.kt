@@ -30,14 +30,16 @@ fun BudgetEntry.toCreateRequest() = CreateBudgetEntryRequest(
     amount = amount.toDoubleOrNull() ?: 0.0,
     description = description,
     category = category.name,
-    type = type.name
+    type = type.name,
+    date = date
 )
 
 fun BudgetEntry.toUpdateRequest() = UpdateBudgetEntryRequest(
     amount = amount.toDoubleOrNull() ?: 0.0,
     description = description,
     category = category.name,
-    type = type.name
+    type = type.name,
+    date = date
 )
 
 fun String.toBudgetEntryType(): BudgetEntry.Type =

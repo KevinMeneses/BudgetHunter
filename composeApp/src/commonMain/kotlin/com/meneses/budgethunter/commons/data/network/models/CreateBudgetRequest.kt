@@ -5,5 +5,6 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class CreateBudgetRequest(
     val name: String,
-    val amount: Double
+    val amount: Double,
+    val date: String? = null
 )
