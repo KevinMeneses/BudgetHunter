@@ -38,6 +38,7 @@ import budgethunter.composeapp.generated.resources.ok
 import budgethunter.composeapp.generated.resources.select_default_budget
 import budgethunter.composeapp.generated.resources.select_default_budget_description
 import com.meneses.budgethunter.budgetList.domain.Budget
+import com.meneses.budgethunter.commons.util.toCurrency
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -165,7 +166,7 @@ private fun BudgetOptionItem(
                 )
                 if (budget.amount > 0) {
                     Text(
-                        text = "$${budget.amount}",
+                        text = budget.amount.toCurrency(),
                         fontSize = 14.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
