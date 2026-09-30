@@ -251,23 +251,20 @@ grep -c '^GOOGLE_OAUTH_CLIENT_IDS=[0-9]\{6,\}-[a-z0-9]\{10,\}\.apps\.googleuserc
 
 Debe imprimir `1`. Si imprime `0`, algo sobra o falta en la línea.
 
-### 7.2 Correr la migración en el servidor
+### 7.2 La migración: no tienes que correrla
 
-Antes de desplegar el jar nuevo. `deploy.sh` no corre migraciones y el paquete que sube no incluye
-`database/migrations/`, así que el SQL se envía por `ssh` desde tu máquina:
+La del SSO ya está aplicada en producción desde septiembre de 2026, y las migraciones dejaron de ser
+un paso manual: el backend las aplica al arrancar con Flyway, leyéndolas de
+`src/main/resources/db/migration`. La del SSO es `V1__add_google_sso.sql` y queda por debajo del
+baseline, así que Flyway la registra como historia y no la vuelve a ejecutar. Desplegar es solo
+desplegar.
+
+Si quieres confirmar que el esquema está como debe:
 
 ```bash
 cd ~/Documents/BudgetHunter/BudgetHunterBackend
 source .env.server   # trae SERVER_IP y SERVER_USER
 
-ssh $SERVER_USER@$SERVER_IP \
-  "cd /opt/budgethunter && docker compose exec -T postgres psql -U budgethunter_user -d budgethunter" \
-  < database/migrations/001_add_google_sso.sql
-```
-
-Debe responder con `BEGIN`, tres `ALTER TABLE`, `CREATE INDEX` y `COMMIT`. Confirma el resultado:
-
-```bash
 ssh $SERVER_USER@$SERVER_IP \
   "cd /opt/budgethunter && docker compose exec -T postgres psql -U budgethunter_user -d budgethunter \
    -c '\\d users'"
@@ -275,8 +272,18 @@ ssh $SERVER_USER@$SERVER_IP \
 
 Deben aparecer `google_subject` y `auth_provider`, y `password` **sin** `not null`.
 
-El script es idempotente (`ADD COLUMN IF NOT EXISTS`, `CREATE UNIQUE INDEX IF NOT EXISTS`), así que
-volver a correrlo no hace daño.
+> Antes de Flyway (PR #29 del backend) esto se corría a mano: `deploy.sh` no aplica migraciones y el
+> paquete que sube no incluye el SQL, así que había que enviarlo por `ssh` **antes** de desplegar el
+> jar nuevo, redirigiendo el archivo al mismo `psql` de arriba. Olvidarlo no fallaba en silencio:
+> producción corre con `ddl-auto=validate`, así que el backend nuevo encontraba el esquema viejo,
+> fallaba la validación y entraba en bucle de reinicio. Si trabajas con un backend anterior a ese
+> cambio, esa receta es la que aplica, y los scripts son idempotentes (`ADD COLUMN IF NOT EXISTS`,
+> `CREATE UNIQUE INDEX IF NOT EXISTS`), así que volver a correrlos no hace daño.
+
+Para cambios de esquema nuevos, el archivo va en `src/main/resources/db/migration` como `V3__`, `V4__`
+y siguientes, y viaja con el jar. La única regla que sigue en pie es que una migración tiene que ser
+compatible con el jar que reemplaza, porque corre mientras el contenedor nuevo arranca: añadir es
+seguro, quitar necesita dos despliegues.
 
 ### 7.3 Desplegar
 
@@ -350,7 +357,7 @@ Con el backend local corriendo y `BACKEND_URL=http://10.0.2.2:8080` en `local.pr
 | Tu correo recibe "acceso denegado" de Google | Falta agregarlo como *test user* en la pestaña Audience |
 | El backend responde 401 con un token que parece válido | `GOOGLE_OAUTH_CLIENT_IDS` vacío, o no coincide con el web client ID |
 | "Funcionaba y dejó de funcionar de repente" | Tras varios descartes seguidos del selector, Google impone un enfriamiento de 24 h. Limpia los datos de Play Services o cambia de cuenta en el emulador |
-| El backend no arranca tras desplegar | Falta correr `001_add_google_sso.sql` |
+| El backend no arranca tras desplegar | Una migración falló al arrancar: revisa los logs. En un backend anterior a Flyway, falta correr `001_add_google_sso.sql` a mano |
 | **iOS:** el botón no aparece | `GOOGLE_IOS_CLIENT_ID` vacío o sin la forma `….apps.googleusercontent.com` en `iosApp/Config.xcconfig` |
 | **iOS:** la hoja de Google abre pero nunca vuelve a la app | `GOOGLE_REVERSED_CLIENT_ID` mal invertido |
 | **iOS:** eliges cuenta y el backend responde 401 | El iOS client ID no está en `GOOGLE_OAUTH_CLIENT_IDS` del backend |
