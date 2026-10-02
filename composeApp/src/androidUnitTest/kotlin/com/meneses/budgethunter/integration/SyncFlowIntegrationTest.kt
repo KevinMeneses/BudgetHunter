@@ -248,18 +248,19 @@ class SyncFlowIntegrationTest {
         budgetApiService = BudgetApiService(httpClient, Dispatchers.Unconfined)
         budgetEntryApiService = BudgetEntryApiService(httpClient, Dispatchers.Unconfined)
 
-        budgetSyncManager = BudgetSyncManager(
-            localDataSource = budgetLocalDataSource,
-            budgetApiService = budgetApiService,
+        budgetEntrySyncManager = BudgetEntrySyncManager(
+            localDataSource = budgetEntryLocalDataSource,
+            budgetEntryApiService = budgetEntryApiService,
+            budgetLocalDataSource = budgetLocalDataSource,
             authRepository = authRepository,
             ioDispatcher = Dispatchers.Unconfined,
             logger = NoOpLogger()
         )
 
-        budgetEntrySyncManager = BudgetEntrySyncManager(
-            localDataSource = budgetEntryLocalDataSource,
-            budgetEntryApiService = budgetEntryApiService,
-            budgetLocalDataSource = budgetLocalDataSource,
+        budgetSyncManager = BudgetSyncManager(
+            localDataSource = budgetLocalDataSource,
+            budgetApiService = budgetApiService,
+            entrySyncManager = budgetEntrySyncManager,
             authRepository = authRepository,
             ioDispatcher = Dispatchers.Unconfined,
             logger = NoOpLogger()

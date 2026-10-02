@@ -8,9 +8,6 @@ import com.meneses.budgethunter.budgetList.data.datasource.BudgetLocalDataSource
 import com.meneses.budgethunter.commons.data.sync.Logger
 import com.meneses.budgethunter.commons.data.sync.SyncResult
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.withContext
 
 class BudgetEntryRepository(
@@ -24,33 +21,32 @@ class BudgetEntryRepository(
 ) {
     private val tag = "BudgetEntryRepository"
 
-    private val _backgroundSyncErrors = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
-    val backgroundSyncErrors: SharedFlow<Unit> = _backgroundSyncErrors.asSharedFlow()
+    val budgetsWithFailedSync = syncManager.budgetsWithFailedPush
 
     fun getAllByBudgetId(budgetId: Long) =
         localDataSource.selectAllByBudgetId(budgetId)
 
     suspend fun create(budgetEntry: BudgetEntry) = withContext(ioDispatcher) {
         localDataSource.create(budgetEntry)
-
-        if (authRepository.isAuthenticated()) {
-            val result = syncManager.syncPendingEntries(budgetEntry.budgetId)
-            if (result is SyncResult.Failure) {
-                logger.warn(tag, "Background sync failed after create", result.error)
-                _backgroundSyncErrors.tryEmit(Unit)
-            }
-        }
+        pushPendingEntries(budgetEntry.budgetId, operation = "create")
     }
 
     suspend fun update(budgetEntry: BudgetEntry) = withContext(ioDispatcher) {
         localDataSource.update(budgetEntry.copy(isSynced = false))
+        pushPendingEntries(budgetEntry.budgetId, operation = "update")
+    }
 
-        if (authRepository.isAuthenticated()) {
-            val result = syncManager.syncPendingEntries(budgetEntry.budgetId)
-            if (result is SyncResult.Failure) {
-                logger.warn(tag, "Background sync failed after update", result.error)
-                _backgroundSyncErrors.tryEmit(Unit)
-            }
+    private suspend fun pushPendingEntries(budgetId: Int, operation: String) {
+        if (!authRepository.isAuthenticated()) {
+            logger.debug(tag, "Not authenticated; entries of budget $budgetId stay pending after $operation")
+            return
+        }
+
+        when (val result = syncManager.syncPendingEntries(budgetId)) {
+            is SyncResult.Success -> Unit
+            is SyncResult.PartialSuccess ->
+                logger.warn(tag, "Background sync after $operation: ${result.succeeded} succeeded, ${result.failed} failed")
+            is SyncResult.Failure -> logger.warn(tag, "Background sync failed after $operation", result.error)
         }
     }
 
@@ -71,6 +67,7 @@ class BudgetEntryRepository(
      */
     suspend fun clearAllData() = withContext(ioDispatcher) {
         localDataSource.clearAllData()
+        syncManager.clearFailedPushes()
     }
 
     /**

@@ -1,5 +1,6 @@
 package com.meneses.budgethunter.budgetList.data.sync
 
+import com.meneses.budgethunter.budgetEntry.data.BudgetEntrySyncManager
 import com.meneses.budgethunter.auth.data.AuthRepository
 import com.meneses.budgethunter.budgetList.data.datasource.BudgetLocalDataSource
 import com.meneses.budgethunter.budgetList.data.network.BudgetApiService
@@ -38,13 +39,16 @@ class BudgetSyncManagerTest {
     private val logger = mockk<Logger>(relaxed = true)
 
     // System under test
+    private val entrySyncManager = mockk<BudgetEntrySyncManager>()
     private lateinit var syncManager: BudgetSyncManager
 
     @BeforeTest
     fun setup() {
+        coEvery { entrySyncManager.syncPendingEntries(any()) } returns SyncResult.Success(SyncStats(totalItems = 0))
         syncManager = BudgetSyncManager(
             localDataSource = localDataSource,
             budgetApiService = apiService,
+            entrySyncManager = entrySyncManager,
             authRepository = authRepository,
             ioDispatcher = Dispatchers.Unconfined,
             logger = logger
@@ -624,5 +628,98 @@ class BudgetSyncManagerTest {
             localDataSource.create(match { it.serverId == 102L })
             localDataSource.create(match { it.serverId == 103L })
         }
+    }
+
+    // ========== Entry push after budget create ==========
+
+    private val entryBudgetResponse = BudgetResponse(id = 101, name = "Budget 1", amount = 1000.0)
+
+    @Test
+    fun `syncSingleBudget pushes pending entries after creating a budget on the server`() = runTest {
+        // Given
+        coEvery { authRepository.isAuthenticated() } returns true
+        val budget = Budget(id = 1, name = "Budget 1", amount = 1000.0)
+        every { localDataSource.getUnsynced() } returns listOf(budget)
+        coEvery { apiService.createBudget(any()) } returns Result.success(entryBudgetResponse)
+        every { localDataSource.markAsSynced(any(), any(), any()) } returns Unit
+
+        // When
+        syncManager.syncPendingBudgets()
+
+        // Then - entries are pushed after the budget got its serverId
+        coVerify(exactly = 1) { entrySyncManager.syncPendingEntries(1) }
+        io.mockk.coVerifyOrder {
+            localDataSource.markAsSynced(1, 101, any())
+            entrySyncManager.syncPendingEntries(1)
+        }
+    }
+
+    @Test
+    fun `syncSingleBudget does not push entries when updating a budget that already has a serverId`() = runTest {
+        // Given
+        coEvery { authRepository.isAuthenticated() } returns true
+        val budget = Budget(id = 1, name = "Budget 1", amount = 1000.0, serverId = 101)
+        every { localDataSource.getUnsynced() } returns listOf(budget)
+        coEvery { apiService.updateBudget(101, any()) } returns Result.success(entryBudgetResponse)
+        every { localDataSource.markAsSynced(any(), any(), any()) } returns Unit
+
+        // When
+        syncManager.syncPendingBudgets()
+
+        // Then
+        coVerify(exactly = 0) { entrySyncManager.syncPendingEntries(any()) }
+    }
+
+    @Test
+    fun `syncSingleBudget does not push entries when the create call fails`() = runTest {
+        // Given
+        coEvery { authRepository.isAuthenticated() } returns true
+        val budget = Budget(id = 1, name = "Budget 1", amount = 1000.0)
+        every { localDataSource.getUnsynced() } returns listOf(budget)
+        coEvery { apiService.createBudget(any()) } returns Result.failure(Exception("Network error"))
+
+        // When
+        syncManager.syncPendingBudgets()
+
+        // Then
+        coVerify(exactly = 0) { entrySyncManager.syncPendingEntries(any()) }
+    }
+
+    @Test
+    fun `syncSingleBudget still succeeds when the entry push returns failure`() = runTest {
+        // Given
+        coEvery { authRepository.isAuthenticated() } returns true
+        val budget = Budget(id = 1, name = "Budget 1", amount = 1000.0)
+        every { localDataSource.getUnsynced() } returns listOf(budget)
+        coEvery { apiService.createBudget(any()) } returns Result.success(entryBudgetResponse)
+        every { localDataSource.markAsSynced(any(), any(), any()) } returns Unit
+        coEvery { entrySyncManager.syncPendingEntries(1) } returns SyncResult.Failure(Exception("boom"))
+
+        // When
+        val result = syncManager.syncPendingBudgets()
+
+        // Then
+        assertIs<SyncResult.Success<SyncStats>>(result)
+        assertEquals(1, result.data.syncedItems)
+        assertEquals(0, result.data.failedItems)
+    }
+
+    @Test
+    fun `syncSingleBudget still succeeds when the entry push throws`() = runTest {
+        // Given
+        coEvery { authRepository.isAuthenticated() } returns true
+        val budget = Budget(id = 1, name = "Budget 1", amount = 1000.0)
+        every { localDataSource.getUnsynced() } returns listOf(budget)
+        coEvery { apiService.createBudget(any()) } returns Result.success(entryBudgetResponse)
+        every { localDataSource.markAsSynced(any(), any(), any()) } returns Unit
+        coEvery { entrySyncManager.syncPendingEntries(1) } throws RuntimeException("boom")
+
+        // When
+        val result = syncManager.syncPendingBudgets()
+
+        // Then
+        assertIs<SyncResult.Success<SyncStats>>(result)
+        assertEquals(1, result.data.syncedItems)
+        assertEquals(0, result.data.failedItems)
     }
 }

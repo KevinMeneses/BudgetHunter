@@ -62,6 +62,7 @@ jetbrains-navigation-compose = { group = "org.jetbrains.androidx.navigation", na
 
 # Lifecycle (Multiplatform)
 jetbrains-lifecycle-viewmodel = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-viewmodel", version.ref = "jetbrains-lifecycle-viewmodel" }
+jetbrains-lifecycle-runtime-compose = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "jetbrains-lifecycle-viewmodel" }
 
 # Database
 sqldelight-android-driver = { group = "app.cash.sqldelight", name = "android-driver", version.ref = "sqldelight" }
