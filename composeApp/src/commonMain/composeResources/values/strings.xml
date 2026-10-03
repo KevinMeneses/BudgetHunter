@@ -298,6 +298,9 @@
 
     <!-- Common UI -->
     <string name="confirmation">Confirmación</string>
+    <string name="ai_autofill_confirmation_message">¿Desea que la IA llene el formulario automáticamente con la información del recibo? Se reemplazarán los datos que ya ingresó.</string>
+    <string name="ai_autofill_confirm">Llenar</string>
+    <string name="ai_autofill_skip">No, gracias</string>
     <string name="error">Error</string>
 
     <!-- Sync Feedback -->

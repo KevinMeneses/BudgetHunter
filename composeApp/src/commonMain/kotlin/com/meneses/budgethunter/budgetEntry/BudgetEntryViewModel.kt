@@ -60,6 +60,8 @@ class BudgetEntryViewModel(
             is BudgetEntryIntent.TakePhoto -> takePhoto()
             is BudgetEntryIntent.PickFile -> pickFile()
             is BudgetEntryIntent.ShareFile -> shareFile(intent.filePath)
+            is BudgetEntryIntent.ConfirmAiAutofill -> resolveAiAutofill(useAi = true)
+            is BudgetEntryIntent.DeclineAiAutofill -> resolveAiAutofill(useAi = false)
             is BudgetEntryIntent.UpdateInvoice -> updateInvoice()
         }
     }
@@ -89,39 +91,79 @@ class BudgetEntryViewModel(
             val invoicePath = fileManager.saveFile(intent.fileData)
             wasNewInvoiceAttached = true
 
-            val aiBudgetEntry = if (preferencesManager.isAiProcessingEnabled()) {
-                _uiState.value.budgetEntry?.let { budgetEntry ->
-                    createBudgetEntryFromImageUseCase.execute(
-                        imageUri = fileManager.createUri(invoicePath),
-                        budgetEntry = budgetEntry
+            if (preferencesManager.isAiProcessingEnabled() && hasUserInput()) {
+                // Ask for confirmation before overwriting what the user already typed
+                _uiState.update {
+                    it.copy(
+                        budgetEntry = it.budgetEntry?.copy(invoice = invoicePath),
+                        isProcessingInvoice = false,
+                        pendingAiInvoicePath = invoicePath
                     )
                 }
-            } else {
-                _uiState.value.budgetEntry
+                validateInvoiceFile(invoicePath)
+                return@launch
             }
 
-            _uiState.update {
-                val updatedEntry = aiBudgetEntry
-                    ?.copy(invoice = invoicePath)
-                    ?: it.budgetEntry
-
-                it.copy(
-                    budgetEntry = updatedEntry,
-                    isProcessingInvoice = false
-                )
-            }
-
-            // Validate the newly attached invoice file
-            validateInvoiceFile(invoicePath)
+            applyInvoice(invoicePath, useAi = preferencesManager.isAiProcessingEnabled())
         } catch (_: Exception) {
-            _uiState.update { it.copy(isProcessingInvoice = false) }
-            _events.trySend(
-                BudgetEntryEvent.ShowNotification(
-                    message = Res.string.error_loading_file,
-                    isError = true
+            showInvoiceError()
+        }
+    }
+
+    private fun hasUserInput(): Boolean {
+        val entry = _uiState.value.budgetEntry ?: return false
+        return entry.amount.isNotBlank() || entry.description.isNotBlank()
+    }
+
+    private fun resolveAiAutofill(useAi: Boolean) {
+        // ConfirmationModal also calls onDismiss after onConfirm, so clear the pending path synchronously
+        val invoicePath = _uiState.value.pendingAiInvoicePath ?: return
+        _uiState.update { it.copy(pendingAiInvoicePath = null, isProcessingInvoice = useAi) }
+        if (!useAi) return
+        viewModelScope.launch {
+            try {
+                applyInvoice(invoicePath, useAi = true)
+            } catch (_: Exception) {
+                showInvoiceError()
+            }
+        }
+    }
+
+    private suspend fun applyInvoice(invoicePath: String, useAi: Boolean) {
+        val resultEntry = if (useAi) {
+            _uiState.value.budgetEntry?.let { budgetEntry ->
+                createBudgetEntryFromImageUseCase.execute(
+                    imageUri = fileManager.createUri(invoicePath),
+                    budgetEntry = budgetEntry
                 )
+            }
+        } else {
+            _uiState.value.budgetEntry
+        }
+
+        _uiState.update {
+            val updatedEntry = resultEntry
+                ?.copy(invoice = invoicePath)
+                ?: it.budgetEntry
+
+            it.copy(
+                budgetEntry = updatedEntry,
+                isProcessingInvoice = false
             )
         }
+
+        // Validate the newly attached invoice file
+        validateInvoiceFile(invoicePath)
+    }
+
+    private fun showInvoiceError() {
+        _uiState.update { it.copy(isProcessingInvoice = false) }
+        _events.trySend(
+            BudgetEntryEvent.ShowNotification(
+                message = Res.string.error_loading_file,
+                isError = true
+            )
+        )
     }
 
     private fun toggleAttachInvoiceModal(show: Boolean) =

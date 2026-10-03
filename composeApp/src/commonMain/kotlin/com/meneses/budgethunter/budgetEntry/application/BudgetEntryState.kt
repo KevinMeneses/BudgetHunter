@@ -14,8 +14,11 @@ data class BudgetEntryState(
     val validatedFilePath: String? = null,
     val isSharingFile: Boolean = false,
     val isOpeningFilePicker: Boolean = false,
-    val isSaving: Boolean = false
+    val isSaving: Boolean = false,
+    val pendingAiInvoicePath: String? = null
 ) {
+    fun shouldShowAiAutofillModal() = pendingAiInvoicePath != null
+
     fun shouldShowFileNotFoundModal() =
         isShowInvoiceModalVisible && budgetEntry?.invoice != null && !isFileValid
 
