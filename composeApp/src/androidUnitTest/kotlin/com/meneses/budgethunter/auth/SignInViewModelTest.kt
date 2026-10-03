@@ -11,6 +11,7 @@ import com.meneses.budgethunter.auth.data.AuthRepository
 import com.meneses.budgethunter.budgetEntry.data.BudgetEntrySyncManager
 import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.commons.data.PreferencesManager
+import com.meneses.budgethunter.settings.application.SyncUserPreferencesUseCase
 import com.meneses.budgethunter.commons.data.network.models.AuthResponse
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -48,6 +49,7 @@ class SignInViewModelTest {
     private val budgetRepository = mockk<BudgetRepository>(relaxed = true)
     private val budgetEntrySyncManager = mockk<BudgetEntrySyncManager>(relaxed = true)
     private val signInWithGoogleUseCase = mockk<SignInWithGoogleUseCase>(relaxed = true)
+    private val syncUserPreferences = mockk<SyncUserPreferencesUseCase>(relaxed = true)
 
     // System under test
     private lateinit var viewModel: SignInViewModel
@@ -61,7 +63,8 @@ class SignInViewModelTest {
             preferencesManager = preferencesManager,
             budgetRepository = budgetRepository,
             budgetEntrySyncManager = budgetEntrySyncManager,
-            signInWithGoogleUseCase = signInWithGoogleUseCase
+            signInWithGoogleUseCase = signInWithGoogleUseCase,
+            syncUserPreferences = syncUserPreferences
         )
     }
 
@@ -191,7 +194,8 @@ class SignInViewModelTest {
             preferencesManager = preferencesManager,
             budgetRepository = budgetRepository,
             budgetEntrySyncManager = budgetEntrySyncManager,
-            signInWithGoogleUseCase = signInWithGoogleUseCase
+            signInWithGoogleUseCase = signInWithGoogleUseCase,
+            syncUserPreferences = syncUserPreferences
         )
 
         // Then

@@ -51,6 +51,19 @@ class PreferencesManager(private val preferences: DataStore<Preferences>) {
         preferences.edit { it[KEY_OFFLINE_MODE_ENABLED] = value }
     }
 
+    /**
+     * Forgets everything the settings screen saves. Used on sign out so the next account to sign
+     * in on this device does not inherit the previous one's choices.
+     */
+    suspend fun clearUserPreferences() {
+        preferences.edit {
+            it.remove(KEY_SMS_READING_ENABLED)
+            it.remove(KEY_DEFAULT_BUDGET_ID)
+            it.remove(KEY_SELECTED_BANK_IDS)
+            it.remove(KEY_AI_PROCESSING_ENABLED)
+        }
+    }
+
     companion object {
         private val KEY_SMS_READING_ENABLED = booleanPreferencesKey("sms_reading_enabled")
         private val KEY_DEFAULT_BUDGET_ID = intPreferencesKey("default_budget_id")

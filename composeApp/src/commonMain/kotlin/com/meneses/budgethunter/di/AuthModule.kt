@@ -55,6 +55,7 @@ val authModule = module {
             authRepository = get<AuthRepository>(),
             budgetRepository = get(),
             budgetEntrySyncManager = get(),
+            syncUserPreferences = get(),
             applicationScope = get<CoroutineScope>(named("ApplicationScope"))
         )
     }
@@ -65,7 +66,8 @@ val authModule = module {
             preferencesManager = get(),
             budgetRepository = get(),
             budgetEntrySyncManager = get(),
-            signInWithGoogleUseCase = get()
+            signInWithGoogleUseCase = get(),
+            syncUserPreferences = get()
         )
     }
 

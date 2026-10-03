@@ -15,6 +15,7 @@ import com.meneses.budgethunter.auth.data.AuthRepository
 import com.meneses.budgethunter.budgetEntry.data.BudgetEntrySyncManager
 import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.commons.data.PreferencesManager
+import com.meneses.budgethunter.settings.application.SyncUserPreferencesUseCase
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -28,7 +29,8 @@ class SignInViewModel(
     private val preferencesManager: PreferencesManager,
     private val budgetRepository: BudgetRepository,
     private val budgetEntrySyncManager: BudgetEntrySyncManager,
-    private val signInWithGoogleUseCase: SignInWithGoogleUseCase
+    private val signInWithGoogleUseCase: SignInWithGoogleUseCase,
+    private val syncUserPreferences: SyncUserPreferencesUseCase
 ) : ViewModel() {
 
     val uiState get() = _uiState.asStateFlow()
@@ -80,6 +82,8 @@ class SignInViewModel(
                         budgetRepository.sync()
                         // Sync all entries for all budgets (push local, then pull from server)
                         budgetEntrySyncManager.syncAllBudgetsEntries()
+                        // After the budgets: the default budget is matched by its server id.
+                        syncUserPreferences.pull()
                     }
 
                     onAuthenticated(currentState.email)
