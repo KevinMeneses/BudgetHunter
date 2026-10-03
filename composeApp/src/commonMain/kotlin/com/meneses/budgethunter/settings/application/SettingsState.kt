@@ -10,7 +10,9 @@ data class SettingsState(
     val hasSmsPermission: Boolean = false,
     val isDefaultBudgetSelectorVisible: Boolean = false,
     val allBudgets: List<Budget> = emptyList(),
-    val isLoading: Boolean = false,
+    // True from the first frame: the device's values are read right after creation, and without
+    // this the screen would flash its empty defaults before that starts.
+    val isLoading: Boolean = true,
     val availableBanks: List<BankSmsConfig> = emptyList(),
     val selectedBanks: Set<BankSmsConfig> = emptySet(),
     val isBankSelectorVisible: Boolean = false,
