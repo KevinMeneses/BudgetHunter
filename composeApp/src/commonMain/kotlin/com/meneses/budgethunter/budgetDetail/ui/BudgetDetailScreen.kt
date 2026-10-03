@@ -15,6 +15,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import budgethunter.composeapp.generated.resources.Res
 import budgethunter.composeapp.generated.resources.add_transaction
 import budgethunter.composeapp.generated.resources.back_content_description
@@ -59,6 +61,13 @@ data class BudgetDetailScreen(val budget: Budget) {
                 .run(onIntent)
 
             onDispose { }
+        }
+
+        // Retry pushing entries saved while the app was in background (e.g. from an SMS) whose own
+        // push failed; the effect above only runs once per ViewModel, so returning to the
+        // foreground would otherwise never sync them.
+        LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+            onIntent(BudgetDetailIntent.ResumeSync)
         }
 
         Scaffold(

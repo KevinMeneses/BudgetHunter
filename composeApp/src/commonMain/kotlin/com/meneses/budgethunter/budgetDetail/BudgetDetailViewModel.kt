@@ -16,11 +16,14 @@ import com.meneses.budgethunter.budgetEntry.domain.BudgetEntryFilter
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.commons.data.network.ApiError
 import com.meneses.budgethunter.commons.data.network.toApiError
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -42,6 +45,8 @@ class BudgetDetailViewModel(
     val events = _events.receiveAsFlow()
 
     private var hasTriggeredInitialSync = false
+
+    private var syncJob: Job? = null
 
     /**
      * Whether this ViewModel is the one that asked [realTimeSyncManager] to listen.
@@ -74,7 +79,13 @@ class BudgetDetailViewModel(
             }
             .launchIn(viewModelScope)
 
-        budgetDetailRepository.backgroundSyncErrors
+        uiState.map { it.budgetDetail.budget.id }
+            .distinctUntilChanged()
+            .combine(budgetDetailRepository.budgetsWithFailedSync) { budgetId, failedBudgetIds ->
+                budgetId in failedBudgetIds
+            }
+            .distinctUntilChanged()
+            .filter { hasFailedSync -> hasFailedSync }
             .onEach { _events.trySend(BudgetDetailEvent.ShowError(Res.string.sync_failed_background)) }
             .launchIn(viewModelScope)
     }
@@ -123,6 +134,7 @@ class BudgetDetailViewModel(
                 val budget = _uiState.value.budgetDetail.budget
                 syncEntries(budgetId = budget.id, serverId = budget.serverId, showErrors = true)
             }
+            is BudgetDetailIntent.ResumeSync -> resumeSync()
         }
     }
 
@@ -290,30 +302,49 @@ class BudgetDetailViewModel(
             )
         }
 
-    private fun syncEntries(budgetId: Int? = null, serverId: Long? = null, showErrors: Boolean) =
-        viewModelScope.launch {
-            hasTriggeredInitialSync = true
+    /**
+     * Retries pushing entries that were saved while the app was in background (e.g. from an SMS)
+     * and whose own push failed. Runs silently: [BudgetDetailState.isLoading] would replace the
+     * whole screen with a loading indicator every time the app comes back to the foreground.
+     */
+    private fun resumeSync() {
+        val budget = _uiState.value.budgetDetail.budget
+        val serverId = budget.serverId ?: return
+        if (syncJob?.isActive == true) return
+        syncEntries(budgetId = budget.id, serverId = serverId, showErrors = false, showProgress = false)
+    }
+
+    private fun syncEntries(
+        budgetId: Int? = null,
+        serverId: Long? = null,
+        showErrors: Boolean,
+        showProgress: Boolean = true
+    ) = viewModelScope.launch {
+        hasTriggeredInitialSync = true
+        if (showProgress) {
             _uiState.update {
                 it.copy(
                     isSyncingEntries = showErrors,
                     isLoading = if (showErrors) it.isLoading else true
                 )
             }
-            try {
-                val result = budgetDetailRepository.syncEntries(budgetId, serverId)
-                if (result.isSuccess && showErrors) {
-                    _events.trySend(BudgetDetailEvent.ShowSuccess(Res.string.entries_synced_successfully))
-                } else if (result.isFailure && showErrors) {
-                    val error = result.exceptionOrNull()
-                    val apiError = error?.toApiError() ?: ApiError.Unknown
-                    _events.trySend(BudgetDetailEvent.ShowError(apiError.messageResource))
-                }
-            } catch (e: Exception) {
-                if (showErrors) {
-                    val apiError = e.toApiError()
-                    _events.trySend(BudgetDetailEvent.ShowError(apiError.messageResource))
-                }
-            } finally {
+        }
+        try {
+            val result = budgetDetailRepository.syncEntries(budgetId, serverId)
+            if (result.isSuccess && showErrors) {
+                _events.trySend(BudgetDetailEvent.ShowSuccess(Res.string.entries_synced_successfully))
+            } else if (result.isFailure && showErrors) {
+                val error = result.exceptionOrNull()
+                val apiError = error?.toApiError() ?: ApiError.Unknown
+                _events.trySend(BudgetDetailEvent.ShowError(apiError.messageResource))
+            }
+        } catch (e: Exception) {
+            if (showErrors) {
+                val apiError = e.toApiError()
+                _events.trySend(BudgetDetailEvent.ShowError(apiError.messageResource))
+            }
+        } finally {
+            if (showProgress) {
                 delay(100)
                 _uiState.update {
                     it.copy(
@@ -323,6 +354,7 @@ class BudgetDetailViewModel(
                 }
             }
         }
+    }.also { syncJob = it }
 
     private fun checkAuthState() {
         viewModelScope.launch {

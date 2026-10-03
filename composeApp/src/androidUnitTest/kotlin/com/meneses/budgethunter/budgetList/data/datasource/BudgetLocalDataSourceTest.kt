@@ -47,6 +47,32 @@ class BudgetLocalDataSourceTest {
     }
 
     @Test
+    fun `getById reads the database even when the budgets flow was never collected`() = runTest {
+        // Given - e.g. the process was started only to handle an SMS, with no screen observing budgets
+        val created = dataSource.create(Budget(name = "Budget 1", amount = 1000.0))
+
+        // When
+        val result = dataSource.getById(created.id)
+
+        // Then
+        assertEquals("Budget 1", result?.name)
+    }
+
+    @Test
+    fun `getById reflects markAsSynced immediately`() = runTest {
+        // Given
+        val created = dataSource.create(Budget(name = "Budget 1", amount = 1000.0))
+        dataSource.budgets.first()
+
+        // When
+        dataSource.markAsSynced(id = created.id, serverId = 18L, lastSyncedAt = "2026-10-03T12:00:00Z")
+        val result = dataSource.getById(created.id)
+
+        // Then
+        assertEquals(18L, result?.serverId)
+    }
+
+    @Test
     fun `getAllCached returns cached budgets after flow emission`() = runTest {
         // Given
         insertBudget(name = "Budget 1", amount = 1000.0)
