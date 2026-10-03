@@ -22,4 +22,5 @@ sealed interface BudgetDetailIntent {
     data class ToggleSelectionState(val isActivated: Boolean) : BudgetDetailIntent
     data object SortList : BudgetDetailIntent
     data object SyncEntries : BudgetDetailIntent
+    data object ResumeSync : BudgetDetailIntent
 }

@@ -1,6 +1,7 @@
 package com.meneses.budgethunter.di
 
 import com.meneses.budgethunter.budgetEntry.data.BudgetEntryRepository
+import com.meneses.budgethunter.budgetEntry.data.BudgetEntrySyncManager
 import com.meneses.budgethunter.budgetEntry.data.datasource.BudgetEntryLocalDataSource
 import com.meneses.budgethunter.budgetList.BudgetListViewModel
 import com.meneses.budgethunter.budgetList.application.DeleteBudgetUseCase
@@ -32,6 +33,7 @@ val budgetListModule = module {
         BudgetSyncManager(
             localDataSource = get<BudgetLocalDataSource>(),
             budgetApiService = get<BudgetApiService>(),
+            entrySyncManager = get<BudgetEntrySyncManager>(),
             authRepository = get(),
             ioDispatcher = get<CoroutineDispatcher>(named("IO")),
             logger = get()

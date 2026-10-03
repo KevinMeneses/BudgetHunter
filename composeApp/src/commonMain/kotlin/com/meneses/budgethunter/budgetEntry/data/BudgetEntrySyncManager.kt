@@ -15,6 +15,10 @@ import com.meneses.budgethunter.commons.util.toCalendarDate
 import com.meneses.budgethunter.commons.util.toPlainString
 import com.meneses.budgethunter.commons.util.today
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -33,9 +37,28 @@ class BudgetEntrySyncManager(
 
     override val logTag = "BudgetEntrySyncManager"
 
-    // Serializes concurrent pullEntriesFromServer calls to prevent duplicate inserts
-    // in mergeServerEntry when SSE events and performFullSync overlap.
-    private val pullMutex = Mutex()
+    // Serializes every push (syncPendingEntries) and pull (pullEntriesFromServer), which overlap when
+    // an entry create/update, SSE events, the screen's initial/resume sync or a manual refresh run
+    // at the same time. Without it:
+    // - two pushes could read the same unsynced entry and POST it twice;
+    // - two pulls could both miss an entry in mergeServerEntry and insert it twice;
+    // - a pull could see an entry a running push has just POSTed, before the push stores its
+    //   serverId locally, and insert it again (the unique-fields fallback in mergeServerEntry can't
+    //   match it because an unpushed entry has no creationDate yet).
+    private val syncMutex = Mutex()
+
+    private val _budgetsWithFailedPush = MutableStateFlow<Set<Int>>(emptySet())
+
+    /**
+     * Local ids of the budgets whose pending entries failed to be pushed on the last attempt. It is
+     * state rather than an event so the failure is not lost when no screen is listening (e.g. an
+     * entry created from an SMS while the app is in background), and it is tracked here so every
+     * push path (entry create/update, full sync, sign-in sync, a newly created budget) keeps it
+     * up to date.
+     */
+    val budgetsWithFailedPush: StateFlow<Set<Int>> = _budgetsWithFailedPush.asStateFlow()
+
+    fun clearFailedPushes() = _budgetsWithFailedPush.update { emptySet() }
 
     /**
      * Pushes all unsynced entries for the given local budget to the server.
@@ -43,8 +66,8 @@ class BudgetEntrySyncManager(
      * @param budgetId Local database identifier for the budget owning these entries.
      * @return SyncResult with statistics about succeeded/failed syncs
      */
-    suspend fun syncPendingEntries(budgetId: Int): SyncResult<SyncStats> {
-        return authenticatedSync {
+    suspend fun syncPendingEntries(budgetId: Int): SyncResult<SyncStats> = syncMutex.withLock {
+        authenticatedSync {
             // Check that the parent budget has been synced to the server first
             val budget = budgetLocalDataSource.getById(budgetId)
             val budgetServerId = budget?.serverId
@@ -72,8 +95,13 @@ class BudgetEntrySyncManager(
         }.fold(
             onSuccess = { stats -> statsToResult(stats) },
             onFailure = { error -> SyncResult.Failure(error) }
-        )
+        ).also { result -> trackPushResult(budgetId, result) }
     }
+
+    private fun trackPushResult(budgetId: Int, result: SyncResult<SyncStats>) =
+        _budgetsWithFailedPush.update { failed ->
+            if (result is SyncResult.Success) failed - budgetId else failed + budgetId
+        }
 
     /**
      * Pushes a single entry to the server (creates if new, updates if existing).
@@ -96,13 +124,7 @@ class BudgetEntrySyncManager(
     suspend fun pullEntriesFromServer(
         budgetServerId: Long,
         localBudgetId: Int? = null
-    ): SyncResult<SyncStats> = pullMutex.withLock {
-        // pullMutex prevents a duplicate-entry race condition in mergeServerEntry.
-        // mergeServerEntry uses a two-step lookup: first by serverId, then by unique fields
-        // (budgetId + amount + description + creationDate). Without this mutex, two concurrent
-        // pull calls (e.g., an SSE event arriving while a full sync is in progress) could both
-        // pass the "entry not found" check simultaneously and each insert the same entry,
-        // creating duplicates before either commit has made the row visible to the other.
+    ): SyncResult<SyncStats> = syncMutex.withLock {
         return authenticatedSync {
             // Find the local budget ID if not provided
             val budgetId = localBudgetId ?: budgetLocalDataSource
