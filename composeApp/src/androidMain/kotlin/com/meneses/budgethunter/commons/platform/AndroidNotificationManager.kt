@@ -23,7 +23,13 @@ class AndroidNotificationManager(
         Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
     }
 
-    override fun showNotification(title: String, message: String) {
+    override fun showNotification(title: String, message: String) =
+        show(title, message, opensDefaultBudget = false)
+
+    override fun showEntryAddedNotification(title: String, message: String) =
+        show(title, message, opensDefaultBudget = true)
+
+    private fun show(title: String, message: String, opensDefaultBudget: Boolean) {
         // Check if we have notification permission (Android 13+)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
@@ -44,7 +50,8 @@ class AndroidNotificationManager(
 
             // Create intent to open the app when notification is tapped
             val intent = Intent(context, MainActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
+                flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                putExtra(EXTRA_OPEN_DEFAULT_BUDGET, opensDefaultBudget)
             }
 
             val pendingIntent = PendingIntent.getActivity(
@@ -89,6 +96,7 @@ class AndroidNotificationManager(
         NOTIFICATION_ID_BASE + notificationCounter.getAndIncrement().mod(MAX_STACKED_NOTIFICATIONS)
 
     companion object {
+        const val EXTRA_OPEN_DEFAULT_BUDGET = "com.meneses.budgethunter.OPEN_DEFAULT_BUDGET"
         private const val CHANNEL_ID = "sms_transactions"
         private const val NOTIFICATION_GROUP = "com.meneses.budgethunter.SMS_TRANSACTIONS"
         private const val NOTIFICATION_ID_BASE = 1002

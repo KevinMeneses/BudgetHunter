@@ -18,9 +18,12 @@ import budgethunter.composeapp.generated.resources.Res
 import budgethunter.composeapp.generated.resources.new_entry_from_collaborator
 import budgethunter.composeapp.generated.resources.signed_in_as
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.navOptions
 import androidx.navigation.toRoute
 import com.meneses.budgethunter.auth.SignInViewModel
@@ -38,6 +41,7 @@ import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.budgetEntry.ui.BudgetEntryScreen
 import com.meneses.budgethunter.budgetList.BudgetListViewModel
 import com.meneses.budgethunter.budgetList.application.BudgetListEvent
+import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.budgetList.ui.BudgetListScreen
 import com.meneses.budgethunter.budgetMetrics.BudgetMetricsViewModel
@@ -45,6 +49,7 @@ import com.meneses.budgethunter.budgetMetrics.ui.BudgetMetricsScreen
 import com.meneses.budgethunter.collaborator.CollaboratorsViewModel
 import com.meneses.budgethunter.collaborator.application.CollaboratorsEvent
 import com.meneses.budgethunter.collaborator.ui.CollaboratorsScreen
+import com.meneses.budgethunter.commons.data.PreferencesManager
 import com.meneses.budgethunter.commons.platform.NetworkMonitor
 import com.meneses.budgethunter.commons.util.serializableType
 import com.meneses.budgethunter.settings.SettingsViewModel
@@ -66,6 +71,8 @@ fun BudgetHunterNavigation() {
     ) {
         val navController = rememberNavController()
         var signedInEmail by remember { mutableStateOf<String?>(null) }
+
+        OpenDefaultBudgetOnRequest(navController)
 
         NavHost(
             navController = navController,
@@ -393,6 +400,41 @@ fun BudgetHunterNavigation() {
                     goBack = { navController.popBackStackOnce(backStackEntry) }
                 )
             }
+        }
+    }
+}
+
+/**
+ * Opens the default budget, on top of the budget list, when the platform asks for it (the
+ * user tapped a transaction notification). The request waits while the user is still on
+ * splash or sign in.
+ */
+@Composable
+private fun OpenDefaultBudgetOnRequest(navController: NavController) {
+    val launchRequest: DefaultBudgetLaunchRequest = koinInject()
+    val preferencesManager: PreferencesManager = koinInject()
+    val budgetRepository: BudgetRepository = koinInject()
+    val isPending by launchRequest.pending.collectAsStateWithLifecycle()
+    val currentDestination = navController.currentBackStackEntryAsState().value?.destination
+
+    val isPastAuth = currentDestination != null &&
+        !currentDestination.hasRoute<SplashScreen>() &&
+        !currentDestination.hasRoute<SignInScreen>() &&
+        !currentDestination.hasRoute<SignUpScreen>()
+
+    LaunchedEffect(isPending, isPastAuth) {
+        if (!isPending || !isPastAuth) return@LaunchedEffect
+        launchRequest.consume()
+
+        val defaultBudgetId = preferencesManager.getDefaultBudgetId()
+        val budget = if (defaultBudgetId > 0) budgetRepository.getById(defaultBudgetId) else null
+        if (budget != null) {
+            navController.navigate(
+                route = BudgetDetailScreen(budget),
+                navOptions = navOptions {
+                    popUpTo<BudgetListScreen> { inclusive = false }
+                }
+            )
         }
     }
 }

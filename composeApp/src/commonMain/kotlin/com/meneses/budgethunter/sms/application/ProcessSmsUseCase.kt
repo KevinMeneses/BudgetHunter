@@ -115,7 +115,7 @@ class ProcessSmsUseCase(
             BudgetEntry.Type.OUTCOME -> Res.string.transaction_added_message
         }
 
-        notificationManager.showNotification(
+        notificationManager.showEntryAddedNotification(
             title = stringResourceProvider.getString(Res.string.transaction_added),
             message = stringResourceProvider.getString(
                 messageResource,
