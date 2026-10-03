@@ -13,6 +13,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.yield
 import kotlin.test.BeforeTest
@@ -150,6 +151,8 @@ class SyncUserPreferencesUseCaseTest {
         }
 
         useCase.pull()
+        // The toggle's push was parked on the lock while the pull ran; let it finish.
+        advanceUntilIdle()
 
         coVerify(exactly = 0) { preferencesManager.setSmsReadingEnabled(any()) }
         // ...and the user's value still reaches the account.
