@@ -12,7 +12,9 @@ import com.meneses.budgethunter.commons.data.PreferencesManager
 import com.meneses.budgethunter.commons.platform.PermissionsManager
 import com.meneses.budgethunter.settings.application.SettingsIntent
 import com.meneses.budgethunter.settings.application.SettingsState
+import com.meneses.budgethunter.settings.application.SyncUserPreferencesUseCase
 import com.meneses.budgethunter.sms.domain.SupportedBanks
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -22,7 +24,10 @@ class SettingsViewModel(
     private val preferencesManager: PreferencesManager,
     private val budgetRepository: BudgetRepository,
     private val permissionsManager: PermissionsManager,
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val syncUserPreferences: SyncUserPreferencesUseCase,
+    // Pushes outlive the screen: leaving Settings right after a toggle must not drop the save.
+    private val applicationScope: CoroutineScope
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsState())
@@ -56,6 +61,11 @@ class SettingsViewModel(
         val selectedBankIds = bankConfigs.map { it.id }.toSet()
         preferencesManager.setSelectedBankIds(selectedBankIds)
         _uiState.update { it.copy(selectedBanks = bankConfigs) }
+        pushPreferences()
+    }
+
+    private fun pushPreferences() {
+        applicationScope.launch { syncUserPreferences.push() }
     }
 
     private fun showBankSelector() {
@@ -71,6 +81,9 @@ class SettingsViewModel(
             _uiState.update { it.copy(isLoading = true) }
 
             try {
+                // Picks up changes made from another device before showing anything.
+                syncUserPreferences.pull()
+
                 val defaultBudgetId = preferencesManager.getDefaultBudgetId()
                 val defaultBudget = if (defaultBudgetId != -1) {
                     budgetRepository.getById(defaultBudgetId)
@@ -102,6 +115,7 @@ class SettingsViewModel(
     private fun toggleSmsReading(enabled: Boolean) = viewModelScope.launch {
         preferencesManager.setSmsReadingEnabled(enabled)
         _uiState.update { it.copy(isSmsReadingEnabled = enabled) }
+        pushPreferences()
         if (!enabled) return@launch
 
         when {
@@ -124,6 +138,7 @@ class SettingsViewModel(
     private fun toggleAiProcessing(enabled: Boolean) = viewModelScope.launch {
         preferencesManager.setAiProcessingEnabled(enabled)
         _uiState.update { it.copy(isAiProcessingEnabled = enabled) }
+        pushPreferences()
     }
 
     private fun setDefaultBudget(budget: Budget) = viewModelScope.launch {
@@ -134,6 +149,7 @@ class SettingsViewModel(
                 isDefaultBudgetSelectorVisible = false
             )
         }
+        pushPreferences()
     }
 
     private fun showDefaultBudgetSelector() {

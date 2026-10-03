@@ -19,7 +19,8 @@ import kotlinx.coroutines.withContext
  * 2. Clear all local budget entry data
  * 3. Clear authentication tokens
  * 4. Forget the cached Google credential
- * 5. Disable offline mode preference
+ * 5. Forget the account's settings
+ * 6. Disable offline mode preference
  */
 class SignOutUseCase(
     private val authRepository: AuthRepository,
@@ -47,6 +48,9 @@ class SignOutUseCase(
         // Without this the platform keeps auto-selecting the last Google account, so the user
         // could never sign back in as somebody else.
         googleSignInManager.signOut()
+
+        // Settings belong to the account; the next one to sign in gets its own.
+        preferencesManager.clearUserPreferences()
 
         // Disable offline mode when signing out
         preferencesManager.setOfflineModeEnabled(false)
