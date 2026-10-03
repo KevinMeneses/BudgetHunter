@@ -20,6 +20,11 @@ server-side categorization arrives through the existing sync/SSE pull.
 - `BudgetEntrySyncManager.mergeServerEntry` / `updateLocalEntryFromResponse` already copy the
   server's category onto synced entries, and SSE events already trigger a pull, so the AI result
   will flow back without new transport code.
+- There is already an "AI processing" toggle (`SettingsScreen` -> `SettingsIntent.ToggleAiProcessing`),
+  stored only on the device in `PreferencesManager` (`ai_processing_enabled`, default on). Today it
+  gates the on-device receipt processing in `BudgetEntryViewModel`. The backend never gets the
+  invoice file (`invoice` stays local), so server-side processing means categorization from the
+  description only.
 - Entries created from SMS and from receipt images (`CreateBudgetEntryFromImageUseCase`, which
   already gets a category from the app-side Gemini call) are other sources of entries.
 - Categories (11): `FOOD, GROCERIES, SELF_CARE, TRANSPORTATION, HOUSEHOLD_ITEMS, SERVICES,
@@ -51,6 +56,26 @@ server-side categorization arrives through the existing sync/SSE pull.
 - Tests: serialization with null category, `SyncFlowIntegrationTest` case where the server returns
   an AI category after create.
 
+### Part 2b - One toggle for on-device and server-side AI
+- The existing toggle also switches server-side categorization. The backend stores it per account
+  (`PUT /api/users/me/settings { aiProcessingEnabled }`, returned by `GET /api/users/me` as
+  `aiProcessingEnabled`; see the backend plan, Part 1b).
+- `ApiEndpoints` + user API service: add the call and the new field on `CurrentUser`.
+- On toggle: save locally first (as today), then push to the server. If it fails (offline, signed
+  out), keep a `ai_processing_synced = false` marker in `PreferencesManager` and retry on the next
+  sync / sign-in. Signed-out users: the toggle stays local only.
+- Order matters: in the sync flow, **push the pending setting before pushing pending entries**,
+  so entries created while the toggle was off are never categorized because of a stale server flag.
+- Sign-in on a new device: the server value wins and overwrites the local preference unless the
+  local one is marked unsynced (then the local one is pushed).
+- When the toggle is **off** the app sends the entry's category as a normal user choice
+  (`categorySource = USER`), never `null`, and the "Automatic" option in the form is hidden. When
+  **on**, new entries default to "Automatic" (Part 3).
+- Update the toggle's description string (`ai_processing_description`) to say it also lets the
+  server categorize entries from their description, and that only the description is sent.
+- Tests: toggle pushes the setting; offline toggle retries; sync ordering; sign-in reconciliation;
+  request omits category only when the toggle is on.
+
 ### Part 3 - UI
 - Entry form: category selector gets an "Automatic" state as the default for new entries (shows
   "Automatic" until the server answers); choosing any concrete category turns it into a manual
@@ -65,7 +90,7 @@ server-side categorization arrives through the existing sync/SSE pull.
 ### Part 4 - Other entry sources
 - SMS-created entries: description comes from the bank message; create as `AUTO` with category
   `OTHER` so the backend categorizes them when synced.
-- Receipt images: keep the app-side Gemini category as `USER`-equivalent? Recommendation: mark it
+- Receipt images: skipped entirely when the toggle is off (current behavior). Otherwise keep the app-side Gemini category as `USER`-equivalent? Recommendation: mark it
   `AUTO` too (it is a model guess), but send it as the category so no second AI call is made - to
   support that, extend the contract later with `categorySource` in requests. Decide with the
   backend plan's open questions; skipping this part is acceptable for the first release.
@@ -84,5 +109,7 @@ server-side categorization arrives through the existing sync/SSE pull.
 - `./gradlew ktlint test` passes.
 
 ## Open questions
+- Should the toggle be per device or per account? This plan makes it per account (server-synced),
+  so two devices of one user share the value.
 - Is an explicit "re-categorize" action wanted on an entry (send `category = null` on update)?
 - Should receipt/SMS entries trust the app-side category (Part 4)?
