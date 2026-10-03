@@ -17,5 +17,7 @@ sealed interface BudgetEntryIntent {
     data class ShareFile(val filePath: String) : BudgetEntryIntent
     data object GoBack : BudgetEntryIntent
     data object DeleteAttachedInvoice : BudgetEntryIntent
+    data object ConfirmAiAutofill : BudgetEntryIntent
+    data object DeclineAiAutofill : BudgetEntryIntent
     data object UpdateInvoice : BudgetEntryIntent
 }
