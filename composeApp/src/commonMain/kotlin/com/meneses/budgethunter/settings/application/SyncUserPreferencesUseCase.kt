@@ -6,6 +6,8 @@ import com.meneses.budgethunter.commons.data.PreferencesManager
 import com.meneses.budgethunter.commons.data.network.models.UpdateUserPreferencesRequest
 import com.meneses.budgethunter.commons.data.sync.Logger
 import com.meneses.budgethunter.settings.data.UserPreferencesRepository
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -28,6 +30,10 @@ class SyncUserPreferencesUseCase(
     // otherwise let the push send values the pull is about to replace.
     private val mutex = Mutex()
 
+    // Bumped by every push. A pull that started before a push is looking at an older world than
+    // the user's latest choice, so it must not overwrite it.
+    private val pushRequests = MutableStateFlow(0)
+
     /**
      * Brings the account's preferences onto the device. An account that never saved any
      * (a fresh one) takes the device's current values instead, so signing up after configuring
@@ -39,10 +45,16 @@ class SyncUserPreferencesUseCase(
     suspend fun pull() = mutex.withLock {
         if (!authRepository.isAuthenticated()) return@withLock
 
+        val pushesBefore = pushRequests.value
+
         val remote = userPreferencesRepository.get().getOrElse {
             logger.warn(TAG, "Could not load the preferences from the account", it)
             return@withLock
         }
+
+        // The user changed something while this was in flight. Their change wins: it is already
+        // on the device, and the push waiting on the lock uploads it right after this returns.
+        if (pushRequests.value != pushesBefore) return@withLock
 
         if (remote.smsReadingEnabled == null && remote.aiProcessingEnabled == null) {
             pushLocked()
@@ -62,7 +74,10 @@ class SyncUserPreferencesUseCase(
     }
 
     /** Saves the device's current preferences on the account. Best effort: failures are logged. */
-    suspend fun push() = mutex.withLock { pushLocked() }
+    suspend fun push() {
+        pushRequests.update { it + 1 }
+        mutex.withLock { pushLocked() }
+    }
 
     private suspend fun pushLocked() {
         if (!authRepository.isAuthenticated()) return

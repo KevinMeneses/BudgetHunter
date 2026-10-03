@@ -13,6 +13,7 @@ import com.meneses.budgethunter.commons.platform.PermissionsManager
 import com.meneses.budgethunter.settings.application.SettingsIntent
 import com.meneses.budgethunter.settings.application.SettingsState
 import com.meneses.budgethunter.settings.application.SyncUserPreferencesUseCase
+import com.meneses.budgethunter.sms.domain.BankSmsConfig
 import com.meneses.budgethunter.sms.domain.SupportedBanks
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -76,41 +77,72 @@ class SettingsViewModel(
         _uiState.update { it.copy(isBankSelectorVisible = false) }
     }
 
+    /**
+     * Shows what is on the device right away and refreshes from the account afterwards, so the
+     * screen never waits on the network. The refresh only fills in what the account changed.
+     */
     private fun loadSettings() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
 
             try {
-                // Picks up changes made from another device before showing anything.
-                syncUserPreferences.pull()
-
-                val defaultBudgetId = preferencesManager.getDefaultBudgetId()
-                val defaultBudget = if (defaultBudgetId != -1) {
-                    budgetRepository.getById(defaultBudgetId)
-                } else null
-
-                val selectedBankIds = preferencesManager.getSelectedBankIds()
-                val selectedBanks = selectedBankIds.mapNotNull { bankId ->
-                    SupportedBanks.getBankConfigById(bankId)
-                }.toSet()
-
+                val preferences = readPreferences()
                 _uiState.update {
                     it.copy(
-                        isSmsReadingEnabled = preferencesManager.isSmsReadingEnabled(),
-                        defaultBudget = defaultBudget,
+                        isSmsReadingEnabled = preferences.isSmsReadingEnabled,
+                        defaultBudget = preferences.defaultBudget,
                         allBudgets = budgetRepository.getAllCached(),
                         hasSmsPermission = permissionsManager.hasSmsPermission(),
                         availableBanks = SupportedBanks.ALL_BANKS,
-                        selectedBanks = selectedBanks,
-                        isAiProcessingEnabled = preferencesManager.isAiProcessingEnabled(),
+                        selectedBanks = preferences.selectedBanks,
+                        isAiProcessingEnabled = preferences.isAiProcessingEnabled,
                         isLoading = false
                     )
                 }
             } catch (_: Exception) {
                 _uiState.update { it.copy(isLoading = false) }
             }
+
+            refreshFromAccount()
         }
     }
+
+    private suspend fun refreshFromAccount() {
+        try {
+            syncUserPreferences.pull()
+            val preferences = readPreferences()
+            _uiState.update {
+                it.copy(
+                    isSmsReadingEnabled = preferences.isSmsReadingEnabled,
+                    defaultBudget = preferences.defaultBudget,
+                    allBudgets = budgetRepository.getAllCached(),
+                    selectedBanks = preferences.selectedBanks,
+                    isAiProcessingEnabled = preferences.isAiProcessingEnabled
+                )
+            }
+        } catch (_: Exception) {
+            // Keep showing the device's values; the pull logs its own failures.
+        }
+    }
+
+    private suspend fun readPreferences(): StoredPreferences {
+        val defaultBudgetId = preferencesManager.getDefaultBudgetId()
+        return StoredPreferences(
+            isSmsReadingEnabled = preferencesManager.isSmsReadingEnabled(),
+            isAiProcessingEnabled = preferencesManager.isAiProcessingEnabled(),
+            defaultBudget = if (defaultBudgetId != -1) budgetRepository.getById(defaultBudgetId) else null,
+            selectedBanks = preferencesManager.getSelectedBankIds()
+                .mapNotNull { SupportedBanks.getBankConfigById(it) }
+                .toSet()
+        )
+    }
+
+    private class StoredPreferences(
+        val isSmsReadingEnabled: Boolean,
+        val isAiProcessingEnabled: Boolean,
+        val defaultBudget: Budget?,
+        val selectedBanks: Set<BankSmsConfig>
+    )
 
     private fun toggleSmsReading(enabled: Boolean) = viewModelScope.launch {
         preferencesManager.setSmsReadingEnabled(enabled)

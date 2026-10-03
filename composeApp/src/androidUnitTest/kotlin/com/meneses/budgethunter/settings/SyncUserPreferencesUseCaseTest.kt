@@ -12,7 +12,9 @@ import com.meneses.budgethunter.settings.data.UserPreferencesRepository
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.yield
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 
@@ -135,5 +137,22 @@ class SyncUserPreferencesUseCaseTest {
 
         coVerify(exactly = 0) { preferencesManager.setSmsReadingEnabled(any()) }
         coVerify(exactly = 0) { userPreferencesRepository.save(any()) }
+    }
+
+    @Test
+    fun `pull does not overwrite a change the user made while it was in flight`() = runTest {
+        coEvery { userPreferencesRepository.save(any()) } returns Result.success(UserPreferencesResponse())
+        coEvery { userPreferencesRepository.get() } coAnswers {
+            // The user toggles something while the request is out.
+            launch { useCase.push() }
+            yield()
+            Result.success(UserPreferencesResponse(smsReadingEnabled = false, aiProcessingEnabled = false))
+        }
+
+        useCase.pull()
+
+        coVerify(exactly = 0) { preferencesManager.setSmsReadingEnabled(any()) }
+        // ...and the user's value still reaches the account.
+        coVerify(exactly = 1) { userPreferencesRepository.save(any()) }
     }
 }
