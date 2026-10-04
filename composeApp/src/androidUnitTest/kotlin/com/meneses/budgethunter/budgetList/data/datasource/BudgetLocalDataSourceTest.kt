@@ -3,6 +3,7 @@ package com.meneses.budgethunter.budgetList.data.datasource
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import com.meneses.budgethunter.budgetList.data.adapter.categoryAdapter
 import com.meneses.budgethunter.budgetList.data.adapter.typeAdapter
+import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.budgetList.domain.BudgetFilter
 import com.meneses.budgethunter.db.Budget_entry
@@ -550,7 +551,124 @@ class BudgetLocalDataSourceTest {
         assertEquals("2025-02-01T12:00:00", result[0].lastSyncedAt)
     }
 
+    // ── Stale account cleanup ─────────────────────────────────────────────────
+
+    @Test
+    fun `getSyncedServerIds returns only the server ids of budgets that have one`() {
+        insertBudget(name = "A", amount = 1.0, serverId = 10L, isSynced = true)
+        insertBudget(name = "B", amount = 1.0, serverId = 20L, isSynced = true)
+        insertBudget(name = "Offline", amount = 1.0, serverId = null)
+
+        assertEquals(setOf(10L, 20L), dataSource.getSyncedServerIds())
+    }
+
+    @Test
+    fun `getSyncedServerIds is empty when no budget has a server id`() {
+        insertBudget(name = "Offline", amount = 1.0, serverId = null)
+
+        assertEquals(emptySet(), dataSource.getSyncedServerIds())
+    }
+
+    @Test
+    fun `deleteByServerIds removes the matching budgets and their entries only`() = runTest {
+        val gone = insertBudget(name = "Gone", amount = 1.0, serverId = 10L, isSynced = true)
+        val kept = insertBudget(name = "Kept", amount = 1.0, serverId = 20L, isSynced = true)
+        val offline = insertBudget(name = "Offline", amount = 1.0, serverId = null)
+        insertEntry(budgetId = gone.toLong(), description = "gone entry")
+        insertEntry(budgetId = kept.toLong(), description = "kept entry")
+        insertEntry(budgetId = offline.toLong(), description = "offline entry")
+
+        dataSource.deleteByServerIds(listOf(10L))
+
+        assertEquals(setOf(20L), dataSource.getSyncedServerIds())
+        assertEquals(null, dataSource.getById(gone))
+        assertEquals(0, entriesOf(gone).size)
+        assertEquals(1, entriesOf(kept).size)
+        assertEquals(1, entriesOf(offline).size)
+        assertEquals("Offline", dataSource.getById(offline)?.name)
+    }
+
+    @Test
+    fun `deleteByServerIds with an empty collection changes nothing`() = runTest {
+        val id = insertBudget(name = "A", amount = 1.0, serverId = 10L, isSynced = true)
+        insertEntry(budgetId = id.toLong(), description = "entry")
+
+        dataSource.deleteByServerIds(emptyList())
+
+        assertEquals("A", dataSource.getById(id)?.name)
+        assertEquals(1, entriesOf(id).size)
+    }
+
+    @Test
+    fun `deleteByServerIds ignores server ids that are not stored locally`() = runTest {
+        val id = insertBudget(name = "A", amount = 1.0, serverId = 10L, isSynced = true)
+
+        dataSource.deleteByServerIds(setOf(999L))
+
+        assertEquals("A", dataSource.getById(id)?.name)
+    }
+
+    @Test
+    fun `deleteSynced removes every budget with a server id together with its entries`() = runTest {
+        val a = insertBudget(name = "A", amount = 1.0, serverId = 10L, isSynced = true)
+        val b = insertBudget(name = "B", amount = 1.0, serverId = 20L, isSynced = false)
+        insertEntry(budgetId = a.toLong(), description = "a entry")
+        insertEntry(budgetId = b.toLong(), description = "b entry")
+
+        dataSource.deleteSynced()
+
+        assertEquals(null, dataSource.getById(a))
+        assertEquals(null, dataSource.getById(b))
+        assertEquals(0, entriesOf(a).size)
+        assertEquals(0, entriesOf(b).size)
+        assertEquals(emptySet(), dataSource.getSyncedServerIds())
+    }
+
+    @Test
+    fun `deleteSynced keeps budgets created offline and their entries`() = runTest {
+        val synced = insertBudget(name = "Synced", amount = 1.0, serverId = 10L, isSynced = true)
+        val offline = insertBudget(name = "Offline", amount = 1.0, serverId = null)
+        insertEntry(budgetId = synced.toLong(), description = "synced entry")
+        insertEntry(budgetId = offline.toLong(), description = "offline entry")
+
+        dataSource.deleteSynced()
+
+        assertEquals("Offline", dataSource.getById(offline)?.name)
+        assertEquals(1, entriesOf(offline).size)
+        assertEquals(null, dataSource.getById(synced))
+        assertEquals(0, entriesOf(synced).size)
+    }
+
+    @Test
+    fun `deleteSynced on an empty database does nothing`() {
+        dataSource.deleteSynced()
+
+        assertEquals(emptySet(), dataSource.getSyncedServerIds())
+    }
+
     // ── Helper ────────────────────────────────────────────────────────────────
+
+    private fun entriesOf(budgetId: Int) =
+        database.budgetEntryQueries.selectAllByBudgetId(budgetId.toLong()).executeAsList()
+
+    private fun insertEntry(budgetId: Long, description: String) {
+        database.budgetEntryQueries.insert(
+            id = null,
+            budgetId = budgetId,
+            amount = 10.0,
+            description = description,
+            type = BudgetEntry.Type.OUTCOME,
+            date = "2025-01-01",
+            invoice = null,
+            category = BudgetEntry.Category.OTHER,
+            server_id = null,
+            is_synced = 0L,
+            created_by_email = null,
+            updated_by_email = null,
+            creation_date = null,
+            modification_date = null
+        )
+    }
 
     private fun insertBudget(
         name: String,

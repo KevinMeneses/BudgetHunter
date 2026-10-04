@@ -25,6 +25,7 @@ class SignInWithGoogleUseCase(
     private val budgetRepository: BudgetRepository,
     private val budgetEntrySyncManager: BudgetEntrySyncManager,
     private val syncUserPreferences: SyncUserPreferencesUseCase,
+    private val prepareDataForAccount: PrepareDataForAccountUseCase,
     private val applicationScope: CoroutineScope
 ) {
 
@@ -52,6 +53,10 @@ class SignInWithGoogleUseCase(
     private suspend fun exchangeForSession(idToken: String): GoogleAuthOutcome =
         authRepository.signInWithGoogle(idToken).fold(
             onSuccess = { authResponse ->
+                // Before the sync and the budget list, so a switched account never sees what
+                // the previous one left behind.
+                prepareDataForAccount.execute(authResponse.email)
+
                 // Deliberately the application scope, not the caller's: the screen is popped the
                 // moment we return, and a sync tied to its lifetime would be cancelled mid-flight.
                 applicationScope.launch {

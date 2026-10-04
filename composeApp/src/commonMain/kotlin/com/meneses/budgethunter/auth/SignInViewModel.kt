@@ -7,6 +7,7 @@ import budgethunter.composeapp.generated.resources.error_google_no_account
 import budgethunter.composeapp.generated.resources.error_google_sign_in_failed
 import budgethunter.composeapp.generated.resources.error_sign_in_failed
 import com.meneses.budgethunter.auth.application.GoogleAuthOutcome
+import com.meneses.budgethunter.auth.application.PrepareDataForAccountUseCase
 import com.meneses.budgethunter.auth.application.SignInEvent
 import com.meneses.budgethunter.auth.application.SignInIntent
 import com.meneses.budgethunter.auth.application.SignInState
@@ -30,7 +31,8 @@ class SignInViewModel(
     private val budgetRepository: BudgetRepository,
     private val budgetEntrySyncManager: BudgetEntrySyncManager,
     private val signInWithGoogleUseCase: SignInWithGoogleUseCase,
-    private val syncUserPreferences: SyncUserPreferencesUseCase
+    private val syncUserPreferences: SyncUserPreferencesUseCase,
+    private val prepareDataForAccount: PrepareDataForAccountUseCase
 ) : ViewModel() {
 
     val uiState get() = _uiState.asStateFlow()
@@ -75,7 +77,11 @@ class SignInViewModel(
                 email = currentState.email,
                 password = currentState.password
             ).fold(
-                onSuccess = {
+                onSuccess = { authResponse ->
+                    // Before the sync and the budget list, so a switched account never sees
+                    // what the previous one left behind.
+                    prepareDataForAccount.execute(authResponse.email)
+
                     // Trigger background sync
                     launch {
                         // Sync all budgets (push local, then pull from server)

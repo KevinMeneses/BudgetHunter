@@ -5,6 +5,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
@@ -52,6 +53,18 @@ class PreferencesManager(private val preferences: DataStore<Preferences>) {
     }
 
     /**
+     * Email of the last account that signed in on this device. Deliberately left alone by sign out
+     * and [clearUserPreferences]: it is what tells the next sign in whether the account changed.
+     */
+    suspend fun getLastSignedInEmail(): String? = preferences.data
+        .map { it[KEY_LAST_SIGNED_IN_EMAIL] }
+        .firstOrNull()
+
+    suspend fun setLastSignedInEmail(value: String) {
+        preferences.edit { it[KEY_LAST_SIGNED_IN_EMAIL] = value }
+    }
+
+    /**
      * Forgets everything the settings screen saves. Used on sign out so the next account to sign
      * in on this device does not inherit the previous one's choices.
      */
@@ -70,5 +83,6 @@ class PreferencesManager(private val preferences: DataStore<Preferences>) {
         private val KEY_SELECTED_BANK_IDS = stringSetPreferencesKey("selected_bank_ids")
         private val KEY_AI_PROCESSING_ENABLED = booleanPreferencesKey("ai_processing_enabled")
         private val KEY_OFFLINE_MODE_ENABLED = booleanPreferencesKey("offline_mode_enabled")
+        private val KEY_LAST_SIGNED_IN_EMAIL = stringPreferencesKey("last_signed_in_email")
     }
 }

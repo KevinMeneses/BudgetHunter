@@ -90,6 +90,14 @@ class BudgetRepository(
     }
 
     /**
+     * Drops the budgets that belong to the account that was signed in before, keeping the ones
+     * created offline so they get pushed to whoever signs in next.
+     */
+    suspend fun clearSyncedData() = withContext(ioDispatcher) {
+        localDataSource.deleteSynced()
+    }
+
+    /**
      * Delete a budget.
      * If the budget is synced to the server, it will be deleted from the server first,
      * then deleted locally. If the server deletion fails, local deletion proceeds anyway

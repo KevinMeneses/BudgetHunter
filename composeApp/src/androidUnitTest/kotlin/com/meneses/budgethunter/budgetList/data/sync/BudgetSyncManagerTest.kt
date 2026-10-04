@@ -14,6 +14,8 @@ import com.meneses.budgethunter.commons.data.sync.SyncStats
 import com.meneses.budgethunter.commons.util.today
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.coVerifyOrder
+import io.mockk.justRun
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -45,6 +47,8 @@ class BudgetSyncManagerTest {
     @BeforeTest
     fun setup() {
         coEvery { entrySyncManager.syncPendingEntries(any()) } returns SyncResult.Success(SyncStats(totalItems = 0))
+        // Nothing synced locally by default, so the pull has nothing to prune.
+        every { localDataSource.getSyncedServerIds() } returns emptySet()
         syncManager = BudgetSyncManager(
             localDataSource = localDataSource,
             budgetApiService = apiService,
@@ -312,6 +316,142 @@ class BudgetSyncManagerTest {
         // Verify no local operations were performed
         verify(exactly = 0) { localDataSource.create(any()) }
         verify(exactly = 0) { localDataSource.update(any()) }
+    }
+
+    // ========== pullBudgetsFromServer() pruning Tests ==========
+
+    @Test
+    fun `pullBudgetsFromServer deletes local synced budgets the server no longer returns`() = runTest {
+        coEvery { authRepository.isAuthenticated() } returns true
+        every { localDataSource.getSyncedServerIds() } returns setOf(1L, 2L, 3L)
+        coEvery { apiService.getBudgets() } returns
+            Result.success(listOf(BudgetResponse(id = 2, name = "B", amount = 1.0)))
+        every { localDataSource.getByServerId(2) } returns
+            Budget(id = 5, name = "B", amount = 1.0, serverId = 2, isSynced = true)
+        justRun { localDataSource.update(any()) }
+        justRun { localDataSource.deleteByServerIds(any()) }
+
+        syncManager.pullBudgetsFromServer()
+
+        verify(exactly = 1) { localDataSource.deleteByServerIds(setOf(1L, 3L)) }
+    }
+
+    @Test
+    fun `pullBudgetsFromServer does not prune when the server returns an empty list`() = runTest {
+        coEvery { authRepository.isAuthenticated() } returns true
+        every { localDataSource.getSyncedServerIds() } returns setOf(1L, 2L)
+        coEvery { apiService.getBudgets() } returns Result.success(emptyList())
+        justRun { localDataSource.deleteByServerIds(any()) }
+
+        val result = syncManager.pullBudgetsFromServer()
+
+        assertIs<SyncResult.Success<SyncStats>>(result)
+        assertEquals(0, result.data.totalItems)
+        verify(exactly = 0) { localDataSource.deleteByServerIds(any()) }
+    }
+
+    @Test
+    fun `pullBudgetsFromServer does not delete when the server returns every local synced budget`() = runTest {
+        coEvery { authRepository.isAuthenticated() } returns true
+        every { localDataSource.getSyncedServerIds() } returns setOf(1L)
+        coEvery { apiService.getBudgets() } returns
+            Result.success(listOf(BudgetResponse(id = 1, name = "A", amount = 1.0)))
+        every { localDataSource.getByServerId(1) } returns
+            Budget(id = 5, name = "A", amount = 1.0, serverId = 1, isSynced = true)
+        justRun { localDataSource.update(any()) }
+
+        syncManager.pullBudgetsFromServer()
+
+        verify(exactly = 0) { localDataSource.deleteByServerIds(any()) }
+    }
+
+    @Test
+    fun `pullBudgetsFromServer does not delete when there are no local synced budgets`() = runTest {
+        coEvery { authRepository.isAuthenticated() } returns true
+        every { localDataSource.getSyncedServerIds() } returns emptySet()
+        coEvery { apiService.getBudgets() } returns Result.success(emptyList())
+
+        syncManager.pullBudgetsFromServer()
+
+        verify(exactly = 0) { localDataSource.deleteByServerIds(any()) }
+    }
+
+    @Test
+    fun `pullBudgetsFromServer does not delete anything when fetching fails`() = runTest {
+        coEvery { authRepository.isAuthenticated() } returns true
+        every { localDataSource.getSyncedServerIds() } returns setOf(1L, 2L)
+        coEvery { apiService.getBudgets() } returns Result.failure(Exception("Server error"))
+
+        val result = syncManager.pullBudgetsFromServer()
+
+        assertIs<SyncResult.Failure>(result)
+        verify(exactly = 0) { localDataSource.deleteByServerIds(any()) }
+    }
+
+    @Test
+    fun `pullBudgetsFromServer does not delete anything when not authenticated`() = runTest {
+        coEvery { authRepository.isAuthenticated() } returns false
+
+        syncManager.pullBudgetsFromServer()
+
+        verify(exactly = 0) { localDataSource.deleteByServerIds(any()) }
+        verify(exactly = 0) { localDataSource.deleteSynced() }
+    }
+
+    @Test
+    fun `pullBudgetsFromServer snapshots synced ids before fetching from the server`() = runTest {
+        coEvery { authRepository.isAuthenticated() } returns true
+        every { localDataSource.getSyncedServerIds() } returns setOf(1L, 2L)
+        coEvery { apiService.getBudgets() } returns
+            Result.success(listOf(BudgetResponse(id = 2, name = "B", amount = 1.0)))
+        every { localDataSource.getByServerId(2) } returns
+            Budget(id = 5, name = "B", amount = 1.0, serverId = 2, isSynced = true)
+        justRun { localDataSource.update(any()) }
+        justRun { localDataSource.deleteByServerIds(any()) }
+
+        syncManager.pullBudgetsFromServer()
+
+        coVerifyOrder {
+            localDataSource.getSyncedServerIds()
+            apiService.getBudgets()
+            localDataSource.deleteByServerIds(setOf(1L))
+        }
+    }
+
+    @Test
+    fun `pullBudgetsFromServer keeps a budget pushed after the snapshot was taken`() = runTest {
+        // Given - budget 7 got its server id while the fetch was in flight, so it is not in the snapshot
+        coEvery { authRepository.isAuthenticated() } returns true
+        every { localDataSource.getSyncedServerIds() } returns setOf(1L, 2L)
+        coEvery { apiService.getBudgets() } returns
+            Result.success(listOf(BudgetResponse(id = 2, name = "B", amount = 1.0)))
+        every { localDataSource.getByServerId(2) } returns
+            Budget(id = 5, name = "B", amount = 1.0, serverId = 2, isSynced = true)
+        justRun { localDataSource.update(any()) }
+        justRun { localDataSource.deleteByServerIds(any()) }
+
+        syncManager.pullBudgetsFromServer()
+
+        // Then - only snapshot ids are candidates
+        verify(exactly = 0) { localDataSource.deleteByServerIds(match { 7L in it }) }
+        verify(exactly = 1) { localDataSource.deleteByServerIds(setOf(1L)) }
+    }
+
+    @Test
+    fun `pullBudgetsFromServer still merges returned budgets while pruning`() = runTest {
+        coEvery { authRepository.isAuthenticated() } returns true
+        every { localDataSource.getSyncedServerIds() } returns setOf(1L)
+        coEvery { apiService.getBudgets() } returns
+            Result.success(listOf(BudgetResponse(id = 101, name = "New", amount = 5.0)))
+        every { localDataSource.getByServerId(101) } returns null
+        every { localDataSource.create(any()) } returns Budget()
+        justRun { localDataSource.deleteByServerIds(any()) }
+
+        val result = syncManager.pullBudgetsFromServer()
+
+        assertIs<SyncResult.Success<SyncStats>>(result)
+        verify(exactly = 1) { localDataSource.create(any()) }
+        verify(exactly = 1) { localDataSource.deleteByServerIds(setOf(1L)) }
     }
 
     // ========== performFullSync() Tests ==========
