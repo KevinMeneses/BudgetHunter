@@ -97,4 +97,28 @@ class BudgetLocalDataSource(
     fun delete(id: Long) = queries.delete(id)
 
     fun clearAllData() = queries.deleteAll()
+
+    fun getSyncedServerIds(): Set<Long> =
+        queries.selectSyncedServerIds().executeAsList().toSet()
+
+    /**
+     * Removes the budgets with these server ids together with their entries. The schema declares
+     * `ON DELETE CASCADE`, but SQLite only honours it with `PRAGMA foreign_keys`, which is off.
+     */
+    fun deleteByServerIds(serverIds: Collection<Long>) {
+        if (serverIds.isEmpty()) return
+        queries.transaction {
+            queries.deleteEntriesByBudgetServerIds(serverIds)
+            queries.deleteByServerIds(serverIds)
+        }
+    }
+
+    /**
+     * Removes every budget that reached the server, with its entries, keeping the ones created
+     * offline that were never pushed.
+     */
+    fun deleteSynced() = queries.transaction {
+        queries.deleteEntriesOfSyncedBudgets()
+        queries.deleteSynced()
+    }
 }

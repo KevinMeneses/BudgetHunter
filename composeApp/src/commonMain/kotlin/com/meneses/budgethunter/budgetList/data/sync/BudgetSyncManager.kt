@@ -128,9 +128,15 @@ class BudgetSyncManager(
      */
     suspend fun pullBudgetsFromServer(): SyncResult<SyncStats> {
         return authenticatedSync {
+            // Taken before the fetch: a budget pushed while the request is in flight gets its
+            // server id afterwards and is missing from the response, but must not be pruned.
+            val knownServerIds = localDataSource.getSyncedServerIds()
+
             // Fetch budgets from server
             budgetApiService.getBudgets().fold(
                 onSuccess = { serverBudgets ->
+                    pruneBudgetsGoneFromServer(knownServerIds, serverBudgets)
+
                     if (serverBudgets.isEmpty()) {
                         return@authenticatedSync SyncStats(totalItems = 0)
                     }
@@ -152,6 +158,32 @@ class BudgetSyncManager(
             onSuccess = { stats -> statsToResult(stats) },
             onFailure = { error -> SyncResult.Failure(error) }
         )
+    }
+
+    /**
+     * Drops local budgets the server no longer lists for this account: deleted on another device,
+     * a collaboration that ended, or left behind by an account that was signed in before.
+     * Budgets that were never pushed have no server id and are never touched.
+     */
+    private fun pruneBudgetsGoneFromServer(
+        knownServerIds: Set<Long>,
+        serverBudgets: List<BudgetResponse>
+    ) {
+        // An empty list is far more likely a faulty response than every budget being gone at
+        // once, and trusting it would wipe all synced data. A switched account is cleaned up on
+        // sign in instead (PrepareDataForAccountUseCase), so nothing relies on pruning here.
+        if (serverBudgets.isEmpty()) {
+            if (knownServerIds.isNotEmpty()) {
+                logger.warn(logTag, "Server returned no budgets; keeping ${knownServerIds.size} synced local budgets")
+            }
+            return
+        }
+
+        val goneServerIds = knownServerIds - serverBudgets.map { it.id }.toSet()
+        if (goneServerIds.isEmpty()) return
+
+        logger.debug(logTag, "Removing ${goneServerIds.size} budgets the server no longer returns: $goneServerIds")
+        localDataSource.deleteByServerIds(goneServerIds)
     }
 
     /**

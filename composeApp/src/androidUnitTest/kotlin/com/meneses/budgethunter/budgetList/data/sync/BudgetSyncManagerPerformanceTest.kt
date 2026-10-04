@@ -47,6 +47,8 @@ class BudgetSyncManagerPerformanceTest {
     @BeforeTest
     fun setup() {
         coEvery { entrySyncManager.syncPendingEntries(any()) } returns SyncResult.Success(SyncStats(totalItems = 0))
+        // Nothing synced locally by default, so the pull has nothing to prune.
+        every { localDataSource.getSyncedServerIds() } returns emptySet()
         syncManager = BudgetSyncManager(
             localDataSource = localDataSource,
             budgetApiService = apiService,
