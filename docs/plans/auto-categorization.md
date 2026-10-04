@@ -1,115 +1,107 @@
 # Plan: automatic entry categorization (app)
 
 Companion plan in the backend repo: `BudgetHunterBackend/docs/plans/auto-categorization.md`
-(read its "Client contract" first). The backend does the categorizing with Gemini Flash-Lite; the
-app's job is to say *when* a category should be automatic, and to show/keep the result.
-Each part is one small PR; ship them in order.
+(read its "How the pieces fit" first). The backend does the categorizing with Gemini Flash-Lite;
+the app's job is to say *when* a category should be automatic, and to show/keep the result.
+Each part is one small PR; ship them in order. Default branch of this repo is `master`.
 
-## Goal
+_Last revised against `master` at `a3409f3` (account-synced preferences, reworked receipt AI,
+English default locale)._
 
-When the user does not pick a category for an entry, the app leaves it to the backend. The entry
-shows up as "Other" immediately (offline-first, no waiting) and updates itself once the
-server-side categorization arrives through the existing sync/SSE pull.
+## What exists today (and changes this plan)
 
-## Current state (relevant bits)
-
-- `BudgetEntry.category` is non-null, default `Category.OTHER`; the DB column is
-  `category TEXT NOT NULL` (`BudgetEntry.sq`), so the app cannot tell "user chose Other" from
-  "user did not choose".
-- `CreateBudgetEntryRequest` / `UpdateBudgetEntryRequest` always send `category: String`.
-- `BudgetEntrySyncManager.mergeServerEntry` / `updateLocalEntryFromResponse` already copy the
-  server's category onto synced entries, and SSE events already trigger a pull, so the AI result
-  will flow back without new transport code.
-- There is already an "AI processing" toggle (`SettingsScreen` -> `SettingsIntent.ToggleAiProcessing`),
-  stored only on the device in `PreferencesManager` (`ai_processing_enabled`, default on). Today it
-  gates the on-device receipt processing in `BudgetEntryViewModel`. The backend never gets the
-  invoice file (`invoice` stays local), so server-side processing means categorization from the
-  description only.
-- Entries created from SMS and from receipt images (`CreateBudgetEntryFromImageUseCase`, which
-  already gets a category from the app-side Gemini call) are other sources of entries.
+- **The AI toggle already syncs with the account.** `SettingsIntent.ToggleAiProcessing` writes
+  `PreferencesManager` (`ai_processing_enabled`, default on) and calls
+  `SyncUserPreferencesUseCase.push()`; `pull()` runs when settings open and after sign-in. The
+  backend stores it in `users.ai_processing_enabled` via `GET/PUT /api/users/me/preferences`.
+  So this plan **adds no new toggle plumbing** (the previous revision's Part 2b is gone). The same
+  flag now means "on-device receipt AI **and** server-side categorization"; only the wording
+  changes.
+- Gaps in that sync that matter here: `push()` is best effort (failures are only logged, no retry),
+  and `PreferencesManager.clearUserPreferences()` on sign-out drops the local value, which then
+  reads as on (`!= false`) until the next `pull()` adopts the account's. The server is the safety
+  net (it re-reads the flag before classifying), but see Part 2.
+- **Receipt AI was reworked:** `CreateBudgetEntryFromImageUseCase` now uses structured output, a
+  per-category guide (`categoryHints`), failure reasons, retries, a 30s deadline and native PDF
+  upload; `BudgetEntryViewModel` asks for confirmation before overwriting an amount/description the
+  user already typed. The receipt flow already yields a category, so it must not trigger a second
+  server-side classification.
+- `BudgetEntry.category` is still non-null, default `Category.OTHER`; the column is
+  `category TEXT NOT NULL`, so the app cannot tell "user chose Other" from "user did not choose".
+  SQLDelight migrations are still `1.sqm`, `2.sqm`, so the next one is `3.sqm`.
+- `CreateBudgetEntryRequest` / `UpdateBudgetEntryRequest` still always send `category: String`.
+- `BudgetEntrySyncManager` still copies the server's category onto synced entries (merge on pull,
+  `updateLocalEntryFromResponse` on push), and SSE events still trigger a pull, so the AI result
+  flows back with no new transport code.
+- SMS-created entries never set a category (they get the default `OTHER`).
 - Categories (11): `FOOD, GROCERIES, SELF_CARE, TRANSPORTATION, HOUSEHOLD_ITEMS, SERVICES,
-  EDUCATION, HEALTH, LEISURE, TAXES, OTHER`. This list is the contract with the backend; do not
-  rename values without a coordinated change.
+  EDUCATION, HEALTH, LEISURE, TAXES, OTHER`. This is the contract with the backend. The one-line
+  meanings in `categoryHints` are reused by the server prompt; if you change them, change both.
+- The app is now **English by default with Spanish in `values-es`**: new strings go in both.
+- The backend never receives the invoice file, so server-side processing is categorization from
+  the description only.
 
 ## Parts
 
 ### Part 1 - Track where a category came from (local data)
 - SqlDelight migration `3.sqm`: add `category_source TEXT NOT NULL DEFAULT 'USER'` to
-  `budget_entry` (existing entries count as user-chosen). Update `BudgetEntry.sq` insert/update
-  statements, mapper, and `BudgetEntryLocalDataSource`.
-- Domain: `BudgetEntry.categorySource: CategorySource { USER, AUTO }`, default `AUTO` for new
-  entries until the user picks one.
-- Form behavior: picking a category in `BudgetEntryForm` sets `USER`; editing the description of
-  an `AUTO` entry keeps it `AUTO`. A user who explicitly picks "Other" stays `USER`.
+  `budget_entry` (existing entries count as user-chosen). Update `BudgetEntry.sq`, the mapper and
+  `BudgetEntryLocalDataSource`.
+- Domain: `BudgetEntry.categorySource: CategorySource { USER, AUTO }`. New entries start `AUTO`
+  **only if AI processing is on**, otherwise `USER`.
+- Form: picking a category sets `USER`; editing the description of an `AUTO` entry keeps it `AUTO`.
+  Explicitly picking "Other" is `USER`.
 - Tests: mapper round-trip, migration test (existing rows become `USER`), form intent tests.
 
 ### Part 2 - Network contract
-- `CreateBudgetEntryRequest` / `UpdateBudgetEntryRequest`: `category: String?` - send `null` when
+- `CreateBudgetEntryRequest` / `UpdateBudgetEntryRequest`: `category: String?` - `null` when
   `categorySource == AUTO`, the category name when `USER`.
-- `BudgetEntryResponse`: add `categorySource: String? = null` (tolerate older servers that do not
-  send it); map to the domain in `mergeServerEntry` and `updateLocalEntryFromResponse`.
-- **Deploy order:** backend Part 1 must be live before this ships, otherwise the old server rejects
-  a missing category with 400. Gate with a `BuildConfig`/remote-config flag if releases may be
-  out of order.
-- Server-wins rule stays: for synced entries the server's category overwrites the local one; an
-  unsynced local entry keeps its own category (already how `mergeServerEntry` treats dates).
-- Tests: serialization with null category, `SyncFlowIntegrationTest` case where the server returns
-  an AI category after create.
-
-### Part 2b - One toggle for on-device and server-side AI
-- The existing toggle also switches server-side categorization. The backend stores it per account
-  (`PUT /api/users/me/settings { aiProcessingEnabled }`, returned by `GET /api/users/me` as
-  `aiProcessingEnabled`; see the backend plan, Part 1b).
-- `ApiEndpoints` + user API service: add the call and the new field on `CurrentUser`.
-- On toggle: save locally first (as today), then push to the server. If it fails (offline, signed
-  out), keep a `ai_processing_synced = false` marker in `PreferencesManager` and retry on the next
-  sync / sign-in. Signed-out users: the toggle stays local only.
-- Order matters: in the sync flow, **push the pending setting before pushing pending entries**,
-  so entries created while the toggle was off are never categorized because of a stale server flag.
-- Sign-in on a new device: the server value wins and overwrites the local preference unless the
-  local one is marked unsynced (then the local one is pushed).
-- When the toggle is **off** the app sends the entry's category as a normal user choice
-  (`categorySource = USER`), never `null`, and the "Automatic" option in the form is hidden. When
-  **on**, new entries default to "Automatic" (Part 3).
-- Update the toggle's description string (`ai_processing_description`) to say it also lets the
-  server categorize entries from their description, and that only the description is sent.
-- Tests: toggle pushes the setting; offline toggle retries; sync ordering; sign-in reconciliation;
-  request omits category only when the toggle is on.
+- `BudgetEntryResponse`: add `categorySource: String? = null` (tolerate older servers); map it in
+  `mergeServerEntry` and `updateLocalEntryFromResponse`.
+- **Deploy order:** backend Part 1 must be live before this ships, or the old server answers 400 to
+  a missing category. Gate it if releases can go out of order.
+- Server wins for synced entries; an unsynced local entry keeps its own category.
+- Stale flag guard: before pushing pending entries, make sure the account has the current toggle
+  value. Smallest change: when the toggle is on and entries are about to be pushed with
+  `category = null`, call `syncUserPreferences.push()` first (it is idempotent), and retry a failed
+  push on resume the same way pending entry pushes already retry. Skip if too invasive: the server
+  just won't classify until the flag is `true`, and the entries stay `OTHER`.
+- Tests: serialization with null category; `SyncFlowIntegrationTest` case where the server returns
+  an AI category after create; null category only sent when the toggle is on.
 
 ### Part 3 - UI
-- Entry form: category selector gets an "Automatic" state as the default for new entries (shows
-  "Automatic" until the server answers); choosing any concrete category turns it into a manual
-  choice. Entry rows/detail: small "auto" indicator when `categorySource == AUTO`, so users can
-  tell and correct it.
-- Entry list updates reactively when the sync pull changes the category (verify the existing Flow
-  re-emits).
-- Metrics (`GetTotalsPerCategoryUseCase`): no change needed; entries pending categorization count
-  as `OTHER` until updated. Compose preview/UI tests for the new states.
-- Strings in all supported languages.
+- Entry form: when AI processing is on, the category selector gets an "Automatic" state as the
+  default for new entries (shows "Automatic" until the server answers); picking a concrete category
+  makes it manual. When AI is off, the option is hidden and the default is a normal choice.
+- Entry rows/detail: a small "auto" indicator when `categorySource == AUTO`, so users can tell and
+  correct it. The list updates when the pull changes the category (verify the Flow re-emits).
+- Update the toggle copy (`ai_processing_description` and its `values-es` version): it now also lets
+  the server categorize entries from their description, and says only the description is sent.
+- Metrics (`GetTotalsPerCategoryUseCase`): no change; pending entries count as `OTHER` until updated.
+- Compose preview/UI tests for the new states; strings in `values` and `values-es`.
 
 ### Part 4 - Other entry sources
-- SMS-created entries: description comes from the bank message; create as `AUTO` with category
-  `OTHER` so the backend categorizes them when synced.
-- Receipt images: skipped entirely when the toggle is off (current behavior). Otherwise keep the app-side Gemini category as `USER`-equivalent? Recommendation: mark it
-  `AUTO` too (it is a model guess), but send it as the category so no second AI call is made - to
-  support that, extend the contract later with `categorySource` in requests. Decide with the
-  backend plan's open questions; skipping this part is acceptable for the first release.
-- Entries created offline get categorized the next time they sync; nothing extra needed.
+- **Receipts:** the category the receipt AI returns is sent explicitly and marked `USER` (not
+  `AUTO`), so the server does not classify again and a good receipt-based category is not
+  overwritten by a description-only guess. If the user declines AI autofill in the confirmation
+  dialog, the entry keeps whatever category it had.
+- **SMS:** description comes from the bank message; create as `AUTO` with category `OTHER` when the
+  toggle is on, so the backend categorizes it on sync (this is the main beneficiary of the feature).
+- Entries created offline get categorized the next time they sync; nothing extra is needed.
 
 ### Part 5 - Cleanup and docs
-- Update `CLAUDE.md` (it still describes the pre-KMP layout) and `README.md` with the
-  auto-categorization behavior.
-- Check iOS source set compiles (`commonMain` changes only) and `./gradlew ktlint test` pass.
+- Update `CLAUDE.md` (still describes the pre-KMP layout) and `README.md` with the behavior.
+- Check the iOS source set still compiles (`commonMain` changes only); `./gradlew ktlint test` pass.
 
 ## Acceptance criteria
-- Creating an entry without choosing a category works offline, shows "Other"/"Automatic", and
-  after sync the category changes to the AI result without user action.
-- An entry whose category the user picked is never changed by the server's AI.
+- Creating an entry without choosing a category works offline, shows "Other"/"Automatic", and after
+  sync the category changes to the AI result without user action.
+- An entry whose category the user picked, or that came from a receipt, is never changed by the
+  server's AI.
+- With the toggle off, entries are saved as before and nothing is classified server-side.
 - Older entries and older server responses (no `categorySource`) keep working.
 - `./gradlew ktlint test` passes.
 
 ## Open questions
-- Should the toggle be per device or per account? This plan makes it per account (server-synced),
-  so two devices of one user share the value.
 - Is an explicit "re-categorize" action wanted on an entry (send `category = null` on update)?
-- Should receipt/SMS entries trust the app-side category (Part 4)?
+- Should turning the toggle on offer to categorize existing `OTHER` entries?
