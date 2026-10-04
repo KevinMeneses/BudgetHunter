@@ -25,6 +25,7 @@ import platform.CoreGraphics.CGRectMake
 import platform.CoreGraphics.kCGPDFMediaBox
 import platform.Foundation.NSData
 import platform.Foundation.NSFileManager
+import platform.Foundation.base64EncodedStringWithOptions
 import platform.Foundation.dataWithContentsOfFile
 import platform.UIKit.UIImage
 
@@ -44,6 +45,20 @@ actual class ImageProcessor {
             }
         } catch (e: Exception) {
             println("iOS Image Processing Error: ${e.message}")
+            null
+        }
+    }
+
+    actual fun readFileAsBase64(imageData: ImageData, maxBytes: Int): String? {
+        return try {
+            val nsData = NSData.dataWithContentsOfFile(cleanFilePath(imageData.uri)) ?: return null
+            if (nsData.length == 0uL || nsData.length > maxBytes.toULong()) {
+                null
+            } else {
+                nsData.base64EncodedStringWithOptions(0u)
+            }
+        } catch (e: Exception) {
+            println("iOS raw file read error: ${e.message}")
             null
         }
     }

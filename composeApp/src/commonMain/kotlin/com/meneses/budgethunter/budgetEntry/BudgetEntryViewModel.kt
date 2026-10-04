@@ -3,6 +3,10 @@ package com.meneses.budgethunter.budgetEntry
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import budgethunter.composeapp.generated.resources.Res
+import budgethunter.composeapp.generated.resources.ai_error_busy
+import budgethunter.composeapp.generated.resources.ai_error_generic
+import budgethunter.composeapp.generated.resources.ai_error_network
+import budgethunter.composeapp.generated.resources.ai_error_not_an_invoice
 import budgethunter.composeapp.generated.resources.amount_is_mandatory
 import budgethunter.composeapp.generated.resources.error_loading_file
 import com.meneses.budgethunter.budgetEntry.application.BudgetEntryEvent
@@ -10,6 +14,7 @@ import com.meneses.budgethunter.budgetEntry.application.BudgetEntryIntent
 import com.meneses.budgethunter.budgetEntry.application.BudgetEntryState
 import com.meneses.budgethunter.budgetEntry.application.CreateBudgetEntryFromImageUseCase
 import com.meneses.budgethunter.budgetEntry.data.BudgetEntryRepository
+import com.meneses.budgethunter.budgetEntry.domain.AiFailureReason
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.commons.application.ValidateFilePathUseCase
 import com.meneses.budgethunter.commons.data.FileManager
@@ -130,12 +135,15 @@ class BudgetEntryViewModel(
     }
 
     private suspend fun applyInvoice(invoicePath: String, useAi: Boolean) {
+        var failure: AiFailureReason? = null
         val resultEntry = if (useAi) {
             _uiState.value.budgetEntry?.let { budgetEntry ->
-                createBudgetEntryFromImageUseCase.execute(
+                val result = createBudgetEntryFromImageUseCase.execute(
                     imageUri = fileManager.createUri(invoicePath),
                     budgetEntry = budgetEntry
                 )
+                failure = result.failure
+                result.entry
             }
         } else {
             _uiState.value.budgetEntry
@@ -152,8 +160,25 @@ class BudgetEntryViewModel(
             )
         }
 
+        failure?.let { showAiFailure(it) }
+
         // Validate the newly attached invoice file
         validateInvoiceFile(invoicePath)
+    }
+
+    private fun showAiFailure(reason: AiFailureReason) {
+        val message = when (reason) {
+            AiFailureReason.NOT_AN_INVOICE -> Res.string.ai_error_not_an_invoice
+            AiFailureReason.NETWORK, AiFailureReason.TIMEOUT -> Res.string.ai_error_network
+            AiFailureReason.RATE_LIMITED, AiFailureReason.SERVER -> Res.string.ai_error_busy
+            else -> Res.string.ai_error_generic
+        }
+        _events.trySend(
+            BudgetEntryEvent.ShowNotification(
+                message = message,
+                isError = reason != AiFailureReason.NOT_AN_INVOICE
+            )
+        )
     }
 
     private fun showInvoiceError() {
