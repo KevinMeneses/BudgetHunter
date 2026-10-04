@@ -95,6 +95,7 @@ internal fun zoomAround(
     val maxY = (container.height * (newScale - 1f) / 2f).coerceAtLeast(0f)
     return ZoomResult(
         scale = newScale,
-        offset = Offset(raw.x.coerceIn(-maxX, maxX), raw.y.coerceIn(-maxY, maxY))
+        // 0f - max instead of -max: avoids a negative zero when not zoomed
+        offset = Offset(raw.x.coerceIn(0f - maxX, maxX), raw.y.coerceIn(0f - maxY, maxY))
     )
 }
