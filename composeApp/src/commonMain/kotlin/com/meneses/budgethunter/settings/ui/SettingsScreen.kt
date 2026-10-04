@@ -1,6 +1,7 @@
 package com.meneses.budgethunter.settings.ui
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -57,6 +58,7 @@ import budgethunter.composeapp.generated.resources.sms_reading_description
 import budgethunter.composeapp.generated.resources.banks_selected
 import budgethunter.composeapp.generated.resources.no_banks_selected
 import com.meneses.budgethunter.commons.ui.AppBar
+import com.meneses.budgethunter.commons.ui.LoadingOverlay
 import com.meneses.budgethunter.commons.util.Platform
 import budgethunter.composeapp.generated.resources.account
 import budgethunter.composeapp.generated.resources.change_password
@@ -75,62 +77,70 @@ object SettingsScreen {
         onIntent: (SettingsIntent) -> Unit,
         goBack: () -> Unit
     ) {
-        Scaffold(
-            topBar = {
-                AppBar(
-                    title = stringResource(Res.string.settings),
-                    leftButtonIcon = Icons.AutoMirrored.Filled.ArrowBack,
-                    onLeftButtonClick = goBack,
-                    leftButtonDescription = stringResource(Res.string.come_back)
-                )
-            }
-        ) { paddingValues ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .verticalScroll(rememberScrollState())
-            ) {
-                SmsReadingSection(
-                    uiState = uiState,
-                    onToggleSmsReading = { enabled ->
-                        onIntent(SettingsIntent.ToggleSmsReading(enabled))
-                    },
-                    onSelectDefaultBudget = {
-                        onIntent(SettingsIntent.ShowDefaultBudgetSelector)
-                    },
-                    onSelectBanks = {
-                        onIntent(SettingsIntent.ShowBankSelector)
-                    }
-                )
+        Box(modifier = Modifier.fillMaxSize()) {
+            Scaffold(
+                topBar = {
+                    AppBar(
+                        title = stringResource(Res.string.settings),
+                        leftButtonIcon = Icons.AutoMirrored.Filled.ArrowBack,
+                        onLeftButtonClick = goBack,
+                        leftButtonDescription = stringResource(Res.string.come_back)
+                    )
+                }
+            ) { paddingValues ->
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    SmsReadingSection(
+                        uiState = uiState,
+                        onToggleSmsReading = { enabled ->
+                            onIntent(SettingsIntent.ToggleSmsReading(enabled))
+                        },
+                        onSelectDefaultBudget = {
+                            onIntent(SettingsIntent.ShowDefaultBudgetSelector)
+                        },
+                        onSelectBanks = {
+                            onIntent(SettingsIntent.ShowBankSelector)
+                        }
+                    )
 
-                Spacer(modifier = Modifier.height(16.dp))
-                HorizontalDivider()
-
-                Spacer(modifier = Modifier.height(16.dp))
-                AiProcessingSection(
-                    uiState = uiState,
-                    onToggleAiProcessing = { enabled ->
-                        onIntent(SettingsIntent.ToggleAiProcessing(enabled))
-                    }
-                )
-
-                if (uiState.isSignedIn) {
                     Spacer(modifier = Modifier.height(16.dp))
                     HorizontalDivider()
 
                     Spacer(modifier = Modifier.height(16.dp))
-                    AccountSection(
-                        hasPassword = uiState.hasPassword,
-                        onManagePassword = { onIntent(SettingsIntent.ShowPasswordDialog) }
+                    AiProcessingSection(
+                        uiState = uiState,
+                        onToggleAiProcessing = { enabled ->
+                            onIntent(SettingsIntent.ToggleAiProcessing(enabled))
+                        }
                     )
+
+                    if (uiState.isSignedIn) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        HorizontalDivider()
+
+                        Spacer(modifier = Modifier.height(16.dp))
+                        AccountSection(
+                            hasPassword = uiState.hasPassword,
+                            onManagePassword = { onIntent(SettingsIntent.ShowPasswordDialog) }
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                    HorizontalDivider()
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                    AboutSection()
                 }
+            }
 
-                Spacer(modifier = Modifier.height(16.dp))
-                HorizontalDivider()
-
-                Spacer(modifier = Modifier.height(16.dp))
-                AboutSection()
+            // Covers the first frames, until the device's values are read, so the screen never
+            // flashes its empty defaults. The account refresh is not waited on.
+            if (uiState.isLoading) {
+                LoadingOverlay()
             }
         }
 

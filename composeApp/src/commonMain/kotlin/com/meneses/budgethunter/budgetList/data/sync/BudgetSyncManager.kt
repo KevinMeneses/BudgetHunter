@@ -1,6 +1,7 @@
 package com.meneses.budgethunter.budgetList.data.sync
 
 import com.meneses.budgethunter.auth.data.AuthRepository
+import com.meneses.budgethunter.budgetEntry.data.BudgetEntrySyncManager
 import com.meneses.budgethunter.budgetList.data.datasource.BudgetLocalDataSource
 import com.meneses.budgethunter.budgetList.data.network.BudgetApiService
 import com.meneses.budgethunter.budgetList.domain.Budget
@@ -11,6 +12,7 @@ import com.meneses.budgethunter.commons.data.sync.Logger
 import com.meneses.budgethunter.commons.data.sync.SyncResult
 import com.meneses.budgethunter.commons.data.sync.SyncStats
 import com.meneses.budgethunter.commons.util.today
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.datetime.Clock
 
@@ -21,6 +23,7 @@ import kotlinx.datetime.Clock
 class BudgetSyncManager(
     private val localDataSource: BudgetLocalDataSource,
     private val budgetApiService: BudgetApiService,
+    private val entrySyncManager: BudgetEntrySyncManager,
     authRepository: AuthRepository,
     ioDispatcher: CoroutineDispatcher,
     logger: Logger
@@ -84,6 +87,7 @@ class BudgetSyncManager(
                     serverId = response.id,
                     lastSyncedAt = Clock.System.now().toString()
                 )
+                if (budget.serverId == null) pushEntriesOfNewBudget(budget.id)
                 Result.success(Unit)
             },
             onFailure = { error ->
@@ -94,6 +98,29 @@ class BudgetSyncManager(
     }
 
     /**
+     * Entries created before their budget reached the server (e.g. from an SMS while offline)
+     * failed with ParentNotSynced; now that the budget has a serverId they can be pushed. A failure
+     * here does not fail the budget sync: the entries stay pending for the next entry sync.
+     */
+    private suspend fun pushEntriesOfNewBudget(budgetId: Int) {
+        try {
+            when (val result = entrySyncManager.syncPendingEntries(budgetId)) {
+                is SyncResult.Success -> Unit
+                is SyncResult.PartialSuccess -> logger.warn(
+                    logTag,
+                    "Pushed pending entries of new budget $budgetId: ${result.succeeded} succeeded, ${result.failed} failed"
+                )
+                is SyncResult.Failure ->
+                    logger.warn(logTag, "Failed to push pending entries of new budget $budgetId", result.error)
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            logger.warn(logTag, "Failed to push pending entries of new budget $budgetId", e)
+        }
+    }
+
+    /**
      * Pulls budgets from the server and merges with local database.
      * Updates existing budgets or creates new ones based on server ID.
      *
@@ -101,9 +128,15 @@ class BudgetSyncManager(
      */
     suspend fun pullBudgetsFromServer(): SyncResult<SyncStats> {
         return authenticatedSync {
+            // Taken before the fetch: a budget pushed while the request is in flight gets its
+            // server id afterwards and is missing from the response, but must not be pruned.
+            val knownServerIds = localDataSource.getSyncedServerIds()
+
             // Fetch budgets from server
             budgetApiService.getBudgets().fold(
                 onSuccess = { serverBudgets ->
+                    pruneBudgetsGoneFromServer(knownServerIds, serverBudgets)
+
                     if (serverBudgets.isEmpty()) {
                         return@authenticatedSync SyncStats(totalItems = 0)
                     }
@@ -125,6 +158,32 @@ class BudgetSyncManager(
             onSuccess = { stats -> statsToResult(stats) },
             onFailure = { error -> SyncResult.Failure(error) }
         )
+    }
+
+    /**
+     * Drops local budgets the server no longer lists for this account: deleted on another device,
+     * a collaboration that ended, or left behind by an account that was signed in before.
+     * Budgets that were never pushed have no server id and are never touched.
+     */
+    private fun pruneBudgetsGoneFromServer(
+        knownServerIds: Set<Long>,
+        serverBudgets: List<BudgetResponse>
+    ) {
+        // An empty list is far more likely a faulty response than every budget being gone at
+        // once, and trusting it would wipe all synced data. A switched account is cleaned up on
+        // sign in instead (PrepareDataForAccountUseCase), so nothing relies on pruning here.
+        if (serverBudgets.isEmpty()) {
+            if (knownServerIds.isNotEmpty()) {
+                logger.warn(logTag, "Server returned no budgets; keeping ${knownServerIds.size} synced local budgets")
+            }
+            return
+        }
+
+        val goneServerIds = knownServerIds - serverBudgets.map { it.id }.toSet()
+        if (goneServerIds.isEmpty()) return
+
+        logger.debug(logTag, "Removing ${goneServerIds.size} budgets the server no longer returns: $goneServerIds")
+        localDataSource.deleteByServerIds(goneServerIds)
     }
 
     /**

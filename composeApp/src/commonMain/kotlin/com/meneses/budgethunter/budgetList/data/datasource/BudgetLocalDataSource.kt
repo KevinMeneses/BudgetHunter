@@ -10,10 +10,11 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 
 class BudgetLocalDataSource(
     private val queries: BudgetQueries,
-    dispatcher: CoroutineDispatcher
+    private val dispatcher: CoroutineDispatcher
 ) {
     private val cacheMutex = Mutex()
     private var cachedList: List<Budget> = emptyList()
@@ -32,8 +33,13 @@ class BudgetLocalDataSource(
         cachedList
     }
 
-    suspend fun getById(id: Int): Budget? = cacheMutex.withLock {
-        cachedList.firstOrNull { it.id == id }
+    /**
+     * Reads the database instead of [cachedList]: the cache is only filled while [budgets] is
+     * collected (a screen is open) and lags behind writes such as [markAsSynced], so sync code
+     * running in the background or right after a write would see a missing or stale budget.
+     */
+    suspend fun getById(id: Int): Budget? = withContext(dispatcher) {
+        queries.selectById(id.toLong(), ::mapSelectAllToBudget).executeAsOneOrNull()
     }
 
     fun getByServerId(serverId: Long): Budget? =
@@ -91,4 +97,28 @@ class BudgetLocalDataSource(
     fun delete(id: Long) = queries.delete(id)
 
     fun clearAllData() = queries.deleteAll()
+
+    fun getSyncedServerIds(): Set<Long> =
+        queries.selectSyncedServerIds().executeAsList().toSet()
+
+    /**
+     * Removes the budgets with these server ids together with their entries. The schema declares
+     * `ON DELETE CASCADE`, but SQLite only honours it with `PRAGMA foreign_keys`, which is off.
+     */
+    fun deleteByServerIds(serverIds: Collection<Long>) {
+        if (serverIds.isEmpty()) return
+        queries.transaction {
+            queries.deleteEntriesByBudgetServerIds(serverIds)
+            queries.deleteByServerIds(serverIds)
+        }
+    }
+
+    /**
+     * Removes every budget that reached the server, with its entries, keeping the ones created
+     * offline that were never pushed.
+     */
+    fun deleteSynced() = queries.transaction {
+        queries.deleteEntriesOfSyncedBudgets()
+        queries.deleteSynced()
+    }
 }

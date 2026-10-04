@@ -4,6 +4,7 @@ import budgethunter.composeapp.generated.resources.Res
 import budgethunter.composeapp.generated.resources.error_google_no_account
 import budgethunter.composeapp.generated.resources.error_google_sign_in_failed
 import com.meneses.budgethunter.auth.application.GoogleAuthOutcome
+import com.meneses.budgethunter.auth.application.PrepareDataForAccountUseCase
 import com.meneses.budgethunter.auth.application.SignInEvent
 import com.meneses.budgethunter.auth.application.SignInIntent
 import com.meneses.budgethunter.auth.application.SignInWithGoogleUseCase
@@ -11,9 +12,11 @@ import com.meneses.budgethunter.auth.data.AuthRepository
 import com.meneses.budgethunter.budgetEntry.data.BudgetEntrySyncManager
 import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.commons.data.PreferencesManager
+import com.meneses.budgethunter.settings.application.SyncUserPreferencesUseCase
 import com.meneses.budgethunter.commons.data.network.models.AuthResponse
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.coJustRun
 import io.mockk.mockk
@@ -48,6 +51,8 @@ class SignInViewModelTest {
     private val budgetRepository = mockk<BudgetRepository>(relaxed = true)
     private val budgetEntrySyncManager = mockk<BudgetEntrySyncManager>(relaxed = true)
     private val signInWithGoogleUseCase = mockk<SignInWithGoogleUseCase>(relaxed = true)
+    private val syncUserPreferences = mockk<SyncUserPreferencesUseCase>(relaxed = true)
+    private val prepareDataForAccount = mockk<PrepareDataForAccountUseCase>(relaxed = true)
 
     // System under test
     private lateinit var viewModel: SignInViewModel
@@ -61,7 +66,9 @@ class SignInViewModelTest {
             preferencesManager = preferencesManager,
             budgetRepository = budgetRepository,
             budgetEntrySyncManager = budgetEntrySyncManager,
-            signInWithGoogleUseCase = signInWithGoogleUseCase
+            signInWithGoogleUseCase = signInWithGoogleUseCase,
+            syncUserPreferences = syncUserPreferences,
+            prepareDataForAccount = prepareDataForAccount
         )
     }
 
@@ -98,6 +105,37 @@ class SignInViewModelTest {
         val event = viewModel.events.first()
         assertIs<SignInEvent.NavigateToBudgetList>(event)
         assertEquals(email, event.email)
+    }
+
+    @Test
+    fun `signIn success prepares local data for the signed in account before syncing`() = runTest {
+        val email = "user@example.com"
+        viewModel.sendIntent(SignInIntent.EmailChanged("typed@example.com"))
+        viewModel.sendIntent(SignInIntent.PasswordChanged("securepass"))
+        coEvery { authRepository.signIn(email = "typed@example.com", password = "securepass") } returns
+            Result.success(AuthResponse("auth", "refresh", email, "Test User"))
+
+        viewModel.sendIntent(SignInIntent.SignInClicked)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        coVerifyOrder {
+            prepareDataForAccount.execute(email)
+            budgetRepository.sync()
+        }
+        assertIs<SignInEvent.NavigateToBudgetList>(viewModel.events.first())
+    }
+
+    @Test
+    fun `signIn failure does not prepare or clear any data`() = runTest {
+        viewModel.sendIntent(SignInIntent.EmailChanged("user@example.com"))
+        viewModel.sendIntent(SignInIntent.PasswordChanged("wrong"))
+        coEvery { authRepository.signIn(any(), any()) } returns Result.failure(Exception("bad credentials"))
+
+        viewModel.sendIntent(SignInIntent.SignInClicked)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        coVerify(exactly = 0) { prepareDataForAccount.execute(any()) }
+        coVerify(exactly = 0) { budgetRepository.sync() }
     }
 
     // ========== continueOffline Tests ==========
@@ -191,7 +229,9 @@ class SignInViewModelTest {
             preferencesManager = preferencesManager,
             budgetRepository = budgetRepository,
             budgetEntrySyncManager = budgetEntrySyncManager,
-            signInWithGoogleUseCase = signInWithGoogleUseCase
+            signInWithGoogleUseCase = signInWithGoogleUseCase,
+            syncUserPreferences = syncUserPreferences,
+            prepareDataForAccount = prepareDataForAccount
         )
 
         // Then

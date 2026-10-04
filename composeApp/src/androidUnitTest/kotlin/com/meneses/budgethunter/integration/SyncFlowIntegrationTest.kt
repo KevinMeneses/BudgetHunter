@@ -248,18 +248,19 @@ class SyncFlowIntegrationTest {
         budgetApiService = BudgetApiService(httpClient, Dispatchers.Unconfined)
         budgetEntryApiService = BudgetEntryApiService(httpClient, Dispatchers.Unconfined)
 
-        budgetSyncManager = BudgetSyncManager(
-            localDataSource = budgetLocalDataSource,
-            budgetApiService = budgetApiService,
+        budgetEntrySyncManager = BudgetEntrySyncManager(
+            localDataSource = budgetEntryLocalDataSource,
+            budgetEntryApiService = budgetEntryApiService,
+            budgetLocalDataSource = budgetLocalDataSource,
             authRepository = authRepository,
             ioDispatcher = Dispatchers.Unconfined,
             logger = NoOpLogger()
         )
 
-        budgetEntrySyncManager = BudgetEntrySyncManager(
-            localDataSource = budgetEntryLocalDataSource,
-            budgetEntryApiService = budgetEntryApiService,
-            budgetLocalDataSource = budgetLocalDataSource,
+        budgetSyncManager = BudgetSyncManager(
+            localDataSource = budgetLocalDataSource,
+            budgetApiService = budgetApiService,
+            entrySyncManager = budgetEntrySyncManager,
             authRepository = authRepository,
             ioDispatcher = Dispatchers.Unconfined,
             logger = NoOpLogger()
@@ -438,7 +439,7 @@ class SyncFlowIntegrationTest {
                     status = HttpStatusCode.OK,
                     headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString())
                 )
-                HttpMethod.Get to 2 -> respond(
+                HttpMethod.Get to 4 -> respond(
                     content = json.encodeToString(
                         ListSerializer(BudgetResponse.serializer()),
                         listOf(
@@ -449,7 +450,7 @@ class SyncFlowIntegrationTest {
                     status = HttpStatusCode.OK,
                     headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString())
                 )
-                HttpMethod.Post to 3 -> respond(
+                HttpMethod.Post to 2 -> respond(
                     content = json.encodeToString(
                         BudgetEntryResponse(
                             id = 501,
@@ -467,7 +468,7 @@ class SyncFlowIntegrationTest {
                     status = HttpStatusCode.OK,
                     headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString())
                 )
-                HttpMethod.Post to 4 -> respond(
+                HttpMethod.Post to 3 -> respond(
                     content = json.encodeToString(
                         BudgetEntryResponse(
                             id = 502,
@@ -561,9 +562,8 @@ class SyncFlowIntegrationTest {
         assertTrue(entryStats.totalItems >= 0, "Should have processed entries")
         assertTrue(entryStats.syncedItems >= 0, "Should have synced entries")
 
-        // Note: In this test scenario with rapid budget->entry sync, entries may not all be
-        // fully synced due to timing/caching issues in the test environment. In production,
-        // this flow works correctly as sync operations are properly spaced.
+        // Creating a budget on the server pushes its pending entries right away
+        assertTrue(getUnsyncedEntries(budget1.id).isEmpty(), "Entries should be pushed once their budget is created")
     }
 
     @Test
@@ -599,7 +599,7 @@ class SyncFlowIntegrationTest {
                     status = HttpStatusCode.OK,
                     headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString())
                 )
-                HttpMethod.Get to 1 -> respond(
+                HttpMethod.Get to 3 -> respond(
                     content = json.encodeToString(
                         ListSerializer(BudgetResponse.serializer()),
                         listOf(BudgetResponse(id = 601, name = "New Budget", amount = 7000.0))
@@ -607,7 +607,7 @@ class SyncFlowIntegrationTest {
                     status = HttpStatusCode.OK,
                     headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString())
                 )
-                HttpMethod.Post to 2 -> respond(
+                HttpMethod.Post to 1 -> respond(
                     content = json.encodeToString(
                         BudgetEntryResponse(
                             id = 701,
@@ -625,7 +625,7 @@ class SyncFlowIntegrationTest {
                     status = HttpStatusCode.OK,
                     headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString())
                 )
-                HttpMethod.Post to 3 -> respond(
+                HttpMethod.Post to 2 -> respond(
                     content = json.encodeToString(
                         BudgetEntryResponse(
                             id = 702,
@@ -693,6 +693,9 @@ class SyncFlowIntegrationTest {
         assertNotNull(syncedBudgetBeforeEntries)
         assertTrue(syncedBudgetBeforeEntries.isSynced)
 
+        // Creating the budget on the server pushed its pending entries right away
+        assertTrue(getUnsyncedEntries(budget.id).isEmpty(), "Entries should be pushed once their budget is created")
+
         val entrySyncResult = budgetEntrySyncManager.performFullSync(
             budgetId = budget.id,
             budgetServerId = syncedBudgetBeforeEntries.serverId!!
@@ -705,9 +708,9 @@ class SyncFlowIntegrationTest {
         assertTrue(syncedBudget.isSynced)
         assertEquals(601L, syncedBudget.serverId)
 
-        // performFullSync aggregates push (2 local entries) + pull (2 server entries) = 4 total
-        assertEquals(4, entryStats.totalItems)
-        assertEquals(4, entryStats.syncedItems)
+        // Nothing left to push, so performFullSync only pulls the 2 server entries
+        assertEquals(2, entryStats.totalItems)
+        assertEquals(2, entryStats.syncedItems)
 
         val unsyncedEntries = getUnsyncedEntries(budget.id)
         assertTrue(unsyncedEntries.isEmpty(), "All entries should be synced after budget sync")

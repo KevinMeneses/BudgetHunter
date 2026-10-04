@@ -1,6 +1,5 @@
 package com.meneses.budgethunter.budgetEntry.ui
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,6 +12,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Share
@@ -52,9 +52,11 @@ import budgethunter.composeapp.generated.resources.invoice_content_description
 import budgethunter.composeapp.generated.resources.replace_file
 import budgethunter.composeapp.generated.resources.select_from_files
 import budgethunter.composeapp.generated.resources.select_invoice_option
+import budgethunter.composeapp.generated.resources.open_content_description
 import budgethunter.composeapp.generated.resources.share_content_description
 import budgethunter.composeapp.generated.resources.take_a_picture
 import budgethunter.composeapp.generated.resources.unable_to_display_file
+import com.meneses.budgethunter.commons.ui.ZoomableImage
 import com.meneses.budgethunter.commons.ui.dashedBorder
 import com.meneses.budgethunter.commons.util.getImageBitmapFromFile
 import com.meneses.budgethunter.commons.util.getImageBitmapFromPDFFile
@@ -68,10 +70,13 @@ fun InvoiceDisplayModal(
     onDismiss: () -> Unit,
     onEdit: () -> Unit,
     onShare: () -> Unit,
+    onOpen: () -> Unit,
     onDelete: () -> Unit,
     onError: () -> Unit
 ) {
     if (show) {
+        // The preview only renders the first page, so PDFs can be opened in a full viewer
+        val isPdf = validatedFilePath.endsWith(".pdf", ignoreCase = true)
         var bitmap by remember(validatedFilePath) { mutableStateOf<ImageBitmap?>(null) }
         var isLoading by remember(validatedFilePath) { mutableStateOf(true) }
 
@@ -116,7 +121,7 @@ fun InvoiceDisplayModal(
                                 )
                             }
                             bitmap != null -> {
-                                Image(
+                                ZoomableImage(
                                     bitmap = bitmap!!,
                                     contentDescription = stringResource(Res.string.invoice_content_description),
                                     modifier = Modifier
@@ -151,6 +156,28 @@ fun InvoiceDisplayModal(
                                         .size(20.dp),
                                     tint = MaterialTheme.colorScheme.onPrimaryContainer
                                 )
+                            }
+
+                            if (isPdf) {
+                                Card(
+                                    onClick = {
+                                        onOpen()
+                                        onDismiss()
+                                    },
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                                    ),
+                                    shape = RoundedCornerShape(8.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.OpenInNew,
+                                        contentDescription = stringResource(Res.string.open_content_description),
+                                        modifier = Modifier
+                                            .padding(12.dp)
+                                            .size(20.dp),
+                                        tint = MaterialTheme.colorScheme.onTertiaryContainer
+                                    )
+                                }
                             }
 
                             Card(

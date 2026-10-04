@@ -1,16 +1,27 @@
 package com.meneses.budgethunter.budgetEntry
 
+import budgethunter.composeapp.generated.resources.Res
+import budgethunter.composeapp.generated.resources.ai_error_network
+import budgethunter.composeapp.generated.resources.ai_error_not_an_invoice
+import budgethunter.composeapp.generated.resources.ai_error_timeout
+import budgethunter.composeapp.generated.resources.error_no_app_to_open_file
 import com.meneses.budgethunter.budgetEntry.application.BudgetEntryEvent
 import com.meneses.budgethunter.budgetEntry.application.BudgetEntryIntent
 import com.meneses.budgethunter.budgetEntry.application.CreateBudgetEntryFromImageUseCase
 import com.meneses.budgethunter.budgetEntry.data.BudgetEntryRepository
+import com.meneses.budgethunter.budgetEntry.domain.AiFailureReason
+import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.commons.application.ValidateFilePathUseCase
+import com.meneses.budgethunter.commons.data.FileData
 import com.meneses.budgethunter.commons.data.FileManager
 import com.meneses.budgethunter.commons.data.PreferencesManager
 import com.meneses.budgethunter.commons.platform.CameraManager
 import com.meneses.budgethunter.commons.platform.FilePickerManager
 import com.meneses.budgethunter.commons.platform.ShareManager
+import io.mockk.coEvery
+import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -18,10 +29,15 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertIs
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 /**
  * Unit tests for BudgetEntryViewModel event emissions.
@@ -78,5 +94,80 @@ class BudgetEntryViewModelTest {
         // Then - the ViewModel should emit a NavigateBack event instead of mutating goBack state
         val event = viewModel.events.first()
         assertIs<BudgetEntryEvent.NavigateBack>(event)
+    }
+
+    // ========== AI failure feedback ==========
+
+    private fun attachWithAiResult(result: CreateBudgetEntryFromImageUseCase.Result) {
+        coEvery { preferencesManager.isAiProcessingEnabled() } returns true
+        every { fileManager.saveFile(any()) } returns "/files/invoice.pdf"
+        every { fileManager.createUri(any()) } returns "file:///files/invoice.pdf"
+        coEvery { createBudgetEntryFromImageUseCase.execute(any(), any()) } returns result
+
+        viewModel.sendIntent(BudgetEntryIntent.SetBudgetEntry(BudgetEntry()))
+        viewModel.sendIntent(
+            BudgetEntryIntent.AttachInvoice(FileData(byteArrayOf(1), "invoice.pdf", "application/pdf", "/files"))
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+    }
+
+    @Test
+    fun `AI network failure shows an error notification and keeps the invoice`() = runTest {
+        attachWithAiResult(CreateBudgetEntryFromImageUseCase.Result(BudgetEntry(), AiFailureReason.NETWORK))
+
+        val event = viewModel.events.first()
+
+        assertIs<BudgetEntryEvent.ShowNotification>(event)
+        assertEquals(Res.string.ai_error_network, event.message)
+        assertTrue(event.isError)
+        assertEquals("/files/invoice.pdf", viewModel.uiState.value.budgetEntry?.invoice)
+    }
+
+    @Test
+    fun `not an invoice shows an informative notification`() = runTest {
+        attachWithAiResult(CreateBudgetEntryFromImageUseCase.Result(BudgetEntry(), AiFailureReason.NOT_AN_INVOICE))
+
+        val event = viewModel.events.first()
+
+        assertIs<BudgetEntryEvent.ShowNotification>(event)
+        assertEquals(Res.string.ai_error_not_an_invoice, event.message)
+        assertFalse(event.isError)
+    }
+
+    @Test
+    fun `AI timeout shows its own message`() = runTest {
+        attachWithAiResult(CreateBudgetEntryFromImageUseCase.Result(BudgetEntry(), AiFailureReason.TIMEOUT))
+
+        val event = viewModel.events.first()
+
+        assertIs<BudgetEntryEvent.ShowNotification>(event)
+        assertEquals(Res.string.ai_error_timeout, event.message)
+        assertTrue(event.isError)
+    }
+
+    // ========== Open file externally ==========
+
+    @Test
+    fun `OpenFile opens a pdf with the pdf mime type and shows nothing when it works`() = runTest {
+        every { shareManager.openFile(any(), any()) } returns true
+
+        viewModel.sendIntent(BudgetEntryIntent.OpenFile("/files/invoice.PDF"))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        verify(exactly = 1) { shareManager.openFile("/files/invoice.PDF", "application/pdf") }
+        assertNull(withTimeoutOrNull(100) { viewModel.events.first() })
+    }
+
+    @Test
+    fun `OpenFile shows an error when no app can open the file`() = runTest {
+        every { shareManager.openFile(any(), any()) } returns false
+
+        viewModel.sendIntent(BudgetEntryIntent.OpenFile("/files/invoice.pdf"))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val event = viewModel.events.first()
+        assertIs<BudgetEntryEvent.ShowNotification>(event)
+        assertEquals(Res.string.error_no_app_to_open_file, event.message)
+        assertTrue(event.isError)
     }
 }

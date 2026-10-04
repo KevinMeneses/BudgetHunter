@@ -3,6 +3,7 @@ package com.meneses.budgethunter.di
 import com.meneses.budgethunter.BuildKonfig
 import com.meneses.budgethunter.auth.SignInViewModel
 import com.meneses.budgethunter.auth.SignUpViewModel
+import com.meneses.budgethunter.auth.application.PrepareDataForAccountUseCase
 import com.meneses.budgethunter.auth.application.SignInWithGoogleUseCase
 import com.meneses.budgethunter.auth.application.SignOutUseCase
 import com.meneses.budgethunter.auth.data.AuthRepository
@@ -55,7 +56,16 @@ val authModule = module {
             authRepository = get<AuthRepository>(),
             budgetRepository = get(),
             budgetEntrySyncManager = get(),
+            syncUserPreferences = get(),
+            prepareDataForAccount = get(),
             applicationScope = get<CoroutineScope>(named("ApplicationScope"))
+        )
+    }
+
+    factory<PrepareDataForAccountUseCase> {
+        PrepareDataForAccountUseCase(
+            preferencesManager = get(),
+            budgetRepository = get()
         )
     }
 
@@ -65,7 +75,9 @@ val authModule = module {
             preferencesManager = get(),
             budgetRepository = get(),
             budgetEntrySyncManager = get(),
-            signInWithGoogleUseCase = get()
+            signInWithGoogleUseCase = get(),
+            syncUserPreferences = get(),
+            prepareDataForAccount = get()
         )
     }
 

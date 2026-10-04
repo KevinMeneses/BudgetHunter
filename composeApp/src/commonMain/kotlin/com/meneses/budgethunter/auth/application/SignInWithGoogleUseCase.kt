@@ -5,6 +5,7 @@ import com.meneses.budgethunter.budgetEntry.data.BudgetEntrySyncManager
 import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.commons.platform.GoogleSignInManager
 import com.meneses.budgethunter.commons.platform.GoogleSignInResult
+import com.meneses.budgethunter.settings.application.SyncUserPreferencesUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -23,6 +24,8 @@ class SignInWithGoogleUseCase(
     private val authRepository: AuthRepository,
     private val budgetRepository: BudgetRepository,
     private val budgetEntrySyncManager: BudgetEntrySyncManager,
+    private val syncUserPreferences: SyncUserPreferencesUseCase,
+    private val prepareDataForAccount: PrepareDataForAccountUseCase,
     private val applicationScope: CoroutineScope
 ) {
 
@@ -50,11 +53,16 @@ class SignInWithGoogleUseCase(
     private suspend fun exchangeForSession(idToken: String): GoogleAuthOutcome =
         authRepository.signInWithGoogle(idToken).fold(
             onSuccess = { authResponse ->
+                // Before the sync and the budget list, so a switched account never sees what
+                // the previous one left behind.
+                prepareDataForAccount.execute(authResponse.email)
+
                 // Deliberately the application scope, not the caller's: the screen is popped the
                 // moment we return, and a sync tied to its lifetime would be cancelled mid-flight.
                 applicationScope.launch {
                     budgetRepository.sync()
                     budgetEntrySyncManager.syncAllBudgetsEntries()
+                    syncUserPreferences.pull()
                 }
                 // The email comes from the server, since the user never typed one.
                 GoogleAuthOutcome.Success(authResponse.email)

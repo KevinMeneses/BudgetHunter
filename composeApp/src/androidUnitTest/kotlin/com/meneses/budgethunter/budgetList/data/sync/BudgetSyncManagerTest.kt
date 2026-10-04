@@ -1,5 +1,6 @@
 package com.meneses.budgethunter.budgetList.data.sync
 
+import com.meneses.budgethunter.budgetEntry.data.BudgetEntrySyncManager
 import com.meneses.budgethunter.auth.data.AuthRepository
 import com.meneses.budgethunter.budgetList.data.datasource.BudgetLocalDataSource
 import com.meneses.budgethunter.budgetList.data.network.BudgetApiService
@@ -13,6 +14,8 @@ import com.meneses.budgethunter.commons.data.sync.SyncStats
 import com.meneses.budgethunter.commons.util.today
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.coVerifyOrder
+import io.mockk.justRun
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -38,13 +41,18 @@ class BudgetSyncManagerTest {
     private val logger = mockk<Logger>(relaxed = true)
 
     // System under test
+    private val entrySyncManager = mockk<BudgetEntrySyncManager>()
     private lateinit var syncManager: BudgetSyncManager
 
     @BeforeTest
     fun setup() {
+        coEvery { entrySyncManager.syncPendingEntries(any()) } returns SyncResult.Success(SyncStats(totalItems = 0))
+        // Nothing synced locally by default, so the pull has nothing to prune.
+        every { localDataSource.getSyncedServerIds() } returns emptySet()
         syncManager = BudgetSyncManager(
             localDataSource = localDataSource,
             budgetApiService = apiService,
+            entrySyncManager = entrySyncManager,
             authRepository = authRepository,
             ioDispatcher = Dispatchers.Unconfined,
             logger = logger
@@ -308,6 +316,142 @@ class BudgetSyncManagerTest {
         // Verify no local operations were performed
         verify(exactly = 0) { localDataSource.create(any()) }
         verify(exactly = 0) { localDataSource.update(any()) }
+    }
+
+    // ========== pullBudgetsFromServer() pruning Tests ==========
+
+    @Test
+    fun `pullBudgetsFromServer deletes local synced budgets the server no longer returns`() = runTest {
+        coEvery { authRepository.isAuthenticated() } returns true
+        every { localDataSource.getSyncedServerIds() } returns setOf(1L, 2L, 3L)
+        coEvery { apiService.getBudgets() } returns
+            Result.success(listOf(BudgetResponse(id = 2, name = "B", amount = 1.0)))
+        every { localDataSource.getByServerId(2) } returns
+            Budget(id = 5, name = "B", amount = 1.0, serverId = 2, isSynced = true)
+        justRun { localDataSource.update(any()) }
+        justRun { localDataSource.deleteByServerIds(any()) }
+
+        syncManager.pullBudgetsFromServer()
+
+        verify(exactly = 1) { localDataSource.deleteByServerIds(setOf(1L, 3L)) }
+    }
+
+    @Test
+    fun `pullBudgetsFromServer does not prune when the server returns an empty list`() = runTest {
+        coEvery { authRepository.isAuthenticated() } returns true
+        every { localDataSource.getSyncedServerIds() } returns setOf(1L, 2L)
+        coEvery { apiService.getBudgets() } returns Result.success(emptyList())
+        justRun { localDataSource.deleteByServerIds(any()) }
+
+        val result = syncManager.pullBudgetsFromServer()
+
+        assertIs<SyncResult.Success<SyncStats>>(result)
+        assertEquals(0, result.data.totalItems)
+        verify(exactly = 0) { localDataSource.deleteByServerIds(any()) }
+    }
+
+    @Test
+    fun `pullBudgetsFromServer does not delete when the server returns every local synced budget`() = runTest {
+        coEvery { authRepository.isAuthenticated() } returns true
+        every { localDataSource.getSyncedServerIds() } returns setOf(1L)
+        coEvery { apiService.getBudgets() } returns
+            Result.success(listOf(BudgetResponse(id = 1, name = "A", amount = 1.0)))
+        every { localDataSource.getByServerId(1) } returns
+            Budget(id = 5, name = "A", amount = 1.0, serverId = 1, isSynced = true)
+        justRun { localDataSource.update(any()) }
+
+        syncManager.pullBudgetsFromServer()
+
+        verify(exactly = 0) { localDataSource.deleteByServerIds(any()) }
+    }
+
+    @Test
+    fun `pullBudgetsFromServer does not delete when there are no local synced budgets`() = runTest {
+        coEvery { authRepository.isAuthenticated() } returns true
+        every { localDataSource.getSyncedServerIds() } returns emptySet()
+        coEvery { apiService.getBudgets() } returns Result.success(emptyList())
+
+        syncManager.pullBudgetsFromServer()
+
+        verify(exactly = 0) { localDataSource.deleteByServerIds(any()) }
+    }
+
+    @Test
+    fun `pullBudgetsFromServer does not delete anything when fetching fails`() = runTest {
+        coEvery { authRepository.isAuthenticated() } returns true
+        every { localDataSource.getSyncedServerIds() } returns setOf(1L, 2L)
+        coEvery { apiService.getBudgets() } returns Result.failure(Exception("Server error"))
+
+        val result = syncManager.pullBudgetsFromServer()
+
+        assertIs<SyncResult.Failure>(result)
+        verify(exactly = 0) { localDataSource.deleteByServerIds(any()) }
+    }
+
+    @Test
+    fun `pullBudgetsFromServer does not delete anything when not authenticated`() = runTest {
+        coEvery { authRepository.isAuthenticated() } returns false
+
+        syncManager.pullBudgetsFromServer()
+
+        verify(exactly = 0) { localDataSource.deleteByServerIds(any()) }
+        verify(exactly = 0) { localDataSource.deleteSynced() }
+    }
+
+    @Test
+    fun `pullBudgetsFromServer snapshots synced ids before fetching from the server`() = runTest {
+        coEvery { authRepository.isAuthenticated() } returns true
+        every { localDataSource.getSyncedServerIds() } returns setOf(1L, 2L)
+        coEvery { apiService.getBudgets() } returns
+            Result.success(listOf(BudgetResponse(id = 2, name = "B", amount = 1.0)))
+        every { localDataSource.getByServerId(2) } returns
+            Budget(id = 5, name = "B", amount = 1.0, serverId = 2, isSynced = true)
+        justRun { localDataSource.update(any()) }
+        justRun { localDataSource.deleteByServerIds(any()) }
+
+        syncManager.pullBudgetsFromServer()
+
+        coVerifyOrder {
+            localDataSource.getSyncedServerIds()
+            apiService.getBudgets()
+            localDataSource.deleteByServerIds(setOf(1L))
+        }
+    }
+
+    @Test
+    fun `pullBudgetsFromServer keeps a budget pushed after the snapshot was taken`() = runTest {
+        // Given - budget 7 got its server id while the fetch was in flight, so it is not in the snapshot
+        coEvery { authRepository.isAuthenticated() } returns true
+        every { localDataSource.getSyncedServerIds() } returns setOf(1L, 2L)
+        coEvery { apiService.getBudgets() } returns
+            Result.success(listOf(BudgetResponse(id = 2, name = "B", amount = 1.0)))
+        every { localDataSource.getByServerId(2) } returns
+            Budget(id = 5, name = "B", amount = 1.0, serverId = 2, isSynced = true)
+        justRun { localDataSource.update(any()) }
+        justRun { localDataSource.deleteByServerIds(any()) }
+
+        syncManager.pullBudgetsFromServer()
+
+        // Then - only snapshot ids are candidates
+        verify(exactly = 0) { localDataSource.deleteByServerIds(match { 7L in it }) }
+        verify(exactly = 1) { localDataSource.deleteByServerIds(setOf(1L)) }
+    }
+
+    @Test
+    fun `pullBudgetsFromServer still merges returned budgets while pruning`() = runTest {
+        coEvery { authRepository.isAuthenticated() } returns true
+        every { localDataSource.getSyncedServerIds() } returns setOf(1L)
+        coEvery { apiService.getBudgets() } returns
+            Result.success(listOf(BudgetResponse(id = 101, name = "New", amount = 5.0)))
+        every { localDataSource.getByServerId(101) } returns null
+        every { localDataSource.create(any()) } returns Budget()
+        justRun { localDataSource.deleteByServerIds(any()) }
+
+        val result = syncManager.pullBudgetsFromServer()
+
+        assertIs<SyncResult.Success<SyncStats>>(result)
+        verify(exactly = 1) { localDataSource.create(any()) }
+        verify(exactly = 1) { localDataSource.deleteByServerIds(setOf(1L)) }
     }
 
     // ========== performFullSync() Tests ==========
@@ -624,5 +768,98 @@ class BudgetSyncManagerTest {
             localDataSource.create(match { it.serverId == 102L })
             localDataSource.create(match { it.serverId == 103L })
         }
+    }
+
+    // ========== Entry push after budget create ==========
+
+    private val entryBudgetResponse = BudgetResponse(id = 101, name = "Budget 1", amount = 1000.0)
+
+    @Test
+    fun `syncSingleBudget pushes pending entries after creating a budget on the server`() = runTest {
+        // Given
+        coEvery { authRepository.isAuthenticated() } returns true
+        val budget = Budget(id = 1, name = "Budget 1", amount = 1000.0)
+        every { localDataSource.getUnsynced() } returns listOf(budget)
+        coEvery { apiService.createBudget(any()) } returns Result.success(entryBudgetResponse)
+        every { localDataSource.markAsSynced(any(), any(), any()) } returns Unit
+
+        // When
+        syncManager.syncPendingBudgets()
+
+        // Then - entries are pushed after the budget got its serverId
+        coVerify(exactly = 1) { entrySyncManager.syncPendingEntries(1) }
+        io.mockk.coVerifyOrder {
+            localDataSource.markAsSynced(1, 101, any())
+            entrySyncManager.syncPendingEntries(1)
+        }
+    }
+
+    @Test
+    fun `syncSingleBudget does not push entries when updating a budget that already has a serverId`() = runTest {
+        // Given
+        coEvery { authRepository.isAuthenticated() } returns true
+        val budget = Budget(id = 1, name = "Budget 1", amount = 1000.0, serverId = 101)
+        every { localDataSource.getUnsynced() } returns listOf(budget)
+        coEvery { apiService.updateBudget(101, any()) } returns Result.success(entryBudgetResponse)
+        every { localDataSource.markAsSynced(any(), any(), any()) } returns Unit
+
+        // When
+        syncManager.syncPendingBudgets()
+
+        // Then
+        coVerify(exactly = 0) { entrySyncManager.syncPendingEntries(any()) }
+    }
+
+    @Test
+    fun `syncSingleBudget does not push entries when the create call fails`() = runTest {
+        // Given
+        coEvery { authRepository.isAuthenticated() } returns true
+        val budget = Budget(id = 1, name = "Budget 1", amount = 1000.0)
+        every { localDataSource.getUnsynced() } returns listOf(budget)
+        coEvery { apiService.createBudget(any()) } returns Result.failure(Exception("Network error"))
+
+        // When
+        syncManager.syncPendingBudgets()
+
+        // Then
+        coVerify(exactly = 0) { entrySyncManager.syncPendingEntries(any()) }
+    }
+
+    @Test
+    fun `syncSingleBudget still succeeds when the entry push returns failure`() = runTest {
+        // Given
+        coEvery { authRepository.isAuthenticated() } returns true
+        val budget = Budget(id = 1, name = "Budget 1", amount = 1000.0)
+        every { localDataSource.getUnsynced() } returns listOf(budget)
+        coEvery { apiService.createBudget(any()) } returns Result.success(entryBudgetResponse)
+        every { localDataSource.markAsSynced(any(), any(), any()) } returns Unit
+        coEvery { entrySyncManager.syncPendingEntries(1) } returns SyncResult.Failure(Exception("boom"))
+
+        // When
+        val result = syncManager.syncPendingBudgets()
+
+        // Then
+        assertIs<SyncResult.Success<SyncStats>>(result)
+        assertEquals(1, result.data.syncedItems)
+        assertEquals(0, result.data.failedItems)
+    }
+
+    @Test
+    fun `syncSingleBudget still succeeds when the entry push throws`() = runTest {
+        // Given
+        coEvery { authRepository.isAuthenticated() } returns true
+        val budget = Budget(id = 1, name = "Budget 1", amount = 1000.0)
+        every { localDataSource.getUnsynced() } returns listOf(budget)
+        coEvery { apiService.createBudget(any()) } returns Result.success(entryBudgetResponse)
+        every { localDataSource.markAsSynced(any(), any(), any()) } returns Unit
+        coEvery { entrySyncManager.syncPendingEntries(1) } throws RuntimeException("boom")
+
+        // When
+        val result = syncManager.syncPendingBudgets()
+
+        // Then
+        assertIs<SyncResult.Success<SyncStats>>(result)
+        assertEquals(1, result.data.syncedItems)
+        assertEquals(0, result.data.failedItems)
     }
 }

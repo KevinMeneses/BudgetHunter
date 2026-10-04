@@ -75,6 +75,7 @@ kotlin {
 
             // Lifecycle ViewModels
             implementation(libs.jetbrains.lifecycle.viewmodel)
+            implementation(libs.jetbrains.lifecycle.runtime.compose)
 
             // DataStore (KMP support)
             implementation(libs.bundles.datastore)

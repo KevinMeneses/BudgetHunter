@@ -10,6 +10,7 @@ val smsModule = module {
     single {
         SmsMapper(
             preferencesManager = get(),
+            budgetLocalDataSource = get(),
             stringResourceProvider = get()
         )
     }

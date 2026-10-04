@@ -3,13 +3,20 @@ package com.meneses.budgethunter.budgetEntry
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import budgethunter.composeapp.generated.resources.Res
+import budgethunter.composeapp.generated.resources.ai_error_busy
+import budgethunter.composeapp.generated.resources.ai_error_generic
+import budgethunter.composeapp.generated.resources.ai_error_network
+import budgethunter.composeapp.generated.resources.ai_error_not_an_invoice
+import budgethunter.composeapp.generated.resources.ai_error_timeout
 import budgethunter.composeapp.generated.resources.amount_is_mandatory
 import budgethunter.composeapp.generated.resources.error_loading_file
+import budgethunter.composeapp.generated.resources.error_no_app_to_open_file
 import com.meneses.budgethunter.budgetEntry.application.BudgetEntryEvent
 import com.meneses.budgethunter.budgetEntry.application.BudgetEntryIntent
 import com.meneses.budgethunter.budgetEntry.application.BudgetEntryState
 import com.meneses.budgethunter.budgetEntry.application.CreateBudgetEntryFromImageUseCase
 import com.meneses.budgethunter.budgetEntry.data.BudgetEntryRepository
+import com.meneses.budgethunter.budgetEntry.domain.AiFailureReason
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.commons.application.ValidateFilePathUseCase
 import com.meneses.budgethunter.commons.data.FileManager
@@ -60,6 +67,9 @@ class BudgetEntryViewModel(
             is BudgetEntryIntent.TakePhoto -> takePhoto()
             is BudgetEntryIntent.PickFile -> pickFile()
             is BudgetEntryIntent.ShareFile -> shareFile(intent.filePath)
+            is BudgetEntryIntent.OpenFile -> openFile(intent.filePath)
+            is BudgetEntryIntent.ConfirmAiAutofill -> resolveAiAutofill(useAi = true)
+            is BudgetEntryIntent.DeclineAiAutofill -> resolveAiAutofill(useAi = false)
             is BudgetEntryIntent.UpdateInvoice -> updateInvoice()
         }
     }
@@ -89,39 +99,100 @@ class BudgetEntryViewModel(
             val invoicePath = fileManager.saveFile(intent.fileData)
             wasNewInvoiceAttached = true
 
-            val aiBudgetEntry = if (preferencesManager.isAiProcessingEnabled()) {
-                _uiState.value.budgetEntry?.let { budgetEntry ->
-                    createBudgetEntryFromImageUseCase.execute(
-                        imageUri = fileManager.createUri(invoicePath),
-                        budgetEntry = budgetEntry
+            if (preferencesManager.isAiProcessingEnabled() && hasUserInput()) {
+                // Ask for confirmation before overwriting what the user already typed
+                _uiState.update {
+                    it.copy(
+                        budgetEntry = it.budgetEntry?.copy(invoice = invoicePath),
+                        isProcessingInvoice = false,
+                        pendingAiInvoicePath = invoicePath
                     )
                 }
-            } else {
-                _uiState.value.budgetEntry
+                validateInvoiceFile(invoicePath)
+                return@launch
             }
 
-            _uiState.update {
-                val updatedEntry = aiBudgetEntry
-                    ?.copy(invoice = invoicePath)
-                    ?: it.budgetEntry
-
-                it.copy(
-                    budgetEntry = updatedEntry,
-                    isProcessingInvoice = false
-                )
-            }
-
-            // Validate the newly attached invoice file
-            validateInvoiceFile(invoicePath)
+            applyInvoice(invoicePath, useAi = preferencesManager.isAiProcessingEnabled())
         } catch (_: Exception) {
-            _uiState.update { it.copy(isProcessingInvoice = false) }
-            _events.trySend(
-                BudgetEntryEvent.ShowNotification(
-                    message = Res.string.error_loading_file,
-                    isError = true
+            showInvoiceError()
+        }
+    }
+
+    private fun hasUserInput(): Boolean {
+        val entry = _uiState.value.budgetEntry ?: return false
+        return entry.amount.isNotBlank() || entry.description.isNotBlank()
+    }
+
+    private fun resolveAiAutofill(useAi: Boolean) {
+        // ConfirmationModal also calls onDismiss after onConfirm, so clear the pending path synchronously
+        val invoicePath = _uiState.value.pendingAiInvoicePath ?: return
+        _uiState.update { it.copy(pendingAiInvoicePath = null, isProcessingInvoice = useAi) }
+        if (!useAi) return
+        viewModelScope.launch {
+            try {
+                applyInvoice(invoicePath, useAi = true)
+            } catch (_: Exception) {
+                showInvoiceError()
+            }
+        }
+    }
+
+    private suspend fun applyInvoice(invoicePath: String, useAi: Boolean) {
+        var failure: AiFailureReason? = null
+        val resultEntry = if (useAi) {
+            _uiState.value.budgetEntry?.let { budgetEntry ->
+                val result = createBudgetEntryFromImageUseCase.execute(
+                    imageUri = fileManager.createUri(invoicePath),
+                    budgetEntry = budgetEntry
                 )
+                failure = result.failure
+                result.entry
+            }
+        } else {
+            _uiState.value.budgetEntry
+        }
+
+        _uiState.update {
+            val updatedEntry = resultEntry
+                ?.copy(invoice = invoicePath)
+                ?: it.budgetEntry
+
+            it.copy(
+                budgetEntry = updatedEntry,
+                isProcessingInvoice = false
             )
         }
+
+        failure?.let { showAiFailure(it) }
+
+        // Validate the newly attached invoice file
+        validateInvoiceFile(invoicePath)
+    }
+
+    private fun showAiFailure(reason: AiFailureReason) {
+        val message = when (reason) {
+            AiFailureReason.NOT_AN_INVOICE -> Res.string.ai_error_not_an_invoice
+            AiFailureReason.NETWORK -> Res.string.ai_error_network
+            AiFailureReason.TIMEOUT -> Res.string.ai_error_timeout
+            AiFailureReason.RATE_LIMITED, AiFailureReason.SERVER -> Res.string.ai_error_busy
+            else -> Res.string.ai_error_generic
+        }
+        _events.trySend(
+            BudgetEntryEvent.ShowNotification(
+                message = message,
+                isError = reason != AiFailureReason.NOT_AN_INVOICE
+            )
+        )
+    }
+
+    private fun showInvoiceError() {
+        _uiState.update { it.copy(isProcessingInvoice = false) }
+        _events.trySend(
+            BudgetEntryEvent.ShowNotification(
+                message = Res.string.error_loading_file,
+                isError = true
+            )
+        )
     }
 
     private fun toggleAttachInvoiceModal(show: Boolean) =
@@ -228,6 +299,18 @@ class BudgetEntryViewModel(
             fileData?.let {
                 sendIntent(BudgetEntryIntent.AttachInvoice(it))
             }
+        }
+    }
+
+    private fun openFile(filePath: String) {
+        val mimeType = if (filePath.endsWith(".pdf", ignoreCase = true)) "application/pdf" else "image/*"
+        if (!shareManager.openFile(filePath, mimeType)) {
+            _events.trySend(
+                BudgetEntryEvent.ShowNotification(
+                    message = Res.string.error_no_app_to_open_file,
+                    isError = true
+                )
+            )
         }
     }
 

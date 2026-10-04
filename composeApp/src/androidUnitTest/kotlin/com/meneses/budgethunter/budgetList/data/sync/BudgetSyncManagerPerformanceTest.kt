@@ -1,5 +1,6 @@
 package com.meneses.budgethunter.budgetList.data.sync
 
+import com.meneses.budgethunter.budgetEntry.data.BudgetEntrySyncManager
 import com.meneses.budgethunter.auth.data.AuthRepository
 import com.meneses.budgethunter.budgetList.data.datasource.BudgetLocalDataSource
 import com.meneses.budgethunter.budgetList.data.network.BudgetApiService
@@ -40,13 +41,18 @@ class BudgetSyncManagerPerformanceTest {
     private val logger = mockk<Logger>(relaxed = true)
 
     // System under test
+    private val entrySyncManager = mockk<BudgetEntrySyncManager>()
     private lateinit var syncManager: BudgetSyncManager
 
     @BeforeTest
     fun setup() {
+        coEvery { entrySyncManager.syncPendingEntries(any()) } returns SyncResult.Success(SyncStats(totalItems = 0))
+        // Nothing synced locally by default, so the pull has nothing to prune.
+        every { localDataSource.getSyncedServerIds() } returns emptySet()
         syncManager = BudgetSyncManager(
             localDataSource = localDataSource,
             budgetApiService = apiService,
+            entrySyncManager = entrySyncManager,
             authRepository = authRepository,
             ioDispatcher = Dispatchers.Unconfined,
             logger = logger

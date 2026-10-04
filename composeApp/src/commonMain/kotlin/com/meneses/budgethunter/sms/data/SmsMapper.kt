@@ -3,6 +3,7 @@ package com.meneses.budgethunter.sms.data
 import budgethunter.composeapp.generated.resources.Res
 import budgethunter.composeapp.generated.resources.sms_transaction_from_bank
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
+import com.meneses.budgethunter.budgetList.data.datasource.BudgetLocalDataSource
 import com.meneses.budgethunter.commons.data.PreferencesManager
 import com.meneses.budgethunter.commons.resources.StringResourceProvider
 import com.meneses.budgethunter.sms.domain.BankSmsConfig
@@ -12,6 +13,7 @@ import com.meneses.budgethunter.sms.domain.SmsTransactionParser
 
 class SmsMapper(
     private val preferencesManager: PreferencesManager,
+    private val budgetLocalDataSource: BudgetLocalDataSource,
     private val stringResourceProvider: StringResourceProvider
 ) {
     suspend fun smsToBudgetEntry(messageBody: String, bankConfig: BankSmsConfig): SmsParseResult {
@@ -34,6 +36,10 @@ class SmsMapper(
     ): SmsParseResult {
         val defaultBudgetId = preferencesManager.getDefaultBudgetId()
         if (defaultBudgetId <= 0) return SmsParseResult.NoDefaultBudget
+        // The preference outlives the budget when it is deleted here, on another device, or by
+        // a sync that drops budgets the server no longer returns. Without this check the entry
+        // would be stored under a budget nobody can open.
+        if (budgetLocalDataSource.getById(defaultBudgetId) == null) return SmsParseResult.NoDefaultBudget
 
         val entry = BudgetEntry(
             amount = analysis.amount,

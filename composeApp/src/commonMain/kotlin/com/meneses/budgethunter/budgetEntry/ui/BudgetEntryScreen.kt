@@ -13,6 +13,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import budgethunter.composeapp.generated.resources.Res
+import budgethunter.composeapp.generated.resources.ai_autofill_confirm
+import budgethunter.composeapp.generated.resources.ai_autofill_confirmation_message
+import budgethunter.composeapp.generated.resources.ai_autofill_skip
 import budgethunter.composeapp.generated.resources.come_back
 import budgethunter.composeapp.generated.resources.discard
 import budgethunter.composeapp.generated.resources.new_registry
@@ -130,6 +133,21 @@ data class BudgetEntryScreen(val budgetEntry: BudgetEntry) {
             }
         )
 
+        ConfirmationModal(
+            show = uiState.shouldShowAiAutofillModal(),
+            message = stringResource(Res.string.ai_autofill_confirmation_message),
+            confirmButtonText = stringResource(Res.string.ai_autofill_confirm),
+            cancelButtonText = stringResource(Res.string.ai_autofill_skip),
+            onDismiss = {
+                BudgetEntryIntent.DeclineAiAutofill
+                    .run(onIntent)
+            },
+            onConfirm = {
+                BudgetEntryIntent.ConfirmAiAutofill
+                    .run(onIntent)
+            }
+        )
+
         FileNotFoundModal(
             show = uiState.shouldShowFileNotFoundModal(),
             onDismiss = {
@@ -165,6 +183,11 @@ data class BudgetEntryScreen(val budgetEntry: BudgetEntry) {
                 onShare = {
                     BudgetEntryIntent
                         .ShareFile(validatedPath)
+                        .run(onIntent)
+                },
+                onOpen = {
+                    BudgetEntryIntent
+                        .OpenFile(validatedPath)
                         .run(onIntent)
                 },
                 onDelete = {

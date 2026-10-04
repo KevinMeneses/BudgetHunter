@@ -572,4 +572,19 @@ class BudgetRepositoryTest {
             dataSource.update(updatedBudget)
         }
     }
+
+    // ── clearSyncedData ───────────────────────────────────────────────────────
+
+    @Test
+    fun `clearSyncedData delegates to deleteSynced and keeps offline budgets`() = runTest {
+        val dataSource = mockk<BudgetLocalDataSource> {
+            every { deleteSynced() } returns Unit
+        }
+        val repository = buildRepository(dataSource = dataSource)
+
+        repository.clearSyncedData()
+
+        io.mockk.verify(exactly = 1) { dataSource.deleteSynced() }
+        io.mockk.verify(exactly = 0) { dataSource.clearAllData() }
+    }
 }

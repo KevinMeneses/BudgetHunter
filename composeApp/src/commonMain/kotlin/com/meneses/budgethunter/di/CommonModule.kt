@@ -14,6 +14,7 @@ import com.meneses.budgethunter.db.BudgetEntryQueries
 import com.meneses.budgethunter.db.BudgetQueries
 import com.meneses.budgethunter.db.Budget_entry
 import com.meneses.budgethunter.db.Database
+import com.meneses.budgethunter.navigation.DefaultBudgetLaunchRequest
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -52,6 +53,8 @@ val commonModule = module {
     }
 
     single<PreferencesManager> { PreferencesManager(get()) }
+
+    single { DefaultBudgetLaunchRequest() }
 
     single<StringResourceProvider> { StringResourceProviderImpl() }
 

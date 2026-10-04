@@ -1,17 +1,12 @@
 package com.meneses.budgethunter.budgetEntry.data
 
 import android.content.ContentResolver
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.Matrix
-import android.graphics.Rect
-import android.graphics.pdf.PdfRenderer
-import android.graphics.pdf.PdfRenderer.Page
-import android.os.ParcelFileDescriptor
-import androidx.core.graphics.createBitmap
+import android.util.Base64
 import androidx.core.net.toUri
 import com.meneses.budgethunter.budgetEntry.domain.ImageData
 import com.meneses.budgethunter.commons.data.sync.Logger
+import com.meneses.budgethunter.commons.util.getBitmapFromPDFFileDescriptor
 
 /**
  * Android-specific implementation of ImageProcessor.
@@ -32,6 +27,20 @@ actual class ImageProcessor(
             }
         } catch (e: Exception) {
             logger.warn(tag, "Image processing error", e)
+            null
+        }
+    }
+
+    actual fun readFileAsBase64(imageData: ImageData, maxBytes: Int): String? {
+        return try {
+            val bytes = contentResolver.openInputStream(imageData.uri.toUri())?.use { it.readBytes() }
+            if (bytes == null || bytes.isEmpty() || bytes.size > maxBytes) {
+                null
+            } else {
+                Base64.encodeToString(bytes, Base64.NO_WRAP)
+            }
+        } catch (e: Exception) {
+            logger.warn(tag, "Raw file read error", e)
             null
         }
     }
@@ -59,17 +68,5 @@ actual class ImageProcessor(
             logger.warn(tag, "Regular image processing error", e)
             null
         }
-    }
-
-    /**
-     * Converts PDF file descriptor to Bitmap.
-     * This preserves the exact same logic from the original Android implementation.
-     */
-    private fun getBitmapFromPDFFileDescriptor(descriptor: ParcelFileDescriptor): Bitmap {
-        val page = PdfRenderer(descriptor).openPage(0)
-        val bitmap = createBitmap(page.width, page.height)
-        val rect = Rect(0, page.height, page.width, 0)
-        page.render(bitmap, rect, Matrix(), Page.RENDER_MODE_FOR_DISPLAY)
-        return bitmap
     }
 }

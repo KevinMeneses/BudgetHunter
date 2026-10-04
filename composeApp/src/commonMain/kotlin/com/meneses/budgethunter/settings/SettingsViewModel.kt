@@ -12,7 +12,10 @@ import com.meneses.budgethunter.commons.data.PreferencesManager
 import com.meneses.budgethunter.commons.platform.PermissionsManager
 import com.meneses.budgethunter.settings.application.SettingsIntent
 import com.meneses.budgethunter.settings.application.SettingsState
+import com.meneses.budgethunter.settings.application.SyncUserPreferencesUseCase
+import com.meneses.budgethunter.sms.domain.BankSmsConfig
 import com.meneses.budgethunter.sms.domain.SupportedBanks
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -22,7 +25,10 @@ class SettingsViewModel(
     private val preferencesManager: PreferencesManager,
     private val budgetRepository: BudgetRepository,
     private val permissionsManager: PermissionsManager,
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val syncUserPreferences: SyncUserPreferencesUseCase,
+    // Pushes outlive the screen: leaving Settings right after a toggle must not drop the save.
+    private val applicationScope: CoroutineScope
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsState())
@@ -56,6 +62,11 @@ class SettingsViewModel(
         val selectedBankIds = bankConfigs.map { it.id }.toSet()
         preferencesManager.setSelectedBankIds(selectedBankIds)
         _uiState.update { it.copy(selectedBanks = bankConfigs) }
+        pushPreferences()
+    }
+
+    private fun pushPreferences() {
+        applicationScope.launch { syncUserPreferences.push() }
     }
 
     private fun showBankSelector() {
@@ -66,42 +77,77 @@ class SettingsViewModel(
         _uiState.update { it.copy(isBankSelectorVisible = false) }
     }
 
+    /**
+     * Shows what is on the device right away and refreshes from the account afterwards, so the
+     * screen never waits on the network. The refresh only fills in what the account changed.
+     */
     private fun loadSettings() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
 
             try {
-                val defaultBudgetId = preferencesManager.getDefaultBudgetId()
-                val defaultBudget = if (defaultBudgetId != -1) {
-                    budgetRepository.getById(defaultBudgetId)
-                } else null
-
-                val selectedBankIds = preferencesManager.getSelectedBankIds()
-                val selectedBanks = selectedBankIds.mapNotNull { bankId ->
-                    SupportedBanks.getBankConfigById(bankId)
-                }.toSet()
-
+                val preferences = readPreferences()
                 _uiState.update {
                     it.copy(
-                        isSmsReadingEnabled = preferencesManager.isSmsReadingEnabled(),
-                        defaultBudget = defaultBudget,
+                        isSmsReadingEnabled = preferences.isSmsReadingEnabled,
+                        defaultBudget = preferences.defaultBudget,
                         allBudgets = budgetRepository.getAllCached(),
                         hasSmsPermission = permissionsManager.hasSmsPermission(),
                         availableBanks = SupportedBanks.ALL_BANKS,
-                        selectedBanks = selectedBanks,
-                        isAiProcessingEnabled = preferencesManager.isAiProcessingEnabled(),
+                        selectedBanks = preferences.selectedBanks,
+                        isAiProcessingEnabled = preferences.isAiProcessingEnabled,
                         isLoading = false
                     )
                 }
             } catch (_: Exception) {
                 _uiState.update { it.copy(isLoading = false) }
             }
+
+            refreshFromAccount()
         }
     }
+
+    private suspend fun refreshFromAccount() {
+        try {
+            syncUserPreferences.pull()
+            val preferences = readPreferences()
+            _uiState.update {
+                it.copy(
+                    isSmsReadingEnabled = preferences.isSmsReadingEnabled,
+                    defaultBudget = preferences.defaultBudget,
+                    allBudgets = budgetRepository.getAllCached(),
+                    selectedBanks = preferences.selectedBanks,
+                    isAiProcessingEnabled = preferences.isAiProcessingEnabled
+                )
+            }
+        } catch (_: Exception) {
+            // Keep showing the device's values; the pull logs its own failures.
+        }
+    }
+
+    private suspend fun readPreferences(): StoredPreferences {
+        val defaultBudgetId = preferencesManager.getDefaultBudgetId()
+        return StoredPreferences(
+            isSmsReadingEnabled = preferencesManager.isSmsReadingEnabled(),
+            isAiProcessingEnabled = preferencesManager.isAiProcessingEnabled(),
+            defaultBudget = if (defaultBudgetId != -1) budgetRepository.getById(defaultBudgetId) else null,
+            selectedBanks = preferencesManager.getSelectedBankIds()
+                .mapNotNull { SupportedBanks.getBankConfigById(it) }
+                .toSet()
+        )
+    }
+
+    private class StoredPreferences(
+        val isSmsReadingEnabled: Boolean,
+        val isAiProcessingEnabled: Boolean,
+        val defaultBudget: Budget?,
+        val selectedBanks: Set<BankSmsConfig>
+    )
 
     private fun toggleSmsReading(enabled: Boolean) = viewModelScope.launch {
         preferencesManager.setSmsReadingEnabled(enabled)
         _uiState.update { it.copy(isSmsReadingEnabled = enabled) }
+        pushPreferences()
         if (!enabled) return@launch
 
         when {
@@ -124,6 +170,7 @@ class SettingsViewModel(
     private fun toggleAiProcessing(enabled: Boolean) = viewModelScope.launch {
         preferencesManager.setAiProcessingEnabled(enabled)
         _uiState.update { it.copy(isAiProcessingEnabled = enabled) }
+        pushPreferences()
     }
 
     private fun setDefaultBudget(budget: Budget) = viewModelScope.launch {
@@ -134,6 +181,7 @@ class SettingsViewModel(
                 isDefaultBudgetSelectorVisible = false
             )
         }
+        pushPreferences()
     }
 
     private fun showDefaultBudgetSelector() {

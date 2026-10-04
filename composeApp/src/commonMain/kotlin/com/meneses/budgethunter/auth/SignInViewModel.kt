@@ -7,6 +7,7 @@ import budgethunter.composeapp.generated.resources.error_google_no_account
 import budgethunter.composeapp.generated.resources.error_google_sign_in_failed
 import budgethunter.composeapp.generated.resources.error_sign_in_failed
 import com.meneses.budgethunter.auth.application.GoogleAuthOutcome
+import com.meneses.budgethunter.auth.application.PrepareDataForAccountUseCase
 import com.meneses.budgethunter.auth.application.SignInEvent
 import com.meneses.budgethunter.auth.application.SignInIntent
 import com.meneses.budgethunter.auth.application.SignInState
@@ -15,6 +16,7 @@ import com.meneses.budgethunter.auth.data.AuthRepository
 import com.meneses.budgethunter.budgetEntry.data.BudgetEntrySyncManager
 import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.commons.data.PreferencesManager
+import com.meneses.budgethunter.settings.application.SyncUserPreferencesUseCase
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -28,7 +30,9 @@ class SignInViewModel(
     private val preferencesManager: PreferencesManager,
     private val budgetRepository: BudgetRepository,
     private val budgetEntrySyncManager: BudgetEntrySyncManager,
-    private val signInWithGoogleUseCase: SignInWithGoogleUseCase
+    private val signInWithGoogleUseCase: SignInWithGoogleUseCase,
+    private val syncUserPreferences: SyncUserPreferencesUseCase,
+    private val prepareDataForAccount: PrepareDataForAccountUseCase
 ) : ViewModel() {
 
     val uiState get() = _uiState.asStateFlow()
@@ -73,13 +77,19 @@ class SignInViewModel(
                 email = currentState.email,
                 password = currentState.password
             ).fold(
-                onSuccess = {
+                onSuccess = { authResponse ->
+                    // Before the sync and the budget list, so a switched account never sees
+                    // what the previous one left behind.
+                    prepareDataForAccount.execute(authResponse.email)
+
                     // Trigger background sync
                     launch {
                         // Sync all budgets (push local, then pull from server)
                         budgetRepository.sync()
                         // Sync all entries for all budgets (push local, then pull from server)
                         budgetEntrySyncManager.syncAllBudgetsEntries()
+                        // After the budgets: the default budget is matched by its server id.
+                        syncUserPreferences.pull()
                     }
 
                     onAuthenticated(currentState.email)
