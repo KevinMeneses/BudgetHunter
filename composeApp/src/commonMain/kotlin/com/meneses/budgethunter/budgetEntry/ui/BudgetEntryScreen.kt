@@ -185,6 +185,11 @@ data class BudgetEntryScreen(val budgetEntry: BudgetEntry) {
                         .ShareFile(validatedPath)
                         .run(onIntent)
                 },
+                onOpen = {
+                    BudgetEntryIntent
+                        .OpenFile(validatedPath)
+                        .run(onIntent)
+                },
                 onDelete = {
                     BudgetEntryIntent
                         .DeleteAttachedInvoice

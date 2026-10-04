@@ -1,11 +1,48 @@
 import UIKit
 import Foundation
 import ComposeApp
+import QuickLook
 
 /**
  * iOS Share Manager implementation that conforms to the KMP ShareManager interface
  */
-class IOSShareManager: NSObject, ShareManager {
+class IOSShareManager: NSObject, ShareManager, QLPreviewControllerDataSource {
+
+    // QLPreviewController keeps only a weak reference to its data source
+    private var previewURL: URL?
+
+    func openFile(filePath: String, mimeType: String) -> Bool {
+        let cleanPath = filePath.hasPrefix("file://") ?
+            String(filePath.dropFirst(7)) : filePath
+
+        guard FileManager.default.fileExists(atPath: cleanPath) else {
+            print("Open failed: File does not exist at path: \(cleanPath)")
+            return false
+        }
+        guard var presenter = getRootViewController() else {
+            print("No root view controller available for preview")
+            return false
+        }
+
+        // Present from the top-most controller so it shows over any sheet or dialog
+        while let presented = presenter.presentedViewController {
+            presenter = presented
+        }
+
+        previewURL = URL(fileURLWithPath: cleanPath)
+        let previewController = QLPreviewController()
+        previewController.dataSource = self
+        presenter.present(previewController, animated: true)
+        return true
+    }
+
+    func numberOfPreviewItems(in controller: QLPreviewController) -> Int {
+        return previewURL == nil ? 0 : 1
+    }
+
+    func previewController(_ controller: QLPreviewController, previewItemAt index: Int) -> QLPreviewItem {
+        return (previewURL ?? URL(fileURLWithPath: "")) as NSURL
+    }
 
     func shareFile(filePath: String, mimeTypes: KotlinArray<NSString>) {
         // Handle different path formats

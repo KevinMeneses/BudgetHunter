@@ -4,6 +4,7 @@ import budgethunter.composeapp.generated.resources.Res
 import budgethunter.composeapp.generated.resources.ai_error_network
 import budgethunter.composeapp.generated.resources.ai_error_not_an_invoice
 import budgethunter.composeapp.generated.resources.ai_error_timeout
+import budgethunter.composeapp.generated.resources.error_no_app_to_open_file
 import com.meneses.budgethunter.budgetEntry.application.BudgetEntryEvent
 import com.meneses.budgethunter.budgetEntry.application.BudgetEntryIntent
 import com.meneses.budgethunter.budgetEntry.application.CreateBudgetEntryFromImageUseCase
@@ -20,6 +21,7 @@ import com.meneses.budgethunter.commons.platform.ShareManager
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -27,12 +29,14 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -138,6 +142,32 @@ class BudgetEntryViewModelTest {
 
         assertIs<BudgetEntryEvent.ShowNotification>(event)
         assertEquals(Res.string.ai_error_timeout, event.message)
+        assertTrue(event.isError)
+    }
+
+    // ========== Open file externally ==========
+
+    @Test
+    fun `OpenFile opens a pdf with the pdf mime type and shows nothing when it works`() = runTest {
+        every { shareManager.openFile(any(), any()) } returns true
+
+        viewModel.sendIntent(BudgetEntryIntent.OpenFile("/files/invoice.PDF"))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        verify(exactly = 1) { shareManager.openFile("/files/invoice.PDF", "application/pdf") }
+        assertNull(withTimeoutOrNull(100) { viewModel.events.first() })
+    }
+
+    @Test
+    fun `OpenFile shows an error when no app can open the file`() = runTest {
+        every { shareManager.openFile(any(), any()) } returns false
+
+        viewModel.sendIntent(BudgetEntryIntent.OpenFile("/files/invoice.pdf"))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val event = viewModel.events.first()
+        assertIs<BudgetEntryEvent.ShowNotification>(event)
+        assertEquals(Res.string.error_no_app_to_open_file, event.message)
         assertTrue(event.isError)
     }
 }
