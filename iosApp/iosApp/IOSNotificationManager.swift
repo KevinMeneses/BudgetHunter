@@ -49,6 +49,10 @@ class IOSNotificationManager: NSObject, NotificationManager {
         showNotification(title: title, message: message)
     }
 
+    func showOpenSettingsNotification(title: String, message: String) {
+        showNotification(title: title, message: message)
+    }
+
     private func requestNotificationPermission() {
         let center = UNUserNotificationCenter.current()
         center.requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in

@@ -24,12 +24,20 @@ class AndroidNotificationManager(
     }
 
     override fun showNotification(title: String, message: String) =
-        show(title, message, opensDefaultBudget = false)
+        show(title, message)
 
     override fun showEntryAddedNotification(title: String, message: String) =
         show(title, message, opensDefaultBudget = true)
 
-    private fun show(title: String, message: String, opensDefaultBudget: Boolean) {
+    override fun showOpenSettingsNotification(title: String, message: String) =
+        show(title, message, opensSettings = true)
+
+    private fun show(
+        title: String,
+        message: String,
+        opensDefaultBudget: Boolean = false,
+        opensSettings: Boolean = false
+    ) {
         // Check if we have notification permission (Android 13+)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
@@ -52,6 +60,7 @@ class AndroidNotificationManager(
             val intent = Intent(context, MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
                 putExtra(EXTRA_OPEN_DEFAULT_BUDGET, opensDefaultBudget)
+                putExtra(EXTRA_OPEN_SETTINGS, opensSettings)
             }
 
             val pendingIntent = PendingIntent.getActivity(
@@ -97,6 +106,7 @@ class AndroidNotificationManager(
 
     companion object {
         const val EXTRA_OPEN_DEFAULT_BUDGET = "com.meneses.budgethunter.OPEN_DEFAULT_BUDGET"
+        const val EXTRA_OPEN_SETTINGS = "com.meneses.budgethunter.OPEN_SETTINGS"
         private const val CHANNEL_ID = "sms_transactions"
         private const val NOTIFICATION_GROUP = "com.meneses.budgethunter.SMS_TRANSACTIONS"
         private const val NOTIFICATION_ID_BASE = 1002

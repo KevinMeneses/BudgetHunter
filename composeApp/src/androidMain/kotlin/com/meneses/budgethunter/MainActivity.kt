@@ -84,6 +84,9 @@ class MainActivity :
         if (intent?.getBooleanExtra(AndroidNotificationManager.EXTRA_OPEN_DEFAULT_BUDGET, false) == true) {
             defaultBudgetLaunchRequest.request()
         }
+        if (intent?.getBooleanExtra(AndroidNotificationManager.EXTRA_OPEN_SETTINGS, false) == true) {
+            defaultBudgetLaunchRequest.requestSettings()
+        }
     }
 
     override fun onDestroy() {

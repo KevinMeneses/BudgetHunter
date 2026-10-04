@@ -5,7 +5,8 @@ import kotlinx.coroutines.flow.asStateFlow
 
 /**
  * Carries the platform's request (a tapped transaction notification) to open the default
- * budget. It is consumed by the navigation once the user is past splash and sign in.
+ * budget, or the settings when there is no default budget yet. It is consumed by the
+ * navigation once the user is past splash and sign in.
  */
 class DefaultBudgetLaunchRequest {
     private val _pending = MutableStateFlow(false)
@@ -17,5 +18,17 @@ class DefaultBudgetLaunchRequest {
 
     fun consume() {
         _pending.value = false
+    }
+
+    private val _settingsPending = MutableStateFlow(false)
+    val settingsPending = _settingsPending.asStateFlow()
+
+    /** Asks to open the settings, where the default budget is chosen. */
+    fun requestSettings() {
+        _settingsPending.value = true
+    }
+
+    fun consumeSettings() {
+        _settingsPending.value = false
     }
 }
