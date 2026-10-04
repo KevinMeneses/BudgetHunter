@@ -1,6 +1,8 @@
 package com.meneses.budgethunter.budgetEntry.application
 
 import com.meneses.budgethunter.budgetEntry.domain.AIImageProcessor
+import com.meneses.budgethunter.budgetEntry.domain.AiExtractionResult
+import com.meneses.budgethunter.budgetEntry.domain.AiFailureReason
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.budgetEntry.domain.ImageData
 import com.meneses.budgethunter.commons.data.sync.Logger
@@ -10,6 +12,7 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * Creates budget entries from images using AI processing.
@@ -24,8 +27,9 @@ class CreateBudgetEntryFromImageUseCase(
     private val tag = "CreateBudgetEntryFromImageUseCase"
 
     private fun buildPrompt(today: LocalDate) = """
-        You are extracting data from a photo or scan of a receipt, invoice or bill to register an expense.
-        The document may be in any language and may be a photo with glare, skew or low contrast. Read it carefully.
+        You are extracting data from a photo, scan or PDF of a receipt, invoice or bill to register an expense.
+        The document may be in any language, may be a photo with glare, skew or low contrast, and may have
+        several pages (the total is usually on the last one). Read it carefully.
 
         If the image is not a receipt, invoice or bill, set "isInvoice" to false and leave the rest empty.
 
@@ -65,39 +69,44 @@ class CreateBudgetEntryFromImageUseCase(
         BudgetEntry.Category.OTHER to "anything that does not fit the categories above"
     )
 
+    /**
+     * @property entry The entry to use: the original one with the AI-extracted fields merged in,
+     * or the original untouched when nothing could be extracted.
+     * @property failure Why nothing was extracted, or null when the AI result was applied.
+     */
+    data class Result(val entry: BudgetEntry, val failure: AiFailureReason? = null)
+
     suspend fun execute(
         imageUri: String,
         budgetEntry: BudgetEntry
-    ): BudgetEntry = withContext(ioDispatcher) {
+    ): Result = withContext(ioDispatcher) {
         try {
-            // Create image data object with proper PDF detection
             val imageData = ImageData(
                 uri = imageUri,
                 isPdf = imageUri.endsWith(".pdf", ignoreCase = true)
             )
 
-            // Process the image using AI
-            val aiBudgetEntry = aiImageProcessor.processImage(
-                imageData,
-                buildPrompt(Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date)
-            )
-
-            // If AI processing successful, merge with existing budget entry
-            if (aiBudgetEntry != null) {
-                budgetEntry.copy(
-                    amount = aiBudgetEntry.amount.takeIf { it.isNotBlank() } ?: budgetEntry.amount,
-                    description = aiBudgetEntry.description.takeIf { it.isNotBlank() } ?: budgetEntry.description,
-                    category = aiBudgetEntry.category,
-                    date = aiBudgetEntry.date.takeIf { it.isNotBlank() } ?: budgetEntry.date
-                )
-            } else {
-                // Return original budget entry if AI processing fails
-                budgetEntry
+            val prompt = buildPrompt(Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date)
+            when (val result = aiImageProcessor.processImage(imageData, prompt)) {
+                is AiExtractionResult.Success -> Result(merge(budgetEntry, result.entry))
+                // Keep what the user already has and let the caller explain what went wrong
+                is AiExtractionResult.Failure -> Result(budgetEntry, result.reason)
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
-            // Return original budget entry to maintain user experience
             logger.warn(tag, "AI image processing error", e)
-            budgetEntry
+            Result(budgetEntry, AiFailureReason.UNKNOWN)
         }
     }
+
+    private fun merge(original: BudgetEntry, ai: BudgetEntry) = original.copy(
+        // Ignore amounts that are not a positive number instead of filling the form with garbage
+        amount = ai.amount.trim().takeIf { it.toDoubleOrNull()?.let { value -> value > 0 } == true }
+            ?: original.amount,
+        description = ai.description.takeIf { it.isNotBlank() } ?: original.description,
+        // OTHER is the "no idea" answer: don't overwrite a category the user already picked with it
+        category = ai.category.takeIf { it != BudgetEntry.Category.OTHER } ?: original.category,
+        date = ai.date.takeIf { it.isNotBlank() } ?: original.date
+    )
 }

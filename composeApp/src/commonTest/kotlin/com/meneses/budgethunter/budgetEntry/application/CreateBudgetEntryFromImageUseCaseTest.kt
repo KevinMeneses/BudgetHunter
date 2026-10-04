@@ -1,6 +1,8 @@
 package com.meneses.budgethunter.budgetEntry.application
 
 import com.meneses.budgethunter.budgetEntry.domain.AIImageProcessor
+import com.meneses.budgethunter.budgetEntry.domain.AiExtractionResult
+import com.meneses.budgethunter.budgetEntry.domain.AiFailureReason
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.budgetEntry.domain.ImageData
 import com.meneses.budgethunter.commons.data.sync.NoOpLogger
@@ -17,13 +19,13 @@ import kotlin.test.assertTrue
 class CreateBudgetEntryFromImageUseCaseTest {
 
     private class FakeProcessor(
-        private val result: BudgetEntry? = null,
+        private val result: AiExtractionResult = AiExtractionResult.Failure(AiFailureReason.NOT_AN_INVOICE),
         private val error: Exception? = null
     ) : AIImageProcessor {
         var imageData: ImageData? = null
         var prompt: String? = null
 
-        override suspend fun processImage(imageData: ImageData, prompt: String): BudgetEntry? {
+        override suspend fun processImage(imageData: ImageData, prompt: String): AiExtractionResult {
             this.imageData = imageData
             this.prompt = prompt
             error?.let { throw it }
@@ -67,29 +69,56 @@ class CreateBudgetEntryFromImageUseCaseTest {
         )
         val original = BudgetEntry(id = 7, budgetId = 3, amount = "1", description = "old")
 
-        val result = useCase(FakeProcessor(ai)).execute("file:///a.jpg", original)
+        val result = useCase(FakeProcessor(AiExtractionResult.Success(ai))).execute("file:///a.jpg", original)
 
-        assertEquals(7, result.id)
-        assertEquals(3, result.budgetId)
-        assertEquals("99.5", result.amount)
-        assertEquals("Market", result.description)
-        assertEquals(BudgetEntry.Category.GROCERIES, result.category)
-        assertEquals("2025-03-04", result.date)
+        assertEquals(null, result.failure)
+        assertEquals(7, result.entry.id)
+        assertEquals(3, result.entry.budgetId)
+        assertEquals("99.5", result.entry.amount)
+        assertEquals("Market", result.entry.description)
+        assertEquals(BudgetEntry.Category.GROCERIES, result.entry.category)
+        assertEquals("2025-03-04", result.entry.date)
     }
 
     @Test
-    fun `null ai result keeps the original entry`() = runTest {
+    fun `invalid amount keeps the user's amount`() = runTest {
+        val original = BudgetEntry(amount = "5")
+
+        listOf("abc", "0", "-3", "").forEach { badAmount ->
+            val ai = BudgetEntry(amount = badAmount, description = "x")
+            val result = useCase(FakeProcessor(AiExtractionResult.Success(ai))).execute("file:///a.jpg", original)
+            assertEquals("5", result.entry.amount, "amount '$badAmount'")
+        }
+    }
+
+    @Test
+    fun `OTHER from the ai does not overwrite the user's category`() = runTest {
+        val original = BudgetEntry(category = BudgetEntry.Category.HEALTH)
+        val ai = BudgetEntry(amount = "10", description = "x", category = BudgetEntry.Category.OTHER)
+
+        val result = useCase(FakeProcessor(AiExtractionResult.Success(ai))).execute("file:///a.jpg", original)
+
+        assertEquals(BudgetEntry.Category.HEALTH, result.entry.category)
+    }
+
+    @Test
+    fun `ai failure keeps the original entry and reports the reason`() = runTest {
         val original = BudgetEntry(amount = "5", description = "mine")
 
-        assertEquals(original, useCase(FakeProcessor(null)).execute("file:///a.jpg", original))
+        val result = useCase(FakeProcessor(AiExtractionResult.Failure(AiFailureReason.NETWORK)))
+            .execute("file:///a.jpg", original)
+
+        assertEquals(original, result.entry)
+        assertEquals(AiFailureReason.NETWORK, result.failure)
     }
 
     @Test
-    fun `processor failure keeps the original entry`() = runTest {
+    fun `processor exception keeps the original entry and reports UNKNOWN`() = runTest {
         val original = BudgetEntry(amount = "5", description = "mine")
 
         val result = useCase(FakeProcessor(error = RuntimeException("boom"))).execute("file:///a.jpg", original)
 
-        assertEquals(original, result)
+        assertEquals(original, result.entry)
+        assertEquals(AiFailureReason.UNKNOWN, result.failure)
     }
 }

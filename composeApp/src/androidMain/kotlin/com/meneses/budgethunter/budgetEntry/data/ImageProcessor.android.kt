@@ -2,6 +2,7 @@ package com.meneses.budgethunter.budgetEntry.data
 
 import android.content.ContentResolver
 import android.graphics.BitmapFactory
+import android.util.Base64
 import androidx.core.net.toUri
 import com.meneses.budgethunter.budgetEntry.domain.ImageData
 import com.meneses.budgethunter.commons.data.sync.Logger
@@ -26,6 +27,20 @@ actual class ImageProcessor(
             }
         } catch (e: Exception) {
             logger.warn(tag, "Image processing error", e)
+            null
+        }
+    }
+
+    actual fun readFileAsBase64(imageData: ImageData, maxBytes: Int): String? {
+        return try {
+            val bytes = contentResolver.openInputStream(imageData.uri.toUri())?.use { it.readBytes() }
+            if (bytes == null || bytes.isEmpty() || bytes.size > maxBytes) {
+                null
+            } else {
+                Base64.encodeToString(bytes, Base64.NO_WRAP)
+            }
+        } catch (e: Exception) {
+            logger.warn(tag, "Raw file read error", e)
             null
         }
     }

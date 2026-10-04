@@ -26,8 +26,8 @@
     <!-- Navigation & Screens -->
     <string name="budgets">Presupuestos</string>
     <string name="settings">Configuración</string>
-    <string name="metrics">Metricas</string>
-    <string name="user_guide">Guia de usuario</string>
+    <string name="metrics">Métricas</string>
+    <string name="user_guide">Guía de usuario</string>
     <string name="about">Acerca de</string>
     
     <!-- Budget Management -->
@@ -61,14 +61,14 @@
     <string name="name">Nombre</string>
     <string name="amount">Monto</string>
     <string name="amount_placeholder">0.00</string>
-    <string name="description">Descripcion</string>
-    <string name="no_description">Sin descripcion</string>
+    <string name="description">Descripción</string>
+    <string name="no_description">Sin descripción</string>
     <string name="date">Fecha</string>
     <string name="creation_date">Fecha de creación</string>
     <string name="category">Categoría</string>
     <string name="frequency">Frecuencia</string>
     <string name="start_date">Fecha de inicio</string>
-    <string name="end_date">Fecha limite</string>
+    <string name="end_date">Fecha límite</string>
     <string name="amount_mandatory">Debes ingresar un monto para este registro</string>
     
     <!-- Categories -->
@@ -76,7 +76,7 @@
     <string name="groceries">Mercado</string>
     <string name="self_care">Cuidado personal</string>
     <string name="transportation">Transporte</string>
-    <string name="household_items">Articulos para el hogar</string>
+    <string name="household_items">Artículos para el hogar</string>
     <string name="services">Servicios</string>
     <string name="education">Educación</string>
     <string name="health">Salud</string>
@@ -185,7 +185,7 @@
     
     <!-- Dates & Time -->
     <string name="created">Creado: %1$s</string>
-    <string name="page_">Pagina %1$d</string>
+    <string name="page_">Página %1$d</string>
     
     <!-- Suffixes -->
     <string name="copy_suffix"> (copia)</string>
@@ -311,6 +311,11 @@
     <string name="signed_in_as">Sesión iniciada como %1$s</string>
     <string name="sync_failed_background">Entrada guardada localmente. Error al sincronizar en segundo plano — se reintentará cuando esté en línea.</string>
     <string name="amount_is_mandatory">El monto es obligatorio</string>
+    <string name="ai_error_not_an_invoice">La IA no reconoció una factura o recibo en el archivo, completa los datos manualmente</string>
+    <string name="ai_error_network">No se pudo conectar con la IA, revisa tu conexión e intenta de nuevo</string>
+    <string name="ai_error_timeout">La IA tardó demasiado en responder, intenta de nuevo o completa los datos manualmente</string>
+    <string name="ai_error_busy">El servicio de IA está ocupado en este momento, intenta de nuevo en unos minutos</string>
+    <string name="ai_error_generic">No se pudo leer el archivo con IA, completa los datos manualmente</string>
     <string name="error_loading_file">Algo salió mal al cargar el archivo, por favor intenta de nuevo</string>
     <string name="creating">Creando...</string>
     <string name="updating">Actualizando...</string>

@@ -63,10 +63,17 @@ internal data class InlineData(
 
 @Serializable
 internal data class GeminiResponse(
-    val candidates: List<GeminiCandidate>? = null
+    val candidates: List<GeminiCandidate>? = null,
+    val promptFeedback: GeminiPromptFeedback? = null
+)
+
+@Serializable
+internal data class GeminiPromptFeedback(
+    val blockReason: String? = null
 )
 
 @Serializable
 internal data class GeminiCandidate(
-    val content: GeminiContent? = null
+    val content: GeminiContent? = null,
+    val finishReason: String? = null
 )

@@ -1,10 +1,13 @@
 package com.meneses.budgethunter.budgetEntry.data.remote
 
+import com.meneses.budgethunter.budgetEntry.domain.AiExtractionResult
+import com.meneses.budgethunter.budgetEntry.domain.AiFailureReason
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.commons.data.sync.NoOpLogger
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
+import io.ktor.client.engine.mock.respondError
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
@@ -18,6 +21,7 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonArray
 import kotlinx.serialization.json.putJsonObject
+import kotlinx.coroutines.delay
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -71,7 +75,8 @@ class GeminiApiClientTest {
             httpClient = httpClient,
             apiKey = "test-api-key",
             json = json,
-            logger = NoOpLogger()
+            logger = NoOpLogger(),
+            retryDelayMs = 1L
         )
 
         // Act
@@ -123,7 +128,8 @@ class GeminiApiClientTest {
             httpClient = httpClient,
             apiKey = "test-api-key",
             json = json,
-            logger = NoOpLogger()
+            logger = NoOpLogger(),
+            retryDelayMs = 1L
         )
 
         // Act
@@ -175,7 +181,8 @@ class GeminiApiClientTest {
             httpClient = httpClient,
             apiKey = "test-api-key",
             json = json,
-            logger = NoOpLogger()
+            logger = NoOpLogger(),
+            retryDelayMs = 1L
         )
 
         // Act
@@ -221,7 +228,8 @@ class GeminiApiClientTest {
             httpClient = httpClient,
             apiKey = "test-api-key",
             json = json,
-            logger = NoOpLogger()
+            logger = NoOpLogger(),
+            retryDelayMs = 1L
         )
 
         // Act
@@ -266,7 +274,8 @@ class GeminiApiClientTest {
             httpClient = httpClient,
             apiKey = "test-api-key",
             json = json,
-            logger = NoOpLogger()
+            logger = NoOpLogger(),
+            retryDelayMs = 1L
         )
 
         // Act
@@ -303,7 +312,8 @@ class GeminiApiClientTest {
             httpClient = httpClient,
             apiKey = "invalid-api-key",
             json = json,
-            logger = NoOpLogger()
+            logger = NoOpLogger(),
+            retryDelayMs = 1L
         )
 
         // Act
@@ -352,7 +362,8 @@ class GeminiApiClientTest {
             httpClient = httpClient,
             apiKey = "test-api-key",
             json = json,
-            logger = NoOpLogger()
+            logger = NoOpLogger(),
+            retryDelayMs = 1L
         )
 
         // Act
@@ -395,7 +406,8 @@ class GeminiApiClientTest {
             httpClient = httpClient,
             apiKey = testApiKey,
             json = json,
-            logger = NoOpLogger()
+            logger = NoOpLogger(),
+            retryDelayMs = 1L
         )
 
         // Act
@@ -441,7 +453,8 @@ class GeminiApiClientTest {
             httpClient = httpClient,
             apiKey = "test-api-key",
             json = json,
-            logger = NoOpLogger()
+            logger = NoOpLogger(),
+            retryDelayMs = 1L
         )
 
         // Act
@@ -552,9 +565,201 @@ class GeminiApiClientTest {
         assertEquals("Rent", result.description)
     }
 
+    // Keeps the pre-existing assertions readable: Success -> entry, Failure -> null
+    private suspend fun GeminiApiClient.extractBudgetEntryFromImage(base64Image: String, prompt: String): BudgetEntry? =
+        (extract(base64Image, "image/jpeg", prompt) as? AiExtractionResult.Success)?.entry
+
+    private fun failureOf(result: AiExtractionResult) = (result as AiExtractionResult.Failure).reason
+
+    private fun clientWith(
+        engine: MockEngine,
+        totalTimeoutMs: Long = 30_000L
+    ): GeminiApiClient {
+        val httpClient = HttpClient(engine) {
+            install(ContentNegotiation) { json(this@GeminiApiClientTest.json) }
+        }
+        return GeminiApiClient(httpClient, "test-api-key", json, NoOpLogger(), totalTimeoutMs, retryDelayMs = 1L)
+    }
+
+    private fun jsonHeaders() = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+
+    private fun okBody(text: String) = buildJsonObject {
+        putJsonArray("candidates") {
+            add(
+                buildJsonObject {
+                    putJsonObject("content") {
+                        putJsonArray("parts") { add(buildJsonObject { put("text", text) }) }
+                    }
+                }
+            )
+        }
+    }.toString()
+
+    @Test
+    fun `5xx is retried once and can then succeed`() = runTest {
+        var calls = 0
+        val client = clientWith(
+            MockEngine {
+                calls++
+                if (calls < 2) {
+                    respondError(HttpStatusCode.ServiceUnavailable)
+                } else {
+                    respond(okBody("""{"amount":5,"description":"Coffee"}"""), HttpStatusCode.OK, jsonHeaders())
+                }
+            }
+        )
+
+        val result = client.extract("img", "image/jpeg", "prompt")
+
+        assertEquals(2, calls)
+        assertTrue(result is AiExtractionResult.Success)
+    }
+
+    @Test
+    fun `persistent 5xx gives SERVER after a single retry`() = runTest {
+        var calls = 0
+        val client = clientWith(MockEngine { calls++; respondError(HttpStatusCode.ServiceUnavailable) })
+
+        val result = client.extract("img", "image/jpeg", "prompt")
+
+        assertEquals(2, calls)
+        assertEquals(AiFailureReason.SERVER, failureOf(result))
+    }
+
+    @Test
+    fun `429 is not retried and gives RATE_LIMITED`() = runTest {
+        var calls = 0
+        val client = clientWith(MockEngine { calls++; respondError(HttpStatusCode.TooManyRequests) })
+
+        val result = client.extract("img", "image/jpeg", "prompt")
+
+        assertEquals(1, calls)
+        assertEquals(AiFailureReason.RATE_LIMITED, failureOf(result))
+    }
+
+    @Test
+    fun `4xx is not retried and gives REJECTED`() = runTest {
+        var calls = 0
+        val client = clientWith(MockEngine { calls++; respondError(HttpStatusCode.BadRequest) })
+
+        val result = client.extract("img", "image/jpeg", "prompt")
+
+        assertEquals(1, calls)
+        assertEquals(AiFailureReason.REJECTED, failureOf(result))
+    }
+
+    @Test
+    fun `transport errors are retried once and give NETWORK`() = runTest {
+        var calls = 0
+        val client = clientWith(MockEngine { calls++; throw RuntimeException("no route to host") })
+
+        val result = client.extract("img", "image/jpeg", "prompt")
+
+        assertEquals(2, calls)
+        assertEquals(AiFailureReason.NETWORK, failureOf(result))
+    }
+
+    @Test
+    fun `slow response gives TIMEOUT without retrying`() = runTest {
+        var calls = 0
+        val client = clientWith(
+            MockEngine {
+                calls++
+                delay(5_000)
+                respond(okBody("{}"), HttpStatusCode.OK, jsonHeaders())
+            },
+            totalTimeoutMs = 50L
+        )
+
+        val result = client.extract("img", "image/jpeg", "prompt")
+
+        assertEquals(1, calls)
+        assertEquals(AiFailureReason.TIMEOUT, failureOf(result))
+    }
+
+    @Test
+    fun `the retry shares the total deadline instead of extending it`() = runTest {
+        var calls = 0
+        val client = clientWith(
+            MockEngine {
+                calls++
+                if (calls == 1) {
+                    respondError(HttpStatusCode.ServiceUnavailable)
+                } else {
+                    delay(5_000)
+                    respond(okBody("{}"), HttpStatusCode.OK, jsonHeaders())
+                }
+            },
+            totalTimeoutMs = 100L
+        )
+
+        val startedAt = System.currentTimeMillis()
+        val result = client.extract("img", "image/jpeg", "prompt")
+
+        assertEquals(2, calls)
+        assertEquals(AiFailureReason.TIMEOUT, failureOf(result))
+        assertTrue(System.currentTimeMillis() - startedAt < 2_000, "must give up at the deadline, not after the slow call")
+    }
+
+    @Test
+    fun `prompt blocked by safety gives BLOCKED`() = runTest {
+        val client = clientWith(
+            MockEngine {
+                respond("""{"promptFeedback":{"blockReason":"SAFETY"}}""", HttpStatusCode.OK, jsonHeaders())
+            }
+        )
+
+        assertEquals(AiFailureReason.BLOCKED, failureOf(client.extract("img", "image/jpeg", "prompt")))
+    }
+
+    @Test
+    fun `candidate finished for safety without text gives BLOCKED`() = runTest {
+        val client = clientWith(
+            MockEngine {
+                respond("""{"candidates":[{"finishReason":"SAFETY"}]}""", HttpStatusCode.OK, jsonHeaders())
+            }
+        )
+
+        assertEquals(AiFailureReason.BLOCKED, failureOf(client.extract("img", "image/jpeg", "prompt")))
+    }
+
+    @Test
+    fun `unparseable body gives INVALID_RESPONSE`() = runTest {
+        val client = clientWith(MockEngine { respond("<html>oops</html>", HttpStatusCode.OK, jsonHeaders()) })
+
+        assertEquals(AiFailureReason.INVALID_RESPONSE, failureOf(client.extract("img", "image/jpeg", "prompt")))
+    }
+
+    @Test
+    fun `not an invoice is reported as NOT_AN_INVOICE`() = runTest {
+        val client = clientWith(
+            MockEngine { respond(okBody("""{"isInvoice":false}"""), HttpStatusCode.OK, jsonHeaders()) }
+        )
+
+        assertEquals(AiFailureReason.NOT_AN_INVOICE, failureOf(client.extract("img", "image/jpeg", "prompt")))
+    }
+
+    @Test
+    fun `pdf is sent with its own mime type`() = runTest {
+        var requestBody = ""
+        val client = clientWith(
+            MockEngine { request ->
+                requestBody = (request.body as TextContent).text
+                respond(okBody("{}"), HttpStatusCode.OK, jsonHeaders())
+            }
+        )
+
+        client.extract("JVBERi0=", "application/pdf", "prompt")
+
+        assertTrue(requestBody.contains("\"mimeType\":\"application/pdf\""))
+        assertTrue(requestBody.contains("JVBERi0="))
+    }
+
     // Helper function for running suspending tests
+    // runBlocking instead of kotlinx's runTest: the client's timeout must run on real time,
+    // otherwise the test scheduler skips ahead while MockEngine answers on another dispatcher
     private fun runTest(block: suspend () -> Unit) {
-        kotlinx.coroutines.test.runTest {
+        kotlinx.coroutines.runBlocking {
             block()
         }
     }
