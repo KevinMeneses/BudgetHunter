@@ -86,7 +86,7 @@ class ProcessSmsUseCase(
 
     private suspend fun notifyFailure(result: SmsParseResult, messageBody: String) {
         when (result) {
-            SmsParseResult.NoDefaultBudget -> notificationManager.showNotification(
+            SmsParseResult.NoDefaultBudget -> notificationManager.showOpenSettingsNotification(
                 title = stringResourceProvider.getString(Res.string.transaction_no_budget),
                 message = stringResourceProvider.getString(Res.string.transaction_no_budget_message)
             )

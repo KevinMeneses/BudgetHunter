@@ -155,7 +155,7 @@
     <string name="transaction_error_message">Error procesando SMS: %1$s</string>
     <string name="sms_transaction_from_bank">Transacción de %1$s</string>
     <string name="transaction_no_budget">Sin presupuesto por defecto</string>
-    <string name="transaction_no_budget_message">Configura un presupuesto por defecto para registrar las transacciones automáticamente</string>
+    <string name="transaction_no_budget_message">No has seleccionado un presupuesto por defecto para registrar los movimientos. Toca para configurar uno en ajustes</string>
     <string name="transaction_unrecognized">Mensaje del banco no reconocido</string>
     <string name="transaction_unrecognized_message">No se pudo interpretar este mensaje, revísalo y agrégalo manualmente: %1$s</string>
     

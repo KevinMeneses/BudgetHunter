@@ -415,12 +415,21 @@ private fun OpenDefaultBudgetOnRequest(navController: NavController) {
     val preferencesManager: PreferencesManager = koinInject()
     val budgetRepository: BudgetRepository = koinInject()
     val isPending by launchRequest.pending.collectAsStateWithLifecycle()
+    val isSettingsPending by launchRequest.settingsPending.collectAsStateWithLifecycle()
     val currentDestination = navController.currentBackStackEntryAsState().value?.destination
 
     val isPastAuth = currentDestination != null &&
         !currentDestination.hasRoute<SplashScreen>() &&
         !currentDestination.hasRoute<SignInScreen>() &&
         !currentDestination.hasRoute<SignUpScreen>()
+
+    LaunchedEffect(isSettingsPending, isPastAuth) {
+        if (!isSettingsPending || !isPastAuth) return@LaunchedEffect
+        launchRequest.consumeSettings()
+
+        val isOnSettings = navController.currentBackStackEntry?.destination?.hasRoute<SettingsScreen>() == true
+        if (!isOnSettings) navController.navigate(SettingsScreen)
+    }
 
     LaunchedEffect(isPending, isPastAuth) {
         if (!isPending || !isPastAuth) return@LaunchedEffect

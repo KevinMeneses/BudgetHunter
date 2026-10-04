@@ -155,7 +155,7 @@
     <string name="transaction_error_message">Error processing SMS: %1$s</string>
     <string name="sms_transaction_from_bank">Transaction from %1$s</string>
     <string name="transaction_no_budget">No default budget</string>
-    <string name="transaction_no_budget_message">Set a default budget to record transactions automatically</string>
+    <string name="transaction_no_budget_message">No default budget is selected to record transactions. Tap to set one up in settings</string>
     <string name="transaction_unrecognized">Unrecognized bank message</string>
     <string name="transaction_unrecognized_message">This message could not be interpreted. Review it and add it manually: %1$s</string>
     
