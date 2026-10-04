@@ -201,6 +201,7 @@
     <string name="update_budget_modal">Actualizar presupuesto</string>
     <string name="invoice_content_description">Factura</string>
     <string name="edit_content_description">Editar</string>
+    <string name="open_content_description">Abrir en otra app</string>
     <string name="share_content_description">Compartir</string>
     <string name="delete_content_description">Eliminar</string>
     <string name="back_content_description">Atrás</string>
@@ -316,6 +317,7 @@
     <string name="ai_error_timeout">La IA tardó demasiado en responder, intenta de nuevo o completa los datos manualmente</string>
     <string name="ai_error_busy">El servicio de IA está ocupado en este momento, intenta de nuevo en unos minutos</string>
     <string name="ai_error_generic">No se pudo leer el archivo con IA, completa los datos manualmente</string>
+    <string name="error_no_app_to_open_file">No hay ninguna app para abrir este archivo, puedes compartirlo en su lugar</string>
     <string name="error_loading_file">Algo salió mal al cargar el archivo, por favor intenta de nuevo</string>
     <string name="creating">Creando...</string>
     <string name="updating">Actualizando...</string>

@@ -201,6 +201,7 @@
     <string name="update_budget_modal">Update budget</string>
     <string name="invoice_content_description">Invoice</string>
     <string name="edit_content_description">Edit</string>
+    <string name="open_content_description">Open in another app</string>
     <string name="share_content_description">Share</string>
     <string name="delete_content_description">Delete</string>
     <string name="back_content_description">Back</string>
@@ -316,6 +317,7 @@
     <string name="ai_error_timeout">The AI took too long to respond. Please try again or fill in the details manually</string>
     <string name="ai_error_busy">The AI service is busy right now. Please try again in a few minutes</string>
     <string name="ai_error_generic">The file could not be read with AI. Please fill in the details manually</string>
+    <string name="error_no_app_to_open_file">No app was found to open this file. You can share it instead</string>
     <string name="error_loading_file">Something went wrong while loading the file. Please try again</string>
     <string name="creating">Creating...</string>
     <string name="updating">Updating...</string>

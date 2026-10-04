@@ -10,6 +10,7 @@ import budgethunter.composeapp.generated.resources.ai_error_not_an_invoice
 import budgethunter.composeapp.generated.resources.ai_error_timeout
 import budgethunter.composeapp.generated.resources.amount_is_mandatory
 import budgethunter.composeapp.generated.resources.error_loading_file
+import budgethunter.composeapp.generated.resources.error_no_app_to_open_file
 import com.meneses.budgethunter.budgetEntry.application.BudgetEntryEvent
 import com.meneses.budgethunter.budgetEntry.application.BudgetEntryIntent
 import com.meneses.budgethunter.budgetEntry.application.BudgetEntryState
@@ -66,6 +67,7 @@ class BudgetEntryViewModel(
             is BudgetEntryIntent.TakePhoto -> takePhoto()
             is BudgetEntryIntent.PickFile -> pickFile()
             is BudgetEntryIntent.ShareFile -> shareFile(intent.filePath)
+            is BudgetEntryIntent.OpenFile -> openFile(intent.filePath)
             is BudgetEntryIntent.ConfirmAiAutofill -> resolveAiAutofill(useAi = true)
             is BudgetEntryIntent.DeclineAiAutofill -> resolveAiAutofill(useAi = false)
             is BudgetEntryIntent.UpdateInvoice -> updateInvoice()
@@ -297,6 +299,18 @@ class BudgetEntryViewModel(
             fileData?.let {
                 sendIntent(BudgetEntryIntent.AttachInvoice(it))
             }
+        }
+    }
+
+    private fun openFile(filePath: String) {
+        val mimeType = if (filePath.endsWith(".pdf", ignoreCase = true)) "application/pdf" else "image/*"
+        if (!shareManager.openFile(filePath, mimeType)) {
+            _events.trySend(
+                BudgetEntryEvent.ShowNotification(
+                    message = Res.string.error_no_app_to_open_file,
+                    isError = true
+                )
+            )
         }
     }
 
