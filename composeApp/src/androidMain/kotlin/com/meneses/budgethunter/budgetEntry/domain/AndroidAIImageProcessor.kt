@@ -5,6 +5,7 @@ import android.util.Base64
 import com.meneses.budgethunter.budgetEntry.data.ImageProcessor
 import com.meneses.budgethunter.budgetEntry.data.remote.GeminiApiClient
 import com.meneses.budgethunter.commons.data.sync.Logger
+import com.meneses.budgethunter.commons.util.flattenOnWhite
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
@@ -28,8 +29,9 @@ class AndroidAIImageProcessor(
                 ?: return@withContext null
 
             // Convert Bitmap to base64-encoded JPEG
+            // Flatten on white first: transparent pixels would turn black in JPEG
             val outputStream = ByteArrayOutputStream()
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 80, outputStream)
+            bitmap.flattenOnWhite().compress(Bitmap.CompressFormat.JPEG, 90, outputStream)
             val imageBytes = outputStream.toByteArray()
             val base64Image = Base64.encodeToString(imageBytes, Base64.NO_WRAP)
 

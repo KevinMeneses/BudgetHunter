@@ -7,13 +7,14 @@ import com.meneses.budgethunter.commons.data.sync.Logger
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 
 /**
  * Creates budget entries from images using AI processing.
- * Preserves all the AI prompt engineering logic from the original Android implementation
- * while providing cross-platform compatibility.
+ * The prompt is built per call (so "today" is current) and the response is constrained
+ * by a structured-output schema in GeminiApiClient.
  */
 class CreateBudgetEntryFromImageUseCase(
     private val aiImageProcessor: AIImageProcessor,
@@ -22,23 +23,47 @@ class CreateBudgetEntryFromImageUseCase(
 ) {
     private val tag = "CreateBudgetEntryFromImageUseCase"
 
-    /**
-     * AI prompt preserved from the original Android implementation.
-     * This maintains the exact same prompt engineering that was working in the Android app.
-     */
-    private val prompt = """this is the image of a receipt, obtain the following items:
+    private fun buildPrompt(today: LocalDate) = """
+        You are extracting data from a photo or scan of a receipt, invoice or bill to register an expense.
+        The document may be in any language and may be a photo with glare, skew or low contrast. Read it carefully.
 
-            - total amount (ignore dots and only consider commas as a decimal part)
-            - a high level description of what was paid (avoid adding the words receipt, invoice, bill, or document)
-            - a category among these: ${BudgetEntry.getCategories()}
-            - a date (if it is not available in the image, use ${Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date})
+        If the image is not a receipt, invoice or bill, set "isInvoice" to false and leave the rest empty.
 
-        present this information in the following JSON structure as an API valid JSON response
-        without any additional character that would break serialization:
+        Otherwise extract:
 
-        { "amount": "0", "description": "something", "category": "GROCERIES", "date:"2025-04-01" }
+        - "amount": the FINAL TOTAL actually paid (the amount due after taxes, discounts and tip).
+          Do not return the subtotal, a tax line, a change/cash-tendered amount or a single line item.
+          Return a plain number: use a dot as decimal separator and no thousands separators or currency symbols.
+          Decide how to read separators from the document's currency and locale
+          (e.g. "1.234,50" and "1,234.50" both mean 1234.5; "12.500" in a currency without cents means 12500).
+        - "description": a short, high level description of what was paid (for example the merchant or the kind
+          of purchase). Do not include the words receipt, invoice, bill or document. Use the document's language.
+        - "category": exactly one of the following values:
+          ${categoryGuide()}
+          If none clearly applies, use OTHER.
+        - "date": the date of the purchase in YYYY-MM-DD format. Resolve ambiguous formats using the document's
+          locale (day-first is common outside the US). If no date is visible, use $today.
 
-        or return an empty response if the image is not an invoice, receipt or bill"""
+        Respond only with a JSON object matching the provided schema.
+    """.trimIndent()
+
+    private fun categoryGuide() = BudgetEntry.getCategories().joinToString("\n          ") { category ->
+        "- ${category.name}: ${categoryHints.getValue(category)}"
+    }
+
+    private val categoryHints = mapOf(
+        BudgetEntry.Category.FOOD to "restaurants, cafes, delivery, bars",
+        BudgetEntry.Category.GROCERIES to "supermarket and food/drink shopping to cook at home",
+        BudgetEntry.Category.SELF_CARE to "hair, beauty, cosmetics, gym, personal care",
+        BudgetEntry.Category.TRANSPORTATION to "fuel, public transport, taxi/ride-hailing, parking, tolls, car maintenance",
+        BudgetEntry.Category.HOUSEHOLD_ITEMS to "furniture, appliances, cleaning supplies, hardware, home goods",
+        BudgetEntry.Category.SERVICES to "utilities, internet, phone, subscriptions, rent, professional services",
+        BudgetEntry.Category.EDUCATION to "tuition, courses, books, school supplies",
+        BudgetEntry.Category.HEALTH to "pharmacy, doctors, insurance, medical tests",
+        BudgetEntry.Category.LEISURE to "entertainment, travel, events, hobbies, streaming",
+        BudgetEntry.Category.TAXES to "taxes, fines, government fees",
+        BudgetEntry.Category.OTHER to "anything that does not fit the categories above"
+    )
 
     suspend fun execute(
         imageUri: String,
@@ -52,7 +77,10 @@ class CreateBudgetEntryFromImageUseCase(
             )
 
             // Process the image using AI
-            val aiBudgetEntry = aiImageProcessor.processImage(imageData, prompt)
+            val aiBudgetEntry = aiImageProcessor.processImage(
+                imageData,
+                buildPrompt(Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date)
+            )
 
             // If AI processing successful, merge with existing budget entry
             if (aiBudgetEntry != null) {
