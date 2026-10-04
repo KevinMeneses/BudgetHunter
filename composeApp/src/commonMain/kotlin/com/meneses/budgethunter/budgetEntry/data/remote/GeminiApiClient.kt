@@ -181,7 +181,7 @@ class GeminiApiClient(
 
     private companion object {
         const val MAX_ATTEMPTS = 2
-        const val DEFAULT_TOTAL_TIMEOUT_MS = 25_000L
+        const val DEFAULT_TOTAL_TIMEOUT_MS = 30_000L
         const val DEFAULT_RETRY_DELAY_MS = 1_000L
         val BLOCKED_FINISH_REASONS = setOf("SAFETY", "PROHIBITED_CONTENT", "BLOCKLIST", "SPII", "RECITATION")
         const val ENDPOINT =

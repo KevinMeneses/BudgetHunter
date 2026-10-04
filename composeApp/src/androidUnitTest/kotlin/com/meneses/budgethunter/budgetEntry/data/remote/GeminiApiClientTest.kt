@@ -573,7 +573,7 @@ class GeminiApiClientTest {
 
     private fun clientWith(
         engine: MockEngine,
-        totalTimeoutMs: Long = 25_000L
+        totalTimeoutMs: Long = 30_000L
     ): GeminiApiClient {
         val httpClient = HttpClient(engine) {
             install(ContentNegotiation) { json(this@GeminiApiClientTest.json) }
