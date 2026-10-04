@@ -1,6 +1,5 @@
 package com.meneses.budgethunter.budgetEntry.ui
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -57,6 +56,7 @@ import budgethunter.composeapp.generated.resources.open_content_description
 import budgethunter.composeapp.generated.resources.share_content_description
 import budgethunter.composeapp.generated.resources.take_a_picture
 import budgethunter.composeapp.generated.resources.unable_to_display_file
+import com.meneses.budgethunter.commons.ui.ZoomableImage
 import com.meneses.budgethunter.commons.ui.dashedBorder
 import com.meneses.budgethunter.commons.util.getImageBitmapFromFile
 import com.meneses.budgethunter.commons.util.getImageBitmapFromPDFFile
@@ -121,7 +121,7 @@ fun InvoiceDisplayModal(
                                 )
                             }
                             bitmap != null -> {
-                                Image(
+                                ZoomableImage(
                                     bitmap = bitmap!!,
                                     contentDescription = stringResource(Res.string.invoice_content_description),
                                     modifier = Modifier
