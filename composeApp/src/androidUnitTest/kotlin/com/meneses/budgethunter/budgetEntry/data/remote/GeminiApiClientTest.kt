@@ -1,5 +1,6 @@
 package com.meneses.budgethunter.budgetEntry.data.remote
 
+import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.commons.data.sync.NoOpLogger
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
@@ -8,9 +9,15 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.content.TextContent
 import io.ktor.http.headersOf
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.add
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
+import kotlinx.serialization.json.putJsonArray
+import kotlinx.serialization.json.putJsonObject
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -359,16 +366,18 @@ class GeminiApiClientTest {
     }
 
     /**
-     * Test that request includes correct API key in URL
+     * Test that the API key is sent in a header (not in the URL)
      */
     @Test
-    fun `extractBudgetEntryFromImage includes API key in request URL`() = runTest {
+    fun `extractBudgetEntryFromImage sends API key in header and not in URL`() = runTest {
         // Arrange
         var capturedUrl = ""
+        var capturedKeyHeader: String? = null
         val testApiKey = "test-api-key-12345"
 
         val mockEngine = MockEngine { request ->
             capturedUrl = request.url.toString()
+            capturedKeyHeader = request.headers["x-goog-api-key"]
             respond(
                 content = """{"candidates":[]}""",
                 status = HttpStatusCode.OK,
@@ -396,7 +405,8 @@ class GeminiApiClientTest {
         )
 
         // Assert
-        assertTrue(capturedUrl.contains(testApiKey), "URL should contain API key")
+        assertEquals(testApiKey, capturedKeyHeader)
+        assertTrue(!capturedUrl.contains(testApiKey), "URL should not contain API key")
         assertTrue(capturedUrl.contains("generativelanguage.googleapis.com"), "URL should be Gemini API endpoint")
     }
 
@@ -442,6 +452,104 @@ class GeminiApiClientTest {
 
         // Assert
         assertTrue(requestBodyContainsImage, "Request should be sent")
+    }
+
+    private fun clientReturning(
+        text: String,
+        onRequest: (String) -> Unit = {}
+    ): GeminiApiClient {
+        val body = buildJsonObject {
+            putJsonArray("candidates") {
+                add(
+                    buildJsonObject {
+                        putJsonObject("content") {
+                            putJsonArray("parts") { add(buildJsonObject { put("text", text) }) }
+                        }
+                    }
+                )
+            }
+        }.toString()
+        val mockEngine = MockEngine { request ->
+            onRequest((request.body as TextContent).text)
+            respond(
+                content = body,
+                status = HttpStatusCode.OK,
+                headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+            )
+        }
+        val httpClient = HttpClient(mockEngine) {
+            install(ContentNegotiation) { json(this@GeminiApiClientTest.json) }
+        }
+        return GeminiApiClient(httpClient, "test-api-key", json, NoOpLogger())
+    }
+
+    @Test
+    fun `request asks for structured JSON output with category enum`() = runTest {
+        var requestBody = ""
+        val client = clientReturning("{}") { requestBody = it }
+
+        client.extractBudgetEntryFromImage("img", "prompt")
+
+        assertTrue(requestBody.contains("\"responseMimeType\":\"application/json\""))
+        assertTrue(requestBody.contains("\"responseSchema\""))
+        assertTrue(requestBody.contains("\"temperature\":0.1"))
+        BudgetEntry.Category.entries.forEach { assertTrue(requestBody.contains("\"${it.name}\""), it.name) }
+    }
+
+    @Test
+    fun `unknown category falls back to OTHER`() = runTest {
+        val client = clientReturning("""{"amount":10,"description":"x","category":"SPACESHIPS","date":"2025-02-01"}""")
+
+        val result = client.extractBudgetEntryFromImage("img", "prompt")
+
+        assertNotNull(result)
+        assertEquals(BudgetEntry.Category.OTHER, result.category)
+        assertEquals("10", result.amount)
+    }
+
+    @Test
+    fun `category is matched case-insensitively`() = runTest {
+        val client = clientReturning("""{"amount":10,"description":"x","category":"groceries"}""")
+
+        assertEquals(
+            BudgetEntry.Category.GROCERIES,
+            client.extractBudgetEntryFromImage("img", "prompt")?.category
+        )
+    }
+
+    @Test
+    fun `invalid date falls back to today`() = runTest {
+        val client = clientReturning("""{"amount":10,"description":"x","date":"15/01/2025"}""")
+
+        val result = client.extractBudgetEntryFromImage("img", "prompt")
+
+        assertNotNull(result)
+        assertEquals(BudgetEntry().date, result.date)
+    }
+
+    @Test
+    fun `isInvoice false returns null`() = runTest {
+        val client = clientReturning("""{"isInvoice":false,"amount":10,"description":"x"}""")
+
+        assertNull(client.extractBudgetEntryFromImage("img", "prompt"))
+    }
+
+    @Test
+    fun `response without amount and description returns null`() = runTest {
+        val client = clientReturning("""{"isInvoice":true}""")
+
+        assertNull(client.extractBudgetEntryFromImage("img", "prompt"))
+    }
+
+    @Test
+    fun `string amount and fenced json are accepted`() = runTest {
+        val client = clientReturning("```json\n{\"amount\":\"1234.5\",\"description\":\"Rent\"}\n```")
+
+        val result = client.extractBudgetEntryFromImage("img", "prompt")
+
+        assertNotNull(result)
+        assertEquals("1234.5", result.amount)
+        assertEquals("Rent", result.description)
     }
 
     // Helper function for running suspending tests
