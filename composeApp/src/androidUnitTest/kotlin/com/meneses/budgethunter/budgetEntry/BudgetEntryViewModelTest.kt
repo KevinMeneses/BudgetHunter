@@ -3,6 +3,7 @@ package com.meneses.budgethunter.budgetEntry
 import budgethunter.composeapp.generated.resources.Res
 import budgethunter.composeapp.generated.resources.ai_error_network
 import budgethunter.composeapp.generated.resources.ai_error_not_an_invoice
+import budgethunter.composeapp.generated.resources.ai_error_timeout
 import com.meneses.budgethunter.budgetEntry.application.BudgetEntryEvent
 import com.meneses.budgethunter.budgetEntry.application.BudgetEntryIntent
 import com.meneses.budgethunter.budgetEntry.application.CreateBudgetEntryFromImageUseCase
@@ -127,5 +128,16 @@ class BudgetEntryViewModelTest {
         assertIs<BudgetEntryEvent.ShowNotification>(event)
         assertEquals(Res.string.ai_error_not_an_invoice, event.message)
         assertFalse(event.isError)
+    }
+
+    @Test
+    fun `AI timeout shows its own message`() = runTest {
+        attachWithAiResult(CreateBudgetEntryFromImageUseCase.Result(BudgetEntry(), AiFailureReason.TIMEOUT))
+
+        val event = viewModel.events.first()
+
+        assertIs<BudgetEntryEvent.ShowNotification>(event)
+        assertEquals(Res.string.ai_error_timeout, event.message)
+        assertTrue(event.isError)
     }
 }

@@ -313,6 +313,7 @@
     <string name="amount_is_mandatory">The amount is required</string>
     <string name="ai_error_not_an_invoice">The AI did not recognize an invoice or receipt in the file. Please fill in the details manually</string>
     <string name="ai_error_network">Could not reach the AI service. Check your connection and try again</string>
+    <string name="ai_error_timeout">The AI took too long to respond. Please try again or fill in the details manually</string>
     <string name="ai_error_busy">The AI service is busy right now. Please try again in a few minutes</string>
     <string name="ai_error_generic">The file could not be read with AI. Please fill in the details manually</string>
     <string name="error_loading_file">Something went wrong while loading the file. Please try again</string>

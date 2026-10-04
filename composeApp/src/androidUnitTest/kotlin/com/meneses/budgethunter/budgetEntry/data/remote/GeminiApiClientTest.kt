@@ -573,12 +573,12 @@ class GeminiApiClientTest {
 
     private fun clientWith(
         engine: MockEngine,
-        requestTimeoutMs: Long = 45_000L
+        totalTimeoutMs: Long = 25_000L
     ): GeminiApiClient {
         val httpClient = HttpClient(engine) {
             install(ContentNegotiation) { json(this@GeminiApiClientTest.json) }
         }
-        return GeminiApiClient(httpClient, "test-api-key", json, NoOpLogger(), requestTimeoutMs, retryDelayMs = 1L)
+        return GeminiApiClient(httpClient, "test-api-key", json, NoOpLogger(), totalTimeoutMs, retryDelayMs = 1L)
     }
 
     private fun jsonHeaders() = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString())
@@ -596,13 +596,13 @@ class GeminiApiClientTest {
     }.toString()
 
     @Test
-    fun `429 is retried and then succeeds`() = runTest {
+    fun `5xx is retried once and can then succeed`() = runTest {
         var calls = 0
         val client = clientWith(
             MockEngine {
                 calls++
-                if (calls < 3) {
-                    respondError(HttpStatusCode.TooManyRequests)
+                if (calls < 2) {
+                    respondError(HttpStatusCode.ServiceUnavailable)
                 } else {
                     respond(okBody("""{"amount":5,"description":"Coffee"}"""), HttpStatusCode.OK, jsonHeaders())
                 }
@@ -611,26 +611,30 @@ class GeminiApiClientTest {
 
         val result = client.extract("img", "image/jpeg", "prompt")
 
-        assertEquals(3, calls)
+        assertEquals(2, calls)
         assertTrue(result is AiExtractionResult.Success)
     }
 
     @Test
-    fun `persistent 429 gives RATE_LIMITED after three attempts`() = runTest {
+    fun `persistent 5xx gives SERVER after a single retry`() = runTest {
+        var calls = 0
+        val client = clientWith(MockEngine { calls++; respondError(HttpStatusCode.ServiceUnavailable) })
+
+        val result = client.extract("img", "image/jpeg", "prompt")
+
+        assertEquals(2, calls)
+        assertEquals(AiFailureReason.SERVER, failureOf(result))
+    }
+
+    @Test
+    fun `429 is not retried and gives RATE_LIMITED`() = runTest {
         var calls = 0
         val client = clientWith(MockEngine { calls++; respondError(HttpStatusCode.TooManyRequests) })
 
         val result = client.extract("img", "image/jpeg", "prompt")
 
-        assertEquals(3, calls)
+        assertEquals(1, calls)
         assertEquals(AiFailureReason.RATE_LIMITED, failureOf(result))
-    }
-
-    @Test
-    fun `persistent 5xx gives SERVER`() = runTest {
-        val client = clientWith(MockEngine { respondError(HttpStatusCode.ServiceUnavailable) })
-
-        assertEquals(AiFailureReason.SERVER, failureOf(client.extract("img", "image/jpeg", "prompt")))
     }
 
     @Test
@@ -645,13 +649,13 @@ class GeminiApiClientTest {
     }
 
     @Test
-    fun `transport errors are retried and give NETWORK`() = runTest {
+    fun `transport errors are retried once and give NETWORK`() = runTest {
         var calls = 0
         val client = clientWith(MockEngine { calls++; throw RuntimeException("no route to host") })
 
         val result = client.extract("img", "image/jpeg", "prompt")
 
-        assertEquals(3, calls)
+        assertEquals(2, calls)
         assertEquals(AiFailureReason.NETWORK, failureOf(result))
     }
 
@@ -664,13 +668,37 @@ class GeminiApiClientTest {
                 delay(5_000)
                 respond(okBody("{}"), HttpStatusCode.OK, jsonHeaders())
             },
-            requestTimeoutMs = 50L
+            totalTimeoutMs = 50L
         )
 
         val result = client.extract("img", "image/jpeg", "prompt")
 
         assertEquals(1, calls)
         assertEquals(AiFailureReason.TIMEOUT, failureOf(result))
+    }
+
+    @Test
+    fun `the retry shares the total deadline instead of extending it`() = runTest {
+        var calls = 0
+        val client = clientWith(
+            MockEngine {
+                calls++
+                if (calls == 1) {
+                    respondError(HttpStatusCode.ServiceUnavailable)
+                } else {
+                    delay(5_000)
+                    respond(okBody("{}"), HttpStatusCode.OK, jsonHeaders())
+                }
+            },
+            totalTimeoutMs = 100L
+        )
+
+        val startedAt = System.currentTimeMillis()
+        val result = client.extract("img", "image/jpeg", "prompt")
+
+        assertEquals(2, calls)
+        assertEquals(AiFailureReason.TIMEOUT, failureOf(result))
+        assertTrue(System.currentTimeMillis() - startedAt < 2_000, "must give up at the deadline, not after the slow call")
     }
 
     @Test
@@ -728,7 +756,7 @@ class GeminiApiClientTest {
     }
 
     // Helper function for running suspending tests
-    // runBlocking instead of kotlinx's runTest: the client's request timeout must run on real time,
+    // runBlocking instead of kotlinx's runTest: the client's timeout must run on real time,
     // otherwise the test scheduler skips ahead while MockEngine answers on another dispatcher
     private fun runTest(block: suspend () -> Unit) {
         kotlinx.coroutines.runBlocking {

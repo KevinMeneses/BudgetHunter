@@ -7,6 +7,7 @@ import budgethunter.composeapp.generated.resources.ai_error_busy
 import budgethunter.composeapp.generated.resources.ai_error_generic
 import budgethunter.composeapp.generated.resources.ai_error_network
 import budgethunter.composeapp.generated.resources.ai_error_not_an_invoice
+import budgethunter.composeapp.generated.resources.ai_error_timeout
 import budgethunter.composeapp.generated.resources.amount_is_mandatory
 import budgethunter.composeapp.generated.resources.error_loading_file
 import com.meneses.budgethunter.budgetEntry.application.BudgetEntryEvent
@@ -169,7 +170,8 @@ class BudgetEntryViewModel(
     private fun showAiFailure(reason: AiFailureReason) {
         val message = when (reason) {
             AiFailureReason.NOT_AN_INVOICE -> Res.string.ai_error_not_an_invoice
-            AiFailureReason.NETWORK, AiFailureReason.TIMEOUT -> Res.string.ai_error_network
+            AiFailureReason.NETWORK -> Res.string.ai_error_network
+            AiFailureReason.TIMEOUT -> Res.string.ai_error_timeout
             AiFailureReason.RATE_LIMITED, AiFailureReason.SERVER -> Res.string.ai_error_busy
             else -> Res.string.ai_error_generic
         }

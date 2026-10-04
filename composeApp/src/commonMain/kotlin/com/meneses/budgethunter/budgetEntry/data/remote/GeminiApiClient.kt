@@ -22,15 +22,16 @@ import kotlin.coroutines.cancellation.CancellationException
  * Remote data source for Gemini API.
  * Handles HTTP requests to Google's Gemini REST API for AI-powered budget entry extraction.
  *
- * Transient failures (429, 5xx, transport errors) are retried with a linear backoff; every other
- * outcome is mapped to an [AiFailureReason] so callers can tell the user what happened.
+ * The whole operation has a single deadline ([totalTimeoutMs]) so the user never waits long for a
+ * failure. Only 5xx and transport errors, which fail fast, get one retry; timeouts, rate limits and
+ * every other outcome are mapped straight to an [AiFailureReason] so callers can tell the user what happened.
  */
 class GeminiApiClient(
     private val httpClient: HttpClient,
     private val apiKey: String,
     private val json: Json,
     private val logger: Logger,
-    private val requestTimeoutMs: Long = DEFAULT_REQUEST_TIMEOUT_MS,
+    private val totalTimeoutMs: Long = DEFAULT_TOTAL_TIMEOUT_MS,
     private val retryDelayMs: Long = DEFAULT_RETRY_DELAY_MS
 ) {
     private val tag = "GeminiApiClient"
@@ -68,13 +69,23 @@ class GeminiApiClient(
             )
         )
 
+        return try {
+            // One deadline for everything (upload, model time, retry) so retries can't add up
+            withTimeout(totalTimeoutMs) { requestWithRetry(requestBody) }
+        } catch (e: TimeoutCancellationException) {
+            logger.warn(tag, "Gemini request timed out after ${totalTimeoutMs}ms", e)
+            AiExtractionResult.Failure(AiFailureReason.TIMEOUT)
+        }
+    }
+
+    private suspend fun requestWithRetry(requestBody: GeminiRequest): AiExtractionResult {
         var lastReason = AiFailureReason.UNKNOWN
         repeat(MAX_ATTEMPTS) { attempt ->
             when (val outcome = attemptRequest(requestBody)) {
                 is Attempt.Done -> return outcome.result
                 is Attempt.Retry -> {
                     lastReason = outcome.reason
-                    if (attempt < MAX_ATTEMPTS - 1) delay(retryDelayMs * (attempt + 1))
+                    if (attempt < MAX_ATTEMPTS - 1) delay(retryDelayMs)
                 }
             }
         }
@@ -84,27 +95,25 @@ class GeminiApiClient(
 
     private suspend fun attemptRequest(requestBody: GeminiRequest): Attempt {
         return try {
-            val (status, body) = withTimeout(requestTimeoutMs) {
-                val response = httpClient.post(ENDPOINT) {
-                    header("x-goog-api-key", apiKey)
-                    contentType(ContentType.Application.Json)
-                    setBody(requestBody)
-                }
-                response.status.value to response.bodyAsText()
+            val response = httpClient.post(ENDPOINT) {
+                header("x-goog-api-key", apiKey)
+                contentType(ContentType.Application.Json)
+                setBody(requestBody)
             }
+            val status = response.status.value
+            val body = response.bodyAsText()
             when {
                 status in 200..299 -> Attempt.Done(parseResponse(body))
-                status == 429 -> Attempt.Retry(AiFailureReason.RATE_LIMITED)
+                // Quota errors don't clear in a second, retrying only makes the user wait longer
+                status == 429 -> Attempt.Done(AiExtractionResult.Failure(AiFailureReason.RATE_LIMITED))
                 status >= 500 -> Attempt.Retry(AiFailureReason.SERVER)
                 else -> {
                     logger.warn(tag, "Gemini rejected the request with HTTP $status")
                     Attempt.Done(AiExtractionResult.Failure(AiFailureReason.REJECTED))
                 }
             }
-        } catch (e: TimeoutCancellationException) {
-            logger.warn(tag, "Gemini request timed out", e)
-            Attempt.Done(AiExtractionResult.Failure(AiFailureReason.TIMEOUT))
         } catch (e: CancellationException) {
+            // Also covers the total deadline: extract() turns it into TIMEOUT
             throw e
         } catch (e: Exception) {
             logger.warn(tag, "Gemini request failed", e)
@@ -171,8 +180,8 @@ class GeminiApiClient(
     private fun failure(reason: AiFailureReason) = AiExtractionResult.Failure(reason)
 
     private companion object {
-        const val MAX_ATTEMPTS = 3
-        const val DEFAULT_REQUEST_TIMEOUT_MS = 45_000L
+        const val MAX_ATTEMPTS = 2
+        const val DEFAULT_TOTAL_TIMEOUT_MS = 25_000L
         const val DEFAULT_RETRY_DELAY_MS = 1_000L
         val BLOCKED_FINISH_REASONS = setOf("SAFETY", "PROHIBITED_CONTENT", "BLOCKLIST", "SPII", "RECITATION")
         const val ENDPOINT =

@@ -313,6 +313,7 @@
     <string name="amount_is_mandatory">El monto es obligatorio</string>
     <string name="ai_error_not_an_invoice">La IA no reconoció una factura o recibo en el archivo, completa los datos manualmente</string>
     <string name="ai_error_network">No se pudo conectar con la IA, revisa tu conexión e intenta de nuevo</string>
+    <string name="ai_error_timeout">La IA tardó demasiado en responder, intenta de nuevo o completa los datos manualmente</string>
     <string name="ai_error_busy">El servicio de IA está ocupado en este momento, intenta de nuevo en unos minutos</string>
     <string name="ai_error_generic">No se pudo leer el archivo con IA, completa los datos manualmente</string>
     <string name="error_loading_file">Algo salió mal al cargar el archivo, por favor intenta de nuevo</string>
