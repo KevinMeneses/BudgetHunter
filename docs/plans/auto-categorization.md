@@ -1,12 +1,17 @@
 # Plan: automatic entry categorization (app)
 
 Companion plan in the backend repo: `BudgetHunterBackend/docs/plans/auto-categorization.md`
-(read its "How the pieces fit" first). The backend does the categorizing with Gemini Flash-Lite;
-the app's job is to say *when* a category should be automatic, and to show/keep the result.
-Each part is one small PR; ship them in order. Default branch of this repo is `master`.
+(read its "How the pieces fit" first). The backend categorizes with rules, a cache and Gemini
+Flash-Lite, **on demand**; the app's job is to save entries as "waiting for a category", to ask for the
+categorization at the right moment (the metrics screen) and to show the result. Each part is one small
+PR; ship them in order. Default branch of this repo is `master`.
 
-_Last revised against `master` at `a3409f3` (account-synced preferences, reworked receipt AI,
-English default locale)._
+_Design change:_ an earlier revision categorized every entry in the background and refreshed the app over
+SSE. Dropped: people rarely look at an entry's category unless they open it or open the metrics screen, so
+the category only has to be right when they get there, and asking at that moment needs no live updates, no
+SSE handling and no notification changes.
+
+_Last revised against `master` at `a3409f3`._
 
 ## What exists today (and changes this plan)
 
@@ -48,7 +53,7 @@ English default locale)._
   `budget_entry` (existing entries count as user-chosen). Update `BudgetEntry.sq`, the mapper and
   `BudgetEntryLocalDataSource`.
 - Domain: `BudgetEntry.categorySource: CategorySource { USER, AUTO }`. New entries start `AUTO`
-  **only if AI processing is on**, otherwise `USER`.
+  **only if AI processing is on**, otherwise `USER`. "Waiting" = `AUTO` and `Category.OTHER`.
 - Form: picking a category sets `USER`; editing the description of an `AUTO` entry keeps it `AUTO`.
   Explicitly picking "Other" is `USER`.
 - Tests: mapper round-trip, migration test (existing rows become `USER`), form intent tests.
@@ -58,50 +63,72 @@ English default locale)._
   `categorySource == AUTO`, the category name when `USER`.
 - `BudgetEntryResponse`: add `categorySource: String? = null` (tolerate older servers); map it in
   `mergeServerEntry` and `updateLocalEntryFromResponse`.
-- **Deploy order:** backend Part 1 must be live before this ships, or the old server answers 400 to
-  a missing category. Gate it if releases can go out of order.
+- New call in `BudgetEntryApiService` + `ApiEndpoints`: `POST /api/budgets/{id}/entries/categorize`
+  -> `CategorizeEntriesResponse(categorized: Int, pending: Long)`. Failures to handle: 403 (the account's
+  AI preference is off or not saved yet, or no access), 409 (a run is already in flight), network errors.
+- **Deploy order:** backend Part 1 (optional category) and Part 4 (endpoint) must be live before this ships,
+  or the old server answers 400 to a missing category.
 - Server wins for synced entries; an unsynced local entry keeps its own category.
-- Stale flag guard: before pushing pending entries, make sure the account has the current toggle
-  value. Smallest change: when the toggle is on and entries are about to be pushed with
-  `category = null`, call `syncUserPreferences.push()` first (it is idempotent), and retry a failed
-  push on resume the same way pending entry pushes already retry. Skip if too invasive: the server
-  just won't classify until the flag is `true`, and the entries stay `OTHER`.
-- Tests: serialization with null category; `SyncFlowIntegrationTest` case where the server returns
-  an AI category after create; null category only sent when the toggle is on.
+- Tests: serialization with null category and with the new response; `SyncFlowIntegrationTest` case where
+  a pull brings categories chosen by the server.
 
-### Part 3 - UI
-- Entry form: when AI processing is on, the category selector gets an "Automatic" state as the
-  default for new entries (shows "Automatic" until the server answers); picking a concrete category
-  makes it manual. When AI is off, the option is hidden and the default is a normal choice.
-- Entry rows/detail: a small "auto" indicator when `categorySource == AUTO`, so users can tell and
-  correct it. The list updates when the pull changes the category (verify the Flow re-emits).
-- Update the toggle copy (`ai_processing_description` and its `values-es` version): it now also lets
-  the server categorize entries from their description, and says only the description is sent.
-- Metrics (`GetTotalsPerCategoryUseCase`): no change; pending entries count as `OTHER` until updated.
-- Compose preview/UI tests for the new states; strings in `values` and `values-es`.
+### Part 3 - Metrics screen: ask, then categorize
+This is where the feature becomes visible.
+- **When the dialog appears:** the user opens the metrics screen **and** AI processing is on **and** the
+  budget is synced to the server (has a `serverId`) **and** offline mode is off **and** at least one entry
+  of the budget is waiting (`AUTO` + `OTHER`). Never otherwise.
+- **Dialog:** "Categorize your entries automatically?" Says how many entries, and that only their
+  descriptions are sent to be categorized (no amounts, no names). Confirm / Not now.
+- **On confirm** (a new intent in `BudgetMetricsViewModel`, with its own use case):
+  1. push the budget's unsynced entries first (`syncPendingEntries`), because the server can only
+     categorize what it has, and push the preferences if needed so the server's AI flag is current;
+  2. call the endpoint, with a loading state (it works before it answers, seconds for a big budget);
+  3. pull the budget's entries (`pullEntriesFromServer`) and recompute the totals, so the chart updates;
+  4. show the result: "N entries categorized" and, if `pending > 0`, that some could not be placed or can
+     be retried later.
+  Errors: 403 -> push the preferences once and retry; if still 403, say AI processing is off for the
+  account. 409 -> "already running". Network -> keep the dialog's offer available, nothing is lost.
+- **Not nagging:** "Not now" suppresses the dialog for this budget until the number of waiting entries
+  grows, or the app restarts (decide: see open questions).
+- Entry form: when AI processing is on, the category selector gets an "Automatic" state as the default for
+  new entries (it is categorized later, from the metrics screen); picking a concrete category makes it
+  manual. When AI is off the option is hidden and the default is a normal choice.
+- Entry rows/detail: optional small "auto" indicator when `categorySource == AUTO` and the category is not
+  `OTHER`, so users can tell it was automatic and correct it.
+- Update the toggle copy (`ai_processing_description` and its `values-es` version): it also lets the
+  server categorize entries from their description, on request, and says only the description is sent.
+- Metrics totals (`GetTotalsPerCategoryUseCase`): no change; waiting entries count as `OTHER` until
+  categorized, which is exactly what the dialog offers to fix.
+- Tests: ViewModel (dialog conditions, confirm flow order, each error), compose previews for the dialog
+  and the loading state; strings in `values` and `values-es`.
 
 ### Part 4 - Other entry sources
-- **Receipts:** the category the receipt AI returns is sent explicitly and marked `USER` (not
-  `AUTO`), so the server does not classify again and a good receipt-based category is not
-  overwritten by a description-only guess. If the user declines AI autofill in the confirmation
-  dialog, the entry keeps whatever category it had.
+- **Receipts:** the category the receipt AI returns is sent explicitly and marked `USER` (not `AUTO`), so
+  the server never touches it and a good receipt-based category is not overwritten by a description-only
+  guess. If the user declines AI autofill in the confirmation dialog, the entry keeps whatever category it
+  had.
 - **SMS:** description comes from the bank message; create as `AUTO` with category `OTHER` when the
-  toggle is on, so the backend categorizes it on sync (this is the main beneficiary of the feature).
-- Entries created offline get categorized the next time they sync; nothing extra is needed.
+  toggle is on, so the metrics screen can offer to categorize it (the main beneficiary of the feature).
+- Entries created offline are categorized the same way once they have synced.
 
 ### Part 5 - Cleanup and docs
 - Update `CLAUDE.md` (still describes the pre-KMP layout) and `README.md` with the behavior.
 - Check the iOS source set still compiles (`commonMain` changes only); `./gradlew ktlint test` pass.
 
 ## Acceptance criteria
-- Creating an entry without choosing a category works offline, shows "Other"/"Automatic", and after
-  sync the category changes to the AI result without user action.
-- An entry whose category the user picked, or that came from a receipt, is never changed by the
-  server's AI.
-- With the toggle off, entries are saved as before and nothing is classified server-side.
+- Creating an entry without choosing a category works offline, is stored `AUTO`/`OTHER`, and nothing is
+  sent anywhere at that moment.
+- Opening the metrics screen with AI processing on and waiting entries offers to categorize them; confirming
+  categorizes them and updates the chart; declining changes nothing.
+- An entry whose category the user picked, or that came from a receipt, is never changed by the server's AI,
+  and a second run does not redo the first.
+- With the toggle off, nothing is offered and nothing is classified.
 - Older entries and older server responses (no `categorySource`) keep working.
 - `./gradlew ktlint test` passes.
 
 ## Open questions
-- Is an explicit "re-categorize" action wanted on an entry (send `category = null` on update)?
-- Should turning the toggle on offer to categorize existing `OTHER` entries?
+- How often to ask: every time the metrics screen opens while entries are waiting (simple, nags), once per
+  app session, or until the waiting count grows after a "Not now" (recommended)?
+- Entries saved while the toggle was off are `USER`, so turning it on later does not offer to categorize
+  them. Is a separate "treat my Other entries as waiting" action wanted?
+- Is an explicit "categorize this entry again" action wanted on a single entry?
