@@ -66,8 +66,10 @@ class MainActivity :
         permissionsManager.setLauncherDelegate(this)
         googleSignInManager.setActivityDelegate(this)
 
-        // A recreated Activity keeps its original intent, which was already handled
-        if (savedInstanceState == null) handleLaunchIntent(intent)
+        // Not gated on savedInstanceState: when the process was killed in the background, the
+        // system recreates the Activity with the tapped notification's intent AND a saved state.
+        // handleLaunchIntent consumes the extras, so a recreation does not handle them twice.
+        handleLaunchIntent(intent)
 
         setContent {
             BudgetHunterApp()
@@ -81,12 +83,15 @@ class MainActivity :
     }
 
     private fun handleLaunchIntent(intent: Intent?) {
-        if (intent?.getBooleanExtra(AndroidNotificationManager.EXTRA_OPEN_DEFAULT_BUDGET, false) == true) {
+        if (intent == null) return
+        if (intent.getBooleanExtra(AndroidNotificationManager.EXTRA_OPEN_DEFAULT_BUDGET, false)) {
             defaultBudgetLaunchRequest.request()
         }
-        if (intent?.getBooleanExtra(AndroidNotificationManager.EXTRA_OPEN_SETTINGS, false) == true) {
+        if (intent.getBooleanExtra(AndroidNotificationManager.EXTRA_OPEN_SETTINGS, false)) {
             defaultBudgetLaunchRequest.requestSettings()
         }
+        intent.removeExtra(AndroidNotificationManager.EXTRA_OPEN_DEFAULT_BUDGET)
+        intent.removeExtra(AndroidNotificationManager.EXTRA_OPEN_SETTINGS)
     }
 
     override fun onDestroy() {
