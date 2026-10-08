@@ -36,8 +36,8 @@ _Last revised against `master` at `a3409f3`._
   SQLDelight migrations are still `1.sqm`, `2.sqm`, so the next one is `3.sqm`.
 - `CreateBudgetEntryRequest` / `UpdateBudgetEntryRequest` still always send `category: String`.
 - `BudgetEntrySyncManager` still copies the server's category onto synced entries (merge on pull,
-  `updateLocalEntryFromResponse` on push), and SSE events still trigger a pull, so the AI result
-  flows back with no new transport code.
+  `updateLocalEntryFromResponse` on push), and `pullEntriesFromServer` brings the server's categories
+  back, so after an on-demand run one pull is all the app needs (no SSE involved).
 - SMS-created entries never set a category (they get the default `OTHER`).
 - Categories (11): `FOOD, GROCERIES, SELF_CARE, TRANSPORTATION, HOUSEHOLD_ITEMS, SERVICES,
   EDUCATION, HEALTH, LEISURE, TAXES, OTHER`. This is the contract with the backend. The one-line
