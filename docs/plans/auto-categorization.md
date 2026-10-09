@@ -53,7 +53,9 @@ _Last revised against `master` at `a3409f3`._
   `budget_entry` (existing entries count as user-chosen). Update `BudgetEntry.sq`, the mapper and
   `BudgetEntryLocalDataSource`.
 - Domain: `BudgetEntry.categorySource: CategorySource { USER, AUTO }`. New entries start `AUTO`
-  **only if AI processing is on**, otherwise `USER`. "Waiting" = `AUTO` and `Category.OTHER`.
+  **whatever the AI toggle says**: `AUTO` records that the user has not chosen a category (a default is not
+  a choice), not that the AI may act on it. That is what lets entries saved while the toggle was off be offered
+  once it is on. "Waiting" = `AUTO` and `Category.OTHER`.
 - Form: picking a category sets `USER`; editing the description of an `AUTO` entry keeps it `AUTO`.
   Explicitly picking "Other" is `USER`.
 - Tests: mapper round-trip, migration test (existing rows become `USER`), form intent tests.
@@ -92,7 +94,9 @@ This is where the feature becomes visible.
   grows, or the app restarts (decide: see open questions).
 - Entry form: when AI processing is on, the category selector gets an "Automatic" state as the default for
   new entries (it is categorized later, from the metrics screen); picking a concrete category makes it
-  manual. When AI is off the option is hidden and the default is a normal choice.
+  manual. When AI is off the selector looks and behaves as today (default "Other"), but an entry saved
+  without touching it is still stored `AUTO`/waiting, so a user who turns the toggle on later is offered it.
+  Only an explicit pick, "Other" included, makes it `USER`.
 - Entry rows/detail: optional small "auto" indicator when `categorySource == AUTO` and the category is not
   `OTHER`, so users can tell it was automatic and correct it.
 - Update the toggle copy (`ai_processing_description` and its `values-es` version): it also lets the
@@ -107,8 +111,9 @@ This is where the feature becomes visible.
   the server never touches it and a good receipt-based category is not overwritten by a description-only
   guess. If the user declines AI autofill in the confirmation dialog, the entry keeps whatever category it
   had.
-- **SMS:** description comes from the bank message; create as `AUTO` with category `OTHER` when the
-  toggle is on, so the metrics screen can offer to categorize it (the main beneficiary of the feature).
+- **SMS:** description comes from the bank message; create as `AUTO` with category `OTHER`, so the metrics
+  screen can offer to categorize it (the main beneficiary of the feature), whatever the toggle said when it
+  arrived.
 - Entries created offline are categorized the same way once they have synced.
 
 ### Part 5 - Cleanup and docs
@@ -122,13 +127,14 @@ This is where the feature becomes visible.
   categorizes them and updates the chart; declining changes nothing.
 - An entry whose category the user picked, or that came from a receipt, is never changed by the server's AI,
   and a second run does not redo the first.
-- With the toggle off, nothing is offered and nothing is classified.
+- With the toggle off, nothing is offered and nothing is classified; entries saved meanwhile are offered once it is turned on.
 - Older entries and older server responses (no `categorySource`) keep working.
 - `./gradlew ktlint test` passes.
 
 ## Open questions
 - How often to ask: every time the metrics screen opens while entries are waiting (simple, nags), once per
   app session, or until the waiting count grows after a "Not now" (recommended)?
-- Entries saved while the toggle was off are `USER`, so turning it on later does not offer to categorize
-  them. Is a separate "treat my Other entries as waiting" action wanted?
+- Entries that existed before this feature were migrated to `USER` (their "Other" may be a default or a
+  choice; there is no way to tell), so they are not offered. Offer them through a separate "treat my Other
+  entries as waiting" action, or leave them?
 - Is an explicit "categorize this entry again" action wanted on a single entry?
