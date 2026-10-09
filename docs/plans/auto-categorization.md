@@ -32,7 +32,12 @@ _Last revised against `master` at `a3409f3`._
   user already typed. The receipt flow already yields a category, so it must not trigger a second
   server-side classification.
 - `BudgetEntry.category` is still non-null, default `Category.OTHER`; the column is
-  `category TEXT NOT NULL`, so the app cannot tell "user chose Other" from "user did not choose".
+  `category TEXT NOT NULL`, so the app cannot tell "user chose Other" from "user did not choose". A new
+  explicit **"Sin categoría"** value (`UNCATEGORIZED`, below) fixes that.
+- `BudgetEntry.getCategories()` is used by four things that want different lists: the form's selector
+  (`BudgetEntryComponents`), the metrics totals (`GetTotalsPerCategoryUseCase`), the receipt prompt
+  (`CreateBudgetEntryFromImageUseCase.categoryGuide`) and, through `Category.entries`, the receipt response
+  schema in `GeminiApiClient`. The last two must never offer "Sin categoría" to the AI.
   SQLDelight migrations are still `1.sqm`, `2.sqm`, so the next one is `3.sqm`.
 - `CreateBudgetEntryRequest` / `UpdateBudgetEntryRequest` still always send `category: String`.
 - `BudgetEntrySyncManager` still copies the server's category onto synced entries (merge on pull,
@@ -55,30 +60,42 @@ _Last revised against `master` at `a3409f3`._
 - Domain: `BudgetEntry.categorySource: CategorySource { USER, AUTO }`. New entries start `AUTO`
   **whatever the AI toggle says**: `AUTO` records that the user has not chosen a category (a default is not
   a choice), not that the AI may act on it. That is what lets entries saved while the toggle was off be offered
-  once it is on. "Waiting" = `AUTO` and `Category.OTHER`.
+  once it is on. "Waiting" = `AUTO` and `Category.UNCATEGORIZED`.
+- **New `Category.UNCATEGORIZED`** (label "Sin categoría" / "Uncategorized"; real strings in `values` and
+  `values-es`). It is the default of `BudgetEntry.category` and what the form selects when the user selects
+  nothing. It is the absence of a category, not a category: "Otros" (`OTHER`) stays a real choice, and it is
+  also what the AI answers when nothing fits. The backend stores `UNCATEGORIZED` as is (see its plan for why
+  not `null`: older app builds would crash on a null `category`).
+- Split the lists: keep `getCategories()` for the form selector (with "Sin categoría" first) and the metrics
+  totals; add `getAssignableCategories()` (the original 11) and use it in the receipt prompt and as the
+  enum of the receipt response schema. Add the colour for the new slice in `ChartColors`.
+- Existing rows keep what they have (`OTHER`, `USER`): there is no way to tell whether that "Other" was a
+  choice. The mapper's fallback for unknown values stays `OTHER`.
 - Form: picking a category sets `USER`; editing the description of an `AUTO` entry keeps it `AUTO`.
-  Explicitly picking "Other" is `USER`.
+  Explicitly picking "Other" is `USER`. Explicitly picking "Sin categoría" is the same as picking nothing:
+  `AUTO`.
 - Tests: mapper round-trip, migration test (existing rows become `USER`), form intent tests.
 
 ### Part 2 - Network contract
-- `CreateBudgetEntryRequest` / `UpdateBudgetEntryRequest`: `category: String?` - `null` when
-  `categorySource == AUTO`, the category name when `USER`.
+- `CreateBudgetEntryRequest` / `UpdateBudgetEntryRequest`: **no shape change**, `category: String` stays.
+  The app sends `UNCATEGORIZED` for a waiting entry (the server treats it as "not chosen") and the category
+  name otherwise. No `null`, so nothing here depends on the backend accepting a missing field.
 - `BudgetEntryResponse`: add `categorySource: String? = null` (tolerate older servers); map it in
   `mergeServerEntry` and `updateLocalEntryFromResponse`.
 - New call in `BudgetEntryApiService` + `ApiEndpoints`: `POST /api/budgets/{id}/entries/categorize`
   -> `CategorizeEntriesResponse(categorized: Int, pending: Long)`. Failures to handle: 403 (the account's
   AI preference is off or not saved yet, or no access), 409 (a run is already in flight), network errors.
-- **Deploy order:** backend Part 1 (optional category) and Part 4 (endpoint) must be live before this ships,
-  or the old server answers 400 to a missing category.
+- **Deploy order:** the backend that understands `UNCATEGORIZED` (its Parts 1 and 4) must be live before
+  this ships; an older server would store the string as if it were the user's choice.
 - Server wins for synced entries; an unsynced local entry keeps its own category.
-- Tests: serialization with null category and with the new response; `SyncFlowIntegrationTest` case where
+- Tests: serialization of `UNCATEGORIZED` and of the new response; `SyncFlowIntegrationTest` case where
   a pull brings categories chosen by the server.
 
 ### Part 3 - Metrics screen: ask, then categorize
 This is where the feature becomes visible.
 - **When the dialog appears:** the user opens the metrics screen **and** AI processing is on **and** the
   budget is synced to the server (has a `serverId`) **and** offline mode is off **and** at least one entry
-  of the budget is waiting (`AUTO` + `OTHER`). Never otherwise.
+  of the budget is waiting (`AUTO` + `UNCATEGORIZED`). Never otherwise.
 - **Dialog:** "Categorize your entries automatically?" Says how many entries, and that only their
   descriptions are sent to be categorized (no amounts, no names). Confirm / Not now.
 - **On confirm** (a new intent in `BudgetMetricsViewModel`, with its own use case):
@@ -92,17 +109,15 @@ This is where the feature becomes visible.
   account. 409 -> "already running". Network -> keep the dialog's offer available, nothing is lost.
 - **Not nagging:** "Not now" suppresses the dialog for this budget until the number of waiting entries
   grows, or the app restarts (decide: see open questions).
-- Entry form: when AI processing is on, the category selector gets an "Automatic" state as the default for
-  new entries (it is categorized later, from the metrics screen); picking a concrete category makes it
-  manual. When AI is off the selector looks and behaves as today (default "Other"), but an entry saved
-  without touching it is still stored `AUTO`/waiting, so a user who turns the toggle on later is offered it.
-  Only an explicit pick, "Other" included, makes it `USER`.
-- Entry rows/detail: optional small "auto" indicator when `categorySource == AUTO` and the category is not
-  `OTHER`, so users can tell it was automatic and correct it.
+- Entry form: "Sin categoría" is the first option and the default for new entries, whether the AI toggle is
+  on or off (with it on, the entry is categorized later from the metrics screen; with it off, the user who
+  turns it on later is offered the entry then). Picking any real category, "Otros" included, makes it `USER`.
+- Entry rows/detail: "Sin categoría" shown as such, and an optional small "auto" indicator when
+  `categorySource == AUTO` and the category is a real one, so users can tell it was automatic and correct it.
 - Update the toggle copy (`ai_processing_description` and its `values-es` version): it also lets the
   server categorize entries from their description, on request, and says only the description is sent.
-- Metrics totals (`GetTotalsPerCategoryUseCase`): no change; waiting entries count as `OTHER` until
-  categorized, which is exactly what the dialog offers to fix.
+- Metrics totals (`GetTotalsPerCategoryUseCase`): "Sin categoría" appears as its own slice, separate from
+  "Otros", which is exactly what the dialog offers to fix.
 - Tests: ViewModel (dialog conditions, confirm flow order, each error), compose previews for the dialog
   and the loading state; strings in `values` and `values-es`.
 
@@ -111,7 +126,7 @@ This is where the feature becomes visible.
   the server never touches it and a good receipt-based category is not overwritten by a description-only
   guess. If the user declines AI autofill in the confirmation dialog, the entry keeps whatever category it
   had.
-- **SMS:** description comes from the bank message; create as `AUTO` with category `OTHER`, so the metrics
+- **SMS:** description comes from the bank message; create as `AUTO` with category `UNCATEGORIZED`, so the metrics
   screen can offer to categorize it (the main beneficiary of the feature), whatever the toggle said when it
   arrived.
 - Entries created offline are categorized the same way once they have synced.
@@ -121,7 +136,7 @@ This is where the feature becomes visible.
 - Check the iOS source set still compiles (`commonMain` changes only); `./gradlew ktlint test` pass.
 
 ## Acceptance criteria
-- Creating an entry without choosing a category works offline, is stored `AUTO`/`OTHER`, and nothing is
+- Creating an entry without choosing a category works offline, is stored `AUTO`/`UNCATEGORIZED`, and nothing is
   sent anywhere at that moment.
 - Opening the metrics screen with AI processing on and waiting entries offers to categorize them; confirming
   categorizes them and updates the chart; declining changes nothing.
@@ -136,5 +151,5 @@ This is where the feature becomes visible.
   app session, or until the waiting count grows after a "Not now" (recommended)?
 - Entries that existed before this feature were migrated to `USER` (their "Other" may be a default or a
   choice; there is no way to tell), so they are not offered. Offer them through a separate "treat my Other
-  entries as waiting" action, or leave them?
+  entries as uncategorized" action, or leave them?
 - Is an explicit "categorize this entry again" action wanted on a single entry?
