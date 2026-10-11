@@ -24,6 +24,7 @@ import kotlinx.serialization.json.putJsonObject
 import kotlinx.coroutines.delay
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -506,7 +507,8 @@ class GeminiApiClientTest {
         assertTrue(requestBody.contains("\"responseMimeType\":\"application/json\""))
         assertTrue(requestBody.contains("\"responseSchema\""))
         assertTrue(requestBody.contains("\"temperature\":0.1"))
-        BudgetEntry.Category.entries.forEach { assertTrue(requestBody.contains("\"${it.name}\""), it.name) }
+        BudgetEntry.getAssignableCategories().forEach { assertTrue(requestBody.contains("\"${it.name}\""), it.name) }
+        assertFalse(requestBody.contains(BudgetEntry.Category.UNCATEGORIZED.name))
     }
 
     @Test
@@ -518,6 +520,16 @@ class GeminiApiClientTest {
         assertNotNull(result)
         assertEquals(BudgetEntry.Category.OTHER, result.category)
         assertEquals("10", result.amount)
+    }
+
+    @Test
+    fun `UNCATEGORIZED from the model is not a category, it falls back to OTHER`() = runTest {
+        val client = clientReturning("""{"amount":10,"description":"x","category":"UNCATEGORIZED","date":"2025-02-01"}""")
+
+        assertEquals(
+            BudgetEntry.Category.OTHER,
+            client.extractBudgetEntryFromImage("img", "prompt")?.category
+        )
     }
 
     @Test

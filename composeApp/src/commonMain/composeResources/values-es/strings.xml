@@ -83,6 +83,7 @@
     <string name="leisure">Ocio</string>
     <string name="taxes">Impuestos</string>
     <string name="other">Otros</string>
+    <string name="uncategorized">Sin categoría</string>
     
     <!-- Financial Terms -->
     <string name="total_outcomes">Total gastos:</string>

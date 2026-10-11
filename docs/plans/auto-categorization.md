@@ -54,7 +54,7 @@ _Last revised against `master` at `a3409f3`._
 
 ## Parts
 
-### Part 1 - An explicit "Sin categoría" (local data and UI of the selector)
+### Part 1 - An explicit "Sin categoría" (local data and UI of the selector) (done)
 There is **no "who chose it" marker** (an earlier revision had a `categorySource` USER/AUTO column; it was
 dropped as redundant). Two facts are enough: the entry has no category, and AI processing is on. Whatever
 already has a category, whoever chose it and "Otros" included, is never touched.
@@ -67,13 +67,20 @@ already has a category, whoever chose it and "Otros" included, is never touched.
   while it was off be offered once it is on.
 - Split the lists: keep `getCategories()` for the form selector (with "Sin categoría" first) and the metrics
   totals; add `getAssignableCategories()` (the original 11) and use it in the receipt prompt and as the
-  enum of the receipt response schema. Add the colour for the new slice in `ChartColors`.
+  enum of the receipt response schema, and make the receipt parser accept only those (so a model answering
+  `UNCATEGORIZED` gets `OTHER`, like any unknown value). `ChartColors` needs nothing: the donut colours are
+  assigned by rank, not per category, so "Sin categoría" takes whatever hue its rank gets and the list below it
+  names it.
 - Form: "Sin categoría" is the first option and the default for new entries. Picking it explicitly is the same
   as picking nothing; picking any real category, "Otros" included, is a choice.
 - Existing rows keep what they have (`OTHER`): there is no way to tell whether that "Other" was a choice. The
   mapper's fallback for unknown values stays `OTHER`, which is also what an older app shows for
   `UNCATEGORIZED`.
-- Tests: mapper round-trip of the new value, selector lists (assignable list excludes it), form default.
+- `BudgetEntry()` now defaults to `UNCATEGORIZED`, so the sync tests that build entries with the default expect
+  `"UNCATEGORIZED"` in the requests (server responses in the tests are unchanged). The prompt and request-schema
+  tests list the assignable categories and assert the prompt/schema do not contain `UNCATEGORIZED`.
+- Tests added: `BudgetEntryTest` (default, the two lists, `OTHER` is not "no category"), `BudgetEntryMapperTest`
+  (server value read, unknown value is `OTHER`, requests carry `UNCATEGORIZED`), and the Gemini parser case.
 
 ### Part 2 - Network contract
 - `CreateBudgetEntryRequest` / `UpdateBudgetEntryRequest`: **no shape change**, `category: String` stays.
