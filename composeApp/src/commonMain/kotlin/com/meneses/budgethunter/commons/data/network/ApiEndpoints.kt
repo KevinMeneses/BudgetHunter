@@ -22,6 +22,7 @@ object ApiEndpoints {
     fun budgetEntries(budgetId: Long) = "/api/budgets/$budgetId/entries"
     fun budgetEntry(budgetId: Long, entryId: Long) = "/api/budgets/$budgetId/entries/$entryId"
     fun budgetEntriesStream(budgetId: Long) = "/api/budgets/$budgetId/entries/stream"
+    fun budgetEntriesCategorize(budgetId: Long) = "/api/budgets/$budgetId/entries/categorize"
 
     // Collaborator endpoints
     fun budgetCollaborators(budgetId: Long) = "/api/budgets/$budgetId/collaborators"

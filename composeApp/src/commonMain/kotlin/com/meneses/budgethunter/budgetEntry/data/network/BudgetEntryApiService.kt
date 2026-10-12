@@ -2,11 +2,13 @@ package com.meneses.budgethunter.budgetEntry.data.network
 
 import com.meneses.budgethunter.commons.data.network.ApiEndpoints
 import com.meneses.budgethunter.commons.data.network.models.BudgetEntryResponse
+import com.meneses.budgethunter.commons.data.network.models.CategorizeEntriesResponse
 import com.meneses.budgethunter.commons.data.network.models.CreateBudgetEntryRequest
 import com.meneses.budgethunter.commons.data.network.models.UpdateBudgetEntryRequest
 import com.meneses.budgethunter.commons.data.network.safeApiCall
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.plugins.timeout
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.post
@@ -86,6 +88,31 @@ class BudgetEntryApiService(
         }
 
     /**
+     * Asks the server to give an automatic category to the budget's uncategorized entries.
+     *
+     * RESTful endpoint: POST /api/budgets/{budgetId}/entries/categorize
+     *
+     * The server does the work before it answers, which can take seconds on a big budget, so this
+     * request gets a longer timeout than the rest. Failures map to [com.meneses.budgethunter.commons.data.network.ApiError]:
+     * `Forbidden` (no access to the budget, or AI processing is off for the account) and `Conflict`
+     * (a run for this budget is already in flight) are the ones a caller should tell apart.
+     *
+     * @param budgetId Server-side budget ID (passed in URL path)
+     * @return Result containing how many entries were categorized and how many are still waiting
+     */
+    suspend fun categorizeEntries(budgetId: Long): Result<CategorizeEntriesResponse> =
+        withContext(ioDispatcher) {
+            safeApiCall {
+                httpClient.post(ApiEndpoints.budgetEntriesCategorize(budgetId)) {
+                    timeout {
+                        requestTimeoutMillis = CATEGORIZE_TIMEOUT_MILLIS
+                        socketTimeoutMillis = CATEGORIZE_TIMEOUT_MILLIS
+                    }
+                }.body<CategorizeEntriesResponse>()
+            }
+        }
+
+    /**
      * Deletes a budget entry on the server.
      *
      * RESTful endpoint: DELETE /api/budgets/{budgetId}/entries/{entryId}
@@ -101,5 +128,11 @@ class BudgetEntryApiService(
         safeApiCall {
             httpClient.delete(ApiEndpoints.budgetEntry(budgetId, entryId)).body<Unit>()
         }
+    }
+
+    private companion object {
+        // The server asks the AI provider for what the rules cannot place, in batches, before it
+        // answers: generous on purpose, a timeout here would throw away work that is already done.
+        const val CATEGORIZE_TIMEOUT_MILLIS = 120_000L
     }
 }
