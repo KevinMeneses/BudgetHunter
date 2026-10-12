@@ -43,7 +43,9 @@ class CreateBudgetEntryFromImageUseCaseTest {
         useCase(processor).execute("file:///a.jpg", BudgetEntry())
 
         val prompt = processor.prompt.orEmpty()
-        BudgetEntry.Category.entries.forEach { assertTrue(prompt.contains("- ${it.name}:"), it.name) }
+        BudgetEntry.getAssignableCategories().forEach { assertTrue(prompt.contains("- ${it.name}:"), it.name) }
+        // "Sin categoría" is the absence of a category, so the model must never be offered it.
+        assertFalse(prompt.contains(BudgetEntry.Category.UNCATEGORIZED.name))
         val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
         assertTrue(prompt.contains(today.toString()))
         assertTrue(prompt.contains("FINAL TOTAL"))
