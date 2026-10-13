@@ -1,10 +1,16 @@
 package com.meneses.budgethunter.budgetMetrics
 
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
+import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.budgetMetrics.application.BudgetMetricsIntent
+import com.meneses.budgethunter.budgetMetrics.application.CategorizationOutcome
+import com.meneses.budgethunter.budgetMetrics.application.CategorizeEntriesUseCase
+import com.meneses.budgethunter.budgetMetrics.application.GetCategorizationOfferUseCase
 import com.meneses.budgethunter.budgetMetrics.application.GetTotalsPerCategoryUseCase
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -15,6 +21,8 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -26,6 +34,16 @@ class BudgetMetricsViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
     private val getTotalsPerCategoryUseCase = mockk<GetTotalsPerCategoryUseCase>()
+    private val getCategorizationOfferUseCase = mockk<GetCategorizationOfferUseCase>(relaxed = true)
+    private val categorizeEntriesUseCase = mockk<CategorizeEntriesUseCase>()
+    private val budget = Budget(id = 1, serverId = 10L)
+
+    private fun createViewModel() = BudgetMetricsViewModel(
+        budget = budget,
+        getTotalsPerCategoryUseCase = getTotalsPerCategoryUseCase,
+        getCategorizationOfferUseCase = getCategorizationOfferUseCase,
+        categorizeEntriesUseCase = categorizeEntriesUseCase
+    )
 
     @BeforeTest
     fun setup() {
@@ -44,7 +62,7 @@ class BudgetMetricsViewModelTest {
             BudgetEntry.Category.HEALTH to 250.0
         )
 
-        val viewModel = BudgetMetricsViewModel(getTotalsPerCategoryUseCase)
+        val viewModel = createViewModel()
         testDispatcher.scheduler.advanceUntilIdle()
 
         val state = viewModel.uiState.value
@@ -63,7 +81,7 @@ class BudgetMetricsViewModelTest {
             BudgetEntry.Category.LEISURE to 200.0
         )
 
-        val viewModel = BudgetMetricsViewModel(getTotalsPerCategoryUseCase)
+        val viewModel = createViewModel()
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(
@@ -80,7 +98,7 @@ class BudgetMetricsViewModelTest {
     fun `state is empty when there are no entries`() = runTest {
         coEvery { getTotalsPerCategoryUseCase.execute(BudgetEntry.Type.OUTCOME) } returns emptyMap()
 
-        val viewModel = BudgetMetricsViewModel(getTotalsPerCategoryUseCase)
+        val viewModel = createViewModel()
         testDispatcher.scheduler.advanceUntilIdle()
 
         val state = viewModel.uiState.value
@@ -97,7 +115,7 @@ class BudgetMetricsViewModelTest {
             BudgetEntry.Category.OTHER to 1200.0
         )
 
-        val viewModel = BudgetMetricsViewModel(getTotalsPerCategoryUseCase)
+        val viewModel = createViewModel()
         testDispatcher.scheduler.advanceUntilIdle()
         viewModel.sendIntent(BudgetMetricsIntent.SelectType(BudgetEntry.Type.INCOME))
         testDispatcher.scheduler.advanceUntilIdle()
@@ -112,7 +130,7 @@ class BudgetMetricsViewModelTest {
     fun `expenses are the type shown when the screen opens`() = runTest {
         coEvery { getTotalsPerCategoryUseCase.execute(BudgetEntry.Type.OUTCOME) } returns emptyMap()
 
-        val viewModel = BudgetMetricsViewModel(getTotalsPerCategoryUseCase)
+        val viewModel = createViewModel()
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(BudgetEntry.Type.OUTCOME, viewModel.uiState.value.selectedType)
@@ -124,9 +142,113 @@ class BudgetMetricsViewModelTest {
             BudgetEntry.Category.FOOD to 0.0
         )
 
-        val viewModel = BudgetMetricsViewModel(getTotalsPerCategoryUseCase)
+        val viewModel = createViewModel()
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(0.0, viewModel.uiState.value.categoryMetrics.single().percentage)
+    }
+
+    @Test
+    fun `the offer is in the state when there are entries waiting`() = runTest {
+        coEvery { getTotalsPerCategoryUseCase.execute(any()) } returns emptyMap()
+        coEvery { getCategorizationOfferUseCase.execute(budget) } returns 3
+
+        val viewModel = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(3, viewModel.uiState.value.categorizationOffer)
+    }
+
+    @Test
+    fun `there is no offer when nothing is waiting`() = runTest {
+        coEvery { getTotalsPerCategoryUseCase.execute(any()) } returns emptyMap()
+        coEvery { getCategorizationOfferUseCase.execute(budget) } returns 0
+
+        val viewModel = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.categorizationOffer)
+    }
+
+    @Test
+    fun `declining closes the offer and remembers how many were waiting`() = runTest {
+        coEvery { getTotalsPerCategoryUseCase.execute(any()) } returns emptyMap()
+        coEvery { getCategorizationOfferUseCase.execute(budget) } returns 4
+        val viewModel = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.sendIntent(BudgetMetricsIntent.DeclineCategorization)
+
+        assertNull(viewModel.uiState.value.categorizationOffer)
+        verify { getCategorizationOfferUseCase.decline(budget, 4) }
+    }
+
+    @Test
+    fun `confirming categorizes, closes the offer and reloads the totals`() = runTest {
+        coEvery { getTotalsPerCategoryUseCase.execute(BudgetEntry.Type.OUTCOME) } returnsMany listOf(
+            mapOf(BudgetEntry.Category.UNCATEGORIZED to 100.0),
+            mapOf(BudgetEntry.Category.FOOD to 100.0)
+        )
+        coEvery { getCategorizationOfferUseCase.execute(budget) } returns 2
+        coEvery { categorizeEntriesUseCase.execute(budget) } returns CategorizationOutcome.Done(2, 0)
+        val viewModel = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.sendIntent(BudgetMetricsIntent.ConfirmCategorization)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertNull(state.categorizationOffer)
+        assertFalse(state.isCategorizing)
+        assertEquals(CategorizationOutcome.Done(2, 0), state.categorizationOutcome)
+        assertEquals(BudgetEntry.Category.FOOD, state.categoryMetrics.single().category)
+        verify { getCategorizationOfferUseCase.clearDecline(budget) }
+    }
+
+    @Test
+    fun `a failed run keeps the offer so it can be retried`() = runTest {
+        coEvery { getTotalsPerCategoryUseCase.execute(any()) } returns emptyMap()
+        coEvery { getCategorizationOfferUseCase.execute(budget) } returns 2
+        val error = IllegalStateException("no network")
+        coEvery { categorizeEntriesUseCase.execute(budget) } returns CategorizationOutcome.Failed(error)
+        val viewModel = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.sendIntent(BudgetMetricsIntent.ConfirmCategorization)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals(2, state.categorizationOffer)
+        assertEquals(CategorizationOutcome.Failed(error), state.categorizationOutcome)
+    }
+
+    @Test
+    fun `a second confirmation while a run is going is ignored`() = runTest {
+        coEvery { getTotalsPerCategoryUseCase.execute(any()) } returns emptyMap()
+        coEvery { getCategorizationOfferUseCase.execute(budget) } returns 2
+        coEvery { categorizeEntriesUseCase.execute(budget) } returns CategorizationOutcome.Done(2, 0)
+        val viewModel = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.sendIntent(BudgetMetricsIntent.ConfirmCategorization)
+        viewModel.sendIntent(BudgetMetricsIntent.ConfirmCategorization)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        coVerify(exactly = 1) { categorizeEntriesUseCase.execute(budget) }
+    }
+
+    @Test
+    fun `showing the outcome clears it`() = runTest {
+        coEvery { getTotalsPerCategoryUseCase.execute(any()) } returns emptyMap()
+        coEvery { getCategorizationOfferUseCase.execute(budget) } returns 1
+        coEvery { categorizeEntriesUseCase.execute(budget) } returns CategorizationOutcome.AlreadyRunning
+        val viewModel = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+        viewModel.sendIntent(BudgetMetricsIntent.ConfirmCategorization)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.sendIntent(BudgetMetricsIntent.OutcomeShown)
+
+        assertNull(viewModel.uiState.value.categorizationOutcome)
     }
 }

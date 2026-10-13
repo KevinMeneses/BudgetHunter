@@ -103,7 +103,7 @@ already has a category, whoever chose it and "Otros" included, is never touched.
 - Not done on purpose: mapping Ktor's own timeout exceptions to `ApiError.Timeout` (today they fall into
   `Unknown`); it would change the message of every other call too, so it is a separate change.
 
-### Part 3 - Metrics screen: ask, then categorize
+### Part 3 - Metrics screen: ask, then categorize (done)
 This is where the feature becomes visible.
 - **When the dialog appears:** the user opens the metrics screen **and** AI processing is on **and** the
   budget is synced to the server (has a `serverId`) **and** offline mode is off **and** at least one entry
@@ -131,6 +131,14 @@ This is where the feature becomes visible.
   "Otros", which is exactly what the dialog offers to fix.
 - Tests: ViewModel (dialog conditions, confirm flow order, each error), compose previews for the dialog
   and the loading state; strings in `values` and `values-es`.
+- **As built:** `GetCategorizationOfferUseCase` (conditions + "Not now" memory, in memory so it resets on app
+  restart; it re-offers only when more entries wait than at the decline), `CategorizeEntriesUseCase` (push
+  entries -> endpoint, with one preferences push + retry on 403 -> pull -> refresh the entry cache),
+  `CategorizationOutcome` (Done / AlreadyRunning / AiOff / Failed), `CategorizeEntriesDialog` (stays up with
+  a spinner while the server works) and a snackbar for the outcome. `BudgetMetricsViewModel` now takes the
+  route's budget. A failed run keeps the offer so it can be retried; a finished run (even with entries left
+  waiting) closes it until more entries wait. The repo has no `@Preview` convention, so no previews were
+  added. The entry form needed no change: an entry left on "Sin categoría" is simply picked up here.
 
 ### Part 4 - Other entry sources
 - **Receipts:** the category the receipt AI returns (one of the assignable 11, never "Sin categoría") is sent
