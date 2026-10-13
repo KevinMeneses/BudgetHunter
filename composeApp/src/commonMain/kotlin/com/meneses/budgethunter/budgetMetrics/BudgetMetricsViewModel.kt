@@ -11,6 +11,7 @@ import com.meneses.budgethunter.budgetMetrics.application.CategorizeEntriesUseCa
 import com.meneses.budgethunter.budgetMetrics.application.GetCategorizationOfferUseCase
 import com.meneses.budgethunter.budgetMetrics.application.GetTotalsPerCategoryUseCase
 import com.meneses.budgethunter.budgetMetrics.domain.CategoryMetric
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -24,6 +25,8 @@ class BudgetMetricsViewModel(
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(BudgetMetricsState())
     val uiState = _uiState.asStateFlow()
+
+    private var metricsJob: Job? = null
 
     init {
         getMetrics(_uiState.value.selectedType)
@@ -41,12 +44,14 @@ class BudgetMetricsViewModel(
 
     private fun selectType(type: BudgetEntry.Type) {
         if (type == _uiState.value.selectedType) return
-        _uiState.update { it.copy(selectedType = type) }
+        _uiState.update { it.copy(selectedType = type, isLoading = true) }
         getMetrics(type)
     }
 
     private fun getMetrics(type: BudgetEntry.Type) {
-        viewModelScope.launch {
+        // Only the last type asked for may land in the state, even if an older read ends later.
+        metricsJob?.cancel()
+        metricsJob = viewModelScope.launch {
             val totalsPerCategory = getTotalsPerCategoryUseCase.execute(type)
             val total = totalsPerCategory.values.sum()
 
@@ -61,7 +66,8 @@ class BudgetMetricsViewModel(
             _uiState.update {
                 it.copy(
                     categoryMetrics = categoryMetrics,
-                    total = total
+                    total = total,
+                    isLoading = false
                 )
             }
         }

@@ -327,8 +327,10 @@
     <string name="metrics_expenses">Gastos</string>
     <string name="metrics_incomes">Ingresos</string>
     <string name="metrics_total">Total</string>
-    <string name="metrics_empty_title">Todavía no hay nada que mostrar</string>
-    <string name="metrics_empty_message">Agrega entradas a este presupuesto para ver cómo se distribuyen por categoría</string>
+    <string name="metrics_empty_expenses_title">Todavía no hay gastos</string>
+    <string name="metrics_empty_expenses_message">Agrega gastos a este presupuesto para ver cómo se distribuyen por categoría</string>
+    <string name="metrics_empty_incomes_title">Todavía no hay ingresos</string>
+    <string name="metrics_empty_incomes_message">Agrega ingresos a este presupuesto para ver cómo se distribuyen por categoría</string>
     <string name="categorize_dialog_title">¿Categorizar tus entradas automáticamente?</string>
     <string name="categorize_dialog_message">%1$d entradas no tienen categoría. Solo se envían sus descripciones para categorizarlas, nunca montos ni nombres.</string>
     <string name="categorize_dialog_progress">Categorizando tus entradas…</string>

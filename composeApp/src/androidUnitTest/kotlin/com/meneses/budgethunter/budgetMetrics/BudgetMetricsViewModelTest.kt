@@ -74,6 +74,40 @@ class BudgetMetricsViewModelTest {
     }
 
     @Test
+    fun `the screen is loading until the metrics are read, not empty`() = runTest {
+        coEvery { getTotalsPerCategoryUseCase.execute(BudgetEntry.Type.OUTCOME) } returns emptyMap()
+
+        val viewModel = createViewModel()
+        assertTrue(viewModel.uiState.value.isLoading)
+
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertFalse(viewModel.uiState.value.isLoading)
+    }
+
+    @Test
+    fun `switching type loads again and only the last type asked for is kept`() = runTest {
+        coEvery { getTotalsPerCategoryUseCase.execute(BudgetEntry.Type.OUTCOME) } returns mapOf(
+            BudgetEntry.Category.FOOD to 100.0
+        )
+        coEvery { getTotalsPerCategoryUseCase.execute(BudgetEntry.Type.INCOME) } returns mapOf(
+            BudgetEntry.Category.OTHER to 900.0
+        )
+        val viewModel = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.sendIntent(BudgetMetricsIntent.SelectType(BudgetEntry.Type.INCOME))
+        assertTrue(viewModel.uiState.value.isLoading)
+        viewModel.sendIntent(BudgetMetricsIntent.SelectType(BudgetEntry.Type.OUTCOME))
+        viewModel.sendIntent(BudgetMetricsIntent.SelectType(BudgetEntry.Type.INCOME))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertFalse(state.isLoading)
+        assertEquals(BudgetEntry.Type.INCOME, state.selectedType)
+        assertEquals(900.0, state.total)
+    }
+
+    @Test
     fun `the order the use case returns is kept, so the biggest category comes first`() = runTest {
         coEvery { getTotalsPerCategoryUseCase.execute(BudgetEntry.Type.OUTCOME) } returns mapOf(
             BudgetEntry.Category.TAXES to 500.0,

@@ -24,8 +24,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import budgethunter.composeapp.generated.resources.Res
-import budgethunter.composeapp.generated.resources.metrics_empty_message
-import budgethunter.composeapp.generated.resources.metrics_empty_title
+import budgethunter.composeapp.generated.resources.metrics_empty_expenses_message
+import budgethunter.composeapp.generated.resources.metrics_empty_expenses_title
+import budgethunter.composeapp.generated.resources.metrics_empty_incomes_message
+import budgethunter.composeapp.generated.resources.metrics_empty_incomes_title
 import budgethunter.composeapp.generated.resources.metrics_expenses
 import budgethunter.composeapp.generated.resources.metrics_incomes
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
@@ -34,6 +36,7 @@ import com.meneses.budgethunter.budgetMetrics.application.BudgetMetricsState
 import com.meneses.budgethunter.budgetMetrics.domain.CategoryMetric
 import com.meneses.budgethunter.commons.ui.DonutChart
 import com.meneses.budgethunter.commons.ui.EmptyStatePlaceholder
+import com.meneses.budgethunter.commons.ui.LoadingScreen
 import com.meneses.budgethunter.commons.util.toCurrency
 import com.meneses.budgethunter.theme.AppColors
 import com.meneses.budgethunter.theme.chartCategoryColors
@@ -46,11 +49,16 @@ fun BudgetMetricsContent(
     uiState: BudgetMetricsState,
     modifier: Modifier = Modifier
 ) {
+    if (uiState.isLoading) {
+        LoadingScreen()
+        return
+    }
+
     if (uiState.categoryMetrics.isEmpty()) {
         EmptyStatePlaceholder(
             modifier = modifier,
-            title = stringResource(Res.string.metrics_empty_title),
-            subtitle = stringResource(Res.string.metrics_empty_message)
+            title = uiState.selectedType.toEmptyTitle(),
+            subtitle = uiState.selectedType.toEmptyMessage()
         )
         return
     }
@@ -184,6 +192,19 @@ private fun CategoryRow(
 private fun BudgetEntry.Type.toMetricsLabel() = when (this) {
     BudgetEntry.Type.OUTCOME -> stringResource(Res.string.metrics_expenses)
     BudgetEntry.Type.INCOME -> stringResource(Res.string.metrics_incomes)
+}
+
+// Per type, because the other tab may well have entries: "add entries" would be wrong there.
+@Composable
+private fun BudgetEntry.Type.toEmptyTitle() = when (this) {
+    BudgetEntry.Type.OUTCOME -> stringResource(Res.string.metrics_empty_expenses_title)
+    BudgetEntry.Type.INCOME -> stringResource(Res.string.metrics_empty_incomes_title)
+}
+
+@Composable
+private fun BudgetEntry.Type.toEmptyMessage() = when (this) {
+    BudgetEntry.Type.OUTCOME -> stringResource(Res.string.metrics_empty_expenses_message)
+    BudgetEntry.Type.INCOME -> stringResource(Res.string.metrics_empty_incomes_message)
 }
 
 private fun Double.asPercentage(): String {

@@ -70,7 +70,9 @@ already has a category, whoever chose it and "Otros" included, is never touched.
   enum of the receipt response schema, and make the receipt parser accept only those (so a model answering
   `UNCATEGORIZED` gets `OTHER`, like any unknown value). `ChartColors` needs nothing: the donut colours are
   assigned by rank, not per category, so "Sin categoría" takes whatever hue its rank gets and the list below it
-  names it.
+  names it. Once categorization filled more categories, the 3-hue palette (everything else in gray) fell
+  short, so `chartCategoryColors()` now has one hue per category (12); the gray is only a fallback for a
+  category added later without a hue.
 - Form: "Sin categoría" is the first option and the default for new entries. Picking it explicitly is the same
   as picking nothing; picking any real category, "Otros" included, is a choice.
 - Existing rows keep what they have (`OTHER`): there is no way to tell whether that "Other" was a choice. The
@@ -135,8 +137,11 @@ This is where the feature becomes visible.
   restart; it re-offers only when more entries wait than at the decline), `CategorizeEntriesUseCase` (push
   entries -> endpoint, with one preferences push + retry on 403 -> pull -> refresh the entry cache),
   `CategorizationOutcome` (Done / AlreadyRunning / AiOff / Failed), `CategorizeEntriesDialog` (stays up with
-  a spinner while the server works) and a snackbar for the outcome. `BudgetMetricsViewModel` now takes the
-  route's budget. A failed run keeps the offer so it can be retried; a finished run (even with entries left
+  a spinner while the server works; it and `ConfirmationModal` share the app's dialog look through
+  `AppAlertDialog`, which only draws, so the categorize dialog keeps its own button behaviour) and a
+  snackbar for the outcome. `BudgetMetricsViewModel` now takes the route's budget. The screen shows
+  `LoadingScreen` until the totals of the selected type are read (`isLoading`), instead of the empty state;
+  the reload after a run doesn't show it, so the chart doesn't flash. A failed run keeps the offer so it can be retried; a finished run (even with entries left
   waiting) closes it until more entries wait. The repo has no `@Preview` convention, so no previews were
   added. The entry form needed no change: an entry left on "Sin categoría" is simply picked up here.
 

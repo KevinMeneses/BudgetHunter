@@ -1,13 +1,6 @@
 package com.meneses.budgethunter.commons.ui
 
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.DialogProperties
 import budgethunter.composeapp.generated.resources.Res
 import budgethunter.composeapp.generated.resources.confirmation
 import org.jetbrains.compose.resources.stringResource
@@ -23,46 +16,18 @@ fun ConfirmationModal(
     onConfirm: () -> Unit
 ) {
     if (show) {
-        AlertDialog(
-            onDismissRequest = onDismiss,
-            title = {
-                Text(
-                    text = title ?: stringResource(Res.string.confirmation),
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
+        AppAlertDialog(
+            title = title ?: stringResource(Res.string.confirmation),
+            confirmButtonText = confirmButtonText,
+            cancelButtonText = cancelButtonText,
+            onConfirm = {
+                onConfirm()
+                onDismiss()
             },
-            text = {
-                Text(
-                    text = message,
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        onConfirm()
-                        onDismiss()
-                    }
-                ) {
-                    Text(
-                        text = confirmButtonText,
-                        fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.error
-                    )
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = onDismiss) {
-                    Text(
-                        text = cancelButtonText,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-            },
-            properties = DialogProperties()
-        )
+            onCancel = onDismiss,
+            onDismissRequest = onDismiss
+        ) {
+            AppAlertDialogMessage(message)
+        }
     }
 }
