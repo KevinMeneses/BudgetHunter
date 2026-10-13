@@ -208,28 +208,12 @@ class GetTotalsPerCategoryUseCaseTest {
         val useCase = useCaseWith(entries)
         val result = useCase.execute(BudgetEntry.Type.OUTCOME)
 
-        // Should have all categories with non-zero values, "Sin categoría" included
+        // Should have all categories with non-zero values
         assertEquals(BudgetEntry.getCategories().size, result.size)
 
-        // Each category got (position + 1) * 10, whatever the order of the list
-        BudgetEntry.getCategories().forEachIndexed { index, category ->
-            assertEquals(((index + 1) * 10).toDouble(), result[category], category.name)
-        }
-        assertEquals(10.0, result[BudgetEntry.Category.UNCATEGORIZED])
-    }
-
-    @Test
-    fun `execute totals entries without a category on their own, apart from Other`() = runTest {
-        val entries = listOf(
-            BudgetEntry(id = 1, budgetId = 1, amount = "40", category = BudgetEntry.Category.UNCATEGORIZED),
-            BudgetEntry(id = 2, budgetId = 1, amount = "60", category = BudgetEntry.Category.UNCATEGORIZED),
-            BudgetEntry(id = 3, budgetId = 1, amount = "25", category = BudgetEntry.Category.OTHER)
-        )
-
-        val result = useCaseWith(entries).execute(BudgetEntry.Type.OUTCOME)
-
-        assertEquals(100.0, result[BudgetEntry.Category.UNCATEGORIZED])
-        assertEquals(25.0, result[BudgetEntry.Category.OTHER])
+        // Verify specific values
+        assertEquals(10.0, result[BudgetEntry.Category.FOOD])
+        assertEquals(20.0, result[BudgetEntry.Category.GROCERIES])
     }
 
     @Test

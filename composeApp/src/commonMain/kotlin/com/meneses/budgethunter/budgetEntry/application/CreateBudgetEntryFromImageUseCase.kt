@@ -51,7 +51,7 @@ class CreateBudgetEntryFromImageUseCase(
         Respond only with a JSON object matching the provided schema.
     """.trimIndent()
 
-    private fun categoryGuide() = BudgetEntry.getAssignableCategories().joinToString("\n          ") { category ->
+    private fun categoryGuide() = BudgetEntry.getCategories().joinToString("\n          ") { category ->
         "- ${category.name}: ${categoryHints.getValue(category)}"
     }
 

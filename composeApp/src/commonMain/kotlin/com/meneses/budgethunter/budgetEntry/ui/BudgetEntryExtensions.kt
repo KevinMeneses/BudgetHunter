@@ -15,7 +15,6 @@ import budgethunter.composeapp.generated.resources.self_care
 import budgethunter.composeapp.generated.resources.services
 import budgethunter.composeapp.generated.resources.taxes
 import budgethunter.composeapp.generated.resources.transportation
-import budgethunter.composeapp.generated.resources.uncategorized
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import org.jetbrains.compose.resources.stringResource
 
@@ -30,7 +29,6 @@ fun BudgetEntry.Type.toStringResource(): String {
 @Composable
 fun BudgetEntry.Category.toStringResource(): String {
     return when (this) {
-        BudgetEntry.Category.UNCATEGORIZED -> stringResource(Res.string.uncategorized)
         BudgetEntry.Category.FOOD -> stringResource(Res.string.food)
         BudgetEntry.Category.GROCERIES -> stringResource(Res.string.groceries)
         BudgetEntry.Category.SELF_CARE -> stringResource(Res.string.self_care)
