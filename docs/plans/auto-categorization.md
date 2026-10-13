@@ -156,9 +156,14 @@ This is where the feature becomes visible.
   category from the receipt replaces it (both covered by tests). Declining AI autofill leaves the entry as it
   was. Offline entries need nothing extra: the metrics flow pushes unsynced entries before it calls the server.
 
-### Part 5 - Cleanup and docs
+### Part 5 - Cleanup and docs (done)
 - Update `CLAUDE.md` (still describes the pre-KMP layout) and `README.md` with the behavior.
 - Check the iOS source set still compiles (`commonMain` changes only); `./gradlew ktlint test` pass.
+- **As built:** `CLAUDE.md` and `README.md` now describe the KMP layout, the current versions and the feature.
+  `AGENTS.md` still describes the old `app/` module and was left out of scope. The iOS compile could not be run
+  here (no Xcode, no Android SDK); instead the files this feature changed in `commonMain` were checked for
+  JVM/Android-only APIs (`java.*`, `android.*`, `String.format`, `synchronized`) and have none, so CI plus an
+  iOS build on a Mac remain the real check.
 
 ## Acceptance criteria
 - Creating an entry without choosing a category works offline, is stored `UNCATEGORIZED`, and nothing is
