@@ -185,7 +185,7 @@ class GeminiApiClient(
         const val DEFAULT_RETRY_DELAY_MS = 1_000L
         val BLOCKED_FINISH_REASONS = setOf("SAFETY", "PROHIBITED_CONTENT", "BLOCKLIST", "SPII", "RECITATION")
         const val ENDPOINT =
-            "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent"
         val ISO_DATE = Regex("""\d{4}-\d{2}-\d{2}""")
 
         val EXTRACTION_SCHEMA = GeminiSchema(

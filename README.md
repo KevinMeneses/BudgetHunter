@@ -48,7 +48,7 @@ A modern **cross-platform** budget tracking application built with Kotlin Multip
 - **DataStore** - Multiplatform preferences storage
 
 ### Key Libraries
-- **Google Generative AI (Gemini 2.5 Flash)** - AI-powered receipt processing
+- **Google Generative AI (Gemini 3.8 Flash)** - AI-powered receipt processing
 - **Ktor 3.3.3** - HTTP client, Server-Sent Events and Gemini calls
 - **Kotlinx Serialization 1.7.3** - JSON serialization
 - **Compottie 2.0.0** - Lottie animations for Compose Multiplatform
