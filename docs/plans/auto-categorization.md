@@ -82,20 +82,26 @@ already has a category, whoever chose it and "Otros" included, is never touched.
 - Tests added: `BudgetEntryTest` (default, the two lists, `OTHER` is not "no category"), `BudgetEntryMapperTest`
   (server value read, unknown value is `OTHER`, requests carry `UNCATEGORIZED`), and the Gemini parser case.
 
-### Part 2 - Network contract
+### Part 2 - Network contract (done)
 - `CreateBudgetEntryRequest` / `UpdateBudgetEntryRequest`: **no shape change**, `category: String` stays.
   The app sends `UNCATEGORIZED` for a waiting entry (the server treats it as "not chosen") and the category
   name otherwise. No `null`, so nothing here depends on the backend accepting a missing field.
 - `BudgetEntryResponse`: no change; `mergeServerEntry` and `updateLocalEntryFromResponse` already copy the
   server's category, `UNCATEGORIZED` included.
-- New call in `BudgetEntryApiService` + `ApiEndpoints`: `POST /api/budgets/{id}/entries/categorize`
-  -> `CategorizeEntriesResponse(categorized: Int, pending: Long)`. Failures to handle: 403 (the account's
-  AI preference is off or not saved yet, or no access), 409 (a run is already in flight), network errors.
+- New call `BudgetEntryApiService.categorizeEntries(budgetId)` + `ApiEndpoints.budgetEntriesCategorize`:
+  `POST /api/budgets/{id}/entries/categorize` -> `CategorizeEntriesResponse(categorized: Int, pending: Long)`.
+  The server works before it answers (seconds on a big budget), so this one request gets a 120s request and
+  socket timeout instead of the engine defaults. Errors reuse the existing `ApiError` mapping: `Forbidden`
+  (403: the account's AI preference is off or not saved yet, or no access), `Conflict` (409: a run is already
+  in flight), `Unauthorized`, `ServerError`, `ParseError`. Part 3 decides what to tell the user for each.
 - **Deploy order:** the backend that understands `UNCATEGORIZED` (its Parts 1 and 4) must be live before
   this ships; an older server would store the string as if it were the user's choice.
 - Server wins for synced entries; an unsynced local entry keeps its own category.
-- Tests: serialization of `UNCATEGORIZED` and of the new response; `SyncFlowIntegrationTest` case where
-  a pull brings categories chosen by the server.
+- Tests (`BudgetEntryApiServiceCategorizeTest`, Ktor `MockEngine`): method and path, the response is read
+  (and extra fields ignored), 403 -> `Forbidden`, 409 -> `Conflict`, 401/5xx, an unreadable answer is a
+  `ParseError`. The serialization of `UNCATEGORIZED` in entry requests was covered in Part 1.
+- Not done on purpose: mapping Ktor's own timeout exceptions to `ApiError.Timeout` (today they fall into
+  `Unknown`); it would change the message of every other call too, so it is a separate change.
 
 ### Part 3 - Metrics screen: ask, then categorize
 This is where the feature becomes visible.
