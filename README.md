@@ -18,6 +18,7 @@ A modern **cross-platform** budget tracking application built with Kotlin Multip
 
 ### Smart Features
 - **🤖 AI Receipt Scanning**: Use Google Gemini AI to extract transaction details from receipt images and PDFs
+- **🏷️ Automatic Categorization**: Entries without a category ("Sin categoría") can be categorized from their description on request: the metrics screen asks first, and only descriptions are sent
 - **📱 SMS Transaction Detection**: Automatically detect and parse bank transaction SMS messages
 - **🏦 Multi-Bank Support**: Configurable SMS parsing for different bank formats
 - **📊 Real-time Metrics**: Track spending by category with visual breakdowns
@@ -28,7 +29,7 @@ A modern **cross-platform** budget tracking application built with Kotlin Multip
 - **Offline-First**: Local SQLite database with SqlDelight for reliable data storage
 - **Modern UI**: Built with Compose Multiplatform for a smooth, native experience on both platforms
 - **Real-time Updates**: Reactive UI with StateFlow and Compose integration
-- **Configurable AI Processing**: Toggle AI features on/off in settings
+- **Configurable AI Processing**: One toggle in settings turns receipt scanning and automatic categorization on/off (kept on your account)
 
 ## 🛠️ Tech Stack
 
@@ -40,7 +41,7 @@ A modern **cross-platform** budget tracking application built with Kotlin Multip
 - **Dependency Injection** - Koin with KSP annotation processing
 
 ### Core Technologies
-- **Kotlin 2.1.0** - Primary programming language
+- **Kotlin 2.2.21** - Primary programming language
 - **Compose Multiplatform** - Modern declarative UI toolkit for Android and iOS
 - **SqlDelight 2.0.2** - Type-safe SQL database library with multiplatform drivers
 - **Navigation Compose** - Type-safe navigation (both AndroidX and JetBrains multiplatform)
@@ -48,7 +49,7 @@ A modern **cross-platform** budget tracking application built with Kotlin Multip
 
 ### Key Libraries
 - **Google Generative AI (Gemini 2.5 Flash)** - AI-powered receipt processing
-- **Ktor 2.3.12** - HTTP client and WebSocket communication
+- **Ktor 3.3.3** - HTTP client, Server-Sent Events and Gemini calls
 - **Kotlinx Serialization 1.7.3** - JSON serialization
 - **Compottie 2.0.0** - Lottie animations for Compose Multiplatform
 - **Material 3** - Modern Material Design components
@@ -136,6 +137,13 @@ BudgetHunter/
 └── gradle/
     └── libs.versions.toml               # Centralized dependency management
 ```
+
+### Automatic categorization
+New entries start as "Sin categoría". When AI processing is on, opening the metrics screen of a synced budget with
+uncategorized entries asks whether to categorize them; on confirm the app uploads pending entries, the backend
+categorizes them (keyword rules, then a cache, then Gemini Flash-Lite, using only the description) and the app
+refreshes the chart. Entries that already have a category are never changed. Details:
+[`docs/plans/auto-categorization.md`](docs/plans/auto-categorization.md).
 
 Each feature module follows **Clean Architecture** with:
 - `application/` - ViewModels and presentation logic
