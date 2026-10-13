@@ -177,7 +177,7 @@
     <!-- AI Processing -->
     <string name="ai_processing">Procesamiento con IA</string>
     <string name="enable_ai_processing">Habilitar procesamiento con IA</string>
-    <string name="ai_processing_description">Procesa automáticamente las facturas y comprobantes usando inteligencia artificial para completar el formulario de entrada</string>
+    <string name="ai_processing_description">Usa inteligencia artificial para completar el formulario de entrada con facturas y comprobantes, y permite que el servidor categorice entradas a partir de su descripción cuando lo pidas. Para eso solo se envía la descripción</string>
     <string name="activated">Activado</string>
     <string name="deactivated">Desactivado</string>
     
@@ -329,4 +329,13 @@
     <string name="metrics_total">Total</string>
     <string name="metrics_empty_title">Todavía no hay nada que mostrar</string>
     <string name="metrics_empty_message">Agrega entradas a este presupuesto para ver cómo se distribuyen por categoría</string>
+    <string name="categorize_dialog_title">¿Categorizar tus entradas automáticamente?</string>
+    <string name="categorize_dialog_message">%1$d entradas no tienen categoría. Solo se envían sus descripciones para categorizarlas, nunca montos ni nombres.</string>
+    <string name="categorize_dialog_progress">Categorizando tus entradas…</string>
+    <string name="categorize_confirm">Categorizar</string>
+    <string name="categorize_not_now">Ahora no</string>
+    <string name="categorize_done">%1$d entradas categorizadas</string>
+    <string name="categorize_done_pending">%1$d entradas categorizadas. %2$d no se pudieron ubicar, puedes intentarlo más tarde</string>
+    <string name="categorize_already_running">Estas entradas ya se están categorizando, intenta de nuevo en un momento</string>
+    <string name="categorize_ai_off">El procesamiento con IA está desactivado en tu cuenta. Actívalo en Ajustes para categorizar entradas</string>
 </resources>
