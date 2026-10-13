@@ -48,6 +48,10 @@ class SmsMapper(
                 bankConfig.displayName
             ),
             type = analysis.type,
+            // A bank message says nothing about what was bought: leave it waiting so the metrics
+            // screen can offer to categorize it from the description, whatever the AI toggle said
+            // when the message arrived.
+            category = BudgetEntry.Category.UNCATEGORIZED,
             budgetId = defaultBudgetId
         )
 

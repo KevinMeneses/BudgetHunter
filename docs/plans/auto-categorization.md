@@ -140,7 +140,7 @@ This is where the feature becomes visible.
   waiting) closes it until more entries wait. The repo has no `@Preview` convention, so no previews were
   added. The entry form needed no change: an entry left on "Sin categoría" is simply picked up here.
 
-### Part 4 - Other entry sources
+### Part 4 - Other entry sources (done)
 - **Receipts:** the category the receipt AI returns (one of the assignable 11, never "Sin categoría") is sent
   as a normal category, so the server never touches it and a good receipt-based category is not overwritten by
   a description-only guess. If the user declines AI autofill in the confirmation dialog, the entry keeps
@@ -149,6 +149,12 @@ This is where the feature becomes visible.
   screen can offer to categorize it (the main beneficiary of the feature), whatever the toggle said when it
   arrived.
 - Entries created offline are categorized the same way once they have synced.
+- **As built:** most of this already held after Part 1 (the default category is `UNCATEGORIZED`), so the
+  change is small: `SmsMapper` sets `UNCATEGORIZED` explicitly (with a test) instead of relying on the
+  default; the receipt merge already keeps the original category when the AI answers `OTHER`, which for an
+  entry still waiting means it stays waiting and the server tries from the description, while any real
+  category from the receipt replaces it (both covered by tests). Declining AI autofill leaves the entry as it
+  was. Offline entries need nothing extra: the metrics flow pushes unsynced entries before it calls the server.
 
 ### Part 5 - Cleanup and docs
 - Update `CLAUDE.md` (still describes the pre-KMP layout) and `README.md` with the behavior.

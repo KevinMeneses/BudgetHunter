@@ -104,6 +104,26 @@ class CreateBudgetEntryFromImageUseCaseTest {
     }
 
     @Test
+    fun `OTHER from the ai keeps an entry without a category waiting`() = runTest {
+        val original = BudgetEntry()
+        val ai = BudgetEntry(amount = "10", description = "x", category = BudgetEntry.Category.OTHER)
+
+        val result = useCase(FakeProcessor(AiExtractionResult.Success(ai))).execute("file:///a.jpg", original)
+
+        assertEquals(BudgetEntry.Category.UNCATEGORIZED, result.entry.category)
+    }
+
+    @Test
+    fun `a real category from the ai replaces the one waiting`() = runTest {
+        val original = BudgetEntry()
+        val ai = BudgetEntry(amount = "10", description = "x", category = BudgetEntry.Category.HEALTH)
+
+        val result = useCase(FakeProcessor(AiExtractionResult.Success(ai))).execute("file:///a.jpg", original)
+
+        assertEquals(BudgetEntry.Category.HEALTH, result.entry.category)
+    }
+
+    @Test
     fun `ai failure keeps the original entry and reports the reason`() = runTest {
         val original = BudgetEntry(amount = "5", description = "mine")
 
