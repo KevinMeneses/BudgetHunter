@@ -105,7 +105,10 @@ class CreateBudgetEntryFromImageUseCase(
         amount = ai.amount.trim().takeIf { it.toDoubleOrNull()?.let { value -> value > 0 } == true }
             ?: original.amount,
         description = ai.description.takeIf { it.isNotBlank() } ?: original.description,
-        // OTHER is the "no idea" answer: don't overwrite a category the user already picked with it
+        // OTHER is the "no idea" answer: don't overwrite a category the user already picked with it.
+        // On an entry still waiting for one this keeps it waiting ("Sin categoría"), so the server
+        // can try from the description later; any other category the receipt gives is a real choice
+        // and the server never touches it.
         category = ai.category.takeIf { it != BudgetEntry.Category.OTHER } ?: original.category,
         date = ai.date.takeIf { it.isNotBlank() } ?: original.date
     )

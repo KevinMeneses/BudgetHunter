@@ -41,6 +41,17 @@ class SmsMapperTest {
     }
 
     @Test
+    fun `smsToBudgetEntry leaves the entry without a category for the server to categorize`() = runTest {
+        coEvery { preferencesManager.getDefaultBudgetId() } returns 7
+        coEvery { budgetLocalDataSource.getById(7) } returns Budget(id = 7, name = "Default", amount = 100.0)
+
+        val result = mapper.smsToBudgetEntry(purchaseSms, bankConfig)
+
+        assertIs<SmsParseResult.Success>(result)
+        assertEquals(BudgetEntry.Category.UNCATEGORIZED, result.entry.category)
+    }
+
+    @Test
     fun `smsToBudgetEntry returns NoDefaultBudget when the default budget no longer exists`() = runTest {
         coEvery { preferencesManager.getDefaultBudgetId() } returns 7
         coEvery { budgetLocalDataSource.getById(7) } returns null
