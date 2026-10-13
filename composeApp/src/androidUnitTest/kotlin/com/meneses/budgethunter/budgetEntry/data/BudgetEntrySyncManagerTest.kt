@@ -146,7 +146,7 @@ class BudgetEntrySyncManagerTest {
             modificationDate = "2024-01-01"
         )
         coEvery {
-            apiService.createEntry(101, CreateBudgetEntryRequest(50.0, "Entry 1", "OTHER", "OUTCOME", date = entry1.date))
+            apiService.createEntry(101, CreateBudgetEntryRequest(50.0, "Entry 1", "UNCATEGORIZED", "OUTCOME", date = entry1.date))
         } returns Result.success(response1)
 
         val response2 = BudgetEntryResponse(
@@ -162,7 +162,7 @@ class BudgetEntrySyncManagerTest {
             modificationDate = "2024-01-01"
         )
         coEvery {
-            apiService.createEntry(101, CreateBudgetEntryRequest(75.0, "Entry 2", "OTHER", "OUTCOME", date = entry2.date))
+            apiService.createEntry(101, CreateBudgetEntryRequest(75.0, "Entry 2", "UNCATEGORIZED", "OUTCOME", date = entry2.date))
         } returns Result.success(response2)
 
         every { entryLocalDataSource.update(any()) } returns Unit
@@ -210,7 +210,7 @@ class BudgetEntrySyncManagerTest {
             modificationDate = "2024-01-02"
         )
         coEvery {
-            apiService.updateEntry(101, 201, UpdateBudgetEntryRequest(60.0, "Updated Entry", "OTHER", "OUTCOME", date = entry.date))
+            apiService.updateEntry(101, 201, UpdateBudgetEntryRequest(60.0, "Updated Entry", "UNCATEGORIZED", "OUTCOME", date = entry.date))
         } returns Result.success(response)
 
         every { entryLocalDataSource.update(any()) } returns Unit
@@ -243,14 +243,14 @@ class BudgetEntrySyncManagerTest {
             updatedByEmail = null, creationDate = "2024-01-01", modificationDate = "2024-01-01"
         )
         coEvery {
-            apiService.createEntry(101, CreateBudgetEntryRequest(50.0, "Entry 1", "OTHER", "OUTCOME", date = entry1.date))
+            apiService.createEntry(101, CreateBudgetEntryRequest(50.0, "Entry 1", "UNCATEGORIZED", "OUTCOME", date = entry1.date))
         } returns Result.success(response1)
         every { entryLocalDataSource.update(match { it.id == 1 }) } returns Unit
 
         // Second entry fails
         val networkError = Exception("Network error")
         coEvery {
-            apiService.createEntry(101, CreateBudgetEntryRequest(75.0, "Entry 2", "OTHER", "OUTCOME", date = entry2.date))
+            apiService.createEntry(101, CreateBudgetEntryRequest(75.0, "Entry 2", "UNCATEGORIZED", "OUTCOME", date = entry2.date))
         } returns Result.failure(networkError)
 
         // When
@@ -454,7 +454,7 @@ class BudgetEntrySyncManagerTest {
             updatedByEmail = null, creationDate = "2024-01-01", modificationDate = "2024-01-01"
         )
         coEvery {
-            apiService.createEntry(101, CreateBudgetEntryRequest(50.0, "Local Entry", "OTHER", "OUTCOME", date = localEntry.date))
+            apiService.createEntry(101, CreateBudgetEntryRequest(50.0, "Local Entry", "UNCATEGORIZED", "OUTCOME", date = localEntry.date))
         } returns Result.success(createResponse)
         every { entryLocalDataSource.update(any()) } returns Unit
 
@@ -616,7 +616,7 @@ class BudgetEntrySyncManagerTest {
             creationDate = "2024-01-01", modificationDate = "2024-01-01"
         )
         coEvery {
-            apiService.createEntry(101, CreateBudgetEntryRequest(50.0, "Entry 1", "OTHER", "OUTCOME", date = "2026-01-15"))
+            apiService.createEntry(101, CreateBudgetEntryRequest(50.0, "Entry 1", "UNCATEGORIZED", "OUTCOME", date = "2026-01-15"))
         } returns Result.success(response)
         every { entryLocalDataSource.update(any()) } returns Unit
 
@@ -626,7 +626,7 @@ class BudgetEntrySyncManagerTest {
         // Then
         assertIs<SyncResult.Success<SyncStats>>(result)
         coVerify {
-            apiService.createEntry(101, CreateBudgetEntryRequest(50.0, "Entry 1", "OTHER", "OUTCOME", date = "2026-01-15"))
+            apiService.createEntry(101, CreateBudgetEntryRequest(50.0, "Entry 1", "UNCATEGORIZED", "OUTCOME", date = "2026-01-15"))
         }
     }
 
@@ -654,7 +654,7 @@ class BudgetEntrySyncManagerTest {
             creationDate = "2024-01-01", modificationDate = "2024-01-02"
         )
         coEvery {
-            apiService.updateEntry(101, 201, UpdateBudgetEntryRequest(60.0, "Updated Entry", "OTHER", "OUTCOME", date = "2026-02-20"))
+            apiService.updateEntry(101, 201, UpdateBudgetEntryRequest(60.0, "Updated Entry", "UNCATEGORIZED", "OUTCOME", date = "2026-02-20"))
         } returns Result.success(response)
         every { entryLocalDataSource.update(any()) } returns Unit
 
@@ -664,7 +664,7 @@ class BudgetEntrySyncManagerTest {
         // Then
         assertIs<SyncResult.Success<SyncStats>>(result)
         coVerify {
-            apiService.updateEntry(101, 201, UpdateBudgetEntryRequest(60.0, "Updated Entry", "OTHER", "OUTCOME", date = "2026-02-20"))
+            apiService.updateEntry(101, 201, UpdateBudgetEntryRequest(60.0, "Updated Entry", "UNCATEGORIZED", "OUTCOME", date = "2026-02-20"))
         }
     }
 
@@ -948,10 +948,10 @@ class BudgetEntrySyncManagerTest {
         val entry2 = BudgetEntry(id = 2, budgetId = 1, amount = "75.0", description = "Entry 2", serverId = null)
         every { entryLocalDataSource.getUnsynced(1) } returns listOf(entry1, entry2)
         coEvery {
-            apiService.createEntry(101, CreateBudgetEntryRequest(50.0, "Entry 1", "OTHER", "OUTCOME", date = entry1.date))
+            apiService.createEntry(101, CreateBudgetEntryRequest(50.0, "Entry 1", "UNCATEGORIZED", "OUTCOME", date = entry1.date))
         } returns Result.success(serverResponse(201, 50.0, "Entry 1"))
         coEvery {
-            apiService.createEntry(101, CreateBudgetEntryRequest(75.0, "Entry 2", "OTHER", "OUTCOME", date = entry2.date))
+            apiService.createEntry(101, CreateBudgetEntryRequest(75.0, "Entry 2", "UNCATEGORIZED", "OUTCOME", date = entry2.date))
         } returns Result.failure(Exception("Network error"))
         every { entryLocalDataSource.update(any()) } returns Unit
 

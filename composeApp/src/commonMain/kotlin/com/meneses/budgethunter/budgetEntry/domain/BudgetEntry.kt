@@ -13,7 +13,7 @@ data class BudgetEntry(
     val amount: String = EMPTY,
     val description: String = EMPTY,
     val type: Type = Type.OUTCOME,
-    val category: Category = Category.OTHER,
+    val category: Category = Category.UNCATEGORIZED,
     val date: String = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date.toString(),
     val invoice: String? = null,
     val isSelected: Boolean = false,
@@ -32,6 +32,13 @@ data class BudgetEntry(
 
     @Serializable
     enum class Category {
+        /**
+         * Not a category but the absence of one ("Sin categoría"): what an entry holds until someone
+         * chooses. It is what the automatic categorization looks for, and it is different from [OTHER],
+         * which is a choice (the user's, or the AI's after looking at the entry and finding nothing
+         * that fits). The server stores it as is.
+         */
+        UNCATEGORIZED,
         FOOD,
         GROCERIES,
         SELF_CARE,
@@ -47,7 +54,15 @@ data class BudgetEntry(
 
     companion object {
         fun getItemTypes() = listOf(Type.OUTCOME, Type.INCOME)
-        fun getCategories() = listOf(
+
+        /** Every category a person can pick in the selector or see in the metrics, "Sin categoría" first. */
+        fun getCategories() = listOf(Category.UNCATEGORIZED) + getAssignableCategories()
+
+        /**
+         * The categories that mean something: what the AI may answer, and what the receipt prompt and its
+         * response schema list. Never includes [Category.UNCATEGORIZED].
+         */
+        fun getAssignableCategories() = listOf(
             Category.FOOD,
             Category.GROCERIES,
             Category.SELF_CARE,

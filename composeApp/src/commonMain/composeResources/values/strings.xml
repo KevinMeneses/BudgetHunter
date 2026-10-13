@@ -83,6 +83,7 @@
     <string name="leisure">Leisure</string>
     <string name="taxes">Taxes</string>
     <string name="other">Other</string>
+    <string name="uncategorized">Uncategorized</string>
     
     <!-- Financial Terms -->
     <string name="total_outcomes">Total expenses:</string>
@@ -176,7 +177,7 @@
     <!-- AI Processing -->
     <string name="ai_processing">AI processing</string>
     <string name="enable_ai_processing">Enable AI processing</string>
-    <string name="ai_processing_description">Automatically processes invoices and receipts using artificial intelligence to fill in the entry form</string>
+    <string name="ai_processing_description">Uses artificial intelligence to fill in the entry form from invoices and receipts, and lets the server categorize entries from their description when you ask. Only the description is sent for that</string>
     <string name="activated">On</string>
     <string name="deactivated">Off</string>
     
@@ -326,6 +327,17 @@
     <string name="metrics_expenses">Expenses</string>
     <string name="metrics_incomes">Incomes</string>
     <string name="metrics_total">Total</string>
-    <string name="metrics_empty_title">Nothing to show yet</string>
-    <string name="metrics_empty_message">Add entries to this budget to see how they are distributed by category</string>
+    <string name="metrics_empty_expenses_title">No expenses yet</string>
+    <string name="metrics_empty_expenses_message">Add expenses to this budget to see how they are distributed by category</string>
+    <string name="metrics_empty_incomes_title">No income yet</string>
+    <string name="metrics_empty_incomes_message">Add income to this budget to see how it is distributed by category</string>
+    <string name="categorize_dialog_title">Categorize your entries automatically?</string>
+    <string name="categorize_dialog_message">%1$d entries have no category. Only their descriptions are sent to be categorized, never amounts or names.</string>
+    <string name="categorize_dialog_progress">Categorizing your entries…</string>
+    <string name="categorize_confirm">Categorize</string>
+    <string name="categorize_not_now">Not now</string>
+    <string name="categorize_done">%1$d entries categorized</string>
+    <string name="categorize_done_pending">%1$d entries categorized. %2$d could not be placed, you can try again later</string>
+    <string name="categorize_already_running">These entries are already being categorized, try again in a moment</string>
+    <string name="categorize_ai_off">AI processing is turned off for your account. Turn it on in Settings to categorize entries</string>
 </resources>

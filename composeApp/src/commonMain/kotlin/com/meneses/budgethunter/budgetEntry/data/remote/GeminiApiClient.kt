@@ -162,7 +162,7 @@ class GeminiApiClient(
         val description = extraction.description?.trim().orEmpty()
         if (amount.isEmpty() && description.isEmpty()) return failure(AiFailureReason.INVALID_RESPONSE)
 
-        val category = BudgetEntry.Category.entries
+        val category = BudgetEntry.getAssignableCategories()
             .firstOrNull { it.name.equals(extraction.category?.trim(), ignoreCase = true) }
             ?: BudgetEntry.Category.OTHER
 
@@ -205,7 +205,7 @@ class GeminiApiClient(
                 ),
                 "category" to GeminiSchema(
                     type = "STRING",
-                    enum = BudgetEntry.Category.entries.map { it.name }
+                    enum = BudgetEntry.getAssignableCategories().map { it.name }
                 ),
                 "date" to GeminiSchema(
                     type = "STRING",

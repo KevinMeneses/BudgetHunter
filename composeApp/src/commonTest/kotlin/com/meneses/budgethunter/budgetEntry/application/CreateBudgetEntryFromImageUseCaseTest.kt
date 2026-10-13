@@ -43,7 +43,9 @@ class CreateBudgetEntryFromImageUseCaseTest {
         useCase(processor).execute("file:///a.jpg", BudgetEntry())
 
         val prompt = processor.prompt.orEmpty()
-        BudgetEntry.Category.entries.forEach { assertTrue(prompt.contains("- ${it.name}:"), it.name) }
+        BudgetEntry.getAssignableCategories().forEach { assertTrue(prompt.contains("- ${it.name}:"), it.name) }
+        // "Sin categoría" is the absence of a category, so the model must never be offered it.
+        assertFalse(prompt.contains(BudgetEntry.Category.UNCATEGORIZED.name))
         val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
         assertTrue(prompt.contains(today.toString()))
         assertTrue(prompt.contains("FINAL TOTAL"))
@@ -95,6 +97,26 @@ class CreateBudgetEntryFromImageUseCaseTest {
     fun `OTHER from the ai does not overwrite the user's category`() = runTest {
         val original = BudgetEntry(category = BudgetEntry.Category.HEALTH)
         val ai = BudgetEntry(amount = "10", description = "x", category = BudgetEntry.Category.OTHER)
+
+        val result = useCase(FakeProcessor(AiExtractionResult.Success(ai))).execute("file:///a.jpg", original)
+
+        assertEquals(BudgetEntry.Category.HEALTH, result.entry.category)
+    }
+
+    @Test
+    fun `OTHER from the ai keeps an entry without a category waiting`() = runTest {
+        val original = BudgetEntry()
+        val ai = BudgetEntry(amount = "10", description = "x", category = BudgetEntry.Category.OTHER)
+
+        val result = useCase(FakeProcessor(AiExtractionResult.Success(ai))).execute("file:///a.jpg", original)
+
+        assertEquals(BudgetEntry.Category.UNCATEGORIZED, result.entry.category)
+    }
+
+    @Test
+    fun `a real category from the ai replaces the one waiting`() = runTest {
+        val original = BudgetEntry()
+        val ai = BudgetEntry(amount = "10", description = "x", category = BudgetEntry.Category.HEALTH)
 
         val result = useCase(FakeProcessor(AiExtractionResult.Success(ai))).execute("file:///a.jpg", original)
 

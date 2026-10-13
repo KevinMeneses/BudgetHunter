@@ -360,7 +360,9 @@ fun BudgetHunterNavigation() {
                 typeMap = mapOf(typeOf<Budget>() to serializableType<Budget>())
             ) { backStackEntry ->
                 val budgetMetricsRoute = backStackEntry.toRoute<BudgetMetricsScreen>()
-                val budgetMetricsViewModel: BudgetMetricsViewModel = koinInject()
+                val budgetMetricsViewModel: BudgetMetricsViewModel = koinInject(
+                    parameters = { parametersOf(budgetMetricsRoute.budget) }
+                )
                 val uiState by budgetMetricsViewModel.uiState.collectAsStateWithLifecycle()
 
                 budgetMetricsRoute.Show(
