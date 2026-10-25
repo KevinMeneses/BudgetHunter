@@ -33,7 +33,9 @@ jobs:
         run: ./gradlew :composeApp:assembleDebug
       - name: Name artifact
         id: name
-        run: echo "value=budgethunter-$(echo '${{ inputs.branch || github.ref_name }}' | tr '/' '-')-$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+        env:
+          REF_NAME: ${{ inputs.branch || github.ref_name }}
+        run: echo "value=budgethunter-${REF_NAME//\//-}-$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
