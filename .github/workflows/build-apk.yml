@@ -1,0 +1,42 @@
+name: Build APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch, tag or commit to build (empty = the branch selected in "Use workflow from")'
+        required: false
+        default: ''
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch || github.ref }}
+      - name: Setup local.properties
+        uses: ./.github/actions/setup-local-properties
+        with:
+          backend_url: ${{ secrets.BACKEND_URL_PROD }}
+          google_server_client_id: ${{ secrets.GOOGLE_SERVER_CLIENT_ID }}
+          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
+      - name: Build debug APK
+        run: ./gradlew :composeApp:assembleDebug
+      - name: Name artifact
+        id: name
+        run: echo "value=budgethunter-$(echo '${{ inputs.branch || github.ref_name }}' | tr '/' '-')-$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.name.outputs.value }}
+          path: composeApp/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
