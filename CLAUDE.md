@@ -89,8 +89,14 @@ Type-safe navigation using Navigation Compose with serializable route objects. M
 
 ### SMS Processing
 - SmsService and SmsBroadcastReceiver handle incoming transaction SMS
-- Bank-specific configuration in commons/bank/ for different SMS formats
-- Automatic budget entry creation from SMS transactions
+- Bank-specific configuration in `sms/domain/SupportedBanks.kt` for different SMS formats
+- Automatic budget entry creation from SMS transactions (`RegisterSmsEntryUseCase`, shared by both platforms),
+  always in the default budget of Settings
+- iOS cannot read SMS: a Shortcuts automation (trigger "Mensaje") passes the text to the App Intent
+  `RegisterExpenseFromMessageIntent` (iosApp/, also an App Shortcut), which calls
+  `SmsShortcutEntryPoint` (iosMain) -> `RegisterSmsFromShortcutUseCase` and answers with a dialog.
+  It runs with the app closed, so Koin is started with `startKoinIfNeeded()` and the Swift managers with
+  `IOSBridgeSetup.configureIfNeeded()`. Settings shows the setup guide (`SmsShortcutTutorialScreen`) on iOS only.
 
 ### Automatic categorization
 Entries carry a category; `UNCATEGORIZED` ("Sin categoría") is its own value, the default for a new entry, and is
