@@ -245,6 +245,16 @@ class SmsTransactionParserTest {
     }
 
     @Test
+    fun `discard a purchase that was not successful`() {
+        val analysis = analyze(
+            "Bancolombia: tu compra en PETROCOMERCIALIZADORA PO por $276.101,00 no fue exitosa, " +
+                "el cupo de tu T.Credito *2900 no se afecto"
+        )
+
+        assertEquals(SmsAnalysis.Ignored, analysis)
+    }
+
+    @Test
     fun `do not read a plural mention of purchases as a purchase`() {
         val analysis = analyze(
             "Bancolombia: Tu limite mensual para compras en linea es de $2.000.000."
