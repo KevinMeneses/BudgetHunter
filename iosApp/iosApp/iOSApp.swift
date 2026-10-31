@@ -6,12 +6,7 @@ import ComposeApp
 struct iOSApp: App {
 
     init() {
-        IOSBridge.Companion.shared.cameraManager = IOSCameraManager()
-        IOSBridge.Companion.shared.filePickerManager = IOSFilePickerManager()
-        IOSBridge.Companion.shared.shareManager = IOSShareManager()
-        IOSBridge.Companion.shared.notificationManager = IOSNotificationManager()
-        IOSBridge.Companion.shared.keychainStore = IOSKeychainStore()
-        IOSBridge.Companion.shared.googleSignInManager = IOSGoogleSignInManager()
+        IOSBridgeSetup.configureIfNeeded()
     }
 
     var body: some Scene {
