@@ -67,8 +67,6 @@
     <string name="creation_date">Fecha de creación</string>
     <string name="category">Categoría</string>
     <string name="frequency">Frecuencia</string>
-    <string name="start_date">Fecha de inicio</string>
-    <string name="end_date">Fecha límite</string>
     <string name="amount_mandatory">Debes ingresar un monto para este registro</string>
     
     <!-- Categories -->
@@ -96,8 +94,6 @@
     <!-- Search -->
     <string name="search_budgets">Buscar presupuestos…</string>
     <string name="clear_search">Limpiar búsqueda</string>
-    <string name="filter">Filtrar</string>
-    <string name="filter_entries_criteria">Filtra las entradas por los siguientes criterios:</string>
     
     <!-- Collaboration -->
     <string name="collaborate">Colaborar</string>
@@ -219,7 +215,6 @@
     <string name="update_budget_icon_description">Icono de actualizar presupuesto</string>
     <string name="select_from_files_icon_description">Icono de seleccionar archivos</string>
     <string name="take_picture_icon_description">Icono de tomar foto</string>
-    <string name="budget_list_icon_description">Icono de lista de presupuestos</string>
     <string name="invoice_image_description">Imagen de factura</string>
     
     <!-- Notification Channels -->
@@ -388,4 +383,25 @@
     <string name="sms_shortcut_image_filter">El mensaje contiene con el nombre del banco y Ejecutar de inmediato elegido</string>
     <string name="sms_shortcut_image_action">Botón Crear nuevo atajo</string>
     <string name="sms_shortcut_image_variable">Variable Entrada de atajo en la acción</string>
+    <string name="show_filters">Buscar y filtrar</string>
+    <string name="hide_filters">Ocultar búsqueda y filtros</string>
+    <string name="sort_entries">Ordenar</string>
+    <string name="sort_newest">Más recientes</string>
+    <string name="sort_amount_descending">Monto: mayor a menor</string>
+    <string name="sort_amount_ascending">Monto: menor a mayor</string>
+    <string name="search_entries">Buscar movimientos</string>
+    <string name="outcomes_filter">Gastos</string>
+    <string name="incomes_filter">Ingresos</string>
+    <string name="any_category">Todas las categorías</string>
+    <string name="any_date">Cualquier fecha</string>
+    <string name="this_month">Este mes</string>
+    <string name="last_month">Mes pasado</string>
+    <string name="last_7_days">Últimos 7 días</string>
+    <string name="custom_range">Rango personalizado…</string>
+    <string name="remove_filter">Quitar filtro</string>
+    <string name="no_matching_entries">Ningún movimiento coincide con el filtro</string>
+    <plurals name="filtered_entries_summary">
+        <item quantity="one">%1$d de %2$d movimiento</item>
+        <item quantity="other">%1$d de %2$d movimientos</item>
+    </plurals>
 </resources>

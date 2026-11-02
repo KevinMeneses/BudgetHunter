@@ -2,7 +2,6 @@ package com.meneses.budgethunter.budgetEntry.data.datasource
 
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
-import com.meneses.budgethunter.budgetEntry.domain.BudgetEntryFilter
 import com.meneses.budgethunter.budgetList.data.adapter.categoryAdapter
 import com.meneses.budgethunter.budgetList.data.adapter.typeAdapter
 import com.meneses.budgethunter.db.Budget_entry
@@ -20,7 +19,7 @@ import kotlin.test.assertTrue
 
 /**
  * Integration tests for BudgetEntryLocalDataSource using SQLDelight's in-memory driver.
- * Tests caching, filtering, CRUD operations, and sync-related functionality with real database queries.
+ * Tests caching, CRUD operations, and sync-related functionality with real database queries.
  */
 class BudgetEntryLocalDataSourceTest {
 
@@ -113,186 +112,6 @@ class BudgetEntryLocalDataSourceTest {
         assertEquals("Third", result[0].description)
         assertEquals("Second", result[1].description)
         assertEquals("First", result[2].description)
-    }
-
-    // ── getAllFilteredBy tests ─────────────────────────────────────────────────
-
-    @Test
-    fun `getAllFilteredBy returns all entries when all filters are null or blank`() = runTest {
-        insertEntry(budgetId = 1, description = "Entry 1")
-        insertEntry(budgetId = 1, description = "Entry 2")
-
-        dataSource.selectAllByBudgetId(1L).first()
-        val result = dataSource.getAllFilteredBy(BudgetEntryFilter())
-
-        assertEquals(2, result.size)
-    }
-
-    @Test
-    fun `getAllFilteredBy filters by description case-insensitive`() = runTest {
-        insertEntry(budgetId = 1, description = "Groceries Shopping")
-        insertEntry(budgetId = 1, description = "Restaurant Meal")
-        insertEntry(budgetId = 1, description = "Grocery Store")
-
-        dataSource.selectAllByBudgetId(1L).first()
-        val result = dataSource.getAllFilteredBy(BudgetEntryFilter(description = "GROCER"))
-
-        assertEquals(2, result.size)
-        assertTrue(result.any { it.description == "Groceries Shopping" })
-        assertTrue(result.any { it.description == "Grocery Store" })
-    }
-
-    @Test
-    fun `getAllFilteredBy handles blank description filter`() = runTest {
-        insertEntry(budgetId = 1, description = "Entry 1")
-        insertEntry(budgetId = 1, description = "Entry 2")
-
-        dataSource.selectAllByBudgetId(1L).first()
-        val result = dataSource.getAllFilteredBy(BudgetEntryFilter(description = "   "))
-
-        assertEquals(2, result.size)
-    }
-
-    @Test
-    fun `getAllFilteredBy filters by type`() = runTest {
-        insertEntry(budgetId = 1, description = "Salary", type = BudgetEntry.Type.INCOME)
-        insertEntry(budgetId = 1, description = "Groceries", type = BudgetEntry.Type.OUTCOME)
-
-        dataSource.selectAllByBudgetId(1L).first()
-        val result = dataSource.getAllFilteredBy(BudgetEntryFilter(type = BudgetEntry.Type.INCOME))
-
-        assertEquals(1, result.size)
-        assertEquals("Salary", result[0].description)
-    }
-
-    @Test
-    fun `getAllFilteredBy filters by category`() = runTest {
-        insertEntry(budgetId = 1, description = "Supermarket", category = BudgetEntry.Category.GROCERIES)
-        insertEntry(budgetId = 1, description = "Restaurant", category = BudgetEntry.Category.FOOD)
-
-        dataSource.selectAllByBudgetId(1L).first()
-        val result = dataSource.getAllFilteredBy(
-            BudgetEntryFilter(category = BudgetEntry.Category.GROCERIES)
-        )
-
-        assertEquals(1, result.size)
-        assertEquals("Supermarket", result[0].description)
-    }
-
-    @Test
-    fun `getAllFilteredBy filters by start date`() = runTest {
-        insertEntry(budgetId = 1, description = "Old", date = "2025-01-01")
-        insertEntry(budgetId = 1, description = "Recent", date = "2025-01-15")
-
-        dataSource.selectAllByBudgetId(1L).first()
-        val result = dataSource.getAllFilteredBy(BudgetEntryFilter(startDate = "2025-01-10"))
-
-        assertEquals(1, result.size)
-        assertEquals("Recent", result[0].description)
-    }
-
-    @Test
-    fun `getAllFilteredBy filters by end date`() = runTest {
-        insertEntry(budgetId = 1, description = "Old", date = "2025-01-01")
-        insertEntry(budgetId = 1, description = "Recent", date = "2025-01-31")
-
-        dataSource.selectAllByBudgetId(1L).first()
-        val result = dataSource.getAllFilteredBy(BudgetEntryFilter(endDate = "2025-01-15"))
-
-        assertEquals(1, result.size)
-        assertEquals("Old", result[0].description)
-    }
-
-    @Test
-    fun `getAllFilteredBy filters by date range`() = runTest {
-        insertEntry(budgetId = 1, description = "Jan 1", date = "2025-01-01")
-        insertEntry(budgetId = 1, description = "Jan 15", date = "2025-01-15")
-        insertEntry(budgetId = 1, description = "Jan 31", date = "2025-01-31")
-
-        dataSource.selectAllByBudgetId(1L).first()
-        val result = dataSource.getAllFilteredBy(
-            BudgetEntryFilter(startDate = "2025-01-10", endDate = "2025-01-20")
-        )
-
-        assertEquals(1, result.size)
-        assertEquals("Jan 15", result[0].description)
-    }
-
-    @Test
-    fun `getAllFilteredBy applies multiple filters together`() = runTest {
-        insertEntry(
-            budgetId = 1,
-            description = "Groceries",
-            type = BudgetEntry.Type.OUTCOME,
-            category = BudgetEntry.Category.GROCERIES,
-            date = "2025-01-15"
-        )
-        insertEntry(
-            budgetId = 1,
-            description = "Grocery Store",
-            type = BudgetEntry.Type.INCOME,
-            category = BudgetEntry.Category.GROCERIES,
-            date = "2025-01-15"
-        )
-        insertEntry(
-            budgetId = 1,
-            description = "Groceries",
-            type = BudgetEntry.Type.OUTCOME,
-            category = BudgetEntry.Category.FOOD,
-            date = "2025-01-15"
-        )
-
-        dataSource.selectAllByBudgetId(1L).first()
-        val result = dataSource.getAllFilteredBy(
-            BudgetEntryFilter(
-                description = "grocer",
-                type = BudgetEntry.Type.OUTCOME,
-                category = BudgetEntry.Category.GROCERIES
-            )
-        )
-
-        assertEquals(1, result.size)
-        assertEquals("Groceries", result[0].description)
-    }
-
-    @Test
-    fun `getAllFilteredBy returns empty list when no matches`() = runTest {
-        insertEntry(budgetId = 1, description = "Test")
-
-        dataSource.selectAllByBudgetId(1L).first()
-        val result = dataSource.getAllFilteredBy(BudgetEntryFilter(description = "NonExistent"))
-
-        assertEquals(emptyList(), result)
-    }
-
-    @Test
-    fun `filter by multiple criteria with partial matches`() = runTest {
-        insertEntry(
-            budgetId = 1,
-            description = "Supermarket shopping",
-            type = BudgetEntry.Type.OUTCOME,
-            category = BudgetEntry.Category.GROCERIES,
-            date = "2025-01-15"
-        )
-        insertEntry(
-            budgetId = 1,
-            description = "Market visit",
-            type = BudgetEntry.Type.OUTCOME,
-            category = BudgetEntry.Category.OTHER,
-            date = "2025-01-16"
-        )
-
-        dataSource.selectAllByBudgetId(1L).first()
-        val result = dataSource.getAllFilteredBy(
-            BudgetEntryFilter(
-                description = "market",
-                type = BudgetEntry.Type.OUTCOME,
-                category = BudgetEntry.Category.GROCERIES
-            )
-        )
-
-        assertEquals(1, result.size)
-        assertEquals("Supermarket shopping", result[0].description)
     }
 
     // ── create tests ──────────────────────────────────────────────────────────

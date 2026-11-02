@@ -90,16 +90,10 @@ data class BudgetDetailScreen(val budget: Budget) {
                     onRightButtonClick = {
                         dropdownExpanded = true
                     },
-                    animateRightButton = uiState.filter != null,
                     rightButtonDropdownContent = {
                         BudgetDetailMenu(
                             expanded = dropdownExpanded,
                             onDismiss = { dropdownExpanded = false },
-                            onFilterClick = {
-                                BudgetDetailIntent
-                                    .ToggleFilterModal(true)
-                                    .run(onIntent)
-                            },
                             onMetricsClick = { showBudgetMetrics(currentBudget) },
                             onDeleteClick = {
                                 BudgetDetailIntent
@@ -132,12 +126,6 @@ data class BudgetDetailScreen(val budget: Budget) {
         BudgetModal(
             show = uiState.modal == BudgetDetailState.ModalState.Budget,
             budgetAmount = currentBudget.amount,
-            onIntent = onIntent
-        )
-
-        FilterModal(
-            show = uiState.modal == BudgetDetailState.ModalState.Filter,
-            filter = uiState.filter,
             onIntent = onIntent
         )
 

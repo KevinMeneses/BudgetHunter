@@ -13,9 +13,11 @@ import com.meneses.budgethunter.budgetDetail.data.BudgetDetailRepository
 import com.meneses.budgethunter.budgetEntry.data.sync.RealTimeSyncManager
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntryFilter
+import com.meneses.budgethunter.budgetEntry.domain.filteredBy
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.commons.data.network.ApiError
 import com.meneses.budgethunter.commons.data.network.toApiError
+import com.meneses.budgethunter.commons.util.currentDate
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -52,6 +54,12 @@ class BudgetDetailViewModel(
     private var detailJob: Job? = null
 
     private var realTimeSyncCheckJob: Job? = null
+
+    /**
+     * Every entry of the budget, as the database last emitted them; the state only holds the ones
+     * that pass the filter, in the chosen order (see [withEntries]).
+     */
+    private var allEntries: List<BudgetEntry> = emptyList()
 
     init {
         checkAuthState()
@@ -126,17 +134,17 @@ class BudgetDetailViewModel(
             is BudgetDetailIntent.UpdateBudgetAmount -> updateBudgetAmount(intent.amount)
             is BudgetDetailIntent.FilterEntries -> filterEntries(intent.filter)
             is BudgetDetailIntent.ClearFilter -> clearFilter()
+            is BudgetDetailIntent.ToggleFilterBar -> _uiState.update { it.copy(isFilterBarVisible = !it.isFilterBarVisible) }
             is BudgetDetailIntent.DeleteBudget -> deleteBudget()
             is BudgetDetailIntent.DeleteSelectedEntries -> deleteSelectedEntries()
             is BudgetDetailIntent.ShowEntry -> showEntry(intent.budgetItem)
             is BudgetDetailIntent.ToggleBudgetModal -> setBudgetModalVisibility(intent.isVisible)
             is BudgetDetailIntent.ToggleDeleteBudgetModal -> setDeleteBudgetModalVisibility(intent.isVisible)
             is BudgetDetailIntent.ToggleDeleteEntriesModal -> setDeleteEntriesModalVisibility(intent.isVisible)
-            is BudgetDetailIntent.ToggleFilterModal -> setFilterModalVisibility(intent.isVisible)
             is BudgetDetailIntent.ToggleSelectionState -> toggleSelectionState(intent.isActivated)
             is BudgetDetailIntent.ToggleAllEntriesSelection -> toggleAllEntriesSelection(intent.isSelected)
             is BudgetDetailIntent.ToggleSelectEntry -> toggleEntrySelection(intent)
-            is BudgetDetailIntent.SortList -> orderList()
+            is BudgetDetailIntent.SetListOrder -> setListOrder(intent.order)
             is BudgetDetailIntent.SyncEntries -> {
                 val budget = _uiState.value.budgetDetail.budget
                 syncEntries(budgetId = budget.id, serverId = budget.serverId, showErrors = true)
@@ -145,41 +153,36 @@ class BudgetDetailViewModel(
         }
     }
 
-    private fun orderList() = _uiState.update { currentState ->
-        val newOrder: BudgetDetailState.ListOrder
-        val orderedEntries: List<BudgetEntry>
+    private fun setListOrder(order: BudgetDetailState.ListOrder) =
+        _uiState.update { it.copy(listOrder = order).withEntries(allEntries) }
 
-        when (currentState.listOrder) {
-            BudgetDetailState.ListOrder.DEFAULT -> {
-                newOrder = BudgetDetailState.ListOrder.AMOUNT_ASCENDANT
-                orderedEntries = currentState.budgetDetail.entries.sortedBy {
-                    val isPositive = it.type == BudgetEntry.Type.INCOME
-                    if (isPositive) it.amount
-                    else "-" + it.amount
-                }
-            }
-
-            BudgetDetailState.ListOrder.AMOUNT_ASCENDANT -> {
-                newOrder = BudgetDetailState.ListOrder.AMOUNT_DESCENDANT
-                orderedEntries = currentState.budgetDetail.entries.sortedByDescending {
-                    val isPositive = it.type == BudgetEntry.Type.INCOME
-                    if (isPositive) it.amount
-                    else "-" + it.amount
-                }
-            }
-
-            BudgetDetailState.ListOrder.AMOUNT_DESCENDANT -> {
-                newOrder = BudgetDetailState.ListOrder.DEFAULT
-                orderedEntries = currentState.budgetDetail.entries.sortedWith(
-                    compareByDescending<BudgetEntry> { it.date }.thenByDescending { it.id }
-                )
-            }
-        }
-
-        currentState.copy(
-            budgetDetail = currentState.budgetDetail.copy(entries = orderedEntries),
-            listOrder = newOrder
+    /**
+     * Shows the entries of [entries] that pass the filter, in the chosen order.
+     *
+     * Synchronous on purpose: the search field filters on every keystroke, and a coroutine per
+     * keystroke could finish out of order and show the results of an older text.
+     */
+    private fun BudgetDetailState.withEntries(entries: List<BudgetEntry>): BudgetDetailState {
+        // The selection lives on the shown entries only; carry it over by id
+        val selectedIds = budgetDetail.entries.filter { it.isSelected }.mapTo(mutableSetOf()) { it.id }
+        val shown = entries.filteredBy(filter, currentDate())
+            .sortedBy(listOrder)
+            .map { if (it.id in selectedIds) it.copy(isSelected = true) else it }
+        return copy(
+            budgetDetail = budgetDetail.copy(entries = shown),
+            totalEntryCount = entries.size
         )
+    }
+
+    private fun List<BudgetEntry>.sortedBy(order: BudgetDetailState.ListOrder): List<BudgetEntry> {
+        val newestFirst = compareByDescending<BudgetEntry> { it.date }.thenByDescending { it.id }
+        // The amount is kept as text; compared as text "100" would come before "20"
+        val byAmount = compareBy<BudgetEntry> { it.amount.toDoubleOrNull() ?: 0.0 }
+        return when (order) {
+            BudgetDetailState.ListOrder.DEFAULT -> sortedWith(newestFirst)
+            BudgetDetailState.ListOrder.AMOUNT_ASCENDANT -> sortedWith(byAmount.then(newestFirst))
+            BudgetDetailState.ListOrder.AMOUNT_DESCENDANT -> sortedWith(byAmount.reversed().then(newestFirst))
+        }
     }
 
     private fun setBudget(budget: Budget) =
@@ -218,11 +221,9 @@ class BudgetDetailViewModel(
             budgetDetailRepository
                 .getBudgetDetailById(budgetId)
                 .collect { detail ->
-                    val currentFilter = _uiState.value.filter
-                    val updatedDetail = if (currentFilter == null) detail
-                    else budgetDetailRepository.getAllFilteredBy(currentFilter)
+                    allEntries = detail.entries
                     _uiState.update {
-                        it.copy(budgetDetail = updatedDetail, isLoading = false)
+                        it.copy(budgetDetail = detail, isLoading = false).withEntries(detail.entries)
                     }
                 }
         }
@@ -239,9 +240,11 @@ class BudgetDetailViewModel(
 
     private fun toggleEntrySelection(intent: BudgetDetailIntent.ToggleSelectEntry) {
         _uiState.update { state ->
+            // The list may have changed since the tap (an entry deleted by a collaborator)
             val updatedEntry = state.budgetDetail
-                .entries[intent.index]
-                .copy(isSelected = intent.isSelected)
+                .entries.getOrNull(intent.index)
+                ?.copy(isSelected = intent.isSelected)
+                ?: return@update state
 
             val updatedList = state.budgetDetail
                 .entries
@@ -262,26 +265,16 @@ class BudgetDetailViewModel(
         budgetDetailRepository.updateBudgetAmount(amount)
     }
 
-    private fun filterEntries(filter: BudgetEntryFilter) = viewModelScope.launch {
-        val filteredDetail = budgetDetailRepository.getAllFilteredBy(filter)
-        _uiState.update { it.copy(budgetDetail = filteredDetail, filter = filter) }
-    }
+    private fun filterEntries(filter: BudgetEntryFilter) =
+        _uiState.update { it.copy(filter = filter).withEntries(allEntries) }
 
-    private fun clearFilter() = viewModelScope.launch {
-        val detail = budgetDetailRepository.getCachedDetail()
-        _uiState.update { it.copy(budgetDetail = detail, filter = null) }
-    }
+    private fun clearFilter() = filterEntries(BudgetEntryFilter())
 
     private fun deleteBudget() = viewModelScope.launch {
         val budgetId = _uiState.value.budgetDetail.budget.id
         budgetDetailRepository.deleteBudget(budgetId)
         _events.trySend(BudgetDetailEvent.NavigateBack)
     }
-
-    private fun setFilterModalVisibility(visible: Boolean) =
-        _uiState.update {
-            it.copy(modal = if (visible) BudgetDetailState.ModalState.Filter else BudgetDetailState.ModalState.None)
-        }
 
     private fun setDeleteBudgetModalVisibility(visible: Boolean) =
         _uiState.update {
@@ -322,6 +315,8 @@ class BudgetDetailViewModel(
      * the app was in background reconnect now instead of after its backoff.
      */
     private fun resumeSync() {
+        // "This month" or "Last 7 days" may mean other days than when the filter was applied
+        _uiState.update { it.withEntries(allEntries) }
         realTimeSyncManager.reconnectNow()
         refreshRealTimeSync(_uiState.value.budgetDetail.budget.syncedServerId())
         val budget = _uiState.value.budgetDetail.budget

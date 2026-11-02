@@ -11,16 +11,16 @@ sealed interface BudgetDetailIntent {
     data class FilterEntries(val filter: BudgetEntryFilter) : BudgetDetailIntent
     data class ShowEntry(val budgetItem: BudgetEntry) : BudgetDetailIntent
     data object ClearFilter : BudgetDetailIntent
+    data object ToggleFilterBar : BudgetDetailIntent
     data object DeleteBudget : BudgetDetailIntent
     data object DeleteSelectedEntries : BudgetDetailIntent
     data class ToggleSelectEntry(val index: Int, val isSelected: Boolean) : BudgetDetailIntent
     data class ToggleBudgetModal(val isVisible: Boolean) : BudgetDetailIntent
-    data class ToggleFilterModal(val isVisible: Boolean) : BudgetDetailIntent
     data class ToggleDeleteBudgetModal(val isVisible: Boolean) : BudgetDetailIntent
     data class ToggleDeleteEntriesModal(val isVisible: Boolean) : BudgetDetailIntent
     data class ToggleAllEntriesSelection(val isSelected: Boolean) : BudgetDetailIntent
     data class ToggleSelectionState(val isActivated: Boolean) : BudgetDetailIntent
-    data object SortList : BudgetDetailIntent
+    data class SetListOrder(val order: BudgetDetailState.ListOrder) : BudgetDetailIntent
     data object SyncEntries : BudgetDetailIntent
     data object ResumeSync : BudgetDetailIntent
 }

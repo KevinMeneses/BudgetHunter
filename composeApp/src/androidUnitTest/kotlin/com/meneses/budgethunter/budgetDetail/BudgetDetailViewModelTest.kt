@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModelStore
 import com.meneses.budgethunter.auth.data.AuthRepository
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailEvent
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailIntent
+import com.meneses.budgethunter.budgetDetail.application.BudgetDetailState
 import com.meneses.budgethunter.budgetDetail.data.BudgetDetailRepository
 import com.meneses.budgethunter.budgetDetail.domain.BudgetDetail
 import com.meneses.budgethunter.budgetEntry.data.sync.RealTimeSyncManager
@@ -92,6 +93,21 @@ class BudgetDetailViewModelTest {
     fun tearDown() {
         Dispatchers.resetMain()
     }
+
+    private val budget = Budget(id = 10, name = "Budget", amount = 100.0)
+
+    private fun entry(id: Int, description: String, amount: String = "1") =
+        BudgetEntry(id = id, budgetId = budget.id, description = description, amount = amount, date = "2026-03-10")
+
+    /** Opens [budget] with [entries], in the database order (newest first). */
+    private fun showDetail(entries: List<BudgetEntry>) {
+        every { budgetDetailRepository.getBudgetDetailById(budget.id) } returns flowOf(BudgetDetail(budget, entries))
+        viewModel.sendIntent(BudgetDetailIntent.SetBudget(budget))
+        viewModel.sendIntent(BudgetDetailIntent.GetBudgetDetail)
+        testDispatcher.scheduler.advanceUntilIdle()
+    }
+
+    private fun shownDescriptions() = viewModel.uiState.value.budgetDetail.entries.map { it.description }
 
     // ========== deleteBudget Tests ==========
 
@@ -216,23 +232,9 @@ class BudgetDetailViewModelTest {
      */
     @Test
     fun `GetBudgetDetail again keeps the filter`() = runTest {
-        val budget = Budget(id = 10, name = "Budget", amount = 100.0)
-        val all = BudgetDetail(
-            budget = budget,
-            entries = listOf(
-                BudgetEntry(id = 1, budgetId = 10, description = "Mercado"),
-                BudgetEntry(id = 2, budgetId = 10, description = "Gasolina")
-            )
-        )
-        val filtered = all.copy(entries = all.entries.take(1))
         val filter = BudgetEntryFilter(description = "merc")
-        every { budgetDetailRepository.getBudgetDetailById(10) } returns flowOf(all)
-        coEvery { budgetDetailRepository.getAllFilteredBy(filter) } returns filtered
-
-        viewModel.sendIntent(BudgetDetailIntent.SetBudget(budget))
-        viewModel.sendIntent(BudgetDetailIntent.GetBudgetDetail)
+        showDetail(listOf(entry(2, "Mercado"), entry(1, "Gasolina")))
         viewModel.sendIntent(BudgetDetailIntent.FilterEntries(filter))
-        testDispatcher.scheduler.advanceUntilIdle()
 
         // When - back from an entry
         viewModel.sendIntent(BudgetDetailIntent.GetBudgetDetail)
@@ -240,7 +242,146 @@ class BudgetDetailViewModelTest {
 
         // Then
         assertEquals(filter, viewModel.uiState.value.filter)
-        assertEquals(filtered.entries, viewModel.uiState.value.budgetDetail.entries)
+        assertEquals(listOf("Mercado"), shownDescriptions())
+    }
+
+    // ========== Filter ==========
+
+    @Test
+    fun `filtering applies right away, for every keystroke`() = runTest {
+        showDetail(listOf(entry(3, "Mercado"), entry(2, "Mecánico"), entry(1, "Gasolina")))
+
+        // No dispatcher advance: the search field relies on the state being updated synchronously
+        viewModel.sendIntent(BudgetDetailIntent.FilterEntries(BudgetEntryFilter(description = "me")))
+        assertEquals(listOf("Mercado", "Mecánico"), shownDescriptions())
+
+        viewModel.sendIntent(BudgetDetailIntent.FilterEntries(BudgetEntryFilter(description = "mer")))
+        assertEquals(listOf("Mercado"), shownDescriptions())
+    }
+
+    @Test
+    fun `the total count is every entry of the budget, whatever the filter`() = runTest {
+        showDetail(listOf(entry(2, "Mercado"), entry(1, "Gasolina")))
+
+        viewModel.sendIntent(BudgetDetailIntent.FilterEntries(BudgetEntryFilter(description = "merc")))
+
+        assertEquals(2, viewModel.uiState.value.totalEntryCount)
+        assertEquals(1, viewModel.uiState.value.budgetDetail.entries.size)
+    }
+
+    @Test
+    fun `an entry arriving while filtering is filtered too`() = runTest {
+        val source = MutableStateFlow(BudgetDetail(budget, listOf(entry(1, "Mercado"))))
+        every { budgetDetailRepository.getBudgetDetailById(budget.id) } returns source
+        viewModel.sendIntent(BudgetDetailIntent.SetBudget(budget))
+        viewModel.sendIntent(BudgetDetailIntent.GetBudgetDetail)
+        testDispatcher.scheduler.advanceUntilIdle()
+        viewModel.sendIntent(BudgetDetailIntent.FilterEntries(BudgetEntryFilter(description = "merc")))
+
+        // When - a collaborator adds two entries (real-time sync writes them to the database)
+        source.value = BudgetDetail(
+            budget,
+            listOf(entry(3, "Mercado 2"), entry(2, "Gasolina"), entry(1, "Mercado"))
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then
+        assertEquals(listOf("Mercado 2", "Mercado"), shownDescriptions())
+        assertEquals(3, viewModel.uiState.value.totalEntryCount)
+    }
+
+    @Test
+    fun `the filter bar starts hidden, and hiding it keeps the filter`() = runTest {
+        showDetail(listOf(entry(2, "Mercado"), entry(1, "Gasolina")))
+        assertFalse(viewModel.uiState.value.isFilterBarVisible)
+
+        viewModel.sendIntent(BudgetDetailIntent.ToggleFilterBar)
+        assertTrue(viewModel.uiState.value.isFilterBarVisible)
+        viewModel.sendIntent(BudgetDetailIntent.FilterEntries(BudgetEntryFilter(description = "merc")))
+
+        viewModel.sendIntent(BudgetDetailIntent.ToggleFilterBar)
+
+        assertFalse(viewModel.uiState.value.isFilterBarVisible)
+        assertEquals(listOf("Mercado"), shownDescriptions())
+    }
+
+    @Test
+    fun `ClearFilter shows every entry again`() = runTest {
+        showDetail(listOf(entry(2, "Mercado"), entry(1, "Gasolina")))
+        viewModel.sendIntent(BudgetDetailIntent.FilterEntries(BudgetEntryFilter(type = BudgetEntry.Type.INCOME)))
+        assertEquals(emptyList(), shownDescriptions())
+
+        viewModel.sendIntent(BudgetDetailIntent.ClearFilter)
+
+        assertFalse(viewModel.uiState.value.filter.isActive)
+        assertEquals(listOf("Mercado", "Gasolina"), shownDescriptions())
+    }
+
+    @Test
+    fun `the chosen order survives a filter change and new entries`() = runTest {
+        val source = MutableStateFlow(
+            BudgetDetail(budget, listOf(entry(2, "Mercado", amount = "5"), entry(1, "Mecánico", amount = "1")))
+        )
+        every { budgetDetailRepository.getBudgetDetailById(budget.id) } returns source
+        viewModel.sendIntent(BudgetDetailIntent.SetBudget(budget))
+        viewModel.sendIntent(BudgetDetailIntent.GetBudgetDetail)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.sendIntent(BudgetDetailIntent.SetListOrder(BudgetDetailState.ListOrder.AMOUNT_DESCENDANT))
+        viewModel.sendIntent(BudgetDetailIntent.FilterEntries(BudgetEntryFilter(description = "me")))
+        source.value = BudgetDetail(
+            budget,
+            listOf(
+                entry(3, "Medias", amount = "3"),
+                entry(2, "Mercado", amount = "5"),
+                entry(1, "Mecánico", amount = "1")
+            )
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(BudgetDetailState.ListOrder.AMOUNT_DESCENDANT, viewModel.uiState.value.listOrder)
+        assertEquals(listOf("Mercado", "Medias", "Mecánico"), shownDescriptions())
+    }
+
+    @Test
+    fun `amounts are sorted as numbers, whatever the type`() = runTest {
+        showDetail(
+            listOf(
+                entry(3, "Salario", amount = "20").copy(type = BudgetEntry.Type.INCOME),
+                entry(2, "Arriendo", amount = "100"),
+                entry(1, "Café", amount = "3.5")
+            )
+        )
+
+        viewModel.sendIntent(BudgetDetailIntent.SetListOrder(BudgetDetailState.ListOrder.AMOUNT_DESCENDANT))
+        assertEquals(listOf("Arriendo", "Salario", "Café"), shownDescriptions())
+
+        viewModel.sendIntent(BudgetDetailIntent.SetListOrder(BudgetDetailState.ListOrder.AMOUNT_ASCENDANT))
+        assertEquals(listOf("Café", "Salario", "Arriendo"), shownDescriptions())
+
+        viewModel.sendIntent(BudgetDetailIntent.SetListOrder(BudgetDetailState.ListOrder.DEFAULT))
+        assertEquals(listOf("Salario", "Arriendo", "Café"), shownDescriptions())
+    }
+
+    @Test
+    fun `sorting while selecting keeps the selected entries`() = runTest {
+        showDetail(listOf(entry(2, "Mercado", amount = "5"), entry(1, "Gasolina", amount = "1")))
+        viewModel.sendIntent(BudgetDetailIntent.ToggleSelectionState(true))
+        viewModel.sendIntent(BudgetDetailIntent.ToggleSelectEntry(index = 0, isSelected = true))
+
+        viewModel.sendIntent(BudgetDetailIntent.SetListOrder(BudgetDetailState.ListOrder.AMOUNT_ASCENDANT))
+
+        val selected = viewModel.uiState.value.budgetDetail.entries.filter { it.isSelected }
+        assertEquals(listOf("Mercado"), selected.map { it.description })
+    }
+
+    @Test
+    fun `selecting an entry that is no longer shown is ignored`() = runTest {
+        showDetail(listOf(entry(1, "Mercado")))
+
+        viewModel.sendIntent(BudgetDetailIntent.ToggleSelectEntry(index = 5, isSelected = true))
+
+        assertTrue(viewModel.uiState.value.budgetDetail.entries.none { it.isSelected })
     }
 
     @Test

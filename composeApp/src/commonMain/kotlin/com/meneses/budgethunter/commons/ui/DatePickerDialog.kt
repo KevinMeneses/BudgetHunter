@@ -2,13 +2,19 @@ package com.meneses.budgethunter.commons.ui
 
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DateRangePicker
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.rememberDateRangePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import budgethunter.composeapp.generated.resources.Res
 import budgethunter.composeapp.generated.resources.cancel
 import budgethunter.composeapp.generated.resources.ok
@@ -88,3 +94,68 @@ fun SimpleDatePickerDialog(
         }
     }
 }
+
+/**
+ * Asks for a range of days, both ends included. Confirming needs both ends.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DateRangePickerDialog(
+    onRangeSelected: (start: LocalDate, end: LocalDate) -> Unit,
+    onDismiss: () -> Unit,
+    initialStart: LocalDate? = null,
+    initialEnd: LocalDate? = null
+) {
+    // The picker works with UTC midnights
+    val state = rememberDateRangePickerState(
+        initialSelectedStartDateMillis = initialStart?.atStartOfDayIn(TimeZone.UTC)?.toEpochMilliseconds(),
+        initialSelectedEndDateMillis = initialEnd?.atStartOfDayIn(TimeZone.UTC)?.toEpochMilliseconds()
+    )
+
+    DatePickerDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    val start = state.selectedStartDateMillis
+                    val end = state.selectedEndDateMillis
+                    if (start != null && end != null) {
+                        onRangeSelected(start.toUtcDate(), end.toUtcDate())
+                    }
+                    onDismiss()
+                },
+                enabled = state.selectedStartDateMillis != null && state.selectedEndDateMillis != null
+            ) {
+                Text(stringResource(Res.string.ok))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(Res.string.cancel))
+            }
+        }
+    ) {
+        // The default headline ("Start date - End date" with large text) does not fit the
+        // dialog's width and wraps letter by letter; show the chosen days compactly instead
+        DateRangePicker(
+            state = state,
+            modifier = Modifier.weight(1f),
+            title = null,
+            headline = {
+                val start = state.selectedStartDateMillis?.toUtcDate()?.toDayText() ?: "–"
+                val end = state.selectedEndDateMillis?.toUtcDate()?.toDayText() ?: "–"
+                Text(
+                    text = "$start  →  $end",
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.padding(start = 24.dp, end = 12.dp, top = 16.dp, bottom = 12.dp)
+                )
+            },
+            showModeToggle = false
+        )
+    }
+}
+
+/** "5/10/2026" */
+private fun LocalDate.toDayText(): String = "$dayOfMonth/$monthNumber/$year"
+
+private fun Long.toUtcDate(): LocalDate = Instant.fromEpochMilliseconds(this).toLocalDateTime(TimeZone.UTC).date
