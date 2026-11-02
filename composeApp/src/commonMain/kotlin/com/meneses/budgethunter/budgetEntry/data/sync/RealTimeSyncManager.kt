@@ -50,6 +50,14 @@ class RealTimeSyncManager(
     private var currentJob: Job? = null
     private var currentBudgetServerId: Long? = null
 
+    /**
+     * Last caller of [startListening]; only it may end the stream with [stopListening].
+     *
+     * Like [currentJob] and [currentBudgetServerId], it is not synchronized: the manager is only
+     * called from the main thread (the budget detail ViewModel).
+     */
+    private var currentOwner: Any? = null
+
     private val _collaboratorNotifications = MutableSharedFlow<String>(extraBufferCapacity = 8)
     val collaboratorNotifications: SharedFlow<String> = _collaboratorNotifications.asSharedFlow()
 
@@ -63,13 +71,20 @@ class RealTimeSyncManager(
      * stream fails, so a dropped connection does not silently disable real-time updates for
      * the rest of the session. Only cancelling the job (see [stopListening]) ends it.
      *
+     * The caller becomes the owner of the stream even when it is already open for the same
+     * budget, so a screen that is being destroyed cannot close the stream a newer screen needs:
+     * see [stopListening] with an owner.
+     *
      * @param budgetServerId Server-side ID of the budget to listen for updates
+     * @param owner Who asks for the stream; pass the same object to [stopListening]
      */
-    fun startListening(budgetServerId: Long) {
+    fun startListening(budgetServerId: Long, owner: Any) {
         // Stop existing listener if it's for a different budget
         if (currentBudgetServerId != budgetServerId) {
             stopListening()
         }
+
+        currentOwner = owner
 
         if (currentJob != null) {
             return
@@ -155,6 +170,29 @@ class RealTimeSyncManager(
         currentJob?.cancel()
         currentJob = null
         currentBudgetServerId = null
+        currentOwner = null
+    }
+
+    /**
+     * Makes [owner] the owner of the stream if it is already open for [budgetServerId], without
+     * opening one otherwise.
+     *
+     * For a screen that cannot tell right now whether the budget is still shared (the
+     * collaborators lookup failed) but must not lose a stream a previous screen opened for it.
+     */
+    fun claimIfListening(budgetServerId: Long, owner: Any) {
+        if (currentJob != null && currentBudgetServerId == budgetServerId) currentOwner = owner
+    }
+
+    /**
+     * Stops listening only if [owner] is the last caller of [startListening].
+     *
+     * When the user opens a budget screen while another one is being removed from the back
+     * stack (for example the default budget opened at launch), the new screen may start the
+     * stream before the old one is cleared; the old one must then leave the stream alone.
+     */
+    fun stopListening(owner: Any) {
+        if (currentOwner === owner) stopListening()
     }
 
     private companion object {

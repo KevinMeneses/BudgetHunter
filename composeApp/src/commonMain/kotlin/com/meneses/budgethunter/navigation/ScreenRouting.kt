@@ -18,6 +18,7 @@ import budgethunter.composeapp.generated.resources.Res
 import budgethunter.composeapp.generated.resources.new_entry_from_collaborator
 import budgethunter.composeapp.generated.resources.signed_in_as
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -60,6 +61,7 @@ import com.meneses.budgethunter.splash.application.SplashEvent
 import com.meneses.budgethunter.splash.ui.SplashScreen
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.getKoin
 import org.koin.compose.koinInject
 import org.koin.core.parameter.parametersOf
 import kotlin.reflect.typeOf
@@ -269,7 +271,10 @@ fun BudgetHunterNavigation() {
                 typeMap = mapOf(typeOf<Budget>() to serializableType<Budget>())
             ) { backStackEntry ->
                 val budgetDetailRoute = backStackEntry.toRoute<BudgetDetailScreen>()
-                val budgetDetailViewModel: BudgetDetailViewModel = koinInject()
+                // Scoped to the back stack entry so the state (e.g. the filter) survives opening an
+                // entry and coming back, and onCleared runs when the budget is left.
+                val koin = getKoin()
+                val budgetDetailViewModel = viewModel { koin.get<BudgetDetailViewModel>() }
                 val uiState by budgetDetailViewModel.uiState.collectAsStateWithLifecycle()
                 val networkMonitor: NetworkMonitor = koinInject()
                 val snackbarHostState = remember { SnackbarHostState() }

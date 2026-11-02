@@ -56,7 +56,7 @@ class RealTimeSyncManagerTest {
             SyncResult.Success(SyncStats(totalItems = 1, syncedItems = 1))
 
         val manager = createManager()
-        manager.startListening(BUDGET_SERVER_ID)
+        manager.startListening(BUDGET_SERVER_ID, owner = this)
 
         // First attempt fails; the retry only happens once the backoff delay elapses
         advanceTimeBy(FIRST_BACKOFF_MS)
@@ -81,7 +81,7 @@ class RealTimeSyncManagerTest {
         }
 
         val manager = createManager()
-        manager.startListening(BUDGET_SERVER_ID)
+        manager.startListening(BUDGET_SERVER_ID, owner = this)
         advanceUntilIdle()
 
         manager.stopListening()
@@ -89,6 +89,120 @@ class RealTimeSyncManagerTest {
         advanceUntilIdle()
 
         assertEquals(1, subscriptions)
+    }
+
+    /**
+     * A budget screen being removed from the back stack while a newer one for the same budget
+     * already took over the stream (e.g. the default budget opened at launch) must not close it.
+     */
+    @Test
+    fun `stopListening by a replaced owner keeps the stream open`() = runTest {
+        var subscriptions = 0
+        var cancellations = 0
+        every { sseClient.subscribeToBudgetEntries(BUDGET_SERVER_ID) } returns flow {
+            subscriptions++
+            try {
+                awaitCancellation()
+            } finally {
+                cancellations++
+            }
+        }
+        val oldScreen = Any()
+        val newScreen = Any()
+
+        val manager = createManager()
+        manager.startListening(BUDGET_SERVER_ID, owner = oldScreen)
+        manager.startListening(BUDGET_SERVER_ID, owner = newScreen)
+        manager.stopListening(owner = oldScreen)
+        advanceUntilIdle()
+
+        assertEquals(1, subscriptions)
+        assertEquals(0, cancellations)
+
+        manager.stopListening(owner = newScreen)
+        advanceUntilIdle()
+
+        assertEquals(1, cancellations)
+    }
+
+    @Test
+    fun `stopListening by a replaced owner keeps the stream of another budget open`() = runTest {
+        var cancellations = 0
+        every { sseClient.subscribeToBudgetEntries(any()) } returns flow {
+            try {
+                awaitCancellation()
+            } finally {
+                cancellations++
+            }
+        }
+        val oldScreen = Any()
+        val newScreen = Any()
+
+        val manager = createManager()
+        manager.startListening(BUDGET_SERVER_ID, owner = oldScreen)
+        manager.startListening(OTHER_BUDGET_SERVER_ID, owner = newScreen)
+        advanceUntilIdle()
+        // Switching budgets closes the first stream
+        assertEquals(1, cancellations)
+
+        manager.stopListening(owner = oldScreen)
+        advanceUntilIdle()
+
+        assertEquals(1, cancellations)
+        manager.stopListening()
+    }
+
+    /**
+     * A new screen whose collaborators lookup failed takes over the stream an older screen opened,
+     * so the older one being cleared does not close it.
+     */
+    @Test
+    fun `claimIfListening takes over an open stream for the same budget`() = runTest {
+        var subscriptions = 0
+        var cancellations = 0
+        every { sseClient.subscribeToBudgetEntries(BUDGET_SERVER_ID) } returns flow {
+            subscriptions++
+            try {
+                awaitCancellation()
+            } finally {
+                cancellations++
+            }
+        }
+        val oldScreen = Any()
+        val newScreen = Any()
+
+        val manager = createManager()
+        manager.startListening(BUDGET_SERVER_ID, owner = oldScreen)
+        manager.claimIfListening(BUDGET_SERVER_ID, owner = newScreen)
+        manager.stopListening(owner = oldScreen)
+        advanceUntilIdle()
+
+        assertEquals(1, subscriptions)
+        assertEquals(0, cancellations)
+        manager.stopListening()
+    }
+
+    @Test
+    fun `claimIfListening opens nothing when not listening to that budget`() = runTest {
+        var subscriptions = 0
+        every { sseClient.subscribeToBudgetEntries(any()) } returns flow {
+            subscriptions++
+            awaitCancellation()
+        }
+
+        val manager = createManager()
+        manager.claimIfListening(BUDGET_SERVER_ID, owner = this)
+        advanceUntilIdle()
+        assertEquals(0, subscriptions)
+
+        // Nor takes over the stream of another budget
+        val otherScreen = Any()
+        manager.startListening(OTHER_BUDGET_SERVER_ID, owner = otherScreen)
+        manager.claimIfListening(BUDGET_SERVER_ID, owner = this)
+        manager.stopListening(owner = this)
+        advanceUntilIdle()
+        assertEquals(1, subscriptions)
+        manager.stopListening(owner = otherScreen)
     }
 
     /**
@@ -112,6 +226,7 @@ class RealTimeSyncManagerTest {
 
     private companion object {
         const val BUDGET_SERVER_ID = 3L
+        const val OTHER_BUDGET_SERVER_ID = 4L
         const val FIRST_BACKOFF_MS = 1_000L
     }
 }

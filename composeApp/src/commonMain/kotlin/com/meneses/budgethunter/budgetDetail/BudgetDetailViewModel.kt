@@ -48,30 +48,17 @@ class BudgetDetailViewModel(
 
     private var syncJob: Job? = null
 
-    /**
-     * Whether this ViewModel is the one that asked [realTimeSyncManager] to listen.
-     *
-     * The manager is an application-scoped singleton shared by every instance of this screen, so
-     * a ViewModel that never started it must not stop it: the initial [BudgetDetailState] has no
-     * `serverId` yet, and tearing the stream down on that first emission would kill a healthy
-     * connection owned by a previous instance and force a reconnect.
-     */
-    private var ownsRealTimeSync = false
+    /** Collects the budget detail; restarted rather than duplicated when the screen comes back. */
+    private var detailJob: Job? = null
+
+    private var realTimeSyncCheckJob: Job? = null
 
     init {
         checkAuthState()
         viewModelScope.launch {
-            uiState.map { state ->
-                val budget = state.budgetDetail.budget
-                if (budget.isSynced && budget.serverId != null) budget.serverId else null
-            }.distinctUntilChanged().collect { serverId ->
-                if (serverId != null) {
-                    // Only start SSE if the budget has collaborators
-                    checkAndStartSSE(serverId)
-                } else if (ownsRealTimeSync) {
-                    stopRealTimeSync()
-                }
-            }
+            uiState.map { it.budgetDetail.budget.syncedServerId() }
+                .distinctUntilChanged()
+                .collect { serverId -> refreshRealTimeSync(serverId) }
         }
         realTimeSyncManager.collaboratorNotifications
             .onEach { collaboratorName ->
@@ -90,26 +77,46 @@ class BudgetDetailViewModel(
             .launchIn(viewModelScope)
     }
 
-    private suspend fun checkAndStartSSE(serverId: Long) {
-        val collaboratorsResult = collaboratorRepository.getCollaborators(serverId)
-        val hasCollaborators = (collaboratorsResult.getOrNull()?.size ?: 0) > 1
+    /**
+     * Listens to the budget in real time only while it is on the server and has collaborators.
+     *
+     * Runs when the budget's server id changes and every time the screen comes back (see
+     * [resumeSync]): the ViewModel outlives the trips to other screens, so a collaborator added
+     * or removed in the collaborators screen would otherwise not start or stop the stream.
+     *
+     * [realTimeSyncManager] is an application-scoped singleton shared by every instance of this
+     * screen, so it is stopped with this ViewModel as owner: an instance that never started the
+     * stream, or that was replaced by a newer one, leaves it alone.
+     */
+    private fun refreshRealTimeSync(serverId: Long?) {
+        realTimeSyncCheckJob?.cancel()
+        realTimeSyncCheckJob = viewModelScope.launch {
+            if (serverId == null) {
+                realTimeSyncManager.stopListening(owner = this@BudgetDetailViewModel)
+                return@launch
+            }
 
-        if (hasCollaborators) {
-            realTimeSyncManager.startListening(serverId)
-            ownsRealTimeSync = true
-        } else if (ownsRealTimeSync) {
-            stopRealTimeSync()
+            val collaboratorsResult = collaboratorRepository.getCollaborators(serverId)
+            // A failed lookup says nothing about the collaborators: keep the stream as it is, but
+            // take it over, or a previous instance being cleared would close it under us
+            val collaborators = collaboratorsResult.getOrNull() ?: run {
+                realTimeSyncManager.claimIfListening(serverId, owner = this@BudgetDetailViewModel)
+                return@launch
+            }
+
+            if (collaborators.size > 1) {
+                realTimeSyncManager.startListening(serverId, owner = this@BudgetDetailViewModel)
+            } else {
+                realTimeSyncManager.stopListening(owner = this@BudgetDetailViewModel)
+            }
         }
     }
 
-    private fun stopRealTimeSync() {
-        realTimeSyncManager.stopListening()
-        ownsRealTimeSync = false
-    }
+    private fun Budget.syncedServerId(): Long? = serverId?.takeIf { isSynced }
 
     override fun onCleared() {
         super.onCleared()
-        if (ownsRealTimeSync) stopRealTimeSync()
+        realTimeSyncManager.stopListening(owner = this)
     }
 
     fun sendIntent(intent: BudgetDetailIntent) {
@@ -189,7 +196,10 @@ class BudgetDetailViewModel(
     private fun getBudgetDetail() {
         val budgetId = _uiState.value.budgetDetail.budget.id
 
-        viewModelScope.launch {
+        // The screen asks again each time it comes back from another screen, and the ViewModel
+        // keeps living meanwhile: restart the collection instead of adding a second one.
+        detailJob?.cancel()
+        detailJob = viewModelScope.launch {
             // Trigger auto-sync ONCE before starting to collect, not on every emission
             if (!hasTriggeredInitialSync) {
                 val currentServerId = _uiState.value.budgetDetail.budget.serverId
@@ -306,8 +316,12 @@ class BudgetDetailViewModel(
      * Retries pushing entries that were saved while the app was in background (e.g. from an SMS)
      * and whose own push failed. Runs silently: [BudgetDetailState.isLoading] would replace the
      * whole screen with a loading indicator every time the app comes back to the foreground.
+     *
+     * Also runs when returning from another screen of the app, so it re-checks the real-time
+     * stream too (collaborators may have changed there).
      */
     private fun resumeSync() {
+        refreshRealTimeSync(_uiState.value.budgetDetail.budget.syncedServerId())
         val budget = _uiState.value.budgetDetail.budget
         val serverId = budget.serverId ?: return
         if (syncJob?.isActive == true) return
