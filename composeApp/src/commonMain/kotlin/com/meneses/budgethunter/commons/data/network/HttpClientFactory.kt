@@ -6,6 +6,7 @@ import com.meneses.budgethunter.commons.data.network.models.RefreshTokenRequest
 import com.meneses.budgethunter.commons.data.sync.Logger as AppLogger
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.engine.HttpClientEngineFactory
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.auth.Auth
 import io.ktor.client.plugins.auth.providers.BearerTokens
@@ -26,7 +27,16 @@ import kotlinx.serialization.json.Json
 
 private const val TAG = "HttpClient"
 
+/**
+ * Creates the client for the BudgetHunter API, including the SSE streams.
+ *
+ * @param engine Given by each platform on purpose, instead of letting Ktor pick whichever engine
+ *   it finds first on the classpath: on Android that was the `Android` (HttpURLConnection)
+ *   engine, which never closes the socket when a request is cancelled, so every SSE stream
+ *   left behind (e.g. when switching budgets) stayed open until the network dropped.
+ */
 fun createHttpClient(
+    engine: HttpClientEngineFactory<*>,
     baseUrl: String,
     tokenStorage: TokenStorage,
     json: Json = Json {
@@ -37,7 +47,7 @@ fun createHttpClient(
     appLogger: AppLogger,
     logLevel: LogLevel
 ): HttpClient {
-    return HttpClient {
+    return HttpClient(engine) {
         install(ContentNegotiation) {
             json(json)
         }
@@ -51,7 +61,7 @@ fun createHttpClient(
         install(SSE)
 
         // Required so individual requests can override the engine's timeouts. Long-lived SSE
-        // streams disable the socket timeout entirely; see SseClient.subscribeToBudgetEntries.
+        // streams set their own; see SseClient.configureStreamRequest.
         // Installing it without values keeps the engine defaults for every other request.
         install(HttpTimeout)
 

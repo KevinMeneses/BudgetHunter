@@ -12,16 +12,21 @@ import com.meneses.budgethunter.commons.data.network.createHttpClient
 import com.meneses.budgethunter.commons.data.network.getBaseUrl
 import kotlinx.coroutines.CoroutineScope
 import io.ktor.client.HttpClient
+import io.ktor.client.engine.HttpClientEngineFactory
 import io.ktor.client.plugins.logging.LogLevel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.serialization.json.Json
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
+/** Qualifier of the Ktor engine each platform module provides for the BudgetHunter API client. */
+const val API_HTTP_ENGINE = "ApiHttpEngine"
+
 val authModule = module {
 
     single<HttpClient>(named("AuthHttpClient")) {
         createHttpClient(
+            engine = get<HttpClientEngineFactory<*>>(named(API_HTTP_ENGINE)),
             baseUrl = getBaseUrl(),
             tokenStorage = get<TokenStorage>(),
             json = get<Json>(),
