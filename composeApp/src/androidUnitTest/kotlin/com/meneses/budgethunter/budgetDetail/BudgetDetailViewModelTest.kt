@@ -2,6 +2,7 @@ package com.meneses.budgethunter.budgetDetail
 
 import budgethunter.composeapp.generated.resources.Res
 import budgethunter.composeapp.generated.resources.sync_failed_background
+import androidx.lifecycle.ViewModelStore
 import com.meneses.budgethunter.auth.data.AuthRepository
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailEvent
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailIntent
@@ -9,13 +10,16 @@ import com.meneses.budgethunter.budgetDetail.data.BudgetDetailRepository
 import com.meneses.budgethunter.budgetDetail.domain.BudgetDetail
 import com.meneses.budgethunter.budgetEntry.data.sync.RealTimeSyncManager
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
+import com.meneses.budgethunter.budgetEntry.domain.BudgetEntryFilter
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.collaborator.data.CollaboratorRepository
 import com.meneses.budgethunter.commons.data.network.models.UserInfo
+import io.mockk.clearMocks
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.coJustRun
 import io.mockk.every
+import io.mockk.verify
 import io.mockk.mockk
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -202,6 +206,152 @@ class BudgetDetailViewModelTest {
         val event = viewModel.events.first()
         assertIs<BudgetDetailEvent.ShowCollaboratorEntry>(event)
         assertEquals(collaboratorName, event.collaboratorName)
+    }
+
+    // ========== Lifetime across navigation ==========
+
+    /**
+     * The ViewModel lives on while an entry is opened, and the screen asks for the detail again
+     * when it comes back: the filter must still be applied to what the collection emits.
+     */
+    @Test
+    fun `GetBudgetDetail again keeps the filter`() = runTest {
+        val budget = Budget(id = 10, name = "Budget", amount = 100.0)
+        val all = BudgetDetail(
+            budget = budget,
+            entries = listOf(
+                BudgetEntry(id = 1, budgetId = 10, description = "Mercado"),
+                BudgetEntry(id = 2, budgetId = 10, description = "Gasolina")
+            )
+        )
+        val filtered = all.copy(entries = all.entries.take(1))
+        val filter = BudgetEntryFilter(description = "merc")
+        every { budgetDetailRepository.getBudgetDetailById(10) } returns flowOf(all)
+        coEvery { budgetDetailRepository.getAllFilteredBy(filter) } returns filtered
+
+        viewModel.sendIntent(BudgetDetailIntent.SetBudget(budget))
+        viewModel.sendIntent(BudgetDetailIntent.GetBudgetDetail)
+        viewModel.sendIntent(BudgetDetailIntent.FilterEntries(filter))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // When - back from an entry
+        viewModel.sendIntent(BudgetDetailIntent.GetBudgetDetail)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then
+        assertEquals(filter, viewModel.uiState.value.filter)
+        assertEquals(filtered.entries, viewModel.uiState.value.budgetDetail.entries)
+    }
+
+    @Test
+    fun `GetBudgetDetail again replaces the previous collection instead of adding one`() = runTest {
+        val budget = Budget(id = 10, name = "Budget", amount = 100.0)
+        val source = MutableSharedFlow<BudgetDetail>()
+        every { budgetDetailRepository.getBudgetDetailById(10) } returns source
+
+        viewModel.sendIntent(BudgetDetailIntent.SetBudget(budget))
+        viewModel.sendIntent(BudgetDetailIntent.GetBudgetDetail)
+        testDispatcher.scheduler.advanceUntilIdle()
+        viewModel.sendIntent(BudgetDetailIntent.GetBudgetDetail)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(1, source.subscriptionCount.value)
+    }
+
+    // ========== Real-time sync ==========
+
+    private val sharedBudget = Budget(id = 10, name = "Shared", amount = 1.0, serverId = 42L, isSynced = true)
+    private val twoCollaborators = listOf(
+        UserInfo(email = "a@a.com", name = "a"),
+        UserInfo(email = "b@b.com", name = "b")
+    )
+
+    @Test
+    fun `starts real-time sync as owner when the budget has collaborators`() = runTest {
+        coEvery { collaboratorRepository.getCollaborators(42L) } returns Result.success(twoCollaborators)
+
+        viewModel.sendIntent(BudgetDetailIntent.SetBudget(sharedBudget))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        verify(exactly = 1) { realTimeSyncManager.startListening(42L, viewModel) }
+    }
+
+    @Test
+    fun `ResumeSync starts real-time sync once a collaborator was added`() = runTest {
+        // Given - opened without collaborators
+        viewModel.sendIntent(BudgetDetailIntent.SetBudget(sharedBudget))
+        testDispatcher.scheduler.advanceUntilIdle()
+        verify(exactly = 0) { realTimeSyncManager.startListening(any(), any()) }
+
+        // When - back from the collaborators screen after sharing the budget
+        coEvery { collaboratorRepository.getCollaborators(42L) } returns Result.success(twoCollaborators)
+        viewModel.sendIntent(BudgetDetailIntent.ResumeSync)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then
+        verify(exactly = 1) { realTimeSyncManager.startListening(42L, viewModel) }
+    }
+
+    @Test
+    fun `ResumeSync stops real-time sync once the collaborators are gone`() = runTest {
+        coEvery { collaboratorRepository.getCollaborators(42L) } returns Result.success(twoCollaborators)
+        viewModel.sendIntent(BudgetDetailIntent.SetBudget(sharedBudget))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        forgetRealTimeSyncCalls()
+        coEvery { collaboratorRepository.getCollaborators(42L) } returns Result.success(twoCollaborators.take(1))
+        viewModel.sendIntent(BudgetDetailIntent.ResumeSync)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        verify(exactly = 1) { realTimeSyncManager.stopListening(owner = viewModel) }
+    }
+
+    @Test
+    fun `a failed collaborator lookup leaves real-time sync running`() = runTest {
+        coEvery { collaboratorRepository.getCollaborators(42L) } returns Result.success(twoCollaborators)
+        viewModel.sendIntent(BudgetDetailIntent.SetBudget(sharedBudget))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        forgetRealTimeSyncCalls()
+        coEvery { collaboratorRepository.getCollaborators(42L) } returns Result.failure(Exception("offline"))
+        viewModel.sendIntent(BudgetDetailIntent.ResumeSync)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        verify(exactly = 0) { realTimeSyncManager.stopListening(any<Any>()) }
+        verify(exactly = 0) { realTimeSyncManager.stopListening() }
+        verify(exactly = 1) { realTimeSyncManager.claimIfListening(42L, viewModel) }
+    }
+
+    @Test
+    fun `never stops real-time sync without naming itself as owner`() = runTest {
+        coEvery { collaboratorRepository.getCollaborators(42L) } returns Result.success(twoCollaborators)
+        viewModel.sendIntent(BudgetDetailIntent.SetBudget(sharedBudget))
+        viewModel.sendIntent(BudgetDetailIntent.ResumeSync)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        forgetRealTimeSyncCalls()
+
+        clearViewModel()
+
+        verify(exactly = 0) { realTimeSyncManager.stopListening() }
+        verify(exactly = 1) { realTimeSyncManager.stopListening(owner = viewModel) }
+    }
+
+    /** Drops the calls recorded so far (e.g. the stop for the initial state without server id). */
+    private fun forgetRealTimeSyncCalls() = clearMocks(
+        realTimeSyncManager,
+        answers = false,
+        recordedCalls = true,
+        childMocks = false,
+        verificationMarks = true,
+        exclusionRules = false
+    )
+
+    /** Clears the ViewModel the way the navigation back stack does when the screen is left. */
+    private fun clearViewModel() {
+        val store = ViewModelStore()
+        store.put("detail", viewModel)
+        store.clear()
     }
 
     // ========== ResumeSync Tests ==========
