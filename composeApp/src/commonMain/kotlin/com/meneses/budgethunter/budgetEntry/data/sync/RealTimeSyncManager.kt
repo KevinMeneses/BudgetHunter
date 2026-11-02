@@ -11,7 +11,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * Manages real-time synchronization of budget entries from collaborators.
@@ -50,10 +51,13 @@ class RealTimeSyncManager(
     private var currentJob: Job? = null
     private var currentBudgetServerId: Long? = null
 
+    /** Reconnection state of the open stream, see [Connection]. */
+    private var currentConnection: Connection? = null
+
     /**
      * Last caller of [startListening]; only it may end the stream with [stopListening].
      *
-     * Like [currentJob] and [currentBudgetServerId], it is not synchronized: the manager is only
+     * Like [currentJob], [currentBudgetServerId] and [currentConnection], it is not synchronized: the manager is only
      * called from the main thread (the budget detail ViewModel).
      */
     private var currentOwner: Any? = null
@@ -69,7 +73,8 @@ class RealTimeSyncManager(
      *
      * The connection is re-established automatically with exponential backoff whenever the
      * stream fails, so a dropped connection does not silently disable real-time updates for
-     * the rest of the session. Only cancelling the job (see [stopListening]) ends it.
+     * the rest of the session. The backoff starts over once a connection succeeds, and
+     * [reconnectNow] skips the wait. Only cancelling the job (see [stopListening]) ends it.
      *
      * The caller becomes the owner of the stream even when it is already open for the same
      * budget, so a screen that is being destroyed cannot close the stream a newer screen needs:
@@ -91,10 +96,13 @@ class RealTimeSyncManager(
         }
 
         currentBudgetServerId = budgetServerId
+        val connection = Connection()
+        currentConnection = connection
 
-        currentJob = sseClient.subscribeToBudgetEntries(budgetServerId)
+        currentJob = sseClient
+            .subscribeToBudgetEntries(budgetServerId, onConnected = connection::onConnected)
             .onEach { event -> handleBudgetEntryEvent(event) }
-            .retryWhen { cause, attempt -> reconnectAfterBackoff(cause, attempt) }
+            .retryWhen { cause, _ -> reconnectAfterBackoff(cause, connection) }
             .catch { logger.error(tag, "SSE stream error", it) }
             .launchIn(scope)
     }
@@ -105,20 +113,39 @@ class RealTimeSyncManager(
      * Cancellation must propagate untouched, otherwise [stopListening] would be unable to end
      * the stream. Any other failure is transient from the client's point of view (server
      * restart, connectivity loss, proxy dropping the connection), so it is retried forever with
-     * a delay that doubles up to [MAX_RECONNECT_DELAY_MS].
+     * a delay that doubles with each consecutive failure up to [MAX_RECONNECT_DELAY_MS].
+     *
+     * The wait ends early when [reconnectNow] is called, and the failures count from zero again.
      *
      * @return true to resubscribe, false to let the failure reach the collector
      */
-    private suspend fun reconnectAfterBackoff(cause: Throwable, attempt: Long): Boolean {
+    private suspend fun reconnectAfterBackoff(cause: Throwable, connection: Connection): Boolean {
         if (cause is CancellationException) return false
 
-        val backoffMultiplier = 1L shl attempt.coerceAtMost(MAX_BACKOFF_EXPONENT).toInt()
+        val failures = connection.consecutiveFailures++
+        val backoffMultiplier = 1L shl failures.coerceAtMost(MAX_BACKOFF_EXPONENT)
         val delayMillis = (INITIAL_RECONNECT_DELAY_MS * backoffMultiplier)
             .coerceAtMost(MAX_RECONNECT_DELAY_MS)
 
-        logger.warn(tag, "SSE stream dropped, reconnecting in ${delayMillis}ms (attempt ${attempt + 1})", cause)
-        delay(delayMillis)
+        logger.warn(tag, "SSE stream dropped, reconnecting in ${delayMillis}ms (attempt ${failures + 1})", cause)
+        val woken = withTimeoutOrNull(delayMillis) { connection.wakeUp.receive() } != null
+        if (woken) {
+            logger.debug(tag, "Reconnecting now instead of waiting")
+            connection.consecutiveFailures = 0
+        }
         return true
+    }
+
+    /**
+     * Reconnects right away if the stream is waiting to reconnect, with the backoff started over.
+     *
+     * For when the app comes back to the foreground: Android cuts the network of background apps,
+     * so the stream usually dropped meanwhile and could otherwise still be waiting up to
+     * [MAX_RECONNECT_DELAY_MS]. Does nothing when not listening; when the stream is connected, the
+     * next drop reconnects without waiting once.
+     */
+    fun reconnectNow() {
+        currentConnection?.wakeUp?.trySend(Unit)
     }
 
     /**
@@ -169,6 +196,7 @@ class RealTimeSyncManager(
     fun stopListening() {
         currentJob?.cancel()
         currentJob = null
+        currentConnection = null
         currentBudgetServerId = null
         currentOwner = null
     }
@@ -195,9 +223,27 @@ class RealTimeSyncManager(
         if (currentOwner === owner) stopListening()
     }
 
+    /**
+     * Reconnection state of one stream.
+     *
+     * [consecutiveFailures] is only touched from the stream's collecting coroutine
+     * ([onConnected] runs there too). [wakeUp] is the only part [reconnectNow] uses, from the main
+     * thread; it is conflated so a call made while the stream is failing is not lost, and drained
+     * on connection so a call made while connected only skips one wait.
+     */
+    private class Connection {
+        var consecutiveFailures = 0
+        val wakeUp = Channel<Unit>(Channel.CONFLATED)
+
+        fun onConnected() {
+            consecutiveFailures = 0
+            wakeUp.tryReceive()
+        }
+    }
+
     private companion object {
         const val INITIAL_RECONNECT_DELAY_MS = 1_000L
         const val MAX_RECONNECT_DELAY_MS = 60_000L
-        const val MAX_BACKOFF_EXPONENT = 6L
+        const val MAX_BACKOFF_EXPONENT = 6
     }
 }
