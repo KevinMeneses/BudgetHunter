@@ -8,11 +8,13 @@ import kotlinx.datetime.toLocalDateTime
 /**
  * Today in the device time zone, in the "yyyy-MM-dd" form budgets and entries store.
  */
-fun today(): String =
+fun today(): String = currentDate().toString()
+
+/** Today in the device time zone. */
+fun currentDate(): LocalDate =
     Clock.System.now()
         .toLocalDateTime(TimeZone.currentSystemDefault())
         .date
-        .toString()
 
 /**
  * Calendar date of a backend timestamp: "2026-09-10T21:48:21.123456" -> "2026-09-10".

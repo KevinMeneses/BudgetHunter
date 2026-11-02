@@ -4,7 +4,6 @@ import com.meneses.budgethunter.budgetDetail.domain.BudgetDetail
 import com.meneses.budgethunter.budgetEntry.data.BudgetEntryRepository
 import com.meneses.budgethunter.budgetEntry.data.datasource.BudgetEntryLocalDataSource
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
-import com.meneses.budgethunter.budgetEntry.domain.BudgetEntryFilter
 import com.meneses.budgethunter.budgetList.application.DeleteBudgetUseCase
 import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.budgetList.data.datasource.BudgetLocalDataSource
@@ -95,56 +94,6 @@ class BudgetDetailRepositoryTest {
         val cachedDetail = repository.getCachedDetail()
 
         assertEquals(result, cachedDetail)
-    }
-
-    @Test
-    fun `getAllFilteredBy returns filtered entries`() = runTest {
-        val budget = Budget(id = 1, name = "Test Budget", amount = 1000.0)
-        val entries = listOf(
-            BudgetEntry(id = 1, budgetId = 1, amount = "100.0", description = "Food", category = BudgetEntry.Category.FOOD)
-        )
-        val filter = BudgetEntryFilter(category = BudgetEntry.Category.FOOD)
-        val budgetDataSource = mockk<BudgetLocalDataSource> {
-            coEvery { budgets } returns flowOf(listOf(budget))
-        }
-        val entryDataSource = mockk<BudgetEntryLocalDataSource> {
-            every { selectAllByBudgetId(1L) } returns flowOf(entries)
-            coEvery { getAllFilteredBy(filter) } returns entries
-        }
-        val repository = buildRepository(budgetDataSource, entryDataSource)
-
-        repository.getBudgetDetailById(1).first()
-
-        val result = repository.getAllFilteredBy(filter)
-
-        assertEquals(entries, result.entries)
-        coVerify { entryDataSource.getAllFilteredBy(filter) }
-    }
-
-    @Test
-    fun `getAllFilteredBy uses cached budget`() = runTest {
-        val budget = Budget(id = 1, name = "Test Budget", amount = 1000.0)
-        val allEntries = listOf(
-            BudgetEntry(id = 1, budgetId = 1, amount = "100.0", description = "Food", category = BudgetEntry.Category.FOOD),
-            BudgetEntry(id = 2, budgetId = 1, amount = "200.0", description = "Transport", category = BudgetEntry.Category.TRANSPORTATION)
-        )
-        val filteredEntries = listOf(allEntries[0])
-        val filter = BudgetEntryFilter(category = BudgetEntry.Category.FOOD)
-        val budgetDataSource = mockk<BudgetLocalDataSource> {
-            coEvery { budgets } returns flowOf(listOf(budget))
-        }
-        val entryDataSource = mockk<BudgetEntryLocalDataSource> {
-            every { selectAllByBudgetId(1L) } returns flowOf(allEntries)
-            coEvery { getAllFilteredBy(filter) } returns filteredEntries
-        }
-        val repository = buildRepository(budgetDataSource, entryDataSource)
-
-        repository.getBudgetDetailById(1).first()
-
-        val result = repository.getAllFilteredBy(filter)
-
-        assertEquals(budget, result.budget)
-        assertEquals(filteredEntries, result.entries)
     }
 
     @Test
@@ -497,101 +446,6 @@ class BudgetDetailRepositoryTest {
         val result = repository.getCachedDetail()
 
         assertEquals(BudgetDetail(), result)
-    }
-
-    @Test
-    fun `getAllFilteredBy filters by description`() = runTest {
-        val budget = Budget(id = 1, name = "Test Budget", amount = 1000.0)
-        val filteredEntries = listOf(
-            BudgetEntry(id = 1, budgetId = 1, amount = "100.0", description = "Grocery shopping")
-        )
-        val filter = BudgetEntryFilter(description = "Grocery")
-        val budgetDataSource = mockk<BudgetLocalDataSource> {
-            coEvery { budgets } returns flowOf(listOf(budget))
-        }
-        val entryDataSource = mockk<BudgetEntryLocalDataSource> {
-            every { selectAllByBudgetId(1L) } returns flowOf(emptyList())
-            coEvery { getAllFilteredBy(filter) } returns filteredEntries
-        }
-        val repository = buildRepository(budgetDataSource, entryDataSource)
-
-        repository.getBudgetDetailById(1).first()
-
-        val result = repository.getAllFilteredBy(filter)
-
-        assertEquals(1, result.entries.size)
-        assertEquals("Grocery shopping", result.entries[0].description)
-    }
-
-    @Test
-    fun `getAllFilteredBy filters by type`() = runTest {
-        val budget = Budget(id = 1, name = "Test Budget", amount = 1000.0)
-        val filteredEntries = listOf(
-            BudgetEntry(id = 1, budgetId = 1, amount = "100.0", description = "Income", type = BudgetEntry.Type.INCOME)
-        )
-        val filter = BudgetEntryFilter(type = BudgetEntry.Type.INCOME)
-        val budgetDataSource = mockk<BudgetLocalDataSource> {
-            coEvery { budgets } returns flowOf(listOf(budget))
-        }
-        val entryDataSource = mockk<BudgetEntryLocalDataSource> {
-            every { selectAllByBudgetId(1L) } returns flowOf(emptyList())
-            coEvery { getAllFilteredBy(filter) } returns filteredEntries
-        }
-        val repository = buildRepository(budgetDataSource, entryDataSource)
-
-        repository.getBudgetDetailById(1).first()
-
-        val result = repository.getAllFilteredBy(filter)
-
-        assertEquals(1, result.entries.size)
-        assertEquals(BudgetEntry.Type.INCOME, result.entries[0].type)
-    }
-
-    @Test
-    fun `getAllFilteredBy filters by date range`() = runTest {
-        val budget = Budget(id = 1, name = "Test Budget", amount = 1000.0)
-        val filteredEntries = listOf(
-            BudgetEntry(id = 1, budgetId = 1, amount = "100.0", description = "Entry", date = "2024-02-15")
-        )
-        val filter = BudgetEntryFilter(startDate = "2024-02-01", endDate = "2024-02-28")
-        val budgetDataSource = mockk<BudgetLocalDataSource> {
-            coEvery { budgets } returns flowOf(listOf(budget))
-        }
-        val entryDataSource = mockk<BudgetEntryLocalDataSource> {
-            every { selectAllByBudgetId(1L) } returns flowOf(emptyList())
-            coEvery { getAllFilteredBy(filter) } returns filteredEntries
-        }
-        val repository = buildRepository(budgetDataSource, entryDataSource)
-
-        repository.getBudgetDetailById(1).first()
-
-        val result = repository.getAllFilteredBy(filter)
-
-        assertEquals(1, result.entries.size)
-        assertEquals("2024-02-15", result.entries[0].date)
-    }
-
-    @Test
-    fun `getAllFilteredBy propagates exception from data source`() = runTest {
-        val budget = Budget(id = 1, name = "Test Budget", amount = 1000.0)
-        val filter = BudgetEntryFilter(category = BudgetEntry.Category.FOOD)
-        val budgetDataSource = mockk<BudgetLocalDataSource> {
-            coEvery { budgets } returns flowOf(listOf(budget))
-        }
-        val entryDataSource = mockk<BudgetEntryLocalDataSource> {
-            every { selectAllByBudgetId(1L) } returns flowOf(emptyList())
-            coEvery { getAllFilteredBy(filter) } throws Exception("Filter error")
-        }
-        val repository = buildRepository(budgetDataSource, entryDataSource)
-
-        repository.getBudgetDetailById(1).first()
-
-        val exception = kotlin.runCatching {
-            repository.getAllFilteredBy(filter)
-        }.exceptionOrNull()
-
-        assertEquals("Filter error", exception?.message)
-        assertEquals(Exception::class, exception?.let { it::class })
     }
 
     @Test

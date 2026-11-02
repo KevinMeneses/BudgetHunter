@@ -67,8 +67,6 @@
     <string name="creation_date">Creation date</string>
     <string name="category">Category</string>
     <string name="frequency">Frequency</string>
-    <string name="start_date">Start date</string>
-    <string name="end_date">End date</string>
     <string name="amount_mandatory">You must enter an amount for this entry</string>
     
     <!-- Categories -->
@@ -96,8 +94,6 @@
     <!-- Search -->
     <string name="search_budgets">Search budgets…</string>
     <string name="clear_search">Clear search</string>
-    <string name="filter">Filter</string>
-    <string name="filter_entries_criteria">Filter entries by the following criteria:</string>
     
     <!-- Collaboration -->
     <string name="collaborate">Collaborate</string>
@@ -219,7 +215,6 @@
     <string name="update_budget_icon_description">Update budget icon</string>
     <string name="select_from_files_icon_description">Select files icon</string>
     <string name="take_picture_icon_description">Take picture icon</string>
-    <string name="budget_list_icon_description">Budget list icon</string>
     <string name="invoice_image_description">Invoice image</string>
     
     <!-- Notification Channels -->
@@ -388,4 +383,25 @@
     <string name="sms_shortcut_image_filter">Message Contains with the bank name and Run Immediately chosen</string>
     <string name="sms_shortcut_image_action">Create New Shortcut button</string>
     <string name="sms_shortcut_image_variable">Shortcut Input variable in the action</string>
+    <string name="show_filters">Search and filter</string>
+    <string name="hide_filters">Hide search and filters</string>
+    <string name="sort_entries">Sort</string>
+    <string name="sort_newest">Newest first</string>
+    <string name="sort_amount_descending">Amount: high to low</string>
+    <string name="sort_amount_ascending">Amount: low to high</string>
+    <string name="search_entries">Search entries</string>
+    <string name="outcomes_filter">Expenses</string>
+    <string name="incomes_filter">Income</string>
+    <string name="any_category">All categories</string>
+    <string name="any_date">Any date</string>
+    <string name="this_month">This month</string>
+    <string name="last_month">Last month</string>
+    <string name="last_7_days">Last 7 days</string>
+    <string name="custom_range">Custom range…</string>
+    <string name="remove_filter">Remove filter</string>
+    <string name="no_matching_entries">No entries match the filter</string>
+    <plurals name="filtered_entries_summary">
+        <item quantity="one">%1$d of %2$d entry</item>
+        <item quantity="other">%1$d of %2$d entries</item>
+    </plurals>
 </resources>

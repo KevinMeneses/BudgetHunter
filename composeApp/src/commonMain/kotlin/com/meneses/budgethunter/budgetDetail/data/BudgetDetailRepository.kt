@@ -3,7 +3,6 @@ package com.meneses.budgethunter.budgetDetail.data
 import com.meneses.budgethunter.budgetDetail.domain.BudgetDetail
 import com.meneses.budgethunter.budgetEntry.data.BudgetEntryRepository
 import com.meneses.budgethunter.budgetEntry.data.datasource.BudgetEntryLocalDataSource
-import com.meneses.budgethunter.budgetEntry.domain.BudgetEntryFilter
 import com.meneses.budgethunter.budgetList.application.DeleteBudgetUseCase
 import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.budgetList.data.datasource.BudgetLocalDataSource
@@ -48,13 +47,6 @@ class BudgetDetailRepository(
                     }
                 }
             }
-
-    suspend fun getAllFilteredBy(filter: BudgetEntryFilter): BudgetDetail {
-        val cached = getCachedDetail()
-        return cached.copy(
-            entries = entriesLocalDataSource.getAllFilteredBy(filter)
-        )
-    }
 
     suspend fun updateBudgetAmount(amount: Double) = withContext(ioDispatcher) {
         val cached = getCachedDetail()

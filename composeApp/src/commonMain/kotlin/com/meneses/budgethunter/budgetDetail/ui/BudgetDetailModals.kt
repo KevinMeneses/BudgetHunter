@@ -1,8 +1,6 @@
 package com.meneses.budgethunter.budgetDetail.ui
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
@@ -19,26 +17,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import budgethunter.composeapp.generated.resources.Res
-import budgethunter.composeapp.generated.resources.apply
 import budgethunter.composeapp.generated.resources.budget
 import budgethunter.composeapp.generated.resources.cancel
-import budgethunter.composeapp.generated.resources.clean
 import budgethunter.composeapp.generated.resources.delete
 import budgethunter.composeapp.generated.resources.delete_budget_confirmation_message
 import budgethunter.composeapp.generated.resources.delete_entries_confirmation_message
-import budgethunter.composeapp.generated.resources.end_date
-import budgethunter.composeapp.generated.resources.filter
-import budgethunter.composeapp.generated.resources.filter_entries_criteria
 import budgethunter.composeapp.generated.resources.save
 import budgethunter.composeapp.generated.resources.set_budget_amount
-import budgethunter.composeapp.generated.resources.start_date
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailIntent
-import com.meneses.budgethunter.budgetEntry.domain.BudgetEntryFilter
 import com.meneses.budgethunter.budgetEntry.ui.AmountField
-import com.meneses.budgethunter.budgetEntry.ui.CategorySelector
-import com.meneses.budgethunter.budgetEntry.ui.DateField
-import com.meneses.budgethunter.budgetEntry.ui.DescriptionField
-import com.meneses.budgethunter.budgetEntry.ui.TypeSwitch
 import com.meneses.budgethunter.commons.EMPTY
 import com.meneses.budgethunter.commons.ui.ConfirmationModal
 import com.meneses.budgethunter.commons.util.toPlainString
@@ -109,146 +96,6 @@ fun BudgetModal(
                 TextButton(onClick = onDismiss) {
                     Text(
                         text = stringResource(Res.string.cancel),
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-            },
-            properties = DialogProperties()
-        )
-    }
-}
-
-@Composable
-fun FilterModal(
-    show: Boolean,
-    filter: BudgetEntryFilter?,
-    onIntent: (BudgetDetailIntent) -> Unit
-) {
-    if (show) {
-        val entryFilter = filter ?: BudgetEntryFilter()
-
-        var description by remember {
-            mutableStateOf(entryFilter.description)
-        }
-
-        var type by remember {
-            mutableStateOf(entryFilter.type)
-        }
-
-        var category by remember {
-            mutableStateOf(entryFilter.category)
-        }
-
-        var startDate by remember {
-            mutableStateOf(entryFilter.startDate)
-        }
-
-        var endDate by remember {
-            mutableStateOf(entryFilter.endDate)
-        }
-
-        val onDismiss = remember {
-            fun() { onIntent(BudgetDetailIntent.ToggleFilterModal(false)) }
-        }
-
-        val onClear = remember {
-            fun() {
-                onIntent(BudgetDetailIntent.ClearFilter)
-                onDismiss()
-            }
-        }
-
-        val onApply = remember {
-            fun() {
-                if (
-                    description.isNullOrBlank() &&
-                    type == null &&
-                    category == null &&
-                    startDate == null &&
-                    endDate == null
-                ) {
-                    onIntent(BudgetDetailIntent.ClearFilter)
-                } else {
-                    val budgetEntryFilter = BudgetEntryFilter(
-                        description = description,
-                        type = type,
-                        category = category,
-                        startDate = startDate,
-                        endDate = endDate
-                    )
-                    onIntent(BudgetDetailIntent.FilterEntries(budgetEntryFilter))
-                }
-                onDismiss()
-            }
-        }
-
-        AlertDialog(
-            onDismissRequest = onDismiss,
-            title = {
-                Text(
-                    text = stringResource(Res.string.filter),
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            },
-            text = {
-                Column {
-                    Text(
-                        text = stringResource(Res.string.filter_entries_criteria),
-                        fontSize = 14.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(bottom = 16.dp)
-                    )
-
-                    DescriptionField(
-                        description = description.orEmpty(),
-                        onDescriptionChanged = { description = it }
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    TypeSwitch(
-                        type = type,
-                        onTypeSelected = { type = it }
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    CategorySelector(
-                        category = category,
-                        onCategorySelected = { category = it }
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    DateField(
-                        date = startDate,
-                        label = stringResource(Res.string.start_date),
-                        onDateSelected = { startDate = it }
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    DateField(
-                        date = endDate,
-                        label = stringResource(Res.string.end_date),
-                        onDateSelected = { endDate = it }
-                    )
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = onApply) {
-                    Text(
-                        text = stringResource(Res.string.apply),
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = onClear) {
-                    Text(
-                        text = stringResource(Res.string.clean),
                         fontWeight = FontWeight.Medium
                     )
                 }

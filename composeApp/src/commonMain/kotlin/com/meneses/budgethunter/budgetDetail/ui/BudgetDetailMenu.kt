@@ -5,7 +5,6 @@ import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Group
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.DropdownMenu
@@ -18,7 +17,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import budgethunter.composeapp.generated.resources.Res
 import budgethunter.composeapp.generated.resources.delete_budget
-import budgethunter.composeapp.generated.resources.filter
 import budgethunter.composeapp.generated.resources.manage_collaborators
 import budgethunter.composeapp.generated.resources.metrics
 import budgethunter.composeapp.generated.resources.settings
@@ -29,7 +27,6 @@ import org.jetbrains.compose.resources.stringResource
 fun BudgetDetailMenu(
     expanded: Boolean,
     onDismiss: () -> Unit,
-    onFilterClick: () -> Unit,
     onMetricsClick: () -> Unit,
     onDeleteClick: () -> Unit,
     onSettingsClick: () -> Unit,
@@ -42,26 +39,6 @@ fun BudgetDetailMenu(
         shape = AbsoluteRoundedCornerShape(10.dp),
         containerColor = AppColors.surface
     ) {
-        DropdownMenuItem(
-            text = {
-                Text(
-                    text = stringResource(Res.string.filter),
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            },
-            onClick = {
-                onDismiss()
-                onFilterClick()
-            },
-            leadingIcon = {
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = stringResource(Res.string.filter),
-                    modifier = Modifier.size(18.dp),
-                    tint = AppColors.primary
-                )
-            }
-        )
         if (showCollaboratorsOption) {
             DropdownMenuItem(
                 text = {
