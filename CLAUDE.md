@@ -97,6 +97,9 @@ Type-safe navigation using Navigation Compose with serializable route objects. M
   `SmsShortcutEntryPoint` (iosMain) -> `RegisterSmsFromShortcutUseCase` and answers with a dialog.
   It runs with the app closed, so Koin is started with `startKoinIfNeeded()` and the Swift managers with
   `IOSBridgeSetup.configureIfNeeded()`. Settings shows the setup guide (`SmsShortcutTutorialScreen`) on iOS only.
+  The intent's texts are English in the Swift code and Spanish in `iosApp/iosApp/es.lproj` (`Localizable.strings`,
+  `AppShortcuts.strings` for the Siri phrases). The guide's screenshots are iOS 26 captures in `drawable` (English) and
+  `drawable-es`; the automation filters by the bank name in the message, not by sender.
 
 ### Automatic categorization
 Entries carry a category; `UNCATEGORIZED` ("Sin categoría") is its own value, the default for a new entry, and is

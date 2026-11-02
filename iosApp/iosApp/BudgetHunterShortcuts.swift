@@ -1,8 +1,9 @@
 import AppIntents
 
 /**
- * Makes "Registrar gasto desde mensaje" show up in the Shortcuts app and in Siri without the
+ * Makes "Register expense from message" show up in the Shortcuts app and in Siri without the
  * user having to build anything first. The message is asked for when it is run by voice.
+ * The Spanish phrases are in es.lproj/AppShortcuts.strings.
  */
 @available(iOS 16.0, *)
 struct BudgetHunterShortcuts: AppShortcutsProvider {
@@ -10,9 +11,9 @@ struct BudgetHunterShortcuts: AppShortcutsProvider {
         AppShortcut(
             intent: RegisterExpenseFromMessageIntent(),
             phrases: [
-                "Registrar gasto desde mensaje en \(.applicationName)",
-                "Registrar gasto en \(.applicationName)",
-                "Registrar mensaje del banco en \(.applicationName)"
+                "Register expense from message in \(.applicationName)",
+                "Register expense in \(.applicationName)",
+                "Register bank message in \(.applicationName)"
             ]
         )
     }

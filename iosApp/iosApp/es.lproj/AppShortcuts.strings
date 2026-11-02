@@ -1,0 +1,4 @@
+/* Siri and Shortcuts phrases (BudgetHunterShortcuts.swift) */
+"Register expense from message in ${applicationName}" = "Registrar gasto desde mensaje en ${applicationName}";
+"Register expense in ${applicationName}" = "Registrar gasto en ${applicationName}";
+"Register bank message in ${applicationName}" = "Registrar mensaje del banco en ${applicationName}";

@@ -2,34 +2,36 @@ import AppIntents
 import ComposeApp
 
 /**
- * "Registrar gasto desde mensaje": receives the text of a bank SMS from a Shortcuts automation
+ * "Register expense from message" ("Registrar gasto desde mensaje"): receives the text of a bank SMS from a Shortcuts automation
  * (trigger "Mensaje") and registers it in the default budget, the same way Android does when it
  * reads the SMS itself. It runs in the background, the app does not need to be open.
  *
  * All the reading, the entry creation and the sync live in the shared Kotlin code
  * (SmsShortcutEntryPoint); this only passes the text and shows the answer.
+ *
+ * The texts here are the English ones; the Spanish ones are in es.lproj/Localizable.strings.
  */
 @available(iOS 16.0, *)
 struct RegisterExpenseFromMessageIntent: AppIntent {
 
-    static var title: LocalizedStringResource = "Registrar gasto desde mensaje"
+    static var title: LocalizedStringResource = "Register expense from message"
 
     static var description = IntentDescription(
-        "Lee el SMS de tu banco y registra el movimiento en tu presupuesto por defecto de BudgetHunter."
+        "Reads your bank SMS and registers the transaction in your default BudgetHunter budget."
     )
 
     static var openAppWhenRun: Bool = false
 
     @Parameter(
-        title: "Mensaje",
-        description: "El contenido del SMS del banco.",
+        title: "Message",
+        description: "The text of the bank SMS.",
         inputOptions: String.IntentInputOptions(multiline: true),
-        requestValueDialog: IntentDialog("¿Qué mensaje del banco quieres registrar?")
+        requestValueDialog: IntentDialog("Which bank message do you want to register?")
     )
     var message: String
 
     static var parameterSummary: some ParameterSummary {
-        Summary("Registrar gasto desde \(\.$message)")
+        Summary("Register expense from \(\.$message)")
     }
 
     @MainActor

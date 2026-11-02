@@ -24,6 +24,8 @@
 		5B1E0A012F10C0DE00A1B201 /* IOSBridgeSetup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B1E0A022F10C0DE00A1B201 /* IOSBridgeSetup.swift */; };
 		5B1E0A032F10C0DE00A1B201 /* RegisterExpenseFromMessageIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B1E0A042F10C0DE00A1B201 /* RegisterExpenseFromMessageIntent.swift */; };
 		5B1E0A052F10C0DE00A1B201 /* BudgetHunterShortcuts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B1E0A062F10C0DE00A1B201 /* BudgetHunterShortcuts.swift */; };
+		5B1E0A072F10C0DE00A1B201 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 5B1E0A082F10C0DE00A1B201 /* Localizable.strings */; };
+		5B1E0A0A2F10C0DE00A1B201 /* AppShortcuts.strings in Resources */ = {isa = PBXBuildFile; fileRef = 5B1E0A0B2F10C0DE00A1B201 /* AppShortcuts.strings */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -60,6 +62,8 @@
 		5B1E0A022F10C0DE00A1B201 /* IOSBridgeSetup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSBridgeSetup.swift; sourceTree = "<group>"; };
 		5B1E0A042F10C0DE00A1B201 /* RegisterExpenseFromMessageIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegisterExpenseFromMessageIntent.swift; sourceTree = "<group>"; };
 		5B1E0A062F10C0DE00A1B201 /* BudgetHunterShortcuts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BudgetHunterShortcuts.swift; sourceTree = "<group>"; };
+		5B1E0A092F10C0DE00A1B201 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
+		5B1E0A0C2F10C0DE00A1B201 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -112,6 +116,8 @@
 				058557BA273AAA24004C7B11 /* Assets.xcassets */,
 				2152FB032600AC8F00CF470E /* iOSApp.swift */,
 				5B1E0A062F10C0DE00A1B201 /* BudgetHunterShortcuts.swift */,
+				5B1E0A082F10C0DE00A1B201 /* Localizable.strings */,
+				5B1E0A0B2F10C0DE00A1B201 /* AppShortcuts.strings */,
 				5B1E0A042F10C0DE00A1B201 /* RegisterExpenseFromMessageIntent.swift */,
 				5B1E0A022F10C0DE00A1B201 /* IOSBridgeSetup.swift */,
 				56C2619B9E644D8F950C014E /* IOSCameraManager.swift */,
@@ -188,6 +194,7 @@
 			knownRegions = (
 				en,
 				Base,
+				es,
 			);
 			mainGroup = 7555FF72242A565900829871;
 			packageReferences = (
@@ -209,6 +216,8 @@
 			files = (
 				058557D9273AAEEB004C7B11 /* Preview Assets.xcassets in Resources */,
 				058557BB273AAA24004C7B11 /* Assets.xcassets in Resources */,
+				5B1E0A072F10C0DE00A1B201 /* Localizable.strings in Resources */,
+				5B1E0A0A2F10C0DE00A1B201 /* AppShortcuts.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -256,6 +265,25 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		5B1E0A082F10C0DE00A1B201 /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				5B1E0A092F10C0DE00A1B201 /* es */,
+			);
+			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
+		5B1E0A0B2F10C0DE00A1B201 /* AppShortcuts.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				5B1E0A0C2F10C0DE00A1B201 /* es */,
+			);
+			name = AppShortcuts.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
 		7555FF8D242A565B00829871 /* Debug */ = {
