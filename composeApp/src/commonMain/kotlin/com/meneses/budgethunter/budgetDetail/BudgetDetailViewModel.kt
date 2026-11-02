@@ -318,9 +318,11 @@ class BudgetDetailViewModel(
      * whole screen with a loading indicator every time the app comes back to the foreground.
      *
      * Also runs when returning from another screen of the app, so it re-checks the real-time
-     * stream too (collaborators may have changed there).
+     * stream too (collaborators may have changed there), and makes a stream that dropped while
+     * the app was in background reconnect now instead of after its backoff.
      */
     private fun resumeSync() {
+        realTimeSyncManager.reconnectNow()
         refreshRealTimeSync(_uiState.value.budgetDetail.budget.syncedServerId())
         val budget = _uiState.value.budgetDetail.budget
         val serverId = budget.serverId ?: return

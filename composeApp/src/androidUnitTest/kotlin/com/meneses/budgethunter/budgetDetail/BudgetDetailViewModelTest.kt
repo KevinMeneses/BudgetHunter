@@ -293,6 +293,16 @@ class BudgetDetailViewModelTest {
     }
 
     @Test
+    fun `ResumeSync asks the real-time stream to reconnect now`() = runTest {
+        viewModel.sendIntent(BudgetDetailIntent.SetBudget(sharedBudget))
+
+        viewModel.sendIntent(BudgetDetailIntent.ResumeSync)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        verify(exactly = 1) { realTimeSyncManager.reconnectNow() }
+    }
+
+    @Test
     fun `ResumeSync stops real-time sync once the collaborators are gone`() = runTest {
         coEvery { collaboratorRepository.getCollaborators(42L) } returns Result.success(twoCollaborators)
         viewModel.sendIntent(BudgetDetailIntent.SetBudget(sharedBudget))

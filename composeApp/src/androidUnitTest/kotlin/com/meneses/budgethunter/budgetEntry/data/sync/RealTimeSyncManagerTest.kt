@@ -13,6 +13,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.flow
@@ -47,7 +48,7 @@ class RealTimeSyncManagerTest {
     @Test
     fun `reconnects after the stream fails`() = runTest {
         var subscriptions = 0
-        every { sseClient.subscribeToBudgetEntries(BUDGET_SERVER_ID) } returns flow {
+        every { sseClient.subscribeToBudgetEntries(BUDGET_SERVER_ID, any()) } returns flow {
             subscriptions++
             if (subscriptions == 1) throw ConnectionDropped()
             emit(event)
@@ -75,7 +76,7 @@ class RealTimeSyncManagerTest {
     @Test
     fun `stopListening does not trigger a reconnection`() = runTest {
         var subscriptions = 0
-        every { sseClient.subscribeToBudgetEntries(BUDGET_SERVER_ID) } returns flow {
+        every { sseClient.subscribeToBudgetEntries(BUDGET_SERVER_ID, any()) } returns flow {
             subscriptions++
             awaitCancellation()
         }
@@ -92,6 +93,89 @@ class RealTimeSyncManagerTest {
     }
 
     /**
+     * Regression test: the backoff kept growing over the whole life of the stream, so after a
+     * few drops every reconnection waited a minute even if the previous one had worked.
+     */
+    @Test
+    fun `backoff starts over after a successful connection`() = runTest {
+        val subscriptionTimes = mutableListOf<Long>()
+        val connectedSubscriptions = setOf(3)
+        every { sseClient.subscribeToBudgetEntries(BUDGET_SERVER_ID, any()) } answers {
+            val onConnected = secondArg<() -> Unit>()
+            flow {
+                subscriptionTimes += testScheduler.currentTime
+                if (subscriptionTimes.size in connectedSubscriptions) onConnected()
+                if (subscriptionTimes.size < 5) throw ConnectionDropped()
+                awaitCancellation()
+            }
+        }
+
+        val manager = createManager()
+        manager.startListening(BUDGET_SERVER_ID, owner = this)
+        advanceTimeBy(10_000)
+
+        // Fails twice (1s, 2s), connects and drops (back to 1s), fails again (2s)
+        assertEquals(listOf(0L, 1_000L, 3_000L, 4_000L, 6_000L), subscriptionTimes)
+        manager.stopListening()
+    }
+
+    @Test
+    fun `reconnectNow skips the pending wait and starts the backoff over`() = runTest {
+        val subscriptionTimes = mutableListOf<Long>()
+        every { sseClient.subscribeToBudgetEntries(BUDGET_SERVER_ID, any()) } returns flow {
+            subscriptionTimes += testScheduler.currentTime
+            throw ConnectionDropped()
+        }
+
+        val manager = createManager()
+        manager.startListening(BUDGET_SERVER_ID, owner = this)
+        // Attempts at 0, 1s, 3s, 7s; the next one would be at 15s
+        advanceTimeBy(8_000)
+        assertEquals(4, subscriptionTimes.size)
+
+        // When - the app comes back to the foreground
+        manager.reconnectNow()
+        advanceTimeBy(1)
+
+        // Then - reconnects now, and the next failure waits 1s again
+        assertEquals(8_000L, subscriptionTimes[4])
+        advanceTimeBy(1_000)
+        assertEquals(9_000L, subscriptionTimes[5])
+        manager.stopListening()
+    }
+
+    @Test
+    fun `reconnectNow leaves a connected stream alone`() = runTest {
+        var subscriptions = 0
+        every { sseClient.subscribeToBudgetEntries(BUDGET_SERVER_ID, any()) } answers {
+            val onConnected = secondArg<() -> Unit>()
+            flow {
+                subscriptions++
+                onConnected()
+                awaitCancellation()
+            }
+        }
+
+        val manager = createManager()
+        manager.startListening(BUDGET_SERVER_ID, owner = this)
+        manager.reconnectNow()
+        advanceTimeBy(60_000)
+
+        assertEquals(1, subscriptions)
+        manager.stopListening()
+    }
+
+    @Test
+    fun `reconnectNow does nothing when not listening`() = runTest {
+        val manager = createManager()
+
+        manager.reconnectNow()
+        advanceUntilIdle()
+
+        verify(exactly = 0) { sseClient.subscribeToBudgetEntries(any(), any()) }
+    }
+
+    /**
      * A budget screen being removed from the back stack while a newer one for the same budget
      * already took over the stream (e.g. the default budget opened at launch) must not close it.
      */
@@ -99,7 +183,7 @@ class RealTimeSyncManagerTest {
     fun `stopListening by a replaced owner keeps the stream open`() = runTest {
         var subscriptions = 0
         var cancellations = 0
-        every { sseClient.subscribeToBudgetEntries(BUDGET_SERVER_ID) } returns flow {
+        every { sseClient.subscribeToBudgetEntries(BUDGET_SERVER_ID, any()) } returns flow {
             subscriptions++
             try {
                 awaitCancellation()
@@ -128,7 +212,7 @@ class RealTimeSyncManagerTest {
     @Test
     fun `stopListening by a replaced owner keeps the stream of another budget open`() = runTest {
         var cancellations = 0
-        every { sseClient.subscribeToBudgetEntries(any()) } returns flow {
+        every { sseClient.subscribeToBudgetEntries(any(), any()) } returns flow {
             try {
                 awaitCancellation()
             } finally {
@@ -160,7 +244,7 @@ class RealTimeSyncManagerTest {
     fun `claimIfListening takes over an open stream for the same budget`() = runTest {
         var subscriptions = 0
         var cancellations = 0
-        every { sseClient.subscribeToBudgetEntries(BUDGET_SERVER_ID) } returns flow {
+        every { sseClient.subscribeToBudgetEntries(BUDGET_SERVER_ID, any()) } returns flow {
             subscriptions++
             try {
                 awaitCancellation()
@@ -185,7 +269,7 @@ class RealTimeSyncManagerTest {
     @Test
     fun `claimIfListening opens nothing when not listening to that budget`() = runTest {
         var subscriptions = 0
-        every { sseClient.subscribeToBudgetEntries(any()) } returns flow {
+        every { sseClient.subscribeToBudgetEntries(any(), any()) } returns flow {
             subscriptions++
             awaitCancellation()
         }

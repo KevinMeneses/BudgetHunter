@@ -46,11 +46,17 @@ class SseClient(
      * (see [com.meneses.budgethunter.budgetEntry.data.sync.RealTimeSyncManager]).
      *
      * @param budgetServerId Server-side ID of the budget to listen for updates
+     * @param onConnected Called in the collecting coroutine once the server accepted the stream,
+     *   before any event; lets the caller tell a working connection from a failed attempt
      * @return Flow of BudgetEntryEvent objects as they arrive from the server
      */
-    fun subscribeToBudgetEntries(budgetServerId: Long): Flow<BudgetEntryEvent> = flow {
+    fun subscribeToBudgetEntries(
+        budgetServerId: Long,
+        onConnected: () -> Unit
+    ): Flow<BudgetEntryEvent> = flow {
         val url = "$baseUrl${ApiEndpoints.budgetEntriesStream(budgetServerId)}"
         httpClient.serverSentEvents(urlString = url, request = { configureStreamRequest() }) {
+            onConnected()
             incoming.collect { event ->
                 try {
                     val eventData = event.data
