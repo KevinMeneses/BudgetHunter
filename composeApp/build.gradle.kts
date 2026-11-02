@@ -108,6 +108,7 @@ kotlin {
 
             // Ktor Android engine for HTTP calls
             implementation(libs.ktor.client.android)
+            implementation(libs.ktor.client.okhttp)
 
             // Security (Android only)
             implementation(libs.androidx.security.crypto)

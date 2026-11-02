@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.withContext
@@ -102,6 +103,9 @@ class RealTimeSyncManager(
         currentJob = sseClient
             .subscribeToBudgetEntries(budgetServerId, onConnected = connection::onConnected)
             .onEach { event -> handleBudgetEntryEvent(event) }
+            // The server closing the stream cleanly (a deploy, a proxy timeout) ends the flow
+            // without an error, which retryWhen would not see: treat it as a drop too
+            .onCompletion { cause -> if (cause == null) throw StreamEndedException() }
             .retryWhen { cause, _ -> reconnectAfterBackoff(cause, connection) }
             .catch { logger.error(tag, "SSE stream error", it) }
             .launchIn(scope)
@@ -222,6 +226,9 @@ class RealTimeSyncManager(
     fun stopListening(owner: Any) {
         if (currentOwner === owner) stopListening()
     }
+
+    /** The server closed the stream without an error; reconnected like any other drop. */
+    private class StreamEndedException : Exception("SSE stream closed by the server")
 
     /**
      * Reconnection state of one stream.

@@ -31,7 +31,9 @@ import com.meneses.budgethunter.commons.platform.PermissionsManager
 import com.meneses.budgethunter.commons.platform.ShareManager
 import com.meneses.budgethunter.db.Database
 import io.ktor.client.HttpClient
+import io.ktor.client.engine.HttpClientEngineFactory
 import io.ktor.client.engine.android.Android
+import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.CoroutineDispatcher
@@ -43,6 +45,10 @@ import org.koin.dsl.module
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "budget_hunter_preferences")
 
 val androidPlatformModule = module {
+    // OkHttp closes the socket when a request is cancelled; the Android engine does not, which
+    // left every abandoned SSE stream open (see createHttpClient)
+    single<HttpClientEngineFactory<*>>(named(API_HTTP_ENGINE)) { OkHttp }
+
     // Provide the database using Android-specific factory
     single<Database> {
         DatabaseFactory(get<Context>()).createDatabase()

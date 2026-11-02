@@ -52,6 +52,8 @@ class RealTimeSyncManagerTest {
             subscriptions++
             if (subscriptions == 1) throw ConnectionDropped()
             emit(event)
+            // A live stream stays open after an event; ending here would count as another drop
+            awaitCancellation()
         }
         coEvery { syncManager.pullEntriesFromServer(BUDGET_SERVER_ID) } returns
             SyncResult.Success(SyncStats(totalItems = 1, syncedItems = 1))
@@ -66,6 +68,27 @@ class RealTimeSyncManagerTest {
         assertEquals(2, subscriptions)
         coVerify(exactly = 1) { syncManager.pullEntriesFromServer(BUDGET_SERVER_ID) }
 
+        manager.stopListening()
+    }
+
+    /**
+     * Regression test: a stream the server closed cleanly (deploy, proxy timeout) ended without
+     * an error, retryWhen never saw it and real-time updates stayed off for the session.
+     */
+    @Test
+    fun `reconnects after the server closes the stream`() = runTest {
+        var subscriptions = 0
+        every { sseClient.subscribeToBudgetEntries(BUDGET_SERVER_ID, any()) } returns flow {
+            subscriptions++
+            if (subscriptions > 1) awaitCancellation()
+        }
+
+        val manager = createManager()
+        manager.startListening(BUDGET_SERVER_ID, owner = this)
+        advanceTimeBy(FIRST_BACKOFF_MS)
+        advanceUntilIdle()
+
+        assertEquals(2, subscriptions)
         manager.stopListening()
     }
 

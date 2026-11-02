@@ -23,6 +23,7 @@ import com.meneses.budgethunter.commons.platform.PermissionsManager
 import com.meneses.budgethunter.commons.platform.ShareManager
 import com.meneses.budgethunter.db.Database
 import io.ktor.client.HttpClient
+import io.ktor.client.engine.HttpClientEngineFactory
 import io.ktor.client.engine.darwin.Darwin
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.serialization.kotlinx.json.json
@@ -39,6 +40,8 @@ import platform.Foundation.NSURL
 import platform.Foundation.NSUserDomainMask
 
 val iosPlatformModule = module {
+    single<HttpClientEngineFactory<*>>(named(API_HTTP_ENGINE)) { Darwin }
+
     // Provide the database using iOS-specific factory
     single<Database> {
         DatabaseFactory().createDatabase()

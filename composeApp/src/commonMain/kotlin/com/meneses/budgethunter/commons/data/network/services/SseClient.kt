@@ -24,12 +24,15 @@ import kotlinx.serialization.json.Json
  * @property baseUrl Base URL of the backend API
  * @property json JSON serializer for parsing events
  * @property logger Logger for SSE connection events and errors
+ * @property streamIdleTimeoutMillis Time without receiving anything, not even a keep-alive,
+ *   after which a stream is considered dead and fails (see [configureStreamRequest])
  */
 class SseClient(
     private val httpClient: HttpClient,
     private val baseUrl: String,
     private val json: Json,
-    private val logger: Logger
+    private val logger: Logger,
+    private val streamIdleTimeoutMillis: Long = STREAM_IDLE_TIMEOUT_MS
 ) {
     private val tag = "SseClient"
 
@@ -74,16 +77,25 @@ class SseClient(
     /**
      * Applies the request tweaks a long-lived stream needs.
      *
-     * - Timeouts are disabled: an SSE stream is idle between server events, and the engine
-     *   defaults (100s socket timeout on Android) would tear the connection down mid-stream.
+     * - No request timeout: the stream is meant to stay open indefinitely.
+     * - The socket timeout is the time without receiving anything after which the stream is
+     *   considered dead. The server sends a keep-alive comment every 15 s, so silence for
+     *   [streamIdleTimeoutMillis] means the connection is gone even if no error surfaced: e.g.
+     *   when the phone switches networks, the socket on the old one never fails by itself and
+     *   the stream would hang forever without receiving events or reconnecting.
      * - `application/json` is excluded from content negotiation so the request carries only the
      *   SSE plugin's `Accept: text/event-stream` instead of two conflicting Accept headers.
      */
     private fun HttpRequestBuilder.configureStreamRequest() {
         timeout {
             requestTimeoutMillis = HttpTimeoutConfig.INFINITE_TIMEOUT_MS
-            socketTimeoutMillis = HttpTimeoutConfig.INFINITE_TIMEOUT_MS
+            socketTimeoutMillis = streamIdleTimeoutMillis
         }
         exclude(ContentType.Application.Json)
+    }
+
+    private companion object {
+        /** Three of the server's 15 s keep-alives; must stay well above that interval. */
+        const val STREAM_IDLE_TIMEOUT_MS = 45_000L
     }
 }
