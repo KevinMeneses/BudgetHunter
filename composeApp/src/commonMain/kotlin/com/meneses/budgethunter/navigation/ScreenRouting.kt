@@ -54,6 +54,7 @@ import com.meneses.budgethunter.commons.platform.NetworkMonitor
 import com.meneses.budgethunter.commons.util.serializableType
 import com.meneses.budgethunter.settings.SettingsViewModel
 import com.meneses.budgethunter.settings.ui.SettingsScreen
+import com.meneses.budgethunter.settings.ui.SmsShortcutTutorialScreen
 import com.meneses.budgethunter.splash.SplashScreenViewModel
 import com.meneses.budgethunter.splash.application.SplashEvent
 import com.meneses.budgethunter.splash.ui.SplashScreen
@@ -253,6 +254,13 @@ fun BudgetHunterNavigation() {
                 SettingsScreen.Show(
                     uiState = uiState,
                     onIntent = settingsViewModel::sendIntent,
+                    goBack = { navController.popBackStackOnce(backStackEntry) },
+                    showSmsShortcutTutorial = { navController.navigateOnce(SmsShortcutTutorialScreen) }
+                )
+            }
+
+            composable<SmsShortcutTutorialScreen> { backStackEntry ->
+                SmsShortcutTutorialScreen.Show(
                     goBack = { navController.popBackStackOnce(backStackEntry) }
                 )
             }

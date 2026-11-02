@@ -1,8 +1,7 @@
 package com.meneses.budgethunter
 
 import androidx.compose.ui.window.ComposeUIViewController
-import com.meneses.budgethunter.di.initKoin
-import com.meneses.budgethunter.di.iosPlatformModule
+import com.meneses.budgethunter.di.startKoinIfNeeded
 import platform.UIKit.UIViewController
 
 /**
@@ -10,8 +9,8 @@ import platform.UIKit.UIViewController
  * This function is called from the iOS Swift code to bridge into the shared Compose UI.
  */
 fun MainViewController(): UIViewController {
-    // Initialize Koin for iOS
-    initKoin(iosPlatformModule)
+    // The SMS shortcut may have started Koin already, with the app in the background
+    startKoinIfNeeded()
 
     return ComposeUIViewController {
         BudgetHunterApp()
