@@ -35,7 +35,6 @@ import com.meneses.budgethunter.budgetEntry.ui.toStringResource
 import com.meneses.budgethunter.budgetMetrics.application.BudgetMetricsState
 import com.meneses.budgethunter.budgetMetrics.domain.CategoryMetric
 import com.meneses.budgethunter.commons.ui.DonutChart
-import com.meneses.budgethunter.commons.ui.EmptyStatePlaceholder
 import com.meneses.budgethunter.commons.ui.LoadingScreen
 import com.meneses.budgethunter.commons.util.toCurrency
 import com.meneses.budgethunter.theme.AppColors
@@ -55,10 +54,11 @@ fun BudgetMetricsContent(
     }
 
     if (uiState.categoryMetrics.isEmpty()) {
-        EmptyStatePlaceholder(
-            modifier = modifier,
+        MetricsEmptyState(
+            type = uiState.selectedType,
             title = uiState.selectedType.toEmptyTitle(),
-            subtitle = uiState.selectedType.toEmptyMessage()
+            message = uiState.selectedType.toEmptyMessage(),
+            modifier = modifier
         )
         return
     }
