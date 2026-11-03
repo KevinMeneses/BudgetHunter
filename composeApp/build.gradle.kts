@@ -172,6 +172,20 @@ android {
         buildConfigField("String", "GEMINI_API_KEY", "\"$geminiApiKey\"")
     }
 
+    signingConfigs {
+        getByName("debug") {
+            // CI points this at the shared debug keystore (DEBUG_KEYSTORE secret) so every APK it
+            // builds has the SHA-1 registered for Google sign in. Locally it stays unset and AGP
+            // uses the machine's own debug keystore. Same passwords and alias as AGP's default.
+            System.getenv("DEBUG_KEYSTORE_PATH")?.takeIf { it.isNotBlank() }?.let {
+                storeFile = file(it)
+                storePassword = "android"
+                keyAlias = "androiddebugkey"
+                keyPassword = "android"
+            }
+        }
+    }
+
     buildTypes {
         getByName("release") {
             isMinifyEnabled = true

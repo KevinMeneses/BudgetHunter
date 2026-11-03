@@ -29,10 +29,12 @@ jobs:
           java-version: '17'
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
-      # Without this the runner generates a fresh debug keystore on every run, so each APK has a
+      # Without this every run signs with a freshly generated debug keystore, so each APK has a
       # different SHA-1 that is not registered as an Android OAuth client in Google Cloud and
-      # Google sign in fails. AGP signs debug builds with ~/.android/debug.keystore (store and key
-      # password "android", alias "androiddebugkey"), so the secret must be such a keystore.
+      # Google sign in fails. The secret must be a debug keystore with AGP's default passwords and
+      # alias ("android" / "androiddebugkey"); composeApp/build.gradle.kts picks it up through
+      # DEBUG_KEYSTORE_PATH. Writing it to ~/.android is not enough: AGP reads its user home from
+      # ANDROID_USER_HOME, which the runner points somewhere else.
       - name: Install shared debug keystore
         env:
           DEBUG_KEYSTORE: ${{ secrets.DEBUG_KEYSTORE }}
@@ -41,11 +43,25 @@ jobs:
             echo "::error::DEBUG_KEYSTORE secret is not set; the APK would be signed with a random key and Google sign in would not work"
             exit 1
           fi
-          mkdir -p ~/.android
-          echo "$DEBUG_KEYSTORE" | base64 --decode > ~/.android/debug.keystore
-          keytool -list -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey | grep -E "SHA1:"
+          keystore="$RUNNER_TEMP/debug.keystore"
+          echo "$DEBUG_KEYSTORE" | base64 --decode > "$keystore"
+          echo "DEBUG_KEYSTORE_PATH=$keystore" >> "$GITHUB_ENV"
+          keytool -list -v -keystore "$keystore" -storepass android -alias androiddebugkey | grep -E "SHA1:"
       - name: Build debug APK
         run: ./gradlew :composeApp:assembleDebug
+      - name: Check APK signature
+        run: |
+          expected=$(keytool -list -v -keystore "$DEBUG_KEYSTORE_PATH" -storepass android -alias androiddebugkey \
+            | sed -n 's/.*SHA1: //p' | tr -d ':' | tr 'A-F' 'a-f')
+          apksigner=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)/apksigner
+          for apk in composeApp/build/outputs/apk/debug/*.apk; do
+            actual=$("$apksigner" verify --print-certs "$apk" | sed -n 's/.*SHA-1 digest: //p' | head -1)
+            echo "$apk SHA-1: $actual"
+            if [ "$actual" != "$expected" ]; then
+              echo "::error::$apk is signed with $actual, not the shared debug keystore ($expected)"
+              exit 1
+            fi
+          done
       - name: Name artifact
         id: name
         env:
