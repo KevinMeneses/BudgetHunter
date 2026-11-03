@@ -29,6 +29,21 @@ jobs:
           java-version: '17'
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
+      # Without this the runner generates a fresh debug keystore on every run, so each APK has a
+      # different SHA-1 that is not registered as an Android OAuth client in Google Cloud and
+      # Google sign in fails. AGP signs debug builds with ~/.android/debug.keystore (store and key
+      # password "android", alias "androiddebugkey"), so the secret must be such a keystore.
+      - name: Install shared debug keystore
+        env:
+          DEBUG_KEYSTORE: ${{ secrets.DEBUG_KEYSTORE }}
+        run: |
+          if [ -z "$DEBUG_KEYSTORE" ]; then
+            echo "::error::DEBUG_KEYSTORE secret is not set; the APK would be signed with a random key and Google sign in would not work"
+            exit 1
+          fi
+          mkdir -p ~/.android
+          echo "$DEBUG_KEYSTORE" | base64 --decode > ~/.android/debug.keystore
+          keytool -list -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey | grep -E "SHA1:"
       - name: Build debug APK
         run: ./gradlew :composeApp:assembleDebug
       - name: Name artifact
