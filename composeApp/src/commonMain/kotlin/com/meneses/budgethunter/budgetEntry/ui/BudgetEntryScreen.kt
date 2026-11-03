@@ -138,6 +138,7 @@ data class BudgetEntryScreen(val budgetEntry: BudgetEntry) {
             message = stringResource(Res.string.ai_autofill_confirmation_message),
             confirmButtonText = stringResource(Res.string.ai_autofill_confirm),
             cancelButtonText = stringResource(Res.string.ai_autofill_skip),
+            destructive = false,
             onDismiss = {
                 BudgetEntryIntent.DeclineAiAutofill
                     .run(onIntent)

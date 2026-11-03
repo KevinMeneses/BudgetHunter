@@ -12,6 +12,9 @@ import androidx.compose.ui.window.DialogProperties
 /**
  * The look every two-button dialog of the app shares. It only draws: what the buttons do, and
  * when the dialog goes away, is up to the caller.
+ *
+ * [destructive] paints the confirm button in the error color, for actions that delete or
+ * discard something; otherwise it takes the primary color.
  */
 @Composable
 fun AppAlertDialog(
@@ -22,6 +25,7 @@ fun AppAlertDialog(
     onCancel: () -> Unit,
     onDismissRequest: () -> Unit,
     buttonsEnabled: Boolean = true,
+    destructive: Boolean = true,
     content: @Composable () -> Unit
 ) {
     AlertDialog(
@@ -40,10 +44,10 @@ fun AppAlertDialog(
                 Text(
                     text = confirmButtonText,
                     fontWeight = FontWeight.Medium,
-                    color = if (buttonsEnabled) {
-                        MaterialTheme.colorScheme.error
-                    } else {
-                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                    color = when {
+                        !buttonsEnabled -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                        destructive -> MaterialTheme.colorScheme.error
+                        else -> MaterialTheme.colorScheme.primary
                     }
                 )
             }
