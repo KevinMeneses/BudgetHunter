@@ -4,16 +4,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -21,6 +20,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import budgethunter.composeapp.generated.resources.Res
 import budgethunter.composeapp.generated.resources.budgets
@@ -96,29 +97,33 @@ object BudgetListScreen {
                 }
             },
             floatingActionButton = {
+                // An empty slot where the next budget goes: dashed outline and a faint tint, flat,
+                // so it reads as an action and not as one more budget card.
                 FloatingActionButton(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 20.dp)
                         .dashedBorder(
-                            width = 1.dp,
-                            color = AppColors.onSecondaryContainer,
+                            width = 1.5.dp,
+                            color = AppColors.primary,
                             shape = AbsoluteRoundedCornerShape(10.dp),
-                            on = 10.dp,
-                            off = 8.dp
+                            on = 8.dp,
+                            off = 6.dp
                         ),
                     shape = AbsoluteRoundedCornerShape(10.dp),
-                    elevation = FloatingActionButtonDefaults.elevation(5.dp),
+                    containerColor = AppColors.primary.copy(alpha = 0.08f).compositeOver(AppColors.surface),
+                    contentColor = AppColors.primary,
+                    elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp),
                     onClick = {
                         BudgetListIntent
                             .ToggleAddModal(true)
                             .run(onIntent)
                     }
                 ) {
-                    Icon(
-                        modifier = Modifier.padding(20.dp),
-                        imageVector = Icons.Default.Add,
-                        contentDescription = stringResource(Res.string.create_new_budget)
+                    Text(
+                        modifier = Modifier.padding(vertical = 20.dp),
+                        text = stringResource(Res.string.create_new_budget),
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
             },

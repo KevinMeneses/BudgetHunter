@@ -36,7 +36,8 @@ fun CategorizeEntriesDialog(
         onConfirm = onConfirm,
         onCancel = onDecline,
         onDismissRequest = { if (!isCategorizing) onDecline() },
-        buttonsEnabled = !isCategorizing
+        buttonsEnabled = !isCategorizing,
+        destructive = false
     ) {
         if (isCategorizing) {
             Row(

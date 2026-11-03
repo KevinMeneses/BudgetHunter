@@ -12,6 +12,7 @@ fun ConfirmationModal(
     confirmButtonText: String,
     cancelButtonText: String,
     title: String? = null, // Make title configurable for KMP
+    destructive: Boolean = true,
     onDismiss: () -> Unit,
     onConfirm: () -> Unit
 ) {
@@ -25,7 +26,8 @@ fun ConfirmationModal(
                 onDismiss()
             },
             onCancel = onDismiss,
-            onDismissRequest = onDismiss
+            onDismissRequest = onDismiss,
+            destructive = destructive
         ) {
             AppAlertDialogMessage(message)
         }

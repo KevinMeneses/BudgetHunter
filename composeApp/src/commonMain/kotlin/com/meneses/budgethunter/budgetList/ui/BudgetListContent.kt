@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
@@ -47,6 +48,7 @@ import com.meneses.budgethunter.commons.ui.CompottiePlaceholder
 import com.meneses.budgethunter.commons.ui.LoadingScreen
 import com.meneses.budgethunter.commons.ui.OfflineBanner
 import com.meneses.budgethunter.commons.ui.SyncStatusIndicator
+import com.meneses.budgethunter.commons.ui.fadingBottomEdge
 import com.meneses.budgethunter.commons.util.toCurrency
 import com.meneses.budgethunter.theme.AppColors
 import com.meneses.budgethunter.theme.green_success
@@ -75,12 +77,15 @@ fun BudgetListContent(
         ) {
             Column {
                 OfflineBanner(isOffline = !isOnline)
+                val listState = rememberLazyListState()
                 LazyColumn(
+                    state = listState,
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(horizontal = 20.dp)
                         .padding(top = 5.dp)
-                        .padding(bottom = 90.dp),
+                        .padding(bottom = 90.dp)
+                        .fadingBottomEdge(visible = listState.canScrollForward),
                     verticalArrangement = if (list.isEmpty()) Arrangement.Center else Arrangement.Top
                 ) {
                     if (list.isEmpty()) {
@@ -113,8 +118,8 @@ private fun BudgetItem(
 ) {
     Card(
         colors = CardDefaults.cardColors(
-            containerColor = AppColors.tertiaryContainer,
-            contentColor = AppColors.onTertiaryContainer
+            containerColor = AppColors.primaryContainer,
+            contentColor = AppColors.onPrimaryContainer
         ),
         shape = AbsoluteRoundedCornerShape(10.dp),
         elevation = CardDefaults.cardElevation(

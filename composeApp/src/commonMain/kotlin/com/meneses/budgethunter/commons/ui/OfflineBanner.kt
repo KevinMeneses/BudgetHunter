@@ -12,10 +12,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import budgethunter.composeapp.generated.resources.Res
 import budgethunter.composeapp.generated.resources.offline_banner_message
+import com.meneses.budgethunter.theme.AppColors
 import org.jetbrains.compose.resources.stringResource
 
 /**
@@ -41,14 +41,14 @@ fun OfflineBanner(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color(0xFFFF9800))
+                .background(AppColors.tertiaryContainer)
                 .padding(vertical = 8.dp, horizontal = 16.dp),
             contentAlignment = Alignment.Center
         ) {
             Text(
                 text = stringResource(Res.string.offline_banner_message),
                 style = MaterialTheme.typography.bodyMedium,
-                color = Color.White
+                color = AppColors.onTertiaryContainer
             )
         }
     }

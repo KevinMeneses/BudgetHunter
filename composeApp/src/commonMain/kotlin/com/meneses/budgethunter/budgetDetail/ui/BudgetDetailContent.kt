@@ -184,15 +184,15 @@ fun BudgetSection(
         modifier = Modifier.clickable(onClick = onClick),
         shape = AbsoluteRoundedCornerShape(10.dp),
         colors = CardDefaults.elevatedCardColors(
-            containerColor = AppColors.tertiaryContainer,
-            contentColor = AppColors.onTertiaryContainer
+            containerColor = AppColors.primaryContainer,
+            contentColor = AppColors.onPrimaryContainer
         ),
         elevation = CardDefaults.cardElevation(
             defaultElevation = 5.dp
         ),
         border = BorderStroke(
             width = 1.dp,
-            color = AppColors.onTertiaryContainer
+            color = AppColors.onPrimaryContainer
         )
     ) {
         Column(
@@ -204,7 +204,7 @@ fun BudgetSection(
                 modifier = Modifier.padding(vertical = 10.dp),
                 textAlign = TextAlign.Center,
                 fontWeight = FontWeight.SemiBold,
-                color = AppColors.onTertiaryContainer
+                color = AppColors.onPrimaryContainer
             )
         }
     }
