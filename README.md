@@ -17,7 +17,7 @@ A modern **cross-platform** budget tracking application built with Kotlin Multip
 - **Multi-language Support**: Available in English and Spanish
 
 ### Smart Features
-- **🤖 AI Receipt Scanning**: Use Google Gemini AI to extract transaction details from receipt images and PDFs
+- **🤖 AI Receipt Scanning**: Extract transaction details from receipt images and PDFs (read by the backend with Google Gemini; a monthly allowance per plan, signed-in accounts only)
 - **🏷️ Automatic Categorization**: Entries without a category ("Sin categoría") can be categorized from their description on request: the metrics screen asks first, and only descriptions are sent
 - **📱 SMS Transaction Detection**: Automatically detect and parse bank transaction SMS messages
 - **🏦 Multi-Bank Support**: Configurable SMS parsing for different bank formats
@@ -90,11 +90,13 @@ A modern **cross-platform** budget tracking application built with Kotlin Multip
    cd BudgetHunter
    ```
 
-2. **Set up API Keys**
+2. **Configure the backend**
    Create a `local.properties` file in the root directory:
    ```properties
-   GEMINI_API_KEY=your_gemini_api_key_here
+   BACKEND_URL=https://your-backend.example.com
    ```
+   The app has no AI key: receipt scanning and categorization run on the
+   [backend](https://github.com/kevinmeneses/BudgetHunterBackend), which holds the Gemini key.
 
 3. **Build and run**
 

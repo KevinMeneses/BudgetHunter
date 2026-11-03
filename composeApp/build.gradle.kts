@@ -160,16 +160,6 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
-
-        // Load API key from local.properties
-        val props = Properties()
-        val propsFile = rootProject.file("local.properties")
-        if (propsFile.exists()) {
-            props.load(propsFile.inputStream())
-        }
-
-        val geminiApiKey = props.getProperty("GEMINI_API_KEY") ?: ""
-        buildConfigField("String", "GEMINI_API_KEY", "\"$geminiApiKey\"")
     }
 
     buildTypes {

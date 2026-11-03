@@ -29,5 +29,5 @@
 - Pull requests should outline behavior changes, include screenshots for UI work, and link tracking issues alongside the commands you executed.
 
 ## Security & Configuration Tips
-- Store secrets such as `GEMINI_API_KEY` only in `local.properties` (ignored by Git) and share mock values via documentation rather than commits.
+- Store build settings such as `BACKEND_URL` and `GOOGLE_SERVER_CLIENT_ID` only in `local.properties` (ignored by Git) and share mock values via documentation rather than commits. Never ship an AI provider key in the app: AI calls go through the backend.
 - For CI, prefer environment variables or encrypted secrets over raw files, and call out any new keys in the pull request to alert reviewers.
