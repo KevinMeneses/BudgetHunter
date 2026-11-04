@@ -14,6 +14,10 @@ data class BudgetDetailState(
     val isFilterBarVisible: Boolean = false,
     /** How many entries the budget has, before [filter]. */
     val totalEntryCount: Int = 0,
+    /** Income of the whole budget, before [filter]: the summary describes the budget, not the search. */
+    val budgetIncomes: Double = 0.0,
+    /** Expenses of the whole budget, before [filter]. */
+    val budgetExpenses: Double = 0.0,
     val isSelectionActive: Boolean = false,
     val listOrder: ListOrder = ListOrder.DEFAULT,
     val isAuthenticated: Boolean = false

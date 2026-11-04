@@ -170,9 +170,14 @@ class BudgetDetailViewModel(
             .map { if (it.id in selectedIds) it.copy(isSelected = true) else it }
         return copy(
             budgetDetail = budgetDetail.copy(entries = shown),
-            totalEntryCount = entries.size
+            totalEntryCount = entries.size,
+            budgetIncomes = entries.totalOf(BudgetEntry.Type.INCOME),
+            budgetExpenses = entries.totalOf(BudgetEntry.Type.OUTCOME)
         )
     }
+
+    private fun List<BudgetEntry>.totalOf(type: BudgetEntry.Type): Double =
+        filter { it.type == type }.sumOf { it.amount.toDoubleOrNull() ?: 0.0 }
 
     private fun List<BudgetEntry>.sortedBy(order: BudgetDetailState.ListOrder): List<BudgetEntry> {
         val newestFirst = compareByDescending<BudgetEntry> { it.date }.thenByDescending { it.id }

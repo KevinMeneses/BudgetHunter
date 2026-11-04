@@ -31,6 +31,11 @@ Proposal with before/after screenshots and mockups: https://claude.ai/artifact/T
 
 ## Decisions and deviations from the proposal
 
+- The detail summary always describes the whole budget (`BudgetDetailState.budgetIncomes` /
+  `budgetExpenses`, computed before the filter). A filter only narrows the list, and its own net
+  shows in the filter bar: "4 de 17 movimientos · -$375,000". Mixing both made the balance and the
+  bar meaningless while filtering.
+
 - Category badges are neutral (only "Sin categoría" is blue): the metrics screen colors categories by
   rank, so a fixed color per category in the list would contradict it.
 - The form shows the common categories (Food, Groceries, Transportation, Services) plus the selected
@@ -48,9 +53,6 @@ Proposal with before/after screenshots and mockups: https://claude.ai/artifact/T
 
 ## Pending / ideas
 
-- The detail summary is computed from the entries on screen, so a filter changes it (e.g. "Income $0"
-  while filtering expenses). The old bottom totals did the same; on top it is more visible. Either
-  compute it from the whole budget or label it as the filtered total.
 
 - Collaborator count on budget cards (needs data).
 - Entry count per category in metrics.

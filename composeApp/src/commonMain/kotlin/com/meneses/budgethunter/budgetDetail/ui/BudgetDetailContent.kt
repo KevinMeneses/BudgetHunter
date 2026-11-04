@@ -162,7 +162,8 @@ private fun EntriesList(
     ) {
         item(key = "summary") {
             BudgetSummaryCard(
-                entries = entries,
+                incomes = uiState.budgetIncomes,
+                outcomes = uiState.budgetExpenses,
                 budgetAmount = uiState.budgetDetail.budget.amount,
                 onBudgetClick = { onIntent(BudgetDetailIntent.ToggleBudgetModal(true)) }
             )
@@ -187,6 +188,7 @@ private fun EntriesList(
                     filter = uiState.filter,
                     shownCount = entries.size,
                     totalCount = uiState.totalEntryCount,
+                    shownNet = entries.sumOf(BudgetEntry.Type.INCOME) - entries.sumOf(BudgetEntry.Type.OUTCOME),
                     onFilterChange = { onIntent(BudgetDetailIntent.FilterEntries(it)) },
                     onClear = { onIntent(BudgetDetailIntent.ClearFilter) },
                     modifier = Modifier.padding(bottom = 8.dp)
@@ -274,16 +276,16 @@ private fun LazyListScope.entryItems(
 
 /**
  * Balance first, then what makes it up: the budget (tap to edit it), the income added on top and
- * the expenses. The bar is the share of the available money already spent.
+ * the expenses. The bar is the share of the available money already spent. Always the whole
+ * budget: a filter narrows the list, and its own total shows in the filter bar.
  */
 @Composable
 private fun BudgetSummaryCard(
-    entries: List<BudgetEntry>,
+    incomes: Double,
+    outcomes: Double,
     budgetAmount: Double,
     onBudgetClick: () -> Unit
 ) {
-    val outcomes = entries.sumOf(BudgetEntry.Type.OUTCOME)
-    val incomes = entries.sumOf(BudgetEntry.Type.INCOME)
     val available = budgetAmount + incomes
     val balance = available - outcomes
     val isOver = balance < 0

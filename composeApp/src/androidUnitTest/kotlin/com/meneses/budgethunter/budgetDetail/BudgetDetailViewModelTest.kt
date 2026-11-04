@@ -270,6 +270,24 @@ class BudgetDetailViewModelTest {
     }
 
     @Test
+    fun `the budget totals cover every entry, whatever the filter`() = runTest {
+        showDetail(
+            listOf(
+                entry(3, "Mercado", amount = "100"),
+                entry(2, "Gasolina", amount = "40"),
+                entry(1, "Salario", amount = "500").copy(type = BudgetEntry.Type.INCOME)
+            )
+        )
+
+        viewModel.sendIntent(BudgetDetailIntent.FilterEntries(BudgetEntryFilter(description = "merc")))
+
+        // The summary describes the budget; only the list is narrowed
+        assertEquals(140.0, viewModel.uiState.value.budgetExpenses)
+        assertEquals(500.0, viewModel.uiState.value.budgetIncomes)
+        assertEquals(listOf("Mercado"), shownDescriptions())
+    }
+
+    @Test
     fun `an entry arriving while filtering is filtered too`() = runTest {
         val source = MutableStateFlow(BudgetDetail(budget, listOf(entry(1, "Mercado"))))
         every { budgetDetailRepository.getBudgetDetailById(budget.id) } returns source

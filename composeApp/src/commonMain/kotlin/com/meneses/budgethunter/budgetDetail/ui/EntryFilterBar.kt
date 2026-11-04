@@ -57,6 +57,7 @@ import budgethunter.composeapp.generated.resources.this_month
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntryFilter
 import com.meneses.budgethunter.budgetEntry.domain.EntryDateRange
+import com.meneses.budgethunter.commons.util.toCurrency
 import com.meneses.budgethunter.budgetEntry.ui.toStringResource
 import com.meneses.budgethunter.commons.ui.DateRangePickerDialog
 import com.meneses.budgethunter.commons.util.currentDate
@@ -70,12 +71,14 @@ import org.jetbrains.compose.resources.stringResource
  *
  * @param shownCount entries that pass [filter]
  * @param totalCount entries of the budget
+ * @param shownNet income minus expenses of the entries that pass [filter]
  */
 @Composable
 fun EntryFilterBar(
     filter: BudgetEntryFilter,
     shownCount: Int,
     totalCount: Int,
+    shownNet: Double,
     onFilterChange: (BudgetEntryFilter) -> Unit,
     onClear: () -> Unit,
     modifier: Modifier = Modifier
@@ -109,7 +112,9 @@ fun EntryFilterBar(
 
         if (filter.isActive) {
             Text(
-                text = pluralStringResource(Res.plurals.filtered_entries_summary, totalCount, shownCount, totalCount),
+                // "4 de 17 movimientos · -$375,000": what the filter found and what it adds up to
+                text = pluralStringResource(Res.plurals.filtered_entries_summary, totalCount, shownCount, totalCount) +
+                    " · " + shownNet.toCurrency(),
                 style = MaterialTheme.typography.labelMedium,
                 color = AppColors.onSecondaryContainer
             )
