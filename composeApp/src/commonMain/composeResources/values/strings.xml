@@ -88,8 +88,8 @@
     <string name="expenses">%1$s spent</string>
     <string name="available">of %1$s</string>
     <string name="balance">Balance:</string>
-    <string name="income">INCOME</string>
-    <string name="outcome">EXPENSE</string>
+    <string name="income">Income</string>
+    <string name="outcome">Expense</string>
     
     <!-- Search -->
     <string name="search_budgets">Search budgets…</string>
@@ -404,4 +404,88 @@
         <item quantity="one">%1$d of %2$d entry</item>
         <item quantity="other">%1$d of %2$d entries</item>
     </plurals>
+
+    <!-- Redesign: budget list -->
+    <string name="available_label">Available</string>
+    <string name="spent_amount">Spent %1$s</string>
+    <string name="percent_of_total">%1$s of %2$s</string>
+    <string name="over_budget">Over budget</string>
+    <string name="not_synced">Not synced</string>
+
+    <!-- Redesign: budget detail -->
+    <string name="balance_label">Balance</string>
+    <string name="budget_label">Budget</string>
+    <string name="add_budget_short">Add</string>
+    <string name="scan_receipt">Scan receipt</string>
+    <string name="today">Today</string>
+    <string name="yesterday">Yesterday</string>
+    <string name="day_header_format">%1$s, %3$s %2$d</string>
+    <string name="day_header_format_year">%1$s, %3$s %2$d, %4$d</string>
+    <string name="short_date_format">%2$s %1$d, %3$d</string>
+    <string-array name="weekday_abbreviations">
+        <item>Mon</item>
+        <item>Tue</item>
+        <item>Wed</item>
+        <item>Thu</item>
+        <item>Fri</item>
+        <item>Sat</item>
+        <item>Sun</item>
+    </string-array>
+    <string-array name="month_abbreviations">
+        <item>Jan</item>
+        <item>Feb</item>
+        <item>Mar</item>
+        <item>Apr</item>
+        <item>May</item>
+        <item>Jun</item>
+        <item>Jul</item>
+        <item>Aug</item>
+        <item>Sep</item>
+        <item>Oct</item>
+        <item>Nov</item>
+        <item>Dec</item>
+    </string-array>
+
+    <!-- Redesign: entry form -->
+    <string name="save_expense">Save expense</string>
+    <string name="save_income">Save income</string>
+    <string name="scan_receipt_subtitle">The AI fills in the amount, description and category</string>
+    <string name="attach_receipt_subtitle">Photo or PDF of the receipt</string>
+    <string name="view_receipt_subtitle">Tap to see the receipt</string>
+    <string name="other_date">Other date</string>
+    <string name="created_by">Created by %1$s</string>
+    <string name="edited_by">edited by %1$s</string>
+
+    <!-- Redesign: settings -->
+    <string name="section_automatic_entries">Automatic entries</string>
+    <string name="section_ai">Artificial intelligence</string>
+    <string name="signed_in">Signed in</string>
+    <string name="read_bank_sms">Read bank SMS</string>
+    <plurals name="banks_selected_count">
+        <item quantity="one">%1$d bank selected</item>
+        <item quantity="other">%1$d banks selected</item>
+    </plurals>
+
+    <!-- Redesign: collaborators -->
+    <string name="collaborators_screen_title">Collaborators</string>
+    <string name="collaborators_explainer">People here can see, add and edit the entries of “%1$s”.</string>
+    <string name="invite">Invite</string>
+    <string name="you_suffix">(you)</string>
+    <plurals name="people_count">
+        <item quantity="one">%1$d person</item>
+        <item quantity="other">%1$d people</item>
+    </plurals>
+
+    <!-- Redesign: sign in and sign up -->
+    <string name="welcome_tagline">Your budgets, up to date and shared</string>
+    <string name="continue_with_email">Continue with email</string>
+    <string name="use_without_account">Use without an account</string>
+    <string name="sign_in_title">Sign in</string>
+    <string name="sign_up_title">Create your account</string>
+    <string name="create_account_button">Create account</string>
+    <string name="password_min_hint">At least 6 characters</string>
+    <string name="no_account_prompt">Don't have an account?</string>
+    <string name="sign_up_link">Sign up</string>
+    <string name="have_account_prompt">Already have an account?</string>
+    <string name="sign_in_link">Sign in</string>
 </resources>

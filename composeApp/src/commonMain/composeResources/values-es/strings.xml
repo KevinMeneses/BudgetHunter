@@ -88,8 +88,8 @@
     <string name="expenses">%1$s gastados</string>
     <string name="available">de %1$s</string>
     <string name="balance">Balance:</string>
-    <string name="income">INGRESO</string>
-    <string name="outcome">GASTO</string>
+    <string name="income">Ingreso</string>
+    <string name="outcome">Gasto</string>
     
     <!-- Search -->
     <string name="search_budgets">Buscar presupuestos…</string>
@@ -231,9 +231,9 @@
     <string name="file_missing">Archivo faltante - %1$s</string>
 
     <!-- Authentication -->
-    <string name="sign_in">Iniciar Sesión</string>
+    <string name="sign_in">Iniciar sesión</string>
     <string name="sign_up">Registrarse</string>
-    <string name="email">Correo Electrónico</string>
+    <string name="email">Correo electrónico</string>
     <string name="password">Contraseña</string>
     <string name="confirm_password">Confirmar Contraseña</string>
     <string name="welcome_to_budget_hunter">Bienvenido a BudgetHunter</string>
@@ -285,7 +285,7 @@
     <string name="offline_mode_description">Usa la aplicación sin una cuenta. Tus datos se guardarán localmente solo en este dispositivo.</string>
 
     <!-- Sign Out -->
-    <string name="sign_out">Cerrar Sesión</string>
+    <string name="sign_out">Cerrar sesión</string>
     <string name="sign_out_confirmation">¿Estás seguro de que quieres cerrar sesión?</string>
 
     <!-- Sync Status -->
@@ -404,4 +404,88 @@
         <item quantity="one">%1$d de %2$d movimiento</item>
         <item quantity="other">%1$d de %2$d movimientos</item>
     </plurals>
+
+    <!-- Redesign: budget list -->
+    <string name="available_label">Disponible</string>
+    <string name="spent_amount">Gastado %1$s</string>
+    <string name="percent_of_total">%1$s de %2$s</string>
+    <string name="over_budget">Excedido</string>
+    <string name="not_synced">Sin sincronizar</string>
+
+    <!-- Redesign: budget detail -->
+    <string name="balance_label">Balance</string>
+    <string name="budget_label">Presupuesto</string>
+    <string name="add_budget_short">Agregar</string>
+    <string name="scan_receipt">Escanear recibo</string>
+    <string name="today">Hoy</string>
+    <string name="yesterday">Ayer</string>
+    <string name="day_header_format">%1$s %2$d %3$s</string>
+    <string name="day_header_format_year">%1$s %2$d %3$s %4$d</string>
+    <string name="short_date_format">%1$d %2$s %3$d</string>
+    <string-array name="weekday_abbreviations">
+        <item>Lun</item>
+        <item>Mar</item>
+        <item>Mié</item>
+        <item>Jue</item>
+        <item>Vie</item>
+        <item>Sáb</item>
+        <item>Dom</item>
+    </string-array>
+    <string-array name="month_abbreviations">
+        <item>ene</item>
+        <item>feb</item>
+        <item>mar</item>
+        <item>abr</item>
+        <item>may</item>
+        <item>jun</item>
+        <item>jul</item>
+        <item>ago</item>
+        <item>sep</item>
+        <item>oct</item>
+        <item>nov</item>
+        <item>dic</item>
+    </string-array>
+
+    <!-- Redesign: entry form -->
+    <string name="save_expense">Guardar gasto</string>
+    <string name="save_income">Guardar ingreso</string>
+    <string name="scan_receipt_subtitle">La IA llena el monto, la descripción y la categoría</string>
+    <string name="attach_receipt_subtitle">Foto o PDF del comprobante</string>
+    <string name="view_receipt_subtitle">Toca para ver el comprobante</string>
+    <string name="other_date">Otra fecha</string>
+    <string name="created_by">Creado por %1$s</string>
+    <string name="edited_by">editado por %1$s</string>
+
+    <!-- Redesign: settings -->
+    <string name="section_automatic_entries">Registro automático</string>
+    <string name="section_ai">Inteligencia artificial</string>
+    <string name="signed_in">Sesión iniciada</string>
+    <string name="read_bank_sms">Leer SMS de bancos</string>
+    <plurals name="banks_selected_count">
+        <item quantity="one">%1$d banco seleccionado</item>
+        <item quantity="other">%1$d bancos seleccionados</item>
+    </plurals>
+
+    <!-- Redesign: collaborators -->
+    <string name="collaborators_screen_title">Colaboradores</string>
+    <string name="collaborators_explainer">Quienes estén aquí pueden ver, agregar y editar los registros de «%1$s».</string>
+    <string name="invite">Invitar</string>
+    <string name="you_suffix">(tú)</string>
+    <plurals name="people_count">
+        <item quantity="one">%1$d persona</item>
+        <item quantity="other">%1$d personas</item>
+    </plurals>
+
+    <!-- Redesign: sign in and sign up -->
+    <string name="welcome_tagline">Tus presupuestos, al día y compartidos</string>
+    <string name="continue_with_email">Continuar con correo</string>
+    <string name="use_without_account">Usar sin cuenta</string>
+    <string name="sign_in_title">Inicia sesión</string>
+    <string name="sign_up_title">Crea tu cuenta</string>
+    <string name="create_account_button">Crear cuenta</string>
+    <string name="password_min_hint">Mínimo 6 caracteres</string>
+    <string name="no_account_prompt">¿No tienes cuenta?</string>
+    <string name="sign_up_link">Regístrate</string>
+    <string name="have_account_prompt">¿Ya tienes cuenta?</string>
+    <string name="sign_in_link">Inicia sesión</string>
 </resources>

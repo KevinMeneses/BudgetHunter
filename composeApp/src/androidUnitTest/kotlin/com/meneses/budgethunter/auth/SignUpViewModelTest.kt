@@ -69,7 +69,6 @@ class SignUpViewModelTest {
         viewModel.sendIntent(SignUpIntent.EmailChanged(email))
         viewModel.sendIntent(SignUpIntent.NameChanged(name))
         viewModel.sendIntent(SignUpIntent.PasswordChanged(password))
-        viewModel.sendIntent(SignUpIntent.ConfirmPasswordChanged(password))
 
         // API call succeeds and returns the registered user info
         val userResponse = SignUpResponse(email = email, name = name)

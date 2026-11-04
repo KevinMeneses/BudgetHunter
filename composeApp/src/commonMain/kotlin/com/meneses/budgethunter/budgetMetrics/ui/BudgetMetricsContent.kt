@@ -1,6 +1,7 @@
 package com.meneses.budgethunter.budgetMetrics.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,6 +15,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,6 +35,7 @@ import budgethunter.composeapp.generated.resources.metrics_empty_incomes_title
 import budgethunter.composeapp.generated.resources.metrics_expenses
 import budgethunter.composeapp.generated.resources.metrics_incomes
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
+import com.meneses.budgethunter.budgetEntry.ui.CategoryBadge
 import com.meneses.budgethunter.budgetEntry.ui.toStringResource
 import com.meneses.budgethunter.budgetMetrics.application.BudgetMetricsState
 import com.meneses.budgethunter.budgetMetrics.domain.CategoryMetric
@@ -46,7 +51,9 @@ import kotlin.math.roundToInt
 @Composable
 fun BudgetMetricsContent(
     uiState: BudgetMetricsState,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    /** Opens the budget's entries of that category and of the type on screen. */
+    onCategoryClick: (BudgetEntry.Category) -> Unit = {}
 ) {
     if (uiState.isLoading) {
         LoadingScreen()
@@ -73,8 +80,8 @@ fun BudgetMetricsContent(
 
     LazyColumn(
         modifier = modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 32.dp),
-        verticalArrangement = Arrangement.spacedBy(18.dp)
+        contentPadding = PaddingValues(start = 12.dp, end = 12.dp, bottom = 32.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         item {
             MetricsDonut(
@@ -89,7 +96,8 @@ fun BudgetMetricsContent(
         itemsIndexed(uiState.categoryMetrics) { index, metric ->
             CategoryRow(
                 metric = metric,
-                color = colorOf(index)
+                color = colorOf(index),
+                onClick = { onCategoryClick(metric.category) }
             )
         }
     }
@@ -137,9 +145,35 @@ private fun MetricsDonut(
 @Composable
 private fun CategoryRow(
     metric: CategoryMetric,
-    color: Color
+    color: Color,
+    onClick: () -> Unit
 ) {
-    Column(modifier = Modifier.fillMaxWidth()) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.medium)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 8.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        CategoryBadge(category = metric.category, size = 32.dp)
+        CategoryRowBody(metric = metric, color = color, modifier = Modifier.weight(1f))
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+            contentDescription = null,
+            tint = AppColors.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
+private fun CategoryRowBody(
+    metric: CategoryMetric,
+    color: Color,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.Bottom,

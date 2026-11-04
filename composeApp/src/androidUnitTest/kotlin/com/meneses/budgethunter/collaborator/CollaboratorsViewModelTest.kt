@@ -9,6 +9,7 @@ import com.meneses.budgethunter.collaborator.application.CollaboratorsIntent
 import com.meneses.budgethunter.collaborator.data.CollaboratorRepository
 import com.meneses.budgethunter.commons.data.network.models.CollaboratorResponse
 import com.meneses.budgethunter.commons.data.network.models.UserInfo
+import com.meneses.budgethunter.commons.data.PreferencesManager
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
@@ -39,6 +40,7 @@ class CollaboratorsViewModelTest {
 
     // Mocks
     private val collaboratorRepository = mockk<CollaboratorRepository>(relaxed = true)
+    private val preferencesManager = mockk<PreferencesManager>(relaxed = true)
 
     // System under test
     private lateinit var viewModel: CollaboratorsViewModel
@@ -48,6 +50,7 @@ class CollaboratorsViewModelTest {
         Dispatchers.setMain(testDispatcher)
         viewModel = CollaboratorsViewModel(
             collaboratorRepository = collaboratorRepository,
+            preferencesManager = preferencesManager,
             budgetServerId = budgetServerId
         )
     }

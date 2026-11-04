@@ -14,6 +14,7 @@ import com.meneses.budgethunter.budgetList.application.DeleteBudgetUseCase
 import com.meneses.budgethunter.budgetList.application.DuplicateBudgetUseCase
 import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.budgetList.domain.Budget
+import com.meneses.budgethunter.commons.data.PreferencesManager
 import com.meneses.budgethunter.commons.data.sync.Logger
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -29,6 +30,7 @@ class BudgetListViewModel(
     private val deleteBudgetUseCase: DeleteBudgetUseCase,
     private val authRepository: AuthRepository,
     private val signOutUseCase: SignOutUseCase,
+    private val preferencesManager: PreferencesManager,
     private val logger: Logger
 ) : ViewModel() {
     private val tag = "BudgetListViewModel"
@@ -46,7 +48,9 @@ class BudgetListViewModel(
     private fun checkAuthState() {
         viewModelScope.launch {
             val isAuthenticated = authRepository.isAuthenticated()
-            _uiState.update { it.copy(isAuthenticated = isAuthenticated) }
+            // While signed in, the last account that signed in is the current one
+            val accountEmail = if (isAuthenticated) preferencesManager.getLastSignedInEmail() else null
+            _uiState.update { it.copy(isAuthenticated = isAuthenticated, accountEmail = accountEmail) }
         }
     }
 

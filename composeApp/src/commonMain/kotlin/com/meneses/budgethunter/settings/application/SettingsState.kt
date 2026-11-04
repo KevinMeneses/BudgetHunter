@@ -24,5 +24,9 @@ data class SettingsState(
     val hasPassword: Boolean = false,
     val isPasswordDialogVisible: Boolean = false,
     val isSavingPassword: Boolean = false,
-    val passwordError: StringResource? = null
+    val passwordError: StringResource? = null,
+    /** The signed-in account, shown at the top of the screen; null in offline mode. */
+    val email: String? = null,
+    val isSignOutConfirmationVisible: Boolean = false,
+    val isSigningOut: Boolean = false
 )

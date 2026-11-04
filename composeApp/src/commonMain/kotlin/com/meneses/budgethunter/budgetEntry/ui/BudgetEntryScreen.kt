@@ -1,8 +1,7 @@
 package com.meneses.budgethunter.budgetEntry.ui
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Done
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -11,6 +10,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import budgethunter.composeapp.generated.resources.Res
 import budgethunter.composeapp.generated.resources.ai_autofill_confirm
@@ -19,7 +19,6 @@ import budgethunter.composeapp.generated.resources.ai_autofill_skip
 import budgethunter.composeapp.generated.resources.come_back
 import budgethunter.composeapp.generated.resources.discard
 import budgethunter.composeapp.generated.resources.new_registry
-import budgethunter.composeapp.generated.resources.save_entry
 import budgethunter.composeapp.generated.resources.unsaved_changes_confirmation_message
 import budgethunter.composeapp.generated.resources.update_registry
 import com.meneses.budgethunter.budgetEntry.application.BudgetEntryIntent
@@ -33,7 +32,11 @@ import kotlinx.serialization.Serializable
 import org.jetbrains.compose.resources.stringResource
 
 @Serializable
-data class BudgetEntryScreen(val budgetEntry: BudgetEntry) {
+data class BudgetEntryScreen(
+    val budgetEntry: BudgetEntry,
+    /** Opens the receipt picker as soon as the screen shows, for the "scan a receipt" shortcut. */
+    val scanReceipt: Boolean = false
+) {
     @Composable
     fun Show(
         uiState: BudgetEntryState,
@@ -62,6 +65,17 @@ data class BudgetEntryScreen(val budgetEntry: BudgetEntry) {
             }
         }
 
+        // Saveable so that coming back to the screen does not open the picker a second time
+        var wasReceiptPickerOpened by rememberSaveable { mutableStateOf(false) }
+        LaunchedEffect(scanReceipt) {
+            if (scanReceipt && !wasReceiptPickerOpened) {
+                wasReceiptPickerOpened = true
+                BudgetEntryIntent
+                    .ToggleAttachInvoiceModal(true)
+                    .run(onIntent)
+            }
+        }
+
         Scaffold(
             topBar = {
                 val title = if (budgetEntry.id < 0) stringResource(Res.string.new_registry)
@@ -69,16 +83,10 @@ data class BudgetEntryScreen(val budgetEntry: BudgetEntry) {
 
                 AppBar(
                     title = title,
-                    leftButtonIcon = Icons.AutoMirrored.Filled.ArrowBack,
+                    // Closes the form, as a sheet would: the changes are confirmed before leaving
+                    leftButtonIcon = Icons.Default.Close,
                     leftButtonDescription = stringResource(Res.string.come_back),
-                    rightButtonIcon = Icons.Default.Done,
-                    rightButtonDescription = stringResource(Res.string.save_entry),
-                    onLeftButtonClick = onBack,
-                    onRightButtonClick = {
-                        BudgetEntryIntent
-                            .SaveBudgetEntry
-                            .run(onIntent)
-                    }
+                    onLeftButtonClick = onBack
                 )
             },
             snackbarHost = {
@@ -89,6 +97,8 @@ data class BudgetEntryScreen(val budgetEntry: BudgetEntry) {
                 budgetEntry = uiState.budgetEntry ?: budgetEntry,
                 amountError = uiState.emptyAmountError?.let { stringResource(it) },
                 isFileValid = uiState.isFileValid,
+                isAiEnabled = uiState.isAiProcessingEnabled,
+                focusAmount = budgetEntry.id < 0 && !scanReceipt,
                 paddingValues = paddingValues,
                 onBudgetItemChanged = setBudgetEntry,
                 onInvoiceFieldClick = {
@@ -97,6 +107,11 @@ data class BudgetEntryScreen(val budgetEntry: BudgetEntry) {
                     } else {
                         BudgetEntryIntent.ToggleShowInvoiceModal(true)
                     }.run(onIntent)
+                },
+                onSave = {
+                    BudgetEntryIntent
+                        .SaveBudgetEntry
+                        .run(onIntent)
                 }
             )
         }

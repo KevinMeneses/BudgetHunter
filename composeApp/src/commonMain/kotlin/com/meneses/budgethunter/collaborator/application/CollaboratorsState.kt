@@ -18,5 +18,7 @@ data class CollaboratorsState(
     val isAddingCollaborator: Boolean = false,
     val isRemovingCollaborator: Boolean = false,
     val showAddCollaboratorDialog: Boolean = false,
-    val removeConfirmationEmail: String? = null
+    val removeConfirmationEmail: String? = null,
+    /** The signed-in user's email, to tell their own row apart from the others. */
+    val currentUserEmail: String? = null
 )

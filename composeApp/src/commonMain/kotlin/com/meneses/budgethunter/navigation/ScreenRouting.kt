@@ -35,10 +35,12 @@ import com.meneses.budgethunter.auth.ui.SignInScreen
 import com.meneses.budgethunter.auth.ui.SignUpScreen
 import com.meneses.budgethunter.budgetDetail.BudgetDetailViewModel
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailEvent
+import com.meneses.budgethunter.budgetDetail.application.BudgetDetailIntent
 import com.meneses.budgethunter.budgetDetail.ui.BudgetDetailScreen
 import com.meneses.budgethunter.budgetEntry.BudgetEntryViewModel
 import com.meneses.budgethunter.budgetEntry.application.BudgetEntryEvent
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
+import com.meneses.budgethunter.budgetEntry.domain.BudgetEntryFilter
 import com.meneses.budgethunter.budgetEntry.ui.BudgetEntryScreen
 import com.meneses.budgethunter.budgetList.BudgetListViewModel
 import com.meneses.budgethunter.budgetList.application.BudgetListEvent
@@ -54,6 +56,7 @@ import com.meneses.budgethunter.commons.data.PreferencesManager
 import com.meneses.budgethunter.commons.platform.NetworkMonitor
 import com.meneses.budgethunter.commons.util.serializableType
 import com.meneses.budgethunter.settings.SettingsViewModel
+import com.meneses.budgethunter.settings.application.SettingsEvent
 import com.meneses.budgethunter.settings.ui.SettingsScreen
 import com.meneses.budgethunter.settings.ui.SmsShortcutTutorialScreen
 import com.meneses.budgethunter.splash.SplashScreenViewModel
@@ -65,6 +68,9 @@ import org.koin.compose.getKoin
 import org.koin.compose.koinInject
 import org.koin.core.parameter.parametersOf
 import kotlin.reflect.typeOf
+
+/** "TYPE:CATEGORY" the metrics screen leaves for the budget detail to filter its entries by. */
+private const val METRICS_CATEGORY_FILTER_KEY = "metrics_category_filter"
 
 @Composable
 fun BudgetHunterNavigation() {
@@ -253,6 +259,20 @@ fun BudgetHunterNavigation() {
                 val settingsViewModel: SettingsViewModel = koinInject()
                 val uiState by settingsViewModel.uiState.collectAsStateWithLifecycle()
 
+                LaunchedEffect(Unit) {
+                    settingsViewModel.events.collect { event ->
+                        when (event) {
+                            // Nothing behind Settings is valid without the account
+                            is SettingsEvent.NavigateToSignIn -> navController.navigate(
+                                route = SignInScreen,
+                                navOptions = navOptions {
+                                    popUpTo(navController.graph.id) { inclusive = true }
+                                }
+                            )
+                        }
+                    }
+                }
+
                 SettingsScreen.Show(
                     uiState = uiState,
                     onIntent = settingsViewModel::sendIntent,
@@ -276,6 +296,23 @@ fun BudgetHunterNavigation() {
                 val koin = getKoin()
                 val budgetDetailViewModel = viewModel { koin.get<BudgetDetailViewModel>() }
                 val uiState by budgetDetailViewModel.uiState.collectAsStateWithLifecycle()
+
+                // A category chosen in the metrics screen: show its entries
+                val metricsCategoryFilter by backStackEntry.savedStateHandle
+                    .getStateFlow<String?>(METRICS_CATEGORY_FILTER_KEY, null)
+                    .collectAsStateWithLifecycle()
+                LaunchedEffect(metricsCategoryFilter) {
+                    val (typeName, categoryName) = metricsCategoryFilter?.split(":") ?: return@LaunchedEffect
+                    backStackEntry.savedStateHandle[METRICS_CATEGORY_FILTER_KEY] = null
+                    val type = BudgetEntry.Type.entries.firstOrNull { it.name == typeName }
+                    val category = BudgetEntry.Category.entries.firstOrNull { it.name == categoryName }
+                    budgetDetailViewModel.sendIntent(
+                        BudgetDetailIntent.FilterEntries(BudgetEntryFilter(type = type, category = category))
+                    )
+                    if (!budgetDetailViewModel.uiState.value.isFilterBarVisible) {
+                        budgetDetailViewModel.sendIntent(BudgetDetailIntent.ToggleFilterBar)
+                    }
+                }
                 val networkMonitor: NetworkMonitor = koinInject()
                 val snackbarHostState = remember { SnackbarHostState() }
                 var errorResource by remember { mutableStateOf<StringResource?>(null) }
@@ -287,7 +324,7 @@ fun BudgetHunterNavigation() {
                         when (event) {
                             is BudgetDetailEvent.NavigateBack -> navController.popBackStackOnce(backStackEntry)
                             is BudgetDetailEvent.ShowEntry -> navController.navigateOnce(
-                                BudgetEntryScreen(event.entry)
+                                BudgetEntryScreen(event.entry, event.scanReceipt)
                             )
                             is BudgetDetailEvent.ShowError -> errorResource = event.message
                             is BudgetDetailEvent.ShowSuccess -> successResource = event.message
@@ -381,7 +418,15 @@ fun BudgetHunterNavigation() {
                 budgetMetricsRoute.Show(
                     uiState = uiState,
                     onIntent = budgetMetricsViewModel::sendIntent,
-                    goBack = { navController.popBackStackOnce(backStackEntry) }
+                    goBack = { navController.popBackStackOnce(backStackEntry) },
+                    showCategoryEntries = { category, type ->
+                        // Handed back to the budget detail, which filters its list with it
+                        navController.previousBackStackEntry?.savedStateHandle?.set(
+                            METRICS_CATEGORY_FILTER_KEY,
+                            "${type.name}:${category.name}"
+                        )
+                        navController.popBackStackOnce(backStackEntry)
+                    }
                 )
             }
 

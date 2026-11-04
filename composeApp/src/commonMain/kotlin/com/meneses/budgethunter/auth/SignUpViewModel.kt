@@ -3,14 +3,12 @@ package com.meneses.budgethunter.auth
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import budgethunter.composeapp.generated.resources.Res
-import budgethunter.composeapp.generated.resources.error_confirm_password_required
 import budgethunter.composeapp.generated.resources.error_email_required
 import budgethunter.composeapp.generated.resources.error_google_no_account
 import budgethunter.composeapp.generated.resources.error_google_sign_in_failed
 import budgethunter.composeapp.generated.resources.error_name_required
 import budgethunter.composeapp.generated.resources.error_password_required
 import budgethunter.composeapp.generated.resources.error_password_too_short
-import budgethunter.composeapp.generated.resources.error_passwords_do_not_match
 import budgethunter.composeapp.generated.resources.error_sign_up_failed
 import com.meneses.budgethunter.auth.application.GoogleAuthOutcome
 import com.meneses.budgethunter.auth.application.SignInWithGoogleUseCase
@@ -44,7 +42,6 @@ class SignUpViewModel(
             is SignUpIntent.EmailChanged -> updateEmail(intent.email)
             is SignUpIntent.NameChanged -> updateName(intent.name)
             is SignUpIntent.PasswordChanged -> updatePassword(intent.password)
-            is SignUpIntent.ConfirmPasswordChanged -> updateConfirmPassword(intent.confirmPassword)
             is SignUpIntent.SignUpClicked -> signUp()
             is SignUpIntent.GoogleSignUpClicked -> signUpWithGoogle()
             is SignUpIntent.DismissError -> dismissError()
@@ -64,33 +61,22 @@ class SignUpViewModel(
         _uiState.update { it.copy(password = password) }
     }
 
-    private fun updateConfirmPassword(confirmPassword: String) {
-        _uiState.update { it.copy(confirmPassword = confirmPassword) }
-    }
-
     private fun signUp() {
         val currentState = _uiState.value
 
-        // Validation
+        // Validation, in the order the form shows the fields. There is no confirmation field: the
+        // password can be shown with the eye icon to check it instead.
         when {
-            currentState.email.isBlank() -> {
-                _uiState.update { it.copy(error = Res.string.error_email_required) }
-                return
-            }
             currentState.name.isBlank() -> {
                 _uiState.update { it.copy(error = Res.string.error_name_required) }
                 return
             }
+            currentState.email.isBlank() -> {
+                _uiState.update { it.copy(error = Res.string.error_email_required) }
+                return
+            }
             currentState.password.isBlank() -> {
                 _uiState.update { it.copy(error = Res.string.error_password_required) }
-                return
-            }
-            currentState.confirmPassword.isBlank() -> {
-                _uiState.update { it.copy(error = Res.string.error_confirm_password_required) }
-                return
-            }
-            currentState.password != currentState.confirmPassword -> {
-                _uiState.update { it.copy(error = Res.string.error_passwords_do_not_match) }
                 return
             }
             currentState.password.length < 6 -> {

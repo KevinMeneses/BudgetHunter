@@ -2,6 +2,7 @@ package com.meneses.budgethunter.budgetList
 
 import com.meneses.budgethunter.auth.application.SignOutUseCase
 import com.meneses.budgethunter.auth.data.AuthRepository
+import com.meneses.budgethunter.commons.data.PreferencesManager
 import com.meneses.budgethunter.budgetList.application.BudgetListEvent
 import com.meneses.budgethunter.budgetList.application.BudgetListIntent
 import com.meneses.budgethunter.budgetList.application.DeleteBudgetUseCase
@@ -45,6 +46,7 @@ class BudgetListViewModelTest {
     private val duplicateBudgetUseCase = mockk<DuplicateBudgetUseCase>(relaxed = true)
     private val deleteBudgetUseCase = mockk<DeleteBudgetUseCase>(relaxed = true)
     private val authRepository = mockk<AuthRepository>(relaxed = true)
+    private val preferencesManager = mockk<PreferencesManager>(relaxed = true)
     private val signOutUseCase = mockk<SignOutUseCase>(relaxed = true)
 
     // System under test
@@ -63,6 +65,7 @@ class BudgetListViewModelTest {
             deleteBudgetUseCase = deleteBudgetUseCase,
             authRepository = authRepository,
             signOutUseCase = signOutUseCase,
+            preferencesManager = preferencesManager,
             logger = NoOpLogger()
         )
     }

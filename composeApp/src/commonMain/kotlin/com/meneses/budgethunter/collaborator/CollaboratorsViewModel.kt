@@ -14,6 +14,7 @@ import com.meneses.budgethunter.collaborator.application.CollaboratorsEvent
 import com.meneses.budgethunter.collaborator.application.CollaboratorsIntent
 import com.meneses.budgethunter.collaborator.application.CollaboratorsState
 import com.meneses.budgethunter.collaborator.data.CollaboratorRepository
+import com.meneses.budgethunter.commons.data.PreferencesManager
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -23,6 +24,7 @@ import kotlinx.coroutines.launch
 
 class CollaboratorsViewModel(
     private val collaboratorRepository: CollaboratorRepository,
+    private val preferencesManager: PreferencesManager,
     private val budgetServerId: Long
 ) : ViewModel() {
 
@@ -44,7 +46,9 @@ class CollaboratorsViewModel(
 
     private fun loadCollaborators() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
+            // The screen is only reachable while signed in, so the last account is the current one
+            val currentUserEmail = preferencesManager.getLastSignedInEmail()
+            _uiState.update { it.copy(isLoading = true, currentUserEmail = currentUserEmail) }
 
             collaboratorRepository.getCollaborators(budgetServerId)
                 .onSuccess { collaborators ->

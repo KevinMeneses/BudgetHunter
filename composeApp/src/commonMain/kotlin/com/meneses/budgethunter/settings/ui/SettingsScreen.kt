@@ -1,29 +1,28 @@
 package com.meneses.budgethunter.settings.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.AccountBalance
+import androidx.compose.material.icons.filled.AccountBalanceWallet
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Psychology
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material.icons.filled.Sms
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -33,45 +32,57 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import budgethunter.composeapp.generated.resources.Res
-import budgethunter.composeapp.generated.resources.about
-import budgethunter.composeapp.generated.resources.activated
+import budgethunter.composeapp.generated.resources.account
 import budgethunter.composeapp.generated.resources.ai_processing
 import budgethunter.composeapp.generated.resources.ai_processing_description
 import budgethunter.composeapp.generated.resources.app_description
 import budgethunter.composeapp.generated.resources.app_version
 import budgethunter.composeapp.generated.resources.bank_for_sms_notifications
+import budgethunter.composeapp.generated.resources.banks_selected_count
+import budgethunter.composeapp.generated.resources.cancel
+import budgethunter.composeapp.generated.resources.change_password
 import budgethunter.composeapp.generated.resources.come_back
-import budgethunter.composeapp.generated.resources.deactivated
 import budgethunter.composeapp.generated.resources.default_budget
-import budgethunter.composeapp.generated.resources.enable_ai_processing
-import budgethunter.composeapp.generated.resources.enable_sms_reading
+import budgethunter.composeapp.generated.resources.no_banks_selected
 import budgethunter.composeapp.generated.resources.no_default_budget
+import budgethunter.composeapp.generated.resources.read_bank_sms
+import budgethunter.composeapp.generated.resources.section_ai
+import budgethunter.composeapp.generated.resources.section_automatic_entries
+import budgethunter.composeapp.generated.resources.set_password
+import budgethunter.composeapp.generated.resources.set_password_description
 import budgethunter.composeapp.generated.resources.settings
-import budgethunter.composeapp.generated.resources.sms_reading
+import budgethunter.composeapp.generated.resources.sign_out
+import budgethunter.composeapp.generated.resources.sign_out_confirmation
+import budgethunter.composeapp.generated.resources.signed_in
 import budgethunter.composeapp.generated.resources.sms_reading_description
 import budgethunter.composeapp.generated.resources.sms_shortcut_settings_description
 import budgethunter.composeapp.generated.resources.sms_shortcut_settings_row
-import budgethunter.composeapp.generated.resources.sms_shortcut_settings_row_subtitle
-import budgethunter.composeapp.generated.resources.banks_selected
-import budgethunter.composeapp.generated.resources.no_banks_selected
 import com.meneses.budgethunter.commons.ui.AppBar
+import com.meneses.budgethunter.commons.ui.ConfirmationModal
 import com.meneses.budgethunter.commons.ui.LoadingOverlay
 import com.meneses.budgethunter.commons.util.Platform
-import budgethunter.composeapp.generated.resources.account
-import budgethunter.composeapp.generated.resources.change_password
-import budgethunter.composeapp.generated.resources.set_password
-import budgethunter.composeapp.generated.resources.set_password_description
 import com.meneses.budgethunter.settings.application.SettingsIntent
 import com.meneses.budgethunter.settings.application.SettingsState
+import com.meneses.budgethunter.theme.AppColors
 import kotlinx.serialization.Serializable
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 
+/**
+ * Settings as a grouped list: a label per section and one rounded group of rows under it, with
+ * the account on top and the app's version at the foot. Each row's subtitle says what the option
+ * does; the switch already says whether it is on.
+ */
 @Serializable
 object SettingsScreen {
     @Composable
@@ -97,68 +108,69 @@ object SettingsScreen {
                         .fillMaxSize()
                         .padding(paddingValues)
                         .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
+                    val email = uiState.email
+                    if (uiState.isSignedIn && email != null) {
+                        AccountHeader(email = email)
+                    }
+
+                    SectionLabel(stringResource(Res.string.section_automatic_entries))
                     if (Platform.isAndroid) {
-                        SmsReadingSection(
-                            uiState = uiState,
-                            onToggleSmsReading = { enabled ->
-                                onIntent(SettingsIntent.ToggleSmsReading(enabled))
-                            },
-                            onSelectDefaultBudget = {
-                                onIntent(SettingsIntent.ShowDefaultBudgetSelector)
-                            },
-                            onSelectBanks = {
-                                onIntent(SettingsIntent.ShowBankSelector)
-                            }
-                        )
+                        SmsReadingGroup(uiState = uiState, onIntent = onIntent)
                     } else {
-                        SmsShortcutSection(
+                        SmsShortcutGroup(
                             uiState = uiState,
                             onOpenTutorial = showSmsShortcutTutorial,
-                            onSelectDefaultBudget = {
-                                onIntent(SettingsIntent.ShowDefaultBudgetSelector)
-                            }
+                            onIntent = onIntent
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
-                    HorizontalDivider()
-
-                    Spacer(modifier = Modifier.height(16.dp))
-                    AiProcessingSection(
-                        uiState = uiState,
-                        onToggleAiProcessing = { enabled ->
-                            onIntent(SettingsIntent.ToggleAiProcessing(enabled))
-                        }
-                    )
+                    SectionLabel(stringResource(Res.string.section_ai))
+                    SettingsGroup {
+                        SettingRow(
+                            icon = Icons.Default.AutoAwesome,
+                            title = stringResource(Res.string.ai_processing),
+                            subtitle = stringResource(Res.string.ai_processing_description),
+                            switchChecked = uiState.isAiProcessingEnabled,
+                            onSwitchChange = { onIntent(SettingsIntent.ToggleAiProcessing(it)) }
+                        )
+                    }
 
                     if (uiState.isSignedIn) {
-                        Spacer(modifier = Modifier.height(16.dp))
-                        HorizontalDivider()
-
-                        Spacer(modifier = Modifier.height(16.dp))
-                        AccountSection(
-                            hasPassword = uiState.hasPassword,
-                            onManagePassword = { onIntent(SettingsIntent.ShowPasswordDialog) }
-                        )
+                        SectionLabel(stringResource(Res.string.account))
+                        SettingsGroup {
+                            SettingRow(
+                                icon = Icons.Default.Lock,
+                                title = stringResource(
+                                    if (uiState.hasPassword) Res.string.change_password else Res.string.set_password
+                                ),
+                                subtitle = stringResource(Res.string.set_password_description),
+                                onClick = { onIntent(SettingsIntent.ShowPasswordDialog) }
+                            )
+                            GroupDivider()
+                            SettingRow(
+                                icon = Icons.AutoMirrored.Filled.Logout,
+                                title = stringResource(Res.string.sign_out),
+                                contentColor = AppColors.error,
+                                showChevron = false,
+                                onClick = { onIntent(SettingsIntent.ToggleSignOutConfirmation(true)) }
+                            )
+                        }
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
-                    HorizontalDivider()
-
-                    Spacer(modifier = Modifier.height(16.dp))
-                    AboutSection()
+                    AboutFooter()
                 }
             }
 
             // Covers the first frames, until the device's values are read, so the screen never
             // flashes its empty defaults. The account refresh is not waited on.
-            if (uiState.isLoading) {
+            if (uiState.isLoading || uiState.isSigningOut) {
                 LoadingOverlay()
             }
         }
 
-        // Default Budget Selector Modal
         if (uiState.isDefaultBudgetSelectorVisible) {
             DefaultBudgetSelectorModal(
                 availableBudgets = uiState.allBudgets,
@@ -170,7 +182,6 @@ object SettingsScreen {
             )
         }
 
-        // Bank Selector Modal
         if (uiState.isBankSelectorVisible) {
             BankSelectorModal(
                 availableBanks = uiState.availableBanks,
@@ -182,7 +193,6 @@ object SettingsScreen {
             )
         }
 
-        // Password Modal
         if (uiState.isPasswordDialogVisible) {
             PasswordModal(
                 hasPassword = uiState.hasPassword,
@@ -195,103 +205,60 @@ object SettingsScreen {
             )
         }
 
-        // Manual Permission Dialog
         if (uiState.isManualPermissionDialogVisible) {
             ManualPermissionDialog(
                 onDismiss = { onIntent(SettingsIntent.HideManualPermissionDialog) },
                 onOpenSettings = { onIntent(SettingsIntent.OpenAppSettings) }
             )
         }
+
+        ConfirmationModal(
+            show = uiState.isSignOutConfirmationVisible,
+            message = stringResource(Res.string.sign_out_confirmation),
+            confirmButtonText = stringResource(Res.string.sign_out),
+            cancelButtonText = stringResource(Res.string.cancel),
+            onDismiss = { onIntent(SettingsIntent.ToggleSignOutConfirmation(false)) },
+            onConfirm = { onIntent(SettingsIntent.SignOut) }
+        )
     }
 
     @Composable
-    private fun SmsReadingSection(
+    private fun SmsReadingGroup(
         uiState: SettingsState,
-        onToggleSmsReading: (Boolean) -> Unit,
-        onSelectDefaultBudget: () -> Unit,
-        onSelectBanks: () -> Unit
+        onIntent: (SettingsIntent) -> Unit
     ) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-        ) {
-            Column(
-                modifier = Modifier.padding(20.dp)
-            ) {
-                // Header
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Email,
-                        contentDescription = null,
-                        modifier = Modifier.size(28.dp),
-                        tint = MaterialTheme.colorScheme.primary
+        SettingsGroup {
+            SettingRow(
+                icon = Icons.Default.Sms,
+                title = stringResource(Res.string.read_bank_sms),
+                subtitle = stringResource(Res.string.sms_reading_description),
+                switchChecked = uiState.isSmsReadingEnabled,
+                onSwitchChange = { onIntent(SettingsIntent.ToggleSmsReading(it)) }
+            )
+            GroupDivider()
+            SettingRow(
+                icon = Icons.Default.AccountBalanceWallet,
+                title = stringResource(Res.string.default_budget),
+                subtitle = uiState.defaultBudget?.name ?: stringResource(Res.string.no_default_budget),
+                enabled = uiState.isSmsReadingEnabled,
+                onClick = { onIntent(SettingsIntent.ShowDefaultBudgetSelector) }
+            )
+            GroupDivider()
+            SettingRow(
+                icon = Icons.Default.AccountBalance,
+                title = stringResource(Res.string.bank_for_sms_notifications),
+                subtitle = if (uiState.selectedBanks.isNotEmpty()) {
+                    pluralStringResource(
+                        Res.plurals.banks_selected_count,
+                        uiState.selectedBanks.size,
+                        uiState.selectedBanks.size
                     )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = stringResource(Res.string.sms_reading),
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary,
-                        maxLines = 1
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Text(
-                    text = stringResource(Res.string.sms_reading_description),
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    lineHeight = 20.sp,
-                    maxLines = 3,
-                    overflow = TextOverflow.Ellipsis
-                )
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                // SMS Reading Toggle
-                SettingItem(
-                    icon = Icons.Default.Email,
-                    title = stringResource(Res.string.enable_sms_reading),
-                    subtitle = if (uiState.isSmsReadingEnabled) stringResource(Res.string.activated) else stringResource(Res.string.deactivated),
-                    showSwitch = true,
-                    switchChecked = uiState.isSmsReadingEnabled,
-                    onSwitchChange = onToggleSmsReading
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Default Budget
-                SettingItem(
-                    icon = Icons.Default.AccountCircle,
-                    title = stringResource(Res.string.default_budget),
-                    subtitle = uiState.defaultBudget?.name ?: stringResource(Res.string.no_default_budget),
-                    showButton = true,
-                    onButtonClick = onSelectDefaultBudget,
-                    enabled = uiState.isSmsReadingEnabled
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Bank Selection
-                SettingItem(
-                    icon = Icons.Default.Build,
-                    title = stringResource(Res.string.bank_for_sms_notifications),
-                    subtitle = if (uiState.selectedBanks.isNotEmpty()) {
-                        stringResource(Res.string.banks_selected, uiState.selectedBanks.size)
-                    } else {
-                        stringResource(Res.string.no_banks_selected)
-                    },
-                    showButton = true,
-                    onButtonClick = onSelectBanks,
-                    enabled = uiState.isSmsReadingEnabled
-                )
-            }
+                } else {
+                    stringResource(Res.string.no_banks_selected)
+                },
+                enabled = uiState.isSmsReadingEnabled,
+                onClick = { onIntent(SettingsIntent.ShowBankSelector) }
+            )
         }
     }
 
@@ -300,312 +267,190 @@ object SettingsScreen {
      * to the guide; the automation itself is the switch, so there is no toggle here.
      */
     @Composable
-    private fun SmsShortcutSection(
+    private fun SmsShortcutGroup(
         uiState: SettingsState,
         onOpenTutorial: () -> Unit,
-        onSelectDefaultBudget: () -> Unit
+        onIntent: (SettingsIntent) -> Unit
     ) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-        ) {
-            Column(
-                modifier = Modifier.padding(20.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Email,
-                        contentDescription = null,
-                        modifier = Modifier.size(28.dp),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = stringResource(Res.string.sms_reading),
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary,
-                        maxLines = 1
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Text(
-                    text = stringResource(Res.string.sms_shortcut_settings_description),
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    lineHeight = 20.sp,
-                    maxLines = 3,
-                    overflow = TextOverflow.Ellipsis
-                )
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                SettingItem(
-                    icon = Icons.Default.Email,
-                    title = stringResource(Res.string.sms_shortcut_settings_row),
-                    subtitle = stringResource(Res.string.sms_shortcut_settings_row_subtitle),
-                    showButton = true,
-                    onButtonClick = onOpenTutorial
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // The shortcut stores the movements in this budget, as the Android receiver does
-                SettingItem(
-                    icon = Icons.Default.AccountCircle,
-                    title = stringResource(Res.string.default_budget),
-                    subtitle = uiState.defaultBudget?.name ?: stringResource(Res.string.no_default_budget),
-                    showButton = true,
-                    onButtonClick = onSelectDefaultBudget
-                )
-            }
+        SettingsGroup {
+            SettingRow(
+                icon = Icons.Default.Sms,
+                title = stringResource(Res.string.sms_shortcut_settings_row),
+                subtitle = stringResource(Res.string.sms_shortcut_settings_description),
+                onClick = onOpenTutorial
+            )
+            GroupDivider()
+            // The shortcut stores the movements in this budget, as the Android receiver does
+            SettingRow(
+                icon = Icons.Default.AccountBalanceWallet,
+                title = stringResource(Res.string.default_budget),
+                subtitle = uiState.defaultBudget?.name ?: stringResource(Res.string.no_default_budget),
+                onClick = { onIntent(SettingsIntent.ShowDefaultBudgetSelector) }
+            )
         }
     }
 
     @Composable
-    private fun SettingItem(
-        icon: ImageVector,
-        title: String,
-        subtitle: String,
-        showSwitch: Boolean = false,
-        switchChecked: Boolean = false,
-        onSwitchChange: ((Boolean) -> Unit)? = null,
-        showButton: Boolean = false,
-        onButtonClick: (() -> Unit)? = null,
-        enabled: Boolean = true
-    ) {
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = if (enabled)
-                    MaterialTheme.colorScheme.surface
-                else
-                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-            ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    private fun AccountHeader(email: String) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(MaterialTheme.shapes.large)
+                .background(AppColors.surfaceContainer)
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            val clickableModifier = if (showButton && onButtonClick != null && enabled && !showSwitch) {
-                Modifier.clickable { onButtonClick() }
-            } else {
-                Modifier
-            }
-            Row(
+            Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .then(clickableModifier)
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    modifier = Modifier.size(24.dp),
-                    tint = if (enabled) MaterialTheme.colorScheme.primary
-                    else MaterialTheme.colorScheme.onSurfaceVariant
-                )
-
-                Spacer(modifier = Modifier.width(16.dp))
-
-                Column(
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text(
-                        text = title,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = if (enabled) MaterialTheme.colorScheme.onSurface
-                        else MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = subtitle,
-                        fontSize = 14.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-
-                Spacer(modifier = Modifier.width(8.dp))
-
-                if (showSwitch) {
-                    Switch(
-                        checked = switchChecked,
-                        onCheckedChange = onSwitchChange,
-                        enabled = enabled
-                    )
-                } else if (showButton) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-        }
-    }
-
-    @Composable
-    private fun AccountSection(
-        hasPassword: Boolean,
-        onManagePassword: () -> Unit
-    ) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .background(AppColors.tertiaryContainer),
+                contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = stringResource(Res.string.account),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                SettingItem(
-                    icon = Icons.Default.Lock,
-                    title = stringResource(
-                        if (hasPassword) Res.string.change_password else Res.string.set_password
-                    ),
-                    subtitle = stringResource(Res.string.set_password_description),
-                    showButton = true,
-                    onButtonClick = onManagePassword
+                    text = email.take(1).uppercase(),
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = AppColors.onTertiaryContainer
                 )
             }
-        }
-    }
-
-    @Composable
-    private fun AiProcessingSection(
-        uiState: SettingsState,
-        onToggleAiProcessing: (Boolean) -> Unit
-    ) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-        ) {
-            Column(
-                modifier = Modifier.padding(20.dp)
-            ) {
-                // Header
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Psychology,
-                        contentDescription = null,
-                        modifier = Modifier.size(28.dp),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = stringResource(Res.string.ai_processing),
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary,
-                        maxLines = 1
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = stringResource(Res.string.ai_processing_description),
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    lineHeight = 20.sp,
-                    maxLines = 3,
-                    overflow = TextOverflow.Ellipsis
-                )
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                // AI Processing Toggle
-                SettingItem(
-                    icon = Icons.Default.Psychology,
-                    title = stringResource(Res.string.enable_ai_processing),
-                    subtitle = if (uiState.isAiProcessingEnabled) stringResource(Res.string.activated) else stringResource(Res.string.deactivated),
-                    showSwitch = true,
-                    switchChecked = uiState.isAiProcessingEnabled,
-                    onSwitchChange = onToggleAiProcessing
-                )
-            }
-        }
-    }
-
-    @Composable
-    private fun AboutSection() {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-        ) {
-            Column(
-                modifier = Modifier.padding(20.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Settings,
-                        contentDescription = null,
-                        modifier = Modifier.size(28.dp),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = stringResource(Res.string.about),
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Text(
-                    text = stringResource(Res.string.app_version),
+                    text = email,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-
-                Spacer(modifier = Modifier.height(4.dp))
-
                 Text(
-                    text = stringResource(Res.string.app_description),
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    lineHeight = 20.sp,
-                    maxLines = 3,
-                    overflow = TextOverflow.Ellipsis
+                    text = stringResource(Res.string.signed_in),
+                    fontSize = 13.sp,
+                    color = AppColors.onSurfaceVariant
                 )
             }
+        }
+    }
+
+    @Composable
+    private fun SectionLabel(text: String) {
+        Text(
+            text = text.uppercase(),
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Medium,
+            letterSpacing = 0.8.sp,
+            color = AppColors.primary,
+            modifier = Modifier.padding(start = 4.dp, top = 16.dp)
+        )
+    }
+
+    @Composable
+    private fun SettingsGroup(content: @Composable ColumnScope.() -> Unit) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(MaterialTheme.shapes.large)
+                .background(AppColors.surfaceContainer),
+            content = content
+        )
+    }
+
+    @Composable
+    private fun GroupDivider() {
+        HorizontalDivider(
+            modifier = Modifier.padding(start = 56.dp),
+            color = AppColors.outlineVariant.copy(alpha = 0.6f)
+        )
+    }
+
+    /**
+     * One option. With [onSwitchChange] it carries a switch and toggles from the whole row;
+     * with [onClick] it opens something and shows a chevron.
+     */
+    @Composable
+    private fun SettingRow(
+        icon: ImageVector,
+        title: String,
+        subtitle: String? = null,
+        enabled: Boolean = true,
+        contentColor: Color = AppColors.onSurface,
+        switchChecked: Boolean? = null,
+        onSwitchChange: ((Boolean) -> Unit)? = null,
+        showChevron: Boolean = true,
+        onClick: (() -> Unit)? = null
+    ) {
+        val rowAction: (() -> Unit)? = when {
+            !enabled -> null
+            switchChecked != null && onSwitchChange != null -> { { onSwitchChange(!switchChecked) } }
+            else -> onClick
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .then(if (rowAction != null) Modifier.clickable(onClick = rowAction) else Modifier)
+                .alpha(if (enabled) 1f else 0.5f)
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = if (contentColor == AppColors.onSurface) AppColors.onSurfaceVariant else contentColor,
+                modifier = Modifier.size(24.dp)
+            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    fontSize = 16.sp,
+                    color = contentColor
+                )
+                if (subtitle != null) {
+                    Text(
+                        text = subtitle,
+                        fontSize = 13.sp,
+                        lineHeight = 18.sp,
+                        color = AppColors.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 2.dp)
+                    )
+                }
+            }
+            if (switchChecked != null) {
+                Switch(
+                    checked = switchChecked,
+                    onCheckedChange = onSwitchChange,
+                    enabled = enabled
+                )
+            } else if (onClick != null && showChevron) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = null,
+                    tint = AppColors.onSurfaceVariant
+                )
+            }
+        }
+    }
+
+    @Composable
+    private fun AboutFooter() {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 24.dp, bottom = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = stringResource(Res.string.app_version),
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+                color = AppColors.onSurfaceVariant
+            )
+            Text(
+                text = stringResource(Res.string.app_description),
+                fontSize = 12.sp,
+                color = AppColors.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
         }
     }
 }

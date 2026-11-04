@@ -1,49 +1,52 @@
 package com.meneses.budgethunter.budgetDetail.ui
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.Button
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.automirrored.filled.Sort
-import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.BadgedBox
-import androidx.compose.material3.Badge
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.CloudQueue
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.filled.PieChart
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.minimumInteractiveComponentSize
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -52,591 +55,471 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import budgethunter.composeapp.generated.resources.Res
-import budgethunter.composeapp.generated.resources.add_budget
-import budgethunter.composeapp.generated.resources.balance
-import budgethunter.composeapp.generated.resources.budget_amount
+import budgethunter.composeapp.generated.resources.add_budget_short
+import budgethunter.composeapp.generated.resources.balance_label
+import budgethunter.composeapp.generated.resources.budget_label
 import budgethunter.composeapp.generated.resources.close_entries_selection_mode
-import budgethunter.composeapp.generated.resources.date
 import budgethunter.composeapp.generated.resources.delete
-import budgethunter.composeapp.generated.resources.description
+import budgethunter.composeapp.generated.resources.edit_budget
+import budgethunter.composeapp.generated.resources.manage_collaborators
+import budgethunter.composeapp.generated.resources.metrics
+import budgethunter.composeapp.generated.resources.metrics_expenses
+import budgethunter.composeapp.generated.resources.metrics_incomes
 import budgethunter.composeapp.generated.resources.no_description
-import budgethunter.composeapp.generated.resources.hide_filters
 import budgethunter.composeapp.generated.resources.no_matching_entries
-import budgethunter.composeapp.generated.resources.show_filters
+import budgethunter.composeapp.generated.resources.not_synced
+import budgethunter.composeapp.generated.resources.search
+import budgethunter.composeapp.generated.resources.selected_entries
 import budgethunter.composeapp.generated.resources.sort_amount_ascending
 import budgethunter.composeapp.generated.resources.sort_amount_descending
 import budgethunter.composeapp.generated.resources.sort_entries
 import budgethunter.composeapp.generated.resources.sort_newest
-import budgethunter.composeapp.generated.resources.selected_entries
-import budgethunter.composeapp.generated.resources.total_outcomes
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailIntent
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailState
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
-import com.meneses.budgethunter.commons.EMPTY
+import com.meneses.budgethunter.budgetEntry.ui.CategoryBadge
+import com.meneses.budgethunter.budgetEntry.ui.toStringResource
 import com.meneses.budgethunter.commons.ui.CompottiePlaceholder
 import com.meneses.budgethunter.commons.ui.DefDivider
 import com.meneses.budgethunter.commons.ui.LoadingScreen
 import com.meneses.budgethunter.commons.ui.OfflineBanner
-import com.meneses.budgethunter.commons.ui.SyncStatusIndicator
+import com.meneses.budgethunter.commons.ui.SpendingProgressBar
+import com.meneses.budgethunter.commons.ui.dayHeaderLabel
+import com.meneses.budgethunter.commons.ui.shortDateLabel
 import com.meneses.budgethunter.commons.util.toCurrency
 import com.meneses.budgethunter.theme.AppColors
 import com.meneses.budgethunter.theme.green_success
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BudgetDetailContent(
     paddingValues: PaddingValues,
     isOnline: Boolean,
     uiState: BudgetDetailState,
-    onIntent: (BudgetDetailIntent) -> Unit
+    onIntent: (BudgetDetailIntent) -> Unit,
+    onMetricsClick: () -> Unit,
+    /** Null while the budget is not on the server: there is nobody to share it with yet. */
+    onCollaboratorsClick: (() -> Unit)?
 ) {
-    val onBudgetClick = remember {
-        fun() { onIntent(BudgetDetailIntent.ToggleBudgetModal(true)) }
-    }
-
     if (uiState.isLoading) {
         LoadingScreen()
-    } else {
-        Column(modifier = Modifier.padding(paddingValues)) {
-            OfflineBanner(isOffline = !isOnline)
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(
-                        vertical = 15.dp,
-                        horizontal = 20.dp
-                    )
-            ) {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.SpaceBetween
+        return
+    }
+
+    Column(modifier = Modifier.padding(paddingValues)) {
+        OfflineBanner(isOffline = !isOnline)
+
+        PullToRefreshBox(
+            isRefreshing = uiState.isSyncingEntries,
+            onRefresh = { BudgetDetailIntent.SyncEntries.run(onIntent) },
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+        ) {
+            EntriesList(
+                uiState = uiState,
+                onIntent = onIntent,
+                onMetricsClick = onMetricsClick,
+                onCollaboratorsClick = onCollaboratorsClick
+            )
+        }
+
+        if (uiState.isSelectionActive) {
+            DeleteButton(onIntent)
+        }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun EntriesList(
+    uiState: BudgetDetailState,
+    onIntent: (BudgetDetailIntent) -> Unit,
+    onMetricsClick: () -> Unit,
+    onCollaboratorsClick: (() -> Unit)?
+) {
+    val entries = uiState.budgetDetail.entries
+    val isFiltering = uiState.filter.isActive
+    // Authors are only worth a word when more than one person writes in the budget
+    val showAuthors = entries.mapNotNull { it.createdByEmail?.takeIf(String::isNotBlank) }.distinct().size > 1
+    // Days only make sense while the list is in date order
+    val groupByDay = uiState.listOrder == BudgetDetailState.ListOrder.DEFAULT
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        // Bottom room so the last entry can scroll above the floating buttons
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 120.dp)
+    ) {
+        item(key = "summary") {
+            BudgetSummaryCard(
+                entries = entries,
+                budgetAmount = uiState.budgetDetail.budget.amount,
+                onBudgetClick = { onIntent(BudgetDetailIntent.ToggleBudgetModal(true)) }
+            )
+        }
+
+        item(key = "actions") {
+            // Hidden while selecting: changing the filter would change what is selected
+            if (!uiState.isSelectionActive) {
+                ActionChips(
+                    uiState = uiState,
+                    hasPendingSync = uiState.isAuthenticated && entries.any { !it.isSynced },
+                    onIntent = onIntent,
+                    onMetricsClick = onMetricsClick,
+                    onCollaboratorsClick = onCollaboratorsClick
+                )
+            }
+        }
+
+        item(key = "filter") {
+            AnimatedVisibility(visible = uiState.isFilterBarVisible && !uiState.isSelectionActive) {
+                EntryFilterBar(
+                    filter = uiState.filter,
+                    shownCount = entries.size,
+                    totalCount = uiState.totalEntryCount,
+                    onFilterChange = { onIntent(BudgetDetailIntent.FilterEntries(it)) },
+                    onClear = { onIntent(BudgetDetailIntent.ClearFilter) },
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+            }
+        }
+
+        if (uiState.isSelectionActive && entries.isNotEmpty()) {
+            stickyHeader(key = "selection") {
+                SelectionHeader(entries = entries, onIntent = onIntent)
+            }
+        }
+
+        if (entries.isEmpty()) {
+            item(key = "empty") {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 48.dp),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Column(
-                        modifier = Modifier.weight(0.9f, true)
-                    ) {
-                        BudgetSection(
-                            amount = uiState.budgetDetail.budget.amount,
-                            onClick = onBudgetClick
+                    if (isFiltering) {
+                        Text(
+                            text = stringResource(Res.string.no_matching_entries),
+                            color = AppColors.onSurfaceVariant,
+                            textAlign = TextAlign.Center
                         )
-
-                        Spacer(modifier = Modifier.height(if (uiState.isFilterBarVisible) 12.dp else 20.dp))
-
-                        // Hidden while selecting: changing the filter would change what is selected
-                        AnimatedVisibility(visible = uiState.isFilterBarVisible && !uiState.isSelectionActive) {
-                            EntryFilterBar(
-                                filter = uiState.filter,
-                                shownCount = uiState.budgetDetail.entries.size,
-                                totalCount = uiState.totalEntryCount,
-                                onFilterChange = { onIntent(BudgetDetailIntent.FilterEntries(it)) },
-                                onClear = { onIntent(BudgetDetailIntent.ClearFilter) },
-                                modifier = Modifier.padding(bottom = 8.dp)
-                            )
-                        }
-
-                        ListSection(
-                            budgetEntries = uiState.budgetDetail.entries,
-                            isFiltering = uiState.filter.isActive,
-                            isFilterBarVisible = uiState.isFilterBarVisible,
-                            isSelectionActive = uiState.isSelectionActive,
-                            listOrder = uiState.listOrder,
-                            isSyncing = uiState.isSyncingEntries,
-                            onRefresh = { BudgetDetailIntent.SyncEntries.run(onIntent) },
-                            onIntent = onIntent
+                    } else {
+                        CompottiePlaceholder(
+                            fileName = "empty_list.json",
+                            modifier = Modifier.fillMaxWidth()
                         )
-
-                        Spacer(modifier = Modifier.height(20.dp))
-
-                        if (!uiState.isSelectionActive) {
-                            BalanceSection(
-                                budgetEntries = uiState.budgetDetail.entries,
-                                budgetAmount = uiState.budgetDetail.budget.amount
-                            )
-                        } else {
-                            DeleteButton(onIntent)
-                        }
                     }
                 }
             }
-        }
-    }
-}
-
-@Composable
-fun BudgetSection(
-    amount: Double,
-    onClick: () -> Unit
-) {
-    val budget = if (amount == 0.0) {
-        stringResource(Res.string.add_budget)
-    } else {
-        stringResource(Res.string.budget_amount, amount.toCurrency())
-    }
-
-    Card(
-        modifier = Modifier.clickable(onClick = onClick),
-        shape = AbsoluteRoundedCornerShape(10.dp),
-        colors = CardDefaults.elevatedCardColors(
-            containerColor = AppColors.primaryContainer,
-            contentColor = AppColors.onPrimaryContainer
-        ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 5.dp
-        ),
-        border = BorderStroke(
-            width = 1.dp,
-            color = AppColors.onPrimaryContainer
-        )
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = budget,
-                modifier = Modifier.padding(vertical = 10.dp),
-                textAlign = TextAlign.Center,
-                fontWeight = FontWeight.SemiBold,
-                color = AppColors.onPrimaryContainer
+        } else {
+            entryItems(
+                entries = entries,
+                groupByDay = groupByDay,
+                showAuthors = showAuthors,
+                showSyncState = uiState.isAuthenticated,
+                isSelectionActive = uiState.isSelectionActive,
+                onIntent = onIntent
             )
         }
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
-@Composable
-private fun ColumnScope.ListSection(
-    budgetEntries: List<BudgetEntry>,
-    isFiltering: Boolean,
-    isFilterBarVisible: Boolean,
+/**
+ * The entries, with a header and the day's net total before each new date when [groupByDay].
+ * Indexes passed to the intents are positions in [entries], as the ViewModel expects.
+ */
+private fun LazyListScope.entryItems(
+    entries: List<BudgetEntry>,
+    groupByDay: Boolean,
+    showAuthors: Boolean,
+    showSyncState: Boolean,
     isSelectionActive: Boolean,
-    listOrder: BudgetDetailState.ListOrder,
-    isSyncing: Boolean,
-    onRefresh: () -> Unit,
     onIntent: (BudgetDetailIntent) -> Unit
 ) {
-    var showDate by remember {
-        mutableStateOf(false)
-    }
+    var previousDate: String? = null
+    entries.forEachIndexed { index, entry ->
+        if (groupByDay && entry.date != previousDate) {
+            val date = entry.date
+            val dayEntries = entries.filter { it.date == date }
+            item(key = "day-$date-$index") {
+                DayHeader(date = date, dayEntries = dayEntries)
+            }
+        }
+        previousDate = entry.date
 
-    val onSelectAllItems = remember {
-        fun(isActive: Boolean) {
-            onIntent(BudgetDetailIntent.ToggleAllEntriesSelection(isActive))
+        item(key = "entry-${entry.id}-$index") {
+            EntryRow(
+                entry = entry,
+                index = index,
+                showDate = !groupByDay,
+                showAuthor = showAuthors,
+                showSyncState = showSyncState,
+                isSelectionActive = isSelectionActive,
+                onIntent = onIntent
+            )
         }
     }
+}
 
-    PullToRefreshBox(
-        isRefreshing = isSyncing,
-        onRefresh = onRefresh,
-        modifier = Modifier
-            .weight(0.8f, true)
-            .fillMaxWidth()
+/**
+ * Balance first, then what makes it up: the budget (tap to edit it), the income added on top and
+ * the expenses. The bar is the share of the available money already spent.
+ */
+@Composable
+private fun BudgetSummaryCard(
+    entries: List<BudgetEntry>,
+    budgetAmount: Double,
+    onBudgetClick: () -> Unit
+) {
+    val outcomes = entries.sumOf(BudgetEntry.Type.OUTCOME)
+    val incomes = entries.sumOf(BudgetEntry.Type.INCOME)
+    val available = budgetAmount + incomes
+    val balance = available - outcomes
+    val isOver = balance < 0
+    val spentFraction = when {
+        available > 0 -> (outcomes / available).toFloat()
+        outcomes > 0 -> 1f
+        else -> 0f
+    }
+
+    val content = AppColors.onPrimaryContainer
+    Card(
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(
+            containerColor = AppColors.primaryContainer,
+            contentColor = content
+        ),
+        modifier = Modifier.fillMaxWidth()
     ) {
-        Card(
-            modifier = Modifier.fillMaxSize(),
-            colors = CardDefaults.elevatedCardColors(
-                containerColor = AppColors.background,
-                contentColor = AppColors.onBackground
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = stringResource(Res.string.balance_label),
+                style = MaterialTheme.typography.labelMedium,
+                color = content.copy(alpha = 0.8f)
             )
-        ) {
-            LazyColumn(
-                modifier = Modifier.padding(horizontal = 10.dp)
-            ) {
-                // Kept while a filter hides every entry: it holds the button that shows the filter
-                if (budgetEntries.isNotEmpty() || isFiltering) {
-                    if (isSelectionActive) stickyHeader {
-                        val onCloseSelection = remember {
-                            fun() { onIntent(BudgetDetailIntent.ToggleSelectionState(false)) }
-                        }
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(AppColors.background),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Checkbox(
-                                checked = budgetEntries.all { it.isSelected },
-                                onCheckedChange = onSelectAllItems
-                            )
-                            val selectedEntries = budgetEntries.count { it.isSelected }.toString()
-                            Text(
-                                text = stringResource(Res.string.selected_entries, selectedEntries),
-                                fontWeight = FontWeight.SemiBold
-                            )
-                            IconButton(
-                                modifier = Modifier.offset(10.dp),
-                                onClick = onCloseSelection
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Close,
-                                    contentDescription = stringResource(Res.string.close_entries_selection_mode)
-                                )
-                            }
-                        }
-                        DefDivider()
-                    } else stickyHeader {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(AppColors.background),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            val headerText: StringResource =
-                                if (showDate) Res.string.date
-                                else Res.string.description
+            Text(
+                text = balance.toCurrency(),
+                fontSize = 30.sp,
+                fontWeight = FontWeight.Bold,
+                color = if (isOver) AppColors.error else content,
+                maxLines = 1
+            )
 
-                            TextButton(
-                                modifier = Modifier.offset((-10).dp),
-                                onClick = {
-                                    showDate = !showDate
-                                }
-                            ) {
-                                Text(
-                                    text = stringResource(headerText),
-                                    color = AppColors.onPrimaryContainer,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                            }
+            SpendingProgressBar(
+                fraction = spentFraction.coerceIn(0f, 1f),
+                isOver = isOver,
+                trackColor = content.copy(alpha = 0.18f),
+                fillColor = if (isOver) AppColors.error else content,
+                modifier = Modifier.padding(top = 12.dp, bottom = 12.dp)
+            )
 
-                            // Every icon takes a button's width so they are evenly spaced; the row is
-                            // shifted so the last icon lines up with the amounts below
-                            Row(
-                                modifier = Modifier.offset(x = 10.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Box(
-                                    modifier = Modifier.minimumInteractiveComponentSize(),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    SyncStatusIndicator(
-                                        isSynced = budgetEntries.all { it.isSynced },
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                }
-
-                                FilterToggleButton(
-                                    isFilterBarVisible = isFilterBarVisible,
-                                    isFiltering = isFiltering,
-                                    onClick = { onIntent(BudgetDetailIntent.ToggleFilterBar) }
-                                )
-
-                                SortButton(
-                                    listOrder = listOrder,
-                                    onOrderSelected = { onIntent(BudgetDetailIntent.SetListOrder(it)) }
-                                )
-                            }
-                        }
-                        DefDivider()
-                    }
-                }
-
-                if (budgetEntries.isEmpty()) {
-                    item {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 60.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            if (isFiltering) {
-                                Text(
-                                    text = stringResource(Res.string.no_matching_entries),
-                                    color = AppColors.onSecondaryContainer,
-                                    textAlign = TextAlign.Center
-                                )
-                            } else {
-                                CompottiePlaceholder(
-                                    fileName = "empty_list.json",
-                                    modifier = Modifier.fillMaxWidth()
-                                )
-                            }
-                        }
-                    }
-                } else {
-                    items(budgetEntries.size) { index ->
-                        val budgetItem = budgetEntries[index]
-
-                        val onItemClick = {
-                            onIntent(
-                                if (!isSelectionActive) BudgetDetailIntent.ShowEntry(budgetItem)
-                                else BudgetDetailIntent.ToggleSelectEntry(index, !budgetItem.isSelected)
-                            )
-                        }
-
-                        val onLongClick = remember {
-                            fun() { onIntent(BudgetDetailIntent.ToggleSelectionState(true)) }
-                        }
-
-                        val onItemChecked = fun(isChecked: Boolean) {
-                            onIntent(BudgetDetailIntent.ToggleSelectEntry(index, isChecked))
-                        }
-
-                        Row(
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .combinedClickable(
-                                    onClick = onItemClick,
-                                    onLongClick = {
-                                        onLongClick()
-                                        onItemChecked(true)
-                                    }
-                                )
-                                .padding(vertical = if (isSelectionActive) 8.dp else 13.6.dp)
-                        ) {
-                            if (isSelectionActive) {
-                                Checkbox(
-                                    checked = budgetItem.isSelected,
-                                    onCheckedChange = onItemChecked
-                                )
-                            }
-
-                            val primaryText = if (showDate) {
-                                budgetItem.date
-                            } else {
-                                val description = budgetItem.description
-                                if (description.isNotBlank()) description else stringResource(Res.string.no_description)
-                            }
-                            val secondaryText = if (showDate) {
-                                budgetItem.description.takeIf { it.isNotBlank() }
-                            } else {
-                                budgetItem.date
-                            }
-
-                            Column(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .padding(end = 12.dp)
-                            ) {
-                                Text(
-                                    text = primaryText,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                                secondaryText?.let {
-                                    Text(
-                                        text = it,
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = AppColors.onSecondaryContainer,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                }
-                                if (!budgetItem.isSynced) {
-                                    Text(
-                                        text = "Pending sync",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = AppColors.error
-                                    )
-                                }
-                                budgetItem.createdByEmail?.takeIf { it.isNotBlank() }?.let {
-                                    Text(
-                                        text = "Created by $it",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = AppColors.onSecondaryContainer,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                }
-                                budgetItem.updatedByEmail?.takeIf { it.isNotBlank() }?.let {
-                                    Text(
-                                        text = "Updated by $it",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = AppColors.onSecondaryContainer,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                }
-                            }
-
-                            val operatorSign: String
-                            val color: Color
-
-                            if (budgetItem.type == BudgetEntry.Type.OUTCOME) {
-                                operatorSign = "-"
-                                color = AppColors.error
-                            } else {
-                                operatorSign = "+"
-                                color = green_success
-                            }
-
-                            Text(
-                                text = operatorSign + budgetItem.amount.toCurrency(),
-                                color = color,
-                                modifier = Modifier.widthIn(min = 72.dp),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                textAlign = TextAlign.End
-                            )
-                        }
-                        if (index != budgetEntries.size - 1) {
-                            DefDivider()
-                        }
-                    }
-                }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                SummaryStat(
+                    label = stringResource(Res.string.budget_label),
+                    value = if (budgetAmount == 0.0) {
+                        stringResource(Res.string.add_budget_short)
+                    } else {
+                        budgetAmount.toCurrency()
+                    },
+                    onClick = onBudgetClick,
+                    onClickLabel = stringResource(Res.string.edit_budget)
+                )
+                SummaryStat(
+                    label = stringResource(Res.string.metrics_incomes),
+                    value = incomes.toCurrency()
+                )
+                SummaryStat(
+                    label = stringResource(Res.string.metrics_expenses),
+                    value = outcomes.toCurrency()
+                )
             }
         }
     }
 }
 
 @Composable
-fun BalanceSection(
-    budgetEntries: List<BudgetEntry>,
-    budgetAmount: Double
+private fun RowScope.SummaryStat(
+    label: String,
+    value: String,
+    onClick: (() -> Unit)? = null,
+    onClickLabel: String? = null
 ) {
-    val outcomes = budgetEntries
-        .filter { it.type == BudgetEntry.Type.OUTCOME }
-        .map { it.amount.toDouble() }
-        .reduceOrNull { acc, actual -> acc + actual }
-        ?: 0.0
-
-    val incomes = budgetEntries
-        .filter { it.type == BudgetEntry.Type.INCOME }
-        .map { it.amount.toDouble() }
-        .reduceOrNull { acc, actual -> acc + actual }
-        ?: 0.0
-
-    val outcomesText = outcomes.toCurrency()
-
-    val balance = budgetAmount + incomes - outcomes
-    val balanceText = balance.toCurrency()
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = AbsoluteRoundedCornerShape(10.dp),
-        colors = CardDefaults.outlinedCardColors(
-            containerColor = AppColors.primaryContainer,
-            contentColor = AppColors.onPrimaryContainer
-        ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 5.dp
-        ),
-        border = BorderStroke(
-            width = 1.dp,
-            color = AppColors.onPrimaryContainer
-        )
-    ) {
-        val operatorSign = if (outcomes == 0.0) EMPTY else "-"
-        AmountText(
-            description = stringResource(Res.string.total_outcomes),
-            amount = "$operatorSign$outcomesText"
-        )
-        DefDivider(color = AppColors.onSecondaryContainer)
-        AmountText(
-            description = stringResource(Res.string.balance),
-            amount = balanceText
-        )
-    }
-}
-
-@Composable
-private fun DeleteButton(
-    onIntent: (BudgetDetailIntent) -> Unit
-) {
-    val onClick = remember {
-        fun() { onIntent(BudgetDetailIntent.ToggleDeleteEntriesModal(true)) }
-    }
-    Box(
+    Column(
         modifier = Modifier
-            .fillMaxWidth()
-            .background(AppColors.background)
-            .padding(vertical = 5.dp)
-    ) {
-        Button(
-            onClick = onClick,
-            modifier = Modifier.align(Alignment.Center),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = AppColors.error,
-                contentColor = AppColors.onError
+            .weight(1f)
+            .clip(MaterialTheme.shapes.small)
+            .then(
+                if (onClick != null) Modifier.clickable(onClickLabel = onClickLabel, onClick = onClick)
+                else Modifier
             )
-        ) {
-            Text(text = stringResource(Res.string.delete))
+            .padding(vertical = 2.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = label,
+                fontSize = 11.sp,
+                color = AppColors.onPrimaryContainer.copy(alpha = 0.8f)
+            )
+            if (onClick != null) {
+                Icon(
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = null,
+                    tint = AppColors.onPrimaryContainer.copy(alpha = 0.8f),
+                    modifier = Modifier
+                        .padding(start = 4.dp)
+                        .size(12.dp)
+                )
+            }
         }
+        Text(
+            text = value,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = AppColors.onPrimaryContainer,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }
 
+/** Shortcuts that used to hide in the overflow menu, plus the search and sort controls. */
 @Composable
-private fun AmountText(
-    description: String,
-    amount: String
+private fun ActionChips(
+    uiState: BudgetDetailState,
+    hasPendingSync: Boolean,
+    onIntent: (BudgetDetailIntent) -> Unit,
+    onMetricsClick: () -> Unit,
+    onCollaboratorsClick: (() -> Unit)?
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(all = 10.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
+            .horizontalScroll(rememberScrollState())
+            .padding(top = 8.dp, bottom = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text = description, color = AppColors.onSecondaryContainer)
-        Text(text = amount, color = AppColors.onSecondaryContainer)
-    }
-}
+        ActionChip(
+            label = stringResource(Res.string.metrics),
+            icon = Icons.Default.PieChart,
+            onClick = onMetricsClick
+        )
 
-/**
- * Shows or hides the search and filter bar. Hiding it keeps the filter; a dot on the icon then
- * tells that the list is filtered.
- */
-@Composable
-private fun FilterToggleButton(
-    isFilterBarVisible: Boolean,
-    isFiltering: Boolean,
-    onClick: () -> Unit
-) {
-    IconButton(onClick = onClick) {
-        BadgedBox(
-            badge = {
-                if (isFiltering && !isFilterBarVisible) Badge(containerColor = AppColors.primary)
-            }
-        ) {
-            Icon(
-                imageVector = Icons.Default.Search,
-                contentDescription = stringResource(
-                    if (isFilterBarVisible) Res.string.hide_filters else Res.string.show_filters
-                ),
-                tint = if (isFiltering || isFilterBarVisible) AppColors.primary else LocalContentColor.current
+        if (onCollaboratorsClick != null) {
+            ActionChip(
+                label = stringResource(Res.string.manage_collaborators),
+                icon = Icons.Default.Group,
+                onClick = onCollaboratorsClick
+            )
+        }
+
+        // Selected while the bar is open or a filter applies, so a hidden filter is not forgotten
+        FilterChip(
+            selected = uiState.isFilterBarVisible || uiState.filter.isActive,
+            onClick = { onIntent(BudgetDetailIntent.ToggleFilterBar) },
+            label = { Text(stringResource(Res.string.search), fontSize = 13.sp) },
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Default.Search,
+                    contentDescription = null,
+                    modifier = Modifier.size(FilterChipDefaults.IconSize)
+                )
+            },
+            shape = MaterialTheme.shapes.small
+        )
+
+        SortChip(
+            listOrder = uiState.listOrder,
+            onOrderSelected = { onIntent(BudgetDetailIntent.SetListOrder(it)) }
+        )
+
+        if (hasPendingSync) {
+            ActionChip(
+                label = stringResource(Res.string.not_synced),
+                icon = Icons.Default.CloudQueue,
+                onClick = { BudgetDetailIntent.SyncEntries.run(onIntent) }
             )
         }
     }
 }
 
+@Composable
+private fun ActionChip(
+    label: String,
+    icon: ImageVector,
+    onClick: () -> Unit
+) {
+    AssistChip(
+        onClick = onClick,
+        label = { Text(label, fontSize = 13.sp) },
+        leadingIcon = {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = AppColors.primary,
+                modifier = Modifier.size(AssistChipDefaults.IconSize)
+            )
+        },
+        shape = MaterialTheme.shapes.small
+    )
+}
+
 /**
- * Opens a menu to choose the order of the list. Tinted while the order is not the default one,
- * which would otherwise go unnoticed.
+ * Shows the current order and opens a menu to change it. Selected while the order is not the
+ * default one, which would otherwise go unnoticed.
  */
 @Composable
-private fun SortButton(
+private fun SortChip(
     listOrder: BudgetDetailState.ListOrder,
     onOrderSelected: (BudgetDetailState.ListOrder) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
+    val options = listOf(
+        BudgetDetailState.ListOrder.DEFAULT to Res.string.sort_newest,
+        BudgetDetailState.ListOrder.AMOUNT_DESCENDANT to Res.string.sort_amount_descending,
+        BudgetDetailState.ListOrder.AMOUNT_ASCENDANT to Res.string.sort_amount_ascending
+    )
+    val currentLabel: StringResource = options.first { it.first == listOrder }.second
+
     Box {
-        IconButton(onClick = { expanded = true }) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.Sort,
-                contentDescription = stringResource(Res.string.sort_entries),
-                tint = if (listOrder != BudgetDetailState.ListOrder.DEFAULT) AppColors.primary else LocalContentColor.current
-            )
-        }
+        FilterChip(
+            selected = listOrder != BudgetDetailState.ListOrder.DEFAULT,
+            onClick = { expanded = true },
+            label = { Text(stringResource(currentLabel), fontSize = 13.sp) },
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.Sort,
+                    contentDescription = stringResource(Res.string.sort_entries),
+                    modifier = Modifier.size(FilterChipDefaults.IconSize)
+                )
+            },
+            trailingIcon = {
+                Icon(
+                    imageVector = Icons.Default.ArrowDropDown,
+                    contentDescription = null,
+                    modifier = Modifier.size(FilterChipDefaults.IconSize)
+                )
+            },
+            shape = MaterialTheme.shapes.small
+        )
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
-            shape = AbsoluteRoundedCornerShape(10.dp),
-            containerColor = AppColors.surface
+            shape = MaterialTheme.shapes.medium,
+            containerColor = AppColors.surfaceContainer
         ) {
-            listOf(
-                BudgetDetailState.ListOrder.DEFAULT to Res.string.sort_newest,
-                BudgetDetailState.ListOrder.AMOUNT_DESCENDANT to Res.string.sort_amount_descending,
-                BudgetDetailState.ListOrder.AMOUNT_ASCENDANT to Res.string.sort_amount_ascending
-            ).forEach { (order, label) ->
+            options.forEach { (order, label) ->
                 DropdownMenuItem(
                     text = { Text(stringResource(label), style = MaterialTheme.typography.bodyMedium) },
                     onClick = {
@@ -653,3 +536,208 @@ private fun SortButton(
         }
     }
 }
+
+@Composable
+private fun DayHeader(
+    date: String,
+    dayEntries: List<BudgetEntry>
+) {
+    val net = dayEntries.sumOf(BudgetEntry.Type.INCOME) - dayEntries.sumOf(BudgetEntry.Type.OUTCOME)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 16.dp, bottom = 4.dp, start = 4.dp, end = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = dayHeaderLabel(date),
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium,
+            color = AppColors.onSurfaceVariant
+        )
+        Text(
+            text = net.toCurrency(),
+            fontSize = 13.sp,
+            color = AppColors.onSurfaceVariant
+        )
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun EntryRow(
+    entry: BudgetEntry,
+    index: Int,
+    showDate: Boolean,
+    showAuthor: Boolean,
+    showSyncState: Boolean,
+    isSelectionActive: Boolean,
+    onIntent: (BudgetDetailIntent) -> Unit
+) {
+    val onItemChecked = { isChecked: Boolean ->
+        onIntent(BudgetDetailIntent.ToggleSelectEntry(index, isChecked))
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.medium)
+            .combinedClickable(
+                onClick = {
+                    onIntent(
+                        if (!isSelectionActive) BudgetDetailIntent.ShowEntry(entry)
+                        else BudgetDetailIntent.ToggleSelectEntry(index, !entry.isSelected)
+                    )
+                },
+                onLongClick = {
+                    onIntent(BudgetDetailIntent.ToggleSelectionState(true))
+                    onItemChecked(true)
+                }
+            )
+            .padding(vertical = 8.dp, horizontal = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (isSelectionActive) {
+            Checkbox(
+                checked = entry.isSelected,
+                onCheckedChange = onItemChecked,
+                modifier = Modifier.size(36.dp)
+            )
+        } else {
+            CategoryBadge(category = entry.category)
+        }
+
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = entry.description.ifBlank { stringResource(Res.string.no_description) },
+                fontSize = 15.sp,
+                lineHeight = 19.sp,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+            EntryDetailsLine(
+                entry = entry,
+                showDate = showDate,
+                showAuthor = showAuthor,
+                showSyncState = showSyncState
+            )
+        }
+
+        val isOutcome = entry.type == BudgetEntry.Type.OUTCOME
+        Text(
+            text = (if (isOutcome) "-" else "+") + entry.amount.toCurrency(),
+            color = if (isOutcome) AppColors.error else green_success,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.widthIn(min = 72.dp),
+            maxLines = 1,
+            textAlign = TextAlign.End
+        )
+    }
+}
+
+/** "Comida · ana · Pendiente": the category, then only what applies. */
+@Composable
+private fun EntryDetailsLine(
+    entry: BudgetEntry,
+    showDate: Boolean,
+    showAuthor: Boolean,
+    showSyncState: Boolean
+) {
+    val isWaiting = entry.category == BudgetEntry.Category.UNCATEGORIZED
+    val parts = buildList {
+        if (showDate) add(shortDateLabel(entry.date) to AppColors.onSurfaceVariant)
+        add(entry.category.toStringResource() to if (isWaiting) AppColors.tertiary else AppColors.onSurfaceVariant)
+        if (showAuthor) {
+            entry.createdByEmail?.takeIf { it.isNotBlank() }?.let {
+                add(it.substringBefore('@') to AppColors.onSurfaceVariant)
+            }
+        }
+        if (showSyncState && !entry.isSynced) add(stringResource(Res.string.not_synced) to AppColors.error)
+    }
+
+    Row(
+        modifier = Modifier.padding(top = 2.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        parts.forEachIndexed { i, (text, color) ->
+            if (i > 0) DetailSeparator()
+            Text(
+                text = text,
+                fontSize = 12.sp,
+                color = color,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
+
+@Composable
+private fun DetailSeparator() {
+    Text(
+        text = " · ",
+        fontSize = 12.sp,
+        color = AppColors.onSurfaceVariant
+    )
+}
+
+@Composable
+private fun SelectionHeader(
+    entries: List<BudgetEntry>,
+    onIntent: (BudgetDetailIntent) -> Unit
+) {
+    Column(modifier = Modifier.background(AppColors.background)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Checkbox(
+                checked = entries.all { it.isSelected },
+                onCheckedChange = { onIntent(BudgetDetailIntent.ToggleAllEntriesSelection(it)) }
+            )
+            Text(
+                text = stringResource(Res.string.selected_entries, entries.count { it.isSelected }.toString()),
+                fontWeight = FontWeight.SemiBold
+            )
+            IconButton(
+                modifier = Modifier.offset(10.dp),
+                onClick = { onIntent(BudgetDetailIntent.ToggleSelectionState(false)) }
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = stringResource(Res.string.close_entries_selection_mode)
+                )
+            }
+        }
+        DefDivider()
+    }
+}
+
+@Composable
+private fun DeleteButton(
+    onIntent: (BudgetDetailIntent) -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(AppColors.background)
+            .padding(16.dp)
+    ) {
+        Button(
+            onClick = { onIntent(BudgetDetailIntent.ToggleDeleteEntriesModal(true)) },
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = AppColors.error,
+                contentColor = AppColors.onError
+            )
+        ) {
+            Text(text = stringResource(Res.string.delete))
+        }
+    }
+}
+
+private fun List<BudgetEntry>.sumOf(type: BudgetEntry.Type): Double =
+    filter { it.type == type }.sumOf { it.amount.toDoubleOrNull() ?: 0.0 }

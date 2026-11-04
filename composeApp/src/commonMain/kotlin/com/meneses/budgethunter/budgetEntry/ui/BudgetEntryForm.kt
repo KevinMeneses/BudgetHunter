@@ -1,153 +1,133 @@
 package com.meneses.budgethunter.budgetEntry.ui
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AttachFile
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import budgethunter.composeapp.generated.resources.Res
-import budgethunter.composeapp.generated.resources.attach_invoice
-import budgethunter.composeapp.generated.resources.file_missing
+import budgethunter.composeapp.generated.resources.category
+import budgethunter.composeapp.generated.resources.date
+import budgethunter.composeapp.generated.resources.save_expense
+import budgethunter.composeapp.generated.resources.save_income
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
-import com.meneses.budgethunter.commons.ui.dashedBorder
 import com.meneses.budgethunter.theme.AppColors
 import org.jetbrains.compose.resources.stringResource
 
+/**
+ * The entry form, ordered by how often each field changes: type and amount first, then the
+ * receipt (which can fill the rest), category, description and date. Saving is the button at
+ * the bottom, within reach of the thumb.
+ */
 @Composable
 fun BudgetEntryForm(
     budgetEntry: BudgetEntry,
     amountError: String?,
     isFileValid: Boolean,
+    isAiEnabled: Boolean,
+    /** Opens the keyboard on the amount, for a new entry that is not starting from a receipt. */
+    focusAmount: Boolean,
     paddingValues: PaddingValues,
     onBudgetItemChanged: (BudgetEntry) -> Unit,
-    onInvoiceFieldClick: () -> Unit
+    onInvoiceFieldClick: () -> Unit,
+    onSave: () -> Unit
 ) {
+    val amountFocus = remember { FocusRequester() }
+    LaunchedEffect(focusAmount) {
+        if (focusAmount) runCatching { amountFocus.requestFocus() }
+    }
+
     Column(
-        verticalArrangement = Arrangement.SpaceEvenly,
-        horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .fillMaxSize()
             .padding(paddingValues)
-            .padding(all = 20.dp)
+            .imePadding()
     ) {
-        TypeSwitch(
-            type = budgetEntry.type,
-            onTypeSelected = {
-                budgetEntry
-                    .copy(type = it)
-                    .run(onBudgetItemChanged)
-            }
-        )
-        AmountField(
-            amount = budgetEntry.amount,
-            onAmountChanged = {
-                budgetEntry
-                    .copy(amount = it)
-                    .run(onBudgetItemChanged)
-            },
-            amountError = amountError
-        )
-        DescriptionField(
-            description = budgetEntry.description,
-            onDescriptionChanged = {
-                budgetEntry
-                    .copy(description = it)
-                    .run(onBudgetItemChanged)
-            }
-        )
-        CategorySelector(
-            category = budgetEntry.category,
-            onCategorySelected = {
-                budgetEntry
-                    .copy(category = it)
-                    .run(onBudgetItemChanged)
-            }
-        )
-        DateField(
-            date = budgetEntry.date,
-            onDateSelected = {
-                budgetEntry
-                    .copy(date = it)
-                    .run(onBudgetItemChanged)
-            }
-        )
-        InvoiceField(
-            onAttachInvoice = onInvoiceFieldClick,
-            invoice = budgetEntry.invoice,
-            isFileValid = isFileValid
-        )
-    }
-}
-
-@Composable
-private fun InvoiceField(
-    onAttachInvoice: () -> Unit,
-    invoice: String?,
-    isFileValid: Boolean
-) {
-    Card(
-        colors = CardDefaults.outlinedCardColors(),
-        modifier = Modifier
-            .dashedBorder(
-                width = 1.dp,
-                color = if (invoice != null && !isFileValid) {
-                    MaterialTheme.colorScheme.error
-                } else {
-                    AppColors.onSecondaryContainer
-                },
-                shape = AbsoluteRoundedCornerShape(5.dp),
-                on = 10.dp,
-                off = 8.dp
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
+        ) {
+            EntryTypeSelector(
+                type = budgetEntry.type,
+                onTypeSelected = { budgetEntry.copy(type = it).run(onBudgetItemChanged) }
             )
-            .width(TextFieldDefaults.MinWidth)
-            .clickable(onClick = onAttachInvoice)
-            .padding(vertical = 15.dp, horizontal = 10.dp)
-    ) {
-        Row {
-            val invoiceText = when {
-                invoice == null -> stringResource(Res.string.attach_invoice)
-                !isFileValid -> stringResource(Res.string.file_missing, invoice.split("/").last())
-                else -> invoice.split("/").last()
+
+            AmountHero(
+                amount = budgetEntry.amount,
+                onAmountChanged = { budgetEntry.copy(amount = it).run(onBudgetItemChanged) },
+                amountError = amountError,
+                focusRequester = amountFocus
+            )
+
+            ReceiptCard(
+                invoice = budgetEntry.invoice,
+                isFileValid = isFileValid,
+                isAiEnabled = isAiEnabled,
+                onClick = onInvoiceFieldClick
+            )
+
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                FormSectionLabel(stringResource(Res.string.category))
+                CategoryChips(
+                    selected = budgetEntry.category,
+                    onCategorySelected = { budgetEntry.copy(category = it).run(onBudgetItemChanged) }
+                )
             }
 
-            Icon(
-                imageVector = Icons.Default.AttachFile,
-                contentDescription = null,
-                tint = if (invoice != null && !isFileValid) {
-                    MaterialTheme.colorScheme.error
-                } else {
-                    AppColors.onSurfaceVariant
-                }
+            DescriptionField(
+                description = budgetEntry.description,
+                onDescriptionChanged = { budgetEntry.copy(description = it).run(onBudgetItemChanged) }
             )
-            Spacer(modifier = Modifier.width(10.dp))
+
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                FormSectionLabel(stringResource(Res.string.date))
+                DateShortcuts(
+                    date = budgetEntry.date,
+                    onDateSelected = { budgetEntry.copy(date = it).run(onBudgetItemChanged) }
+                )
+            }
+
+            EntryAuthorship(entry = budgetEntry)
+        }
+
+        Button(
+            onClick = onSave,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+                .height(52.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = AppColors.primary,
+                contentColor = AppColors.onPrimary
+            )
+        ) {
             Text(
-                text = invoiceText,
-                color = if (invoice != null && !isFileValid) {
-                    MaterialTheme.colorScheme.error
-                } else {
-                    Color.Unspecified
-                }
+                text = stringResource(
+                    if (budgetEntry.type == BudgetEntry.Type.INCOME) Res.string.save_income
+                    else Res.string.save_expense
+                ),
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium
             )
         }
     }
-    Spacer(modifier = Modifier.height(10.dp))
 }

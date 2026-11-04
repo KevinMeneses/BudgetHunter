@@ -9,7 +9,7 @@ sealed interface BudgetDetailIntent {
     data object GetBudgetDetail : BudgetDetailIntent
     data class UpdateBudgetAmount(val amount: Double) : BudgetDetailIntent
     data class FilterEntries(val filter: BudgetEntryFilter) : BudgetDetailIntent
-    data class ShowEntry(val budgetItem: BudgetEntry) : BudgetDetailIntent
+    data class ShowEntry(val budgetItem: BudgetEntry, val scanReceipt: Boolean = false) : BudgetDetailIntent
     data object ClearFilter : BudgetDetailIntent
     data object ToggleFilterBar : BudgetDetailIntent
     data object DeleteBudget : BudgetDetailIntent

@@ -137,7 +137,7 @@ class BudgetDetailViewModel(
             is BudgetDetailIntent.ToggleFilterBar -> _uiState.update { it.copy(isFilterBarVisible = !it.isFilterBarVisible) }
             is BudgetDetailIntent.DeleteBudget -> deleteBudget()
             is BudgetDetailIntent.DeleteSelectedEntries -> deleteSelectedEntries()
-            is BudgetDetailIntent.ShowEntry -> showEntry(intent.budgetItem)
+            is BudgetDetailIntent.ShowEntry -> showEntry(intent.budgetItem, intent.scanReceipt)
             is BudgetDetailIntent.ToggleBudgetModal -> setBudgetModalVisibility(intent.isVisible)
             is BudgetDetailIntent.ToggleDeleteBudgetModal -> setDeleteBudgetModalVisibility(intent.isVisible)
             is BudgetDetailIntent.ToggleDeleteEntriesModal -> setDeleteEntriesModalVisibility(intent.isVisible)
@@ -258,8 +258,8 @@ class BudgetDetailViewModel(
         }
     }
 
-    private fun showEntry(budgetItem: BudgetEntry) =
-        _events.trySend(BudgetDetailEvent.ShowEntry(budgetItem))
+    private fun showEntry(budgetItem: BudgetEntry, scanReceipt: Boolean = false) =
+        _events.trySend(BudgetDetailEvent.ShowEntry(budgetItem, scanReceipt))
 
     private fun updateBudgetAmount(amount: Double) = viewModelScope.launch {
         budgetDetailRepository.updateBudgetAmount(amount)

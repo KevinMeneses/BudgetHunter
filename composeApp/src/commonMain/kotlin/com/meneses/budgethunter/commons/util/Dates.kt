@@ -24,3 +24,6 @@ fun String.toCalendarDate(): String? =
     substringBefore('T').takeIf { date ->
         runCatching { LocalDate.parse(date) }.isSuccess
     }
+
+/** The stored "yyyy-MM-dd" date, or null when it does not parse. */
+fun String.toLocalDateOrNull(): LocalDate? = runCatching { LocalDate.parse(this) }.getOrNull()
