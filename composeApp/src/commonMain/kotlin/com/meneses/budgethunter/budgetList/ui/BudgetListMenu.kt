@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
@@ -27,7 +26,6 @@ import budgethunter.composeapp.generated.resources.duplicate_budget
 import budgethunter.composeapp.generated.resources.edit_budget
 import budgethunter.composeapp.generated.resources.settings
 import budgethunter.composeapp.generated.resources.sign_in
-import budgethunter.composeapp.generated.resources.sign_out
 import com.meneses.budgethunter.theme.AppColors
 import org.jetbrains.compose.resources.stringResource
 
@@ -36,9 +34,7 @@ fun BudgetListMenu(
     expanded: Boolean,
     onDismiss: () -> Unit,
     onSettingsClick: () -> Unit,
-    isAuthenticated: Boolean = false,
-    onSignOutClick: () -> Unit = {},
-    onSignInClick: () -> Unit = {}
+    onSignInClick: () -> Unit
 ) {
     DropdownMenu(
         expanded = expanded,
@@ -48,11 +44,9 @@ fun BudgetListMenu(
     ) {
         SettingsOption(onDismiss, onSettingsClick)
 
-        if (isAuthenticated) {
-            SignOutOption(onDismiss, onSignOutClick)
-        } else {
-            SignInOption(onDismiss, onSignInClick)
-        }
+        // Only offline mode opens this menu; signed in, the account button goes to Settings,
+        // where signing out lives
+        SignInOption(onDismiss, onSignInClick)
     }
 }
 
@@ -76,31 +70,6 @@ private fun SignInOption(onDismiss: () -> Unit, onSignInClick: () -> Unit) {
                 contentDescription = stringResource(Res.string.sign_in),
                 modifier = Modifier.size(18.dp),
                 tint = AppColors.secondary
-            )
-        }
-    )
-}
-
-@Composable
-private fun SignOutOption(onDismiss: () -> Unit, onSignOutClick: () -> Unit) {
-    DropdownMenuItem(
-        text = {
-            Text(
-                modifier = Modifier.padding(end = 10.dp),
-                text = stringResource(Res.string.sign_out),
-                style = MaterialTheme.typography.bodyMedium
-            )
-        },
-        onClick = {
-            onDismiss()
-            onSignOutClick()
-        },
-        leadingIcon = {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.Logout,
-                contentDescription = stringResource(Res.string.sign_out),
-                modifier = Modifier.size(18.dp),
-                tint = AppColors.error
             )
         }
     )

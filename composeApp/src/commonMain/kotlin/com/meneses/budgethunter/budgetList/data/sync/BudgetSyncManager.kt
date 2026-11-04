@@ -207,6 +207,7 @@ class BudgetSyncManager(
                     amount = serverBudget.amount,
                     name = serverBudget.name,
                     date = date,
+                    collaboratorCount = serverBudget.collaboratorCount ?: existingBudget.collaboratorCount,
                     isSynced = true,
                     lastSyncedAt = Clock.System.now().toString()
                 )
@@ -220,6 +221,7 @@ class BudgetSyncManager(
                     amount = serverBudget.amount,
                     date = serverBudget.date ?: today(),
                     serverId = serverBudget.id,
+                    collaboratorCount = serverBudget.collaboratorCount ?: 1,
                     isSynced = true,
                     lastSyncedAt = Clock.System.now().toString()
                 )

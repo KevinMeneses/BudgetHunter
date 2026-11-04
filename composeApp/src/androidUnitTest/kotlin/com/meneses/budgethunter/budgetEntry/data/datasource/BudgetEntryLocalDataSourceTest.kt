@@ -42,7 +42,8 @@ class BudgetEntryLocalDataSourceTest {
             date = "2025-01-01",
             server_id = null,
             is_synced = 0L,
-            last_synced_at = null
+            last_synced_at = null,
+            collaborator_count = 1L
         )
     }
 
@@ -358,6 +359,22 @@ class BudgetEntryLocalDataSourceTest {
         val result = dataSource.getUnsynced(localBudgetId = 1)
 
         assertEquals(emptyList(), result)
+    }
+
+    @Test
+    fun `countUnsynced counts only entries with is_synced 0`() = runTest {
+        insertEntry(budgetId = 1, description = "Unsynced 1", isSynced = false)
+        insertEntry(budgetId = 1, description = "Unsynced 2", isSynced = false)
+        insertEntry(budgetId = 1, description = "Synced", isSynced = true)
+
+        assertEquals(2L, dataSource.countUnsynced())
+    }
+
+    @Test
+    fun `countUnsynced is zero when every entry is synced`() = runTest {
+        insertEntry(budgetId = 1, description = "Synced", isSynced = true)
+
+        assertEquals(0L, dataSource.countUnsynced())
     }
 
     // ── selectByServerId tests ────────────────────────────────────────────────

@@ -22,7 +22,3 @@ sealed interface SettingsIntent {
     data object SignOut : SettingsIntent
     data object DismissSignOutError : SettingsIntent
 }
-
-sealed interface SettingsEvent {
-    data object NavigateToSignIn : SettingsEvent
-}

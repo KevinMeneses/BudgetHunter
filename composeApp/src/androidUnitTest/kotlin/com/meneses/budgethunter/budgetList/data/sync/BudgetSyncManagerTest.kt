@@ -637,6 +637,60 @@ class BudgetSyncManagerTest {
     }
 
     @Test
+    fun `pullBudgetsFromServer stores the server collaborator count for a new budget`() = runTest {
+        coEvery { authRepository.isAuthenticated() } returns true
+        val serverBudget = BudgetResponse(id = 101, name = "Shared", amount = 1.0, date = "2026-03-10", collaboratorCount = 3)
+        coEvery { apiService.getBudgets() } returns Result.success(listOf(serverBudget))
+        every { localDataSource.getByServerId(101) } returns null
+        every { localDataSource.create(any()) } returns Budget()
+
+        syncManager.pullBudgetsFromServer()
+
+        verify { localDataSource.create(match { it.collaboratorCount == 3 }) }
+    }
+
+    @Test
+    fun `pullBudgetsFromServer defaults a new budget to 1 collaborator when the server sends none`() = runTest {
+        coEvery { authRepository.isAuthenticated() } returns true
+        val serverBudget = BudgetResponse(id = 101, name = "Old server", amount = 1.0, date = "2026-03-10")
+        coEvery { apiService.getBudgets() } returns Result.success(listOf(serverBudget))
+        every { localDataSource.getByServerId(101) } returns null
+        every { localDataSource.create(any()) } returns Budget()
+
+        syncManager.pullBudgetsFromServer()
+
+        verify { localDataSource.create(match { it.collaboratorCount == 1 }) }
+    }
+
+    @Test
+    fun `pullBudgetsFromServer stores the server collaborator count for an existing budget`() = runTest {
+        coEvery { authRepository.isAuthenticated() } returns true
+        val serverBudget = BudgetResponse(id = 101, name = "Shared", amount = 1.0, date = "2026-03-10", collaboratorCount = 4)
+        coEvery { apiService.getBudgets() } returns Result.success(listOf(serverBudget))
+        every { localDataSource.getByServerId(101) } returns
+            Budget(id = 1, name = "Shared", amount = 1.0, serverId = 101, isSynced = true, collaboratorCount = 2)
+        every { localDataSource.update(any()) } returns Unit
+
+        syncManager.pullBudgetsFromServer()
+
+        verify { localDataSource.update(match { it.collaboratorCount == 4 }) }
+    }
+
+    @Test
+    fun `pullBudgetsFromServer keeps the existing collaborator count when the server sends none`() = runTest {
+        coEvery { authRepository.isAuthenticated() } returns true
+        val serverBudget = BudgetResponse(id = 101, name = "Shared", amount = 1.0, date = "2026-03-10")
+        coEvery { apiService.getBudgets() } returns Result.success(listOf(serverBudget))
+        every { localDataSource.getByServerId(101) } returns
+            Budget(id = 1, name = "Shared", amount = 1.0, serverId = 101, isSynced = true, collaboratorCount = 2)
+        every { localDataSource.update(any()) } returns Unit
+
+        syncManager.pullBudgetsFromServer()
+
+        verify { localDataSource.update(match { it.collaboratorCount == 2 }) }
+    }
+
+    @Test
     fun `pullBudgetsFromServer falls back to today for a new budget with no server date`() = runTest {
         // Given - Server returns a legacy budget with no date (older backend)
         coEvery { authRepository.isAuthenticated() } returns true

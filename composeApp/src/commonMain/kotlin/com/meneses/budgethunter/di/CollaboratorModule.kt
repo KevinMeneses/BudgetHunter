@@ -21,6 +21,7 @@ val collaboratorModule = module {
     single<CollaboratorRepository> {
         CollaboratorRepository(
             collaboratorApiService = get(),
+            budgetLocalDataSource = get(),
             ioDispatcher = get<CoroutineDispatcher>(named("IO"))
         )
     }

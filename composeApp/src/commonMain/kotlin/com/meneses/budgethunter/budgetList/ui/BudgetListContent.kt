@@ -7,11 +7,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CloudQueue
+import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Card
@@ -29,6 +31,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -39,6 +43,7 @@ import budgethunter.composeapp.generated.resources.budget_options
 import budgethunter.composeapp.generated.resources.not_synced
 import budgethunter.composeapp.generated.resources.over_budget
 import budgethunter.composeapp.generated.resources.percent_of_total
+import budgethunter.composeapp.generated.resources.shared_with_people
 import budgethunter.composeapp.generated.resources.spent_amount
 import com.meneses.budgethunter.budgetList.application.BudgetListIntent
 import com.meneses.budgethunter.budgetList.domain.Budget
@@ -177,11 +182,22 @@ private fun BudgetItem(
                 BudgetItemMenuButton(budget = budget, onIntent = onIntent)
             }
 
-            Text(
-                text = stringResource(Res.string.available_label),
-                style = MaterialTheme.typography.labelMedium,
-                color = AppColors.onSurfaceVariant
-            )
+            Row(
+                modifier = Modifier.padding(end = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = stringResource(Res.string.available_label),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = AppColors.onSurfaceVariant,
+                    modifier = Modifier.weight(1f)
+                )
+
+                // Like the chips, only the exception: a budget nobody else sees says nothing
+                if (budget.collaboratorCount > 1) {
+                    SharedIndicator(count = budget.collaboratorCount)
+                }
+            }
             Text(
                 text = remaining.toCurrency(),
                 fontSize = 26.sp,
@@ -222,6 +238,29 @@ private fun BudgetItem(
                 }
             }
         }
+    }
+}
+
+/** People icon and how many share the budget, the user included; read as one sentence. */
+@Composable
+private fun SharedIndicator(count: Int) {
+    val description = stringResource(Res.string.shared_with_people, count)
+    Row(
+        modifier = Modifier.clearAndSetSemantics { contentDescription = description },
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Icon(
+            imageVector = Icons.Default.Group,
+            contentDescription = null,
+            tint = AppColors.onSurfaceVariant,
+            modifier = Modifier.size(16.dp)
+        )
+        Text(
+            text = count.toString(),
+            style = MaterialTheme.typography.labelMedium,
+            color = AppColors.onSurfaceVariant
+        )
     }
 }
 

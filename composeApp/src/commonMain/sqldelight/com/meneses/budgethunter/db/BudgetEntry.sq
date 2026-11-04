@@ -59,3 +59,6 @@ WHERE budget_id = :budgetId
   AND amount BETWEEN :amount - 0.001 AND :amount + 0.001
   AND description = :description
   AND creation_date = :creationDate;
+
+countUnsynced:
+SELECT COUNT(*) FROM budget_entry WHERE is_synced = 0;

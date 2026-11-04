@@ -1,5 +1,6 @@
 package com.meneses.budgethunter.collaborator.data
 
+import com.meneses.budgethunter.budgetList.data.datasource.BudgetLocalDataSource
 import com.meneses.budgethunter.collaborator.data.network.CollaboratorApiService
 import com.meneses.budgethunter.commons.data.network.models.AddCollaboratorRequest
 import com.meneses.budgethunter.commons.data.network.models.CollaboratorResponse
@@ -13,6 +14,7 @@ import kotlinx.coroutines.withContext
  */
 class CollaboratorRepository(
     private val collaboratorApiService: CollaboratorApiService,
+    private val budgetLocalDataSource: BudgetLocalDataSource,
     private val ioDispatcher: CoroutineDispatcher
 ) {
     /**
@@ -37,11 +39,16 @@ class CollaboratorRepository(
      * Fetches all collaborators for a specific budget.
      *
      * @param budgetServerId Server-side budget ID
+     * The list is everyone with access, the user included, so its size is also the budget card's
+     * count; storing it here shows an addition or removal on the list without waiting for a sync.
+     *
      * @return Result containing list of collaborators (UserInfo) or error
      */
     suspend fun getCollaborators(budgetServerId: Long): Result<List<UserInfo>> =
         withContext(ioDispatcher) {
-            collaboratorApiService.getCollaborators(budgetServerId)
+            collaboratorApiService.getCollaborators(budgetServerId).onSuccess { collaborators ->
+                budgetLocalDataSource.updateCollaboratorCount(budgetServerId, collaborators.size)
+            }
         }
 
     /**

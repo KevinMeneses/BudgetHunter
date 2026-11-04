@@ -211,6 +211,57 @@ class AuthRepositoryTest {
 
         // Assert
         assertTrue(result.isFailure)
+        assertTrue(result.exceptionOrNull() is EmailAlreadyRegisteredException)
+    }
+
+    private suspend fun signUpAnswering(status: HttpStatusCode, body: String): Result<*> {
+        val mockEngine = MockEngine {
+            respond(
+                content = body,
+                status = status,
+                headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+            )
+        }
+        val httpClient = HttpClient(mockEngine) {
+            install(ContentNegotiation) {
+                json(this@AuthRepositoryTest.json)
+            }
+            defaultRequest {
+                url("http://localhost:8080")
+                contentType(ContentType.Application.Json)
+            }
+        }
+        val repository = AuthRepository(httpClient, createTestTokenStorage(), Dispatchers.Unconfined, NoOpLogger())
+        return repository.signUp("a@example.com", "Test User", "password123")
+    }
+
+    @Test
+    fun `signUp 400 with the email exists message returns EmailAlreadyRegisteredException`() = runTest {
+        val result = signUpAnswering(
+            HttpStatusCode.BadRequest,
+            """{"status":400,"message":"Email already exists"}"""
+        )
+
+        assertTrue(result.exceptionOrNull() is EmailAlreadyRegisteredException)
+    }
+
+    @Test
+    fun `signUp 400 with another message is not EmailAlreadyRegisteredException`() = runTest {
+        val result = signUpAnswering(
+            HttpStatusCode.BadRequest,
+            """{"status":400,"message":"Password too short"}"""
+        )
+
+        assertTrue(result.isFailure)
+        assertFalse(result.exceptionOrNull() is EmailAlreadyRegisteredException)
+    }
+
+    @Test
+    fun `signUp 500 is not EmailAlreadyRegisteredException`() = runTest {
+        val result = signUpAnswering(HttpStatusCode.InternalServerError, """{"message":"boom"}""")
+
+        assertTrue(result.isFailure)
+        assertFalse(result.exceptionOrNull() is EmailAlreadyRegisteredException)
     }
 
     /**

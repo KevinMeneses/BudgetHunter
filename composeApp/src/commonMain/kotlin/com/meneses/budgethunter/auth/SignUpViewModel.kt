@@ -3,6 +3,7 @@ package com.meneses.budgethunter.auth
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import budgethunter.composeapp.generated.resources.Res
+import budgethunter.composeapp.generated.resources.error_email_already_registered
 import budgethunter.composeapp.generated.resources.error_email_required
 import budgethunter.composeapp.generated.resources.error_google_no_account
 import budgethunter.composeapp.generated.resources.error_google_sign_in_failed
@@ -16,6 +17,7 @@ import com.meneses.budgethunter.auth.application.SignUpEvent
 import com.meneses.budgethunter.auth.application.SignUpIntent
 import com.meneses.budgethunter.auth.application.SignUpState
 import com.meneses.budgethunter.auth.data.AuthRepository
+import com.meneses.budgethunter.auth.data.EmailAlreadyRegisteredException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -94,12 +96,15 @@ class SignUpViewModel(
                     _uiState.update { it.copy(isLoading = false) }
                     _events.trySend(SignUpEvent.NavigateToSignIn)
                 },
-                onFailure = {
+                onFailure = { error ->
                     _uiState.update {
-                        it.copy(
-                            isLoading = false,
-                            error = Res.string.error_sign_up_failed
-                        )
+                        // An existing account is about the email the user typed, so it shows
+                        // under that field; anything else belongs to no field.
+                        if (error is EmailAlreadyRegisteredException) {
+                            it.copy(isLoading = false, emailError = Res.string.error_email_already_registered)
+                        } else {
+                            it.copy(isLoading = false, error = Res.string.error_sign_up_failed)
+                        }
                     }
                 }
             )

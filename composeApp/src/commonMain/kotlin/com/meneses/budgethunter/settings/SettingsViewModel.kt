@@ -12,7 +12,6 @@ import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.commons.data.PreferencesManager
 import com.meneses.budgethunter.commons.platform.PermissionsManager
-import com.meneses.budgethunter.settings.application.SettingsEvent
 import com.meneses.budgethunter.settings.application.SettingsIntent
 import com.meneses.budgethunter.settings.application.SettingsState
 import com.meneses.budgethunter.settings.application.SyncUserPreferencesUseCase
@@ -20,10 +19,8 @@ import com.meneses.budgethunter.sms.domain.BankSmsConfig
 import com.meneses.budgethunter.sms.domain.SupportedBanks
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -40,9 +37,6 @@ class SettingsViewModel(
 
     private val _uiState = MutableStateFlow(SettingsState())
     val uiState = _uiState.asStateFlow()
-
-    private val _events = Channel<SettingsEvent>(Channel.BUFFERED)
-    val events = _events.receiveAsFlow()
 
     init {
         loadSettings()
@@ -65,26 +59,46 @@ class SettingsViewModel(
             is SettingsIntent.ShowPasswordDialog -> showPasswordDialog()
             is SettingsIntent.HidePasswordDialog -> hidePasswordDialog()
             is SettingsIntent.SavePassword -> savePassword(intent.currentPassword, intent.newPassword)
-            is SettingsIntent.ToggleSignOutConfirmation ->
-                _uiState.update { it.copy(isSignOutConfirmationVisible = intent.show) }
+            is SettingsIntent.ToggleSignOutConfirmation -> toggleSignOutConfirmation(intent.show)
             is SettingsIntent.SignOut -> signOut()
             is SettingsIntent.DismissSignOutError -> _uiState.update { it.copy(signOutError = null) }
         }
     }
 
+    private fun toggleSignOutConfirmation(show: Boolean) {
+        if (!show) {
+            _uiState.update { it.copy(isSignOutConfirmationVisible = false) }
+            return
+        }
+        viewModelScope.launch {
+            // Signing out deletes the device's data, so say so when some of it never reached the
+            // server. Unable to tell, warn anyway: a needless warning costs less than lost work.
+            val hasUnsyncedChanges = try {
+                signOutUseCase.hasUnsyncedChanges()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                true
+            }
+            _uiState.update {
+                it.copy(isSignOutConfirmationVisible = true, signOutLosesUnsyncedChanges = hasUnsyncedChanges)
+            }
+        }
+    }
+
     // Outlives the screen, like the preference pushes: leaving Settings half way must not stop
-    // the wipe of the local data and the session with only part of it done.
+    // the wipe of the local data and the session with only part of it done. There is nothing to
+    // send on success: navigation follows AuthSession, so it happens even if this screen is gone.
     private fun signOut() = applicationScope.launch {
         _uiState.update {
             it.copy(isSignOutConfirmationVisible = false, isSigningOut = true, signOutError = null)
         }
         try {
             signOutUseCase.execute()
-            _events.trySend(SettingsEvent.NavigateToSignIn)
         } catch (e: CancellationException) {
             throw e
         } catch (_: Exception) {
-            // Clearing the local data or the session failed: stay here, the user can try again
+            // The session could not be ended and nothing was deleted: the user can try again
             _uiState.update { it.copy(signOutError = Res.string.sign_out_failed) }
         } finally {
             _uiState.update { it.copy(isSigningOut = false) }

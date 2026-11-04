@@ -1,6 +1,5 @@
 package com.meneses.budgethunter.budgetList
 
-import com.meneses.budgethunter.auth.application.SignOutUseCase
 import com.meneses.budgethunter.auth.data.AuthRepository
 import com.meneses.budgethunter.budgetList.application.BudgetListEvent
 import com.meneses.budgethunter.budgetList.application.BudgetListIntent
@@ -48,7 +47,6 @@ class BudgetListViewModelTest {
     private val deleteBudgetUseCase = mockk<DeleteBudgetUseCase>(relaxed = true)
     private val authRepository = mockk<AuthRepository>(relaxed = true)
     private val preferencesManager = mockk<PreferencesManager>(relaxed = true)
-    private val signOutUseCase = mockk<SignOutUseCase>(relaxed = true)
 
     // System under test
     private lateinit var viewModel: BudgetListViewModel
@@ -65,7 +63,6 @@ class BudgetListViewModelTest {
             duplicateBudgetUseCase = duplicateBudgetUseCase,
             deleteBudgetUseCase = deleteBudgetUseCase,
             authRepository = authRepository,
-            signOutUseCase = signOutUseCase,
             preferencesManager = preferencesManager,
             logger = NoOpLogger()
         )
@@ -99,22 +96,6 @@ class BudgetListViewModelTest {
     fun `signIn intent emits NavigateToSignIn event`() = runTest {
         // When
         viewModel.sendIntent(BudgetListIntent.SignIn)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        // Then
-        val event = viewModel.events.first()
-        assertIs<BudgetListEvent.NavigateToSignIn>(event)
-    }
-
-    // ========== signOut Tests ==========
-
-    @Test
-    fun `signOut success emits NavigateToSignIn event`() = runTest {
-        // Given - sign-out use case completes successfully
-        coJustRun { signOutUseCase.execute() }
-
-        // When
-        viewModel.sendIntent(BudgetListIntent.SignOut)
         testDispatcher.scheduler.advanceUntilIdle()
 
         // Then
@@ -159,7 +140,6 @@ class BudgetListViewModelTest {
         duplicateBudgetUseCase = duplicateBudgetUseCase,
         deleteBudgetUseCase = deleteBudgetUseCase,
         authRepository = authRepository,
-        signOutUseCase = signOutUseCase,
         preferencesManager = preferencesManager,
         logger = NoOpLogger()
     )

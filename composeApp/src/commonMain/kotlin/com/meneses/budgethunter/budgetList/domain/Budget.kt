@@ -16,7 +16,9 @@ data class Budget(
     val date: String = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date.toString(),
     val serverId: Long? = null,
     val isSynced: Boolean = false,
-    val lastSyncedAt: String? = null
+    val lastSyncedAt: String? = null,
+    /** People with access on the server, the user included: more than one means it is shared. */
+    val collaboratorCount: Int = 1
 ) {
     val totalAvailable: Double get() = amount + totalIncomes
 }

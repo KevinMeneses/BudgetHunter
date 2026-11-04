@@ -5,7 +5,9 @@ CREATE TABLE budget (
   date TEXT NOT NULL,
   server_id INTEGER,
   is_synced INTEGER NOT NULL DEFAULT 0,
-  last_synced_at TEXT
+  last_synced_at TEXT,
+  -- People with access on the server, the user included; 1 until the server says otherwise
+  collaborator_count INTEGER NOT NULL DEFAULT 1
 );
 
 selectAll:
@@ -15,19 +17,20 @@ SELECT
   COALESCE(SUM(CASE WHEN be.type = 'INCOME' THEN be.amount ELSE 0 END), 0) AS total_incomes
 FROM budget b
 LEFT JOIN budget_entry be ON b.id = be.budget_id
-GROUP BY b.id, b.amount, b.name, b.date, b.server_id, b.is_synced, b.last_synced_at
+GROUP BY b.id, b.amount, b.name, b.date, b.server_id, b.is_synced, b.last_synced_at, b.collaborator_count
 ORDER BY b.date DESC, b.id DESC;
 
 insert:
-INSERT INTO budget (amount, name, date, server_id, is_synced, last_synced_at)
-VALUES (:amount, :name, :date, :server_id, :is_synced, :last_synced_at);
+INSERT INTO budget (amount, name, date, server_id, is_synced, last_synced_at, collaborator_count)
+VALUES (:amount, :name, :date, :server_id, :is_synced, :last_synced_at, :collaborator_count);
 
 selectLastId:
 SELECT last_insert_rowid();
 
 update:
 UPDATE budget
-SET amount = :amount, name = :name, date = :date, server_id = :server_id, is_synced = :is_synced, last_synced_at = :last_synced_at
+SET amount = :amount, name = :name, date = :date, server_id = :server_id, is_synced = :is_synced, last_synced_at = :last_synced_at,
+    collaborator_count = :collaborator_count
 WHERE id = :id;
 
 delete:
@@ -45,7 +48,7 @@ SELECT
 FROM budget b
 LEFT JOIN budget_entry be ON b.id = be.budget_id
 WHERE b.is_synced = 0
-GROUP BY b.id, b.amount, b.name, b.date, b.server_id, b.is_synced, b.last_synced_at
+GROUP BY b.id, b.amount, b.name, b.date, b.server_id, b.is_synced, b.last_synced_at, b.collaborator_count
 ORDER BY b.date DESC, b.id DESC;
 
 markAsSynced:
@@ -61,7 +64,7 @@ SELECT
 FROM budget b
 LEFT JOIN budget_entry be ON b.id = be.budget_id
 WHERE b.server_id = ?
-GROUP BY b.id, b.amount, b.name, b.date, b.server_id, b.is_synced, b.last_synced_at;
+GROUP BY b.id, b.amount, b.name, b.date, b.server_id, b.is_synced, b.last_synced_at, b.collaborator_count;
 
 selectById:
 SELECT
@@ -71,7 +74,7 @@ SELECT
 FROM budget b
 LEFT JOIN budget_entry be ON b.id = be.budget_id
 WHERE b.id = ?
-GROUP BY b.id, b.amount, b.name, b.date, b.server_id, b.is_synced, b.last_synced_at;
+GROUP BY b.id, b.amount, b.name, b.date, b.server_id, b.is_synced, b.last_synced_at, b.collaborator_count;
 
 selectSyncedServerIds:
 SELECT server_id FROM budget
@@ -92,3 +95,11 @@ WHERE budget_id IN (SELECT id FROM budget WHERE server_id IS NOT NULL);
 deleteSynced:
 DELETE FROM budget
 WHERE server_id IS NOT NULL;
+
+updateCollaboratorCount:
+UPDATE budget
+SET collaborator_count = :collaborator_count
+WHERE server_id = :server_id;
+
+countUnsynced:
+SELECT COUNT(*) FROM budget WHERE is_synced = 0;

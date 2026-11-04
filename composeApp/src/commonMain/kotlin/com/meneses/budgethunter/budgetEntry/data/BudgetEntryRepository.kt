@@ -61,6 +61,11 @@ class BudgetEntryRepository(
         }
     }
 
+    /** True when an entry was created or changed here and has not reached the server yet. */
+    suspend fun hasUnsyncedChanges(): Boolean = withContext(ioDispatcher) {
+        localDataSource.countUnsynced() > 0
+    }
+
     /**
      * Clear all budget entries from local database.
      * Used when signing out to prevent data leaking between users.

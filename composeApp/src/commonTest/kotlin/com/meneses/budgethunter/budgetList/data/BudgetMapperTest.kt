@@ -18,6 +18,7 @@ class BudgetMapperTest {
             serverId = null,
             isSynced = 0L,
             lastSyncedAt = null,
+            collaboratorCount = 1L,
             totalExpenses = 250.50,
             totalIncomes = 400.0
         )
@@ -34,6 +35,24 @@ class BudgetMapperTest {
     }
 
     @Test
+    fun `mapSelectAllToBudget maps collaboratorCount`() {
+        val budget = mapSelectAllToBudget(
+            id = 1L,
+            amount = 100.0,
+            name = "Shared",
+            date = "2024-01-01",
+            serverId = 5L,
+            isSynced = 1L,
+            lastSyncedAt = null,
+            collaboratorCount = 4L,
+            totalExpenses = 0.0,
+            totalIncomes = 0.0
+        )
+
+        assertEquals(4, budget.collaboratorCount)
+    }
+
+    @Test
     fun `mapSelectAllToBudget converts Long to Int for id`() {
         val budget = mapSelectAllToBudget(
             id = 999L,
@@ -43,6 +62,7 @@ class BudgetMapperTest {
             serverId = null,
             isSynced = 0L,
             lastSyncedAt = null,
+            collaboratorCount = 1L,
             totalExpenses = 0.0,
             totalIncomes = 0.0
         )
@@ -60,6 +80,7 @@ class BudgetMapperTest {
             serverId = null,
             isSynced = 0L,
             lastSyncedAt = null,
+            collaboratorCount = 1L,
             totalExpenses = 0.0,
             totalIncomes = 0.0
         )
@@ -79,6 +100,7 @@ class BudgetMapperTest {
             serverId = null,
             isSynced = 0L,
             lastSyncedAt = null,
+            collaboratorCount = 1L,
             totalExpenses = 500000.50,
             totalIncomes = 0.0
         )
@@ -98,6 +120,7 @@ class BudgetMapperTest {
             serverId = null,
             isSynced = 0L,
             lastSyncedAt = null,
+            collaboratorCount = 1L,
             totalExpenses = -100.0,
             totalIncomes = 0.0
         )
@@ -115,6 +138,7 @@ class BudgetMapperTest {
             serverId = null,
             isSynced = 0L,
             lastSyncedAt = null,
+            collaboratorCount = 1L,
             totalExpenses = 0.0,
             totalIncomes = 0.0
         )
@@ -133,6 +157,7 @@ class BudgetMapperTest {
             serverId = null,
             isSynced = 0L,
             lastSyncedAt = null,
+            collaboratorCount = 1L,
             totalExpenses = 0.0,
             totalIncomes = 0.0
         )
@@ -150,6 +175,7 @@ class BudgetMapperTest {
             serverId = null,
             isSynced = 0L,
             lastSyncedAt = null,
+            collaboratorCount = 1L,
             totalExpenses = 67.891234,
             totalIncomes = 0.0
         )
@@ -168,6 +194,7 @@ class BudgetMapperTest {
             serverId = 42L,
             isSynced = 1L,
             lastSyncedAt = null,
+            collaboratorCount = 1L,
             totalExpenses = 0.0,
             totalIncomes = 0.0
         )
@@ -185,6 +212,7 @@ class BudgetMapperTest {
             serverId = 10L,
             isSynced = 1L,
             lastSyncedAt = "2024-06-01T10:00:00",
+            collaboratorCount = 1L,
             totalExpenses = 0.0,
             totalIncomes = 0.0
         )
@@ -203,6 +231,7 @@ class BudgetMapperTest {
             serverId = null,
             isSynced = 0L,
             lastSyncedAt = null,
+            collaboratorCount = 1L,
             totalExpenses = 0.0,
             totalIncomes = 0.0
         )

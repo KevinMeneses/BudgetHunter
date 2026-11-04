@@ -468,6 +468,57 @@ class BudgetLocalDataSourceTest {
         assertEquals(emptyList(), result)
     }
 
+    @Test
+    fun `countUnsynced counts only budgets with is_synced 0`() = runTest {
+        insertBudget(name = "Unsynced 1", amount = 1.0, isSynced = false)
+        insertBudget(name = "Unsynced 2", amount = 1.0, isSynced = false)
+        insertBudget(name = "Synced", amount = 1.0, isSynced = true)
+
+        assertEquals(2L, dataSource.countUnsynced())
+    }
+
+    // ── collaborator count tests ──────────────────────────────────────────────
+
+    @Test
+    fun `collaborator count defaults to 1`() = runTest {
+        val created = dataSource.create(Budget(name = "Budget", amount = 100.0, date = "2025-01-01"))
+
+        assertEquals(1, dataSource.getById(created.id)?.collaboratorCount)
+    }
+
+    @Test
+    fun `create persists collaboratorCount`() = runTest {
+        val created = dataSource.create(
+            Budget(name = "Budget", amount = 100.0, date = "2025-01-01", collaboratorCount = 3)
+        )
+
+        assertEquals(3, dataSource.getById(created.id)?.collaboratorCount)
+    }
+
+    @Test
+    fun `update persists collaboratorCount`() = runTest {
+        val budgetId = insertBudget(name = "Budget", amount = 100.0)
+
+        dataSource.update(
+            Budget(id = budgetId, name = "Budget", amount = 100.0, date = "2025-01-01", collaboratorCount = 5)
+        )
+
+        assertEquals(5, dataSource.getById(budgetId)?.collaboratorCount)
+    }
+
+    @Test
+    fun `updateCollaboratorCount changes only the budget with that server id`() = runTest {
+        val target = insertBudget(name = "Target", amount = 1.0, serverId = 10L, isSynced = true)
+        val other = insertBudget(name = "Other", amount = 1.0, serverId = 20L, isSynced = true)
+        val local = insertBudget(name = "Local", amount = 1.0)
+
+        dataSource.updateCollaboratorCount(10L, 4)
+
+        assertEquals(4, dataSource.getById(target)?.collaboratorCount)
+        assertEquals(1, dataSource.getById(other)?.collaboratorCount)
+        assertEquals(1, dataSource.getById(local)?.collaboratorCount)
+    }
+
     // ── markAsSynced tests ────────────────────────────────────────────────────
 
     @Test
@@ -684,7 +735,8 @@ class BudgetLocalDataSourceTest {
             date = date,
             server_id = serverId,
             is_synced = if (isSynced) 1L else 0L,
-            last_synced_at = lastSyncedAt
+            last_synced_at = lastSyncedAt,
+            collaborator_count = 1L
         )
         return database.budgetQueries.selectLastId().executeAsOne().toInt()
     }
