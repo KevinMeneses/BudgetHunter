@@ -266,7 +266,7 @@ class BudgetDetailViewModel(
         }
     }
 
-    private fun showEntry(budgetItem: BudgetEntry, scanReceipt: Boolean = false) =
+    private fun showEntry(budgetItem: BudgetEntry, scanReceipt: Boolean) =
         _events.trySend(BudgetDetailEvent.ShowEntry(budgetItem, scanReceipt))
 
     private fun updateBudgetAmount(amount: Double) = viewModelScope.launch {

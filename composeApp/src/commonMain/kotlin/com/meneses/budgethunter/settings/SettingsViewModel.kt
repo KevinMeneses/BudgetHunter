@@ -72,7 +72,9 @@ class SettingsViewModel(
         }
     }
 
-    private fun signOut() = viewModelScope.launch {
+    // Outlives the screen, like the preference pushes: leaving Settings half way must not stop
+    // the wipe of the local data and the session with only part of it done.
+    private fun signOut() = applicationScope.launch {
         _uiState.update {
             it.copy(isSignOutConfirmationVisible = false, isSigningOut = true, signOutError = null)
         }
