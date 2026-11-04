@@ -28,13 +28,11 @@
     <string name="settings">Configuración</string>
     <string name="metrics">Métricas</string>
     <string name="user_guide">Guía de usuario</string>
-    <string name="about">Acerca de</string>
     
     <!-- Budget Management -->
     <string name="add_budget">Agregar un presupuesto</string>
     <string name="budget">Presupuesto</string>
     <string name="new_budget">Nuevo presupuesto</string>
-    <string name="budget_amount">Presupuesto\n%1$s</string>
     <string name="delete_budget">Eliminar presupuesto</string>
     <string name="delete_budget_confirmation_message">¿Está seguro que desea eliminar este presupuesto?</string>
     <string name="update_budget">Actualizar presupuesto</string>
@@ -51,7 +49,6 @@
     <string name="new_registry">Nuevo registro</string>
     <string name="update_registry">Modificar registro</string>
     <string name="create_budget_entry">Crear entrada de presupuesto</string>
-    <string name="save_entry">Guardar entrada</string>
     <string name="selected_entries">%1$s Seleccionados</string>
     <string name="delete_entries_confirmation_message">¿Está seguro que desea eliminar estos registros?</string>
     <string name="close_entries_selection_mode">Cerrar modo selección de entradas</string>
@@ -84,7 +81,6 @@
     <string name="uncategorized">Sin categoría</string>
     
     <!-- Financial Terms -->
-    <string name="total_outcomes">Total gastos:</string>
     <string name="expenses">%1$s gastados</string>
     <string name="available">de %1$s</string>
     <string name="balance">Balance:</string>
@@ -104,12 +100,9 @@
     <string name="enter_collaboration_code">Ingresa el código de colaboración:</string>
     <string name="code">Código</string>
     <string name="manage_collaborators">Colaborar</string>
-    <string name="collaborators_title">Colaboradores - %1$s</string>
     <string name="add_collaborator">Agregar colaborador</string>
-    <string name="add_collaborator_message">Ingresa el correo de la persona que quieres agregar como colaborador:</string>
     <string name="collaborator_email_placeholder">colaborador@ejemplo.com</string>
     <string name="add">Agregar</string>
-    <string name="adding">Agregando...</string>
     <string name="remove_collaborator">Quitar colaborador</string>
     <string name="remove_collaborator_confirmation_message">¿Seguro que quieres quitar a %1$s de los colaboradores? Ya no tendrá acceso a este presupuesto.</string>
     <string name="remove">Quitar</string>
@@ -136,12 +129,10 @@
     <!-- SMS Processing -->
     <string name="sms_reading">Lectura de SMS</string>
     <string name="sms_reading_description">Leer mensajes de bancos para crear entradas automáticamente</string>
-    <string name="enable_sms_reading">Habilitar lectura de SMS</string>
     <string name="sms_permission_required">Se requiere permiso para leer SMS</string>
     <string name="sms_permission_explanation">Esta función lee mensajes de bancos para crear entradas de presupuesto automáticamente</string>
     <string name="transaction_detected">Transacción detectada</string>
     <string name="transaction_detected_message">Se detectó una transacción por %1$s</string>
-    <string name="add_transaction">Agregar transacción</string>
     <string name="ignore_transaction">Ignorar</string>
     <string name="transaction_added">Transacción agregada exitosamente</string>
     <string name="transaction_failed">Error al agregar transacción</string>
@@ -167,15 +158,11 @@
     <string name="no_banks_configured">No hay bancos configurados</string>
     <string name="select_banks">Selecciona los bancos</string>
     <string name="select_banks_description">Selecciona los bancos para procesar transacciones automáticas:</string>
-    <string name="banks_selected">%1$d bancos seleccionados</string>
     <string name="no_banks_selected">Ningún banco seleccionado</string>
     
     <!-- AI Processing -->
     <string name="ai_processing">Procesamiento con IA</string>
-    <string name="enable_ai_processing">Habilitar procesamiento con IA</string>
     <string name="ai_processing_description">Usa inteligencia artificial para completar el formulario de entrada con facturas y comprobantes, y permite que el servidor categorice entradas a partir de su descripción cuando lo pidas. Para eso solo se envía la descripción</string>
-    <string name="activated">Activado</string>
-    <string name="deactivated">Desactivado</string>
     
     <!-- App Updates -->
     <string name="wait_for_update">Espere mientras se actualiza la aplicación…</string>
@@ -191,7 +178,6 @@
     <string name="open_menu">Botón para abrir el menú</string>
     <string name="open_menu_button">Botón para abrir el menú</string>
     <string name="entry_date">Fecha de la entrada</string>
-    <string name="create_new_budget">Crear nuevo presupuesto</string>
     <string name="budget_options">Opciones del presupuesto</string>
     <string name="edit_budget">Editar presupuesto</string>
     <string name="duplicate_budget">Duplicar presupuesto</string>
@@ -235,11 +221,8 @@
     <string name="sign_up">Registrarse</string>
     <string name="email">Correo electrónico</string>
     <string name="password">Contraseña</string>
-    <string name="confirm_password">Confirmar Contraseña</string>
     <string name="welcome_to_budget_hunter">Bienvenido a BudgetHunter</string>
     <string name="create_account">Crear Cuenta</string>
-    <string name="dont_have_account">¿No tienes cuenta? Regístrate</string>
-    <string name="already_have_account">¿Ya tienes cuenta? Inicia Sesión</string>
     <string name="hide_password">Ocultar contraseña</string>
     <string name="show_password">Mostrar contraseña</string>
 
@@ -247,8 +230,6 @@
     <string name="error_email_required">El correo electrónico es obligatorio</string>
     <string name="error_name_required">El nombre es obligatorio</string>
     <string name="error_password_required">La contraseña es obligatoria</string>
-    <string name="error_confirm_password_required">Por favor confirma tu contraseña</string>
-    <string name="error_passwords_do_not_match">Las contraseñas no coinciden</string>
     <string name="error_password_too_short">La contraseña debe tener al menos 6 caracteres</string>
     <string name="error_sign_in_failed">Error al iniciar sesión. Por favor verifica tus credenciales e intenta nuevamente.</string>
     <string name="error_sign_up_failed">Error al registrarse. Por favor intenta más tarde.</string>
@@ -281,8 +262,6 @@
     <string name="error_unknown">Ocurrió un error inesperado. Por favor intenta nuevamente.</string>
 
     <!-- Offline Mode -->
-    <string name="continue_offline">Continuar Sin Conexión</string>
-    <string name="offline_mode_description">Usa la aplicación sin una cuenta. Tus datos se guardarán localmente solo en este dispositivo.</string>
 
     <!-- Sign Out -->
     <string name="sign_out">Cerrar sesión</string>
@@ -347,7 +326,6 @@
     <string name="sms_shortcut_error">No pude registrar el movimiento, inténtalo de nuevo</string>
     <string name="sms_shortcut_settings_description">En iPhone, la app Atajos le pasa a BudgetHunter los SMS de tu banco</string>
     <string name="sms_shortcut_settings_row">Leer SMS automáticamente</string>
-    <string name="sms_shortcut_settings_row_subtitle">Ver cómo configurarlo con Atajos</string>
     <string name="sms_shortcut_tutorial_title">Leer SMS automáticamente</string>
     <string name="sms_shortcut_intro_title">Qué hace</string>
     <string name="sms_shortcut_intro_body">Cuando llega un SMS de tu banco, Atajos se lo pasa a BudgetHunter y el movimiento queda registrado en tu presupuesto por defecto, sin abrir la app.</string>
@@ -383,8 +361,6 @@
     <string name="sms_shortcut_image_filter">El mensaje contiene con el nombre del banco y Ejecutar de inmediato elegido</string>
     <string name="sms_shortcut_image_action">Botón Crear nuevo atajo</string>
     <string name="sms_shortcut_image_variable">Variable Entrada de atajo en la acción</string>
-    <string name="show_filters">Buscar y filtrar</string>
-    <string name="hide_filters">Ocultar búsqueda y filtros</string>
     <string name="sort_entries">Ordenar</string>
     <string name="sort_newest">Más recientes</string>
     <string name="sort_amount_descending">Monto: mayor a menor</string>
@@ -491,4 +467,7 @@
 
     <!-- Redesign: entry form categories -->
     <string name="more_categories">Más</string>
+
+    <!-- Redesign: review fixes -->
+    <string name="sign_out_failed">No se pudo cerrar sesión. Inténtalo de nuevo</string>
 </resources>

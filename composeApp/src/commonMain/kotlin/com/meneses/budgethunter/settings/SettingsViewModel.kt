@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import budgethunter.composeapp.generated.resources.Res
 import budgethunter.composeapp.generated.resources.error_current_password_incorrect
 import budgethunter.composeapp.generated.resources.error_password_too_short
+import budgethunter.composeapp.generated.resources.sign_out_failed
 import com.meneses.budgethunter.auth.application.SignOutUseCase
 import com.meneses.budgethunter.auth.data.AuthRepository
 import com.meneses.budgethunter.budgetList.data.BudgetRepository
@@ -17,6 +18,7 @@ import com.meneses.budgethunter.settings.application.SettingsState
 import com.meneses.budgethunter.settings.application.SyncUserPreferencesUseCase
 import com.meneses.budgethunter.sms.domain.BankSmsConfig
 import com.meneses.budgethunter.sms.domain.SupportedBanks
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -66,14 +68,22 @@ class SettingsViewModel(
             is SettingsIntent.ToggleSignOutConfirmation ->
                 _uiState.update { it.copy(isSignOutConfirmationVisible = intent.show) }
             is SettingsIntent.SignOut -> signOut()
+            is SettingsIntent.DismissSignOutError -> _uiState.update { it.copy(signOutError = null) }
         }
     }
 
     private fun signOut() = viewModelScope.launch {
-        _uiState.update { it.copy(isSignOutConfirmationVisible = false, isSigningOut = true) }
+        _uiState.update {
+            it.copy(isSignOutConfirmationVisible = false, isSigningOut = true, signOutError = null)
+        }
         try {
             signOutUseCase.execute()
             _events.trySend(SettingsEvent.NavigateToSignIn)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            // Clearing the local data or the session failed: stay here, the user can try again
+            _uiState.update { it.copy(signOutError = Res.string.sign_out_failed) }
         } finally {
             _uiState.update { it.copy(isSigningOut = false) }
         }

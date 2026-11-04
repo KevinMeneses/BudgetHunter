@@ -9,10 +9,11 @@ import budgethunter.composeapp.generated.resources.short_date_format
 import budgethunter.composeapp.generated.resources.today
 import budgethunter.composeapp.generated.resources.weekday_abbreviations
 import budgethunter.composeapp.generated.resources.yesterday
+import com.meneses.budgethunter.commons.util.RelativeDay
 import com.meneses.budgethunter.commons.util.currentDate
+import com.meneses.budgethunter.commons.util.relativeTo
 import com.meneses.budgethunter.commons.util.toLocalDateOrNull
-import kotlinx.datetime.DatePeriod
-import kotlinx.datetime.minus
+import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringArrayResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -21,11 +22,13 @@ import org.jetbrains.compose.resources.stringResource
  * not the current one. Falls back to the stored text when the date does not parse.
  */
 @Composable
-fun dayHeaderLabel(date: String): String {
+fun dayHeaderLabel(date: String, today: LocalDate = currentDate()): String {
     val parsed = date.toLocalDateOrNull() ?: return date
-    val today = currentDate()
-    if (parsed == today) return stringResource(Res.string.today)
-    if (parsed == today.minus(DatePeriod(days = 1))) return stringResource(Res.string.yesterday)
+    when (parsed.relativeTo(today)) {
+        RelativeDay.TODAY -> return stringResource(Res.string.today)
+        RelativeDay.YESTERDAY -> return stringResource(Res.string.yesterday)
+        RelativeDay.OTHER -> Unit
+    }
 
     // Both arrays start on Monday / January, as kotlinx-datetime numbers them
     val weekday = stringArrayResource(Res.array.weekday_abbreviations)[parsed.dayOfWeek.ordinal]

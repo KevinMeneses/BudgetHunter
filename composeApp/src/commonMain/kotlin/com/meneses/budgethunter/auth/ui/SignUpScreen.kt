@@ -32,10 +32,6 @@ import budgethunter.composeapp.generated.resources.Res
 import budgethunter.composeapp.generated.resources.back_content_description
 import budgethunter.composeapp.generated.resources.create_account_button
 import budgethunter.composeapp.generated.resources.email
-import budgethunter.composeapp.generated.resources.error_email_required
-import budgethunter.composeapp.generated.resources.error_name_required
-import budgethunter.composeapp.generated.resources.error_password_required
-import budgethunter.composeapp.generated.resources.error_password_too_short
 import budgethunter.composeapp.generated.resources.have_account_prompt
 import budgethunter.composeapp.generated.resources.name
 import budgethunter.composeapp.generated.resources.password_min_hint
@@ -61,13 +57,10 @@ object SignUpScreen {
         uiState: SignUpState,
         onIntent: (SignUpIntent) -> Unit
     ) {
-        val error = uiState.error
-        val nameError = error.takeIf { it == Res.string.error_name_required }
-        val emailError = error.takeIf { it == Res.string.error_email_required }
-        val passwordError = error.takeIf {
-            it == Res.string.error_password_required || it == Res.string.error_password_too_short
-        }
-        val generalError = error.takeIf { nameError == null && emailError == null && passwordError == null }
+        val nameError = uiState.nameError
+        val emailError = uiState.emailError
+        val passwordError = uiState.passwordError
+        val generalError = uiState.error
 
         Scaffold(
             topBar = {

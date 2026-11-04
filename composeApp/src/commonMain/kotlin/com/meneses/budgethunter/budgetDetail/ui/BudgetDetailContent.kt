@@ -84,6 +84,8 @@ import budgethunter.composeapp.generated.resources.sort_entries
 import budgethunter.composeapp.generated.resources.sort_newest
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailIntent
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailState
+import com.meneses.budgethunter.budgetDetail.domain.EntryDay
+import com.meneses.budgethunter.budgetDetail.domain.groupedByDay
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.budgetEntry.ui.CategoryBadge
 import com.meneses.budgethunter.budgetEntry.ui.toStringResource
@@ -152,8 +154,11 @@ private fun EntriesList(
     val isFiltering = uiState.filter.isActive
     // Authors are only worth a word when more than one person writes in the budget
     val showAuthors = entries.mapNotNull { it.createdByEmail?.takeIf(String::isNotBlank) }.distinct().size > 1
-    // Days only make sense while the list is in date order
-    val groupByDay = uiState.listOrder == BudgetDetailState.ListOrder.DEFAULT
+    // Days only make sense while the list is in date order. Computed once per list, not on every
+    // recomposition of the screen.
+    val days = remember(entries, uiState.listOrder) {
+        if (uiState.listOrder == BudgetDetailState.ListOrder.DEFAULT) entries.groupedByDay() else null
+    }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -227,7 +232,7 @@ private fun EntriesList(
         } else {
             entryItems(
                 entries = entries,
-                groupByDay = groupByDay,
+                days = days,
                 showAuthors = showAuthors,
                 showSyncState = uiState.isAuthenticated,
                 isSelectionActive = uiState.isSelectionActive,
@@ -238,39 +243,41 @@ private fun EntriesList(
 }
 
 /**
- * The entries, with a header and the day's net total before each new date when [groupByDay].
- * Indexes passed to the intents are positions in [entries], as the ViewModel expects.
+ * The entries, under a header with each day's net when [days] is given, or as a flat list with the
+ * date on every row when it is not (amount order). Indexes passed to the intents are positions in
+ * [entries], as the ViewModel expects.
  */
 private fun LazyListScope.entryItems(
     entries: List<BudgetEntry>,
-    groupByDay: Boolean,
+    days: List<EntryDay>?,
     showAuthors: Boolean,
     showSyncState: Boolean,
     isSelectionActive: Boolean,
     onIntent: (BudgetDetailIntent) -> Unit
 ) {
-    var previousDate: String? = null
-    entries.forEachIndexed { index, entry ->
-        if (groupByDay && entry.date != previousDate) {
-            val date = entry.date
-            val dayEntries = entries.filter { it.date == date }
-            item(key = "day-$date-$index") {
-                DayHeader(date = date, dayEntries = dayEntries)
-            }
-        }
-        previousDate = entry.date
-
+    val entryItem = { index: Int, entry: BudgetEntry ->
         item(key = "entry-${entry.id}-$index") {
             EntryRow(
                 entry = entry,
                 index = index,
-                showDate = !groupByDay,
+                showDate = days == null,
                 showAuthor = showAuthors,
                 showSyncState = showSyncState,
                 isSelectionActive = isSelectionActive,
                 onIntent = onIntent
             )
         }
+    }
+
+    if (days == null) {
+        entries.forEachIndexed(entryItem)
+        return
+    }
+    days.forEach { day ->
+        item(key = "day-${day.date}-${day.entries.first().index}") {
+            DayHeader(date = day.date, net = day.net)
+        }
+        day.entries.forEach { (index, entry) -> entryItem(index, entry) }
     }
 }
 
@@ -542,9 +549,8 @@ private fun SortChip(
 @Composable
 private fun DayHeader(
     date: String,
-    dayEntries: List<BudgetEntry>
+    net: Double
 ) {
-    val net = dayEntries.sumOf(BudgetEntry.Type.INCOME) - dayEntries.sumOf(BudgetEntry.Type.OUTCOME)
     Row(
         modifier = Modifier
             .fillMaxWidth()

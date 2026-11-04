@@ -7,9 +7,9 @@ import budgethunter.composeapp.generated.resources.failed_to_load_collaborators
 import com.meneses.budgethunter.collaborator.application.CollaboratorsEvent
 import com.meneses.budgethunter.collaborator.application.CollaboratorsIntent
 import com.meneses.budgethunter.collaborator.data.CollaboratorRepository
+import com.meneses.budgethunter.commons.data.PreferencesManager
 import com.meneses.budgethunter.commons.data.network.models.CollaboratorResponse
 import com.meneses.budgethunter.commons.data.network.models.UserInfo
-import com.meneses.budgethunter.commons.data.PreferencesManager
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
@@ -131,5 +131,20 @@ class CollaboratorsViewModelTest {
         val event = viewModel.events.first()
         assertIs<CollaboratorsEvent.ShowError>(event)
         assertEquals(Res.string.failed_to_add_collaborator, event.message)
+    }
+
+    // ========== currentUserEmail Tests ==========
+
+    @Test
+    fun `loadCollaborators puts the last signed in email in the state`() = runTest {
+        coEvery { preferencesManager.getLastSignedInEmail() } returns "me@example.com"
+        coEvery {
+            collaboratorRepository.getCollaborators(budgetServerId)
+        } returns Result.success(emptyList())
+
+        viewModel.sendIntent(CollaboratorsIntent.LoadCollaborators)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals("me@example.com", viewModel.uiState.value.currentUserEmail)
     }
 }

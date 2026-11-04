@@ -1,6 +1,7 @@
 package com.meneses.budgethunter.commons.util
 
 import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlin.test.Test
@@ -108,5 +109,57 @@ class DatesTest {
 
         // Then
         assertNull(result)
+    }
+
+    // ========== toLocalDateOrNull / relativeTo Tests ==========
+
+    @Test
+    fun `toLocalDateOrNull parses a stored date`() {
+        assertEquals(LocalDate(2026, 10, 3), "2026-10-03".toLocalDateOrNull())
+    }
+
+    @Test
+    fun `toLocalDateOrNull gives null for an empty string`() {
+        assertNull("".toLocalDateOrNull())
+    }
+
+    @Test
+    fun `toLocalDateOrNull gives null for an impossible date`() {
+        assertNull("2026-13-40".toLocalDateOrNull())
+    }
+
+    @Test
+    fun `toLocalDateOrNull gives null for another format`() {
+        assertNull("03/10/2026".toLocalDateOrNull())
+    }
+
+    @Test
+    fun `relativeTo is TODAY for the same day`() {
+        assertEquals(RelativeDay.TODAY, LocalDate(2026, 10, 3).relativeTo(LocalDate(2026, 10, 3)))
+    }
+
+    @Test
+    fun `relativeTo is YESTERDAY for the day before`() {
+        assertEquals(RelativeDay.YESTERDAY, LocalDate(2026, 10, 2).relativeTo(LocalDate(2026, 10, 3)))
+    }
+
+    @Test
+    fun `relativeTo is OTHER for two days before`() {
+        assertEquals(RelativeDay.OTHER, LocalDate(2026, 10, 1).relativeTo(LocalDate(2026, 10, 3)))
+    }
+
+    @Test
+    fun `relativeTo is OTHER for tomorrow`() {
+        assertEquals(RelativeDay.OTHER, LocalDate(2026, 10, 4).relativeTo(LocalDate(2026, 10, 3)))
+    }
+
+    @Test
+    fun `relativeTo is YESTERDAY across a month boundary`() {
+        assertEquals(RelativeDay.YESTERDAY, LocalDate(2026, 9, 30).relativeTo(LocalDate(2026, 10, 1)))
+    }
+
+    @Test
+    fun `relativeTo is YESTERDAY across a year boundary`() {
+        assertEquals(RelativeDay.YESTERDAY, LocalDate(2025, 12, 31).relativeTo(LocalDate(2026, 1, 1)))
     }
 }

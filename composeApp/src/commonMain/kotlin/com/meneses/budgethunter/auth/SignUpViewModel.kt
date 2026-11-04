@@ -49,40 +49,36 @@ class SignUpViewModel(
         }
     }
 
+    // Editing a field clears its own error, the others stay until the next attempt
     private fun updateEmail(email: String) {
-        _uiState.update { it.copy(email = email) }
+        _uiState.update { it.copy(email = email, emailError = null) }
     }
 
     private fun updateName(name: String) {
-        _uiState.update { it.copy(name = name) }
+        _uiState.update { it.copy(name = name, nameError = null) }
     }
 
     private fun updatePassword(password: String) {
-        _uiState.update { it.copy(password = password) }
+        _uiState.update { it.copy(password = password, passwordError = null) }
     }
 
     private fun signUp() {
         val currentState = _uiState.value
 
-        // Validation, in the order the form shows the fields. There is no confirmation field: the
-        // password can be shown with the eye icon to check it instead.
-        when {
-            currentState.name.isBlank() -> {
-                _uiState.update { it.copy(error = Res.string.error_name_required) }
-                return
+        // Every field is checked at once, so all its problems show in one attempt, each under its
+        // field. There is no confirmation field: the eye icon shows the password to check it.
+        val nameError = Res.string.error_name_required.takeIf { currentState.name.isBlank() }
+        val emailError = Res.string.error_email_required.takeIf { currentState.email.isBlank() }
+        val passwordError = when {
+            currentState.password.isBlank() -> Res.string.error_password_required
+            currentState.password.length < MIN_PASSWORD_LENGTH -> Res.string.error_password_too_short
+            else -> null
+        }
+        if (nameError != null || emailError != null || passwordError != null) {
+            _uiState.update {
+                it.copy(nameError = nameError, emailError = emailError, passwordError = passwordError, error = null)
             }
-            currentState.email.isBlank() -> {
-                _uiState.update { it.copy(error = Res.string.error_email_required) }
-                return
-            }
-            currentState.password.isBlank() -> {
-                _uiState.update { it.copy(error = Res.string.error_password_required) }
-                return
-            }
-            currentState.password.length < 6 -> {
-                _uiState.update { it.copy(error = Res.string.error_password_too_short) }
-                return
-            }
+            return
         }
 
         _uiState.update { it.copy(isLoading = true, error = null) }
@@ -140,3 +136,5 @@ class SignUpViewModel(
         _uiState.update { it.copy(error = null) }
     }
 }
+
+private const val MIN_PASSWORD_LENGTH = 6

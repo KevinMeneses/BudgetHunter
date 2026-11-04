@@ -69,8 +69,9 @@ import org.koin.compose.koinInject
 import org.koin.core.parameter.parametersOf
 import kotlin.reflect.typeOf
 
-/** "TYPE:CATEGORY" the metrics screen leaves for the budget detail to filter its entries by. */
-private const val METRICS_CATEGORY_FILTER_KEY = "metrics_category_filter"
+/** Category and type the metrics screen leaves for the budget detail to filter its entries by. */
+private const val METRICS_FILTER_CATEGORY_KEY = "metrics_filter_category"
+private const val METRICS_FILTER_TYPE_KEY = "metrics_filter_type"
 
 @Composable
 fun BudgetHunterNavigation() {
@@ -297,15 +298,20 @@ fun BudgetHunterNavigation() {
                 val budgetDetailViewModel = viewModel { koin.get<BudgetDetailViewModel>() }
                 val uiState by budgetDetailViewModel.uiState.collectAsStateWithLifecycle()
 
-                // A category chosen in the metrics screen: show its entries
-                val metricsCategoryFilter by backStackEntry.savedStateHandle
-                    .getStateFlow<String?>(METRICS_CATEGORY_FILTER_KEY, null)
+                // A category chosen in the metrics screen: show its entries. Read once and
+                // cleared right away, so a rotation or a restored process does not apply it again
+                // over a filter the user changed since.
+                val metricsCategoryName by backStackEntry.savedStateHandle
+                    .getStateFlow<String?>(METRICS_FILTER_CATEGORY_KEY, null)
                     .collectAsStateWithLifecycle()
-                LaunchedEffect(metricsCategoryFilter) {
-                    val (typeName, categoryName) = metricsCategoryFilter?.split(":") ?: return@LaunchedEffect
-                    backStackEntry.savedStateHandle[METRICS_CATEGORY_FILTER_KEY] = null
+                LaunchedEffect(metricsCategoryName) {
+                    val categoryName = metricsCategoryName ?: return@LaunchedEffect
+                    val typeName = backStackEntry.savedStateHandle.get<String>(METRICS_FILTER_TYPE_KEY)
+                    backStackEntry.savedStateHandle.remove<String>(METRICS_FILTER_CATEGORY_KEY)
+                    backStackEntry.savedStateHandle.remove<String>(METRICS_FILTER_TYPE_KEY)
                     val type = BudgetEntry.Type.entries.firstOrNull { it.name == typeName }
                     val category = BudgetEntry.Category.entries.firstOrNull { it.name == categoryName }
+                        ?: return@LaunchedEffect
                     budgetDetailViewModel.sendIntent(
                         BudgetDetailIntent.FilterEntries(BudgetEntryFilter(type = type, category = category))
                     )
@@ -420,11 +426,15 @@ fun BudgetHunterNavigation() {
                     onIntent = budgetMetricsViewModel::sendIntent,
                     goBack = { navController.popBackStackOnce(backStackEntry) },
                     showCategoryEntries = { category, type ->
-                        // Handed back to the budget detail, which filters its list with it
-                        navController.previousBackStackEntry?.savedStateHandle?.set(
-                            METRICS_CATEGORY_FILTER_KEY,
-                            "${type.name}:${category.name}"
-                        )
+                        // Handed back to the budget detail, which filters its list with it. Metrics
+                        // is only opened from there; anywhere else it just goes back.
+                        navController.previousBackStackEntry
+                            ?.takeIf { it.destination.hasRoute<BudgetDetailScreen>() }
+                            ?.savedStateHandle
+                            ?.let { handle ->
+                                handle[METRICS_FILTER_TYPE_KEY] = type.name
+                                handle[METRICS_FILTER_CATEGORY_KEY] = category.name
+                            }
                         navController.popBackStackOnce(backStackEntry)
                     }
                 )

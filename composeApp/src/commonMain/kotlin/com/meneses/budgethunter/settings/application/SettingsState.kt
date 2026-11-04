@@ -28,5 +28,7 @@ data class SettingsState(
     /** The signed-in account, shown at the top of the screen; null in offline mode. */
     val email: String? = null,
     val isSignOutConfirmationVisible: Boolean = false,
-    val isSigningOut: Boolean = false
+    val isSigningOut: Boolean = false,
+    /** Why the last sign out failed; the user stays signed in and can try again. */
+    val signOutError: StringResource? = null
 )

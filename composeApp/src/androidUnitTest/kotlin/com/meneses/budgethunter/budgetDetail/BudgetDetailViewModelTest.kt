@@ -757,4 +757,29 @@ class BudgetDetailViewModelTest {
         // Then
         assertEquals(2, received.count { it is BudgetDetailEvent.ShowError }, "Got $received")
     }
+
+    // ========== showEntry scanReceipt Tests ==========
+
+    @Test
+    fun `showEntry with scanReceipt true emits ShowEntry event asking to scan the receipt`() = runTest {
+        val entry = BudgetEntry(id = 5, budgetId = 10)
+
+        viewModel.sendIntent(BudgetDetailIntent.ShowEntry(entry, scanReceipt = true))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val event = viewModel.events.first()
+        assertIs<BudgetDetailEvent.ShowEntry>(event)
+        assertEquals(entry, event.entry)
+        assertTrue(event.scanReceipt)
+    }
+
+    @Test
+    fun `showEntry without scanReceipt emits ShowEntry event that does not scan the receipt`() = runTest {
+        viewModel.sendIntent(BudgetDetailIntent.ShowEntry(BudgetEntry(id = 5, budgetId = 10)))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val event = viewModel.events.first()
+        assertIs<BudgetDetailEvent.ShowEntry>(event)
+        assertFalse(event.scanReceipt)
+    }
 }

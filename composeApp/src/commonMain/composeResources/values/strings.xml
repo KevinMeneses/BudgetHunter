@@ -28,13 +28,11 @@
     <string name="settings">Settings</string>
     <string name="metrics">Metrics</string>
     <string name="user_guide">User guide</string>
-    <string name="about">About</string>
     
     <!-- Budget Management -->
     <string name="add_budget">Add a budget</string>
     <string name="budget">Budget</string>
     <string name="new_budget">New budget</string>
-    <string name="budget_amount">Budget\n%1$s</string>
     <string name="delete_budget">Delete budget</string>
     <string name="delete_budget_confirmation_message">Are you sure you want to delete this budget?</string>
     <string name="update_budget">Update budget</string>
@@ -51,7 +49,6 @@
     <string name="new_registry">New entry</string>
     <string name="update_registry">Edit entry</string>
     <string name="create_budget_entry">Create budget entry</string>
-    <string name="save_entry">Save entry</string>
     <string name="selected_entries">%1$s selected</string>
     <string name="delete_entries_confirmation_message">Are you sure you want to delete these entries?</string>
     <string name="close_entries_selection_mode">Close entry selection mode</string>
@@ -84,7 +81,6 @@
     <string name="uncategorized">Uncategorized</string>
     
     <!-- Financial Terms -->
-    <string name="total_outcomes">Total expenses:</string>
     <string name="expenses">%1$s spent</string>
     <string name="available">of %1$s</string>
     <string name="balance">Balance:</string>
@@ -104,12 +100,9 @@
     <string name="enter_collaboration_code">Enter the collaboration code:</string>
     <string name="code">Code</string>
     <string name="manage_collaborators">Collaborate</string>
-    <string name="collaborators_title">Collaborators - %1$s</string>
     <string name="add_collaborator">Add collaborator</string>
-    <string name="add_collaborator_message">Enter the email of the person you want to add as a collaborator:</string>
     <string name="collaborator_email_placeholder">collaborator@example.com</string>
     <string name="add">Add</string>
-    <string name="adding">Adding...</string>
     <string name="remove_collaborator">Remove collaborator</string>
     <string name="remove_collaborator_confirmation_message">Are you sure you want to remove %1$s from the collaborators? They will no longer have access to this budget.</string>
     <string name="remove">Remove</string>
@@ -136,12 +129,10 @@
     <!-- SMS Processing -->
     <string name="sms_reading">SMS reading</string>
     <string name="sms_reading_description">Read bank messages to create entries automatically</string>
-    <string name="enable_sms_reading">Enable SMS reading</string>
     <string name="sms_permission_required">Permission to read SMS is required</string>
     <string name="sms_permission_explanation">This feature reads bank messages to create budget entries automatically</string>
     <string name="transaction_detected">Transaction detected</string>
     <string name="transaction_detected_message">A transaction for %1$s was detected</string>
-    <string name="add_transaction">Add transaction</string>
     <string name="ignore_transaction">Ignore</string>
     <string name="transaction_added">Transaction added successfully</string>
     <string name="transaction_failed">Failed to add transaction</string>
@@ -167,15 +158,11 @@
     <string name="no_banks_configured">No banks configured</string>
     <string name="select_banks">Select banks</string>
     <string name="select_banks_description">Select the banks to process automatic transactions:</string>
-    <string name="banks_selected">%1$d banks selected</string>
     <string name="no_banks_selected">No bank selected</string>
     
     <!-- AI Processing -->
     <string name="ai_processing">AI processing</string>
-    <string name="enable_ai_processing">Enable AI processing</string>
     <string name="ai_processing_description">Uses artificial intelligence to fill in the entry form from invoices and receipts, and lets the server categorize entries from their description when you ask. Only the description is sent for that</string>
-    <string name="activated">On</string>
-    <string name="deactivated">Off</string>
     
     <!-- App Updates -->
     <string name="wait_for_update">Please wait while the app updates…</string>
@@ -191,7 +178,6 @@
     <string name="open_menu">Button to open the menu</string>
     <string name="open_menu_button">Button to open the menu</string>
     <string name="entry_date">Entry date</string>
-    <string name="create_new_budget">Create new budget</string>
     <string name="budget_options">Budget options</string>
     <string name="edit_budget">Edit budget</string>
     <string name="duplicate_budget">Duplicate budget</string>
@@ -235,11 +221,8 @@
     <string name="sign_up">Sign up</string>
     <string name="email">Email</string>
     <string name="password">Password</string>
-    <string name="confirm_password">Confirm password</string>
     <string name="welcome_to_budget_hunter">Welcome to BudgetHunter</string>
     <string name="create_account">Create account</string>
-    <string name="dont_have_account">No account yet? Sign up</string>
-    <string name="already_have_account">Already have an account? Sign in</string>
     <string name="hide_password">Hide password</string>
     <string name="show_password">Show password</string>
 
@@ -247,8 +230,6 @@
     <string name="error_email_required">Email is required</string>
     <string name="error_name_required">Name is required</string>
     <string name="error_password_required">Password is required</string>
-    <string name="error_confirm_password_required">Please confirm your password</string>
-    <string name="error_passwords_do_not_match">Passwords do not match</string>
     <string name="error_password_too_short">Password must be at least 6 characters long</string>
     <string name="error_sign_in_failed">Sign in failed. Please check your credentials and try again.</string>
     <string name="error_sign_up_failed">Sign up failed. Please try again later.</string>
@@ -281,8 +262,6 @@
     <string name="error_unknown">An unexpected error occurred. Please try again.</string>
 
     <!-- Offline Mode -->
-    <string name="continue_offline">Continue offline</string>
-    <string name="offline_mode_description">Use the app without an account. Your data will be stored locally on this device only.</string>
 
     <!-- Sign Out -->
     <string name="sign_out">Sign out</string>
@@ -347,7 +326,6 @@
     <string name="sms_shortcut_error">I could not register the transaction, please try again</string>
     <string name="sms_shortcut_settings_description">On iPhone, the Shortcuts app hands your bank SMS to BudgetHunter</string>
     <string name="sms_shortcut_settings_row">Read SMS automatically</string>
-    <string name="sms_shortcut_settings_row_subtitle">See how to set it up with Shortcuts</string>
     <string name="sms_shortcut_tutorial_title">Read SMS automatically</string>
     <string name="sms_shortcut_intro_title">What it does</string>
     <string name="sms_shortcut_intro_body">When an SMS from your bank arrives, Shortcuts hands it to BudgetHunter and the transaction is registered in your default budget, without opening the app.</string>
@@ -383,8 +361,6 @@
     <string name="sms_shortcut_image_filter">Message Contains with the bank name and Run Immediately chosen</string>
     <string name="sms_shortcut_image_action">Create New Shortcut button</string>
     <string name="sms_shortcut_image_variable">Shortcut Input variable in the action</string>
-    <string name="show_filters">Search and filter</string>
-    <string name="hide_filters">Hide search and filters</string>
     <string name="sort_entries">Sort</string>
     <string name="sort_newest">Newest first</string>
     <string name="sort_amount_descending">Amount: high to low</string>
@@ -491,4 +467,7 @@
 
     <!-- Redesign: entry form categories -->
     <string name="more_categories">More</string>
+
+    <!-- Redesign: review fixes -->
+    <string name="sign_out_failed">Could not sign out. Please try again</string>
 </resources>

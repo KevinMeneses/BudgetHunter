@@ -142,7 +142,8 @@ fun PasswordField(
         modifier = Modifier.fillMaxWidth(),
         visualTransformation = if (isVisible) VisualTransformation.None else PasswordVisualTransformation(),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = imeAction),
-        keyboardActions = KeyboardActions(onDone = { onImeAction() }, onNext = { onImeAction() }),
+        // Only "done" submits; "next" keeps its default and moves to the next field
+        keyboardActions = KeyboardActions(onDone = { onImeAction() }),
         trailingIcon = {
             IconButton(onClick = { isVisible = !isVisible }) {
                 Icon(

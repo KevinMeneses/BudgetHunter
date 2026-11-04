@@ -148,7 +148,7 @@ private fun CollaboratorsContent(
     onIntent: (CollaboratorsIntent) -> Unit
 ) {
     val isMe = { user: UserInfo ->
-        uiState.currentUserEmail?.equals(user.email, ignoreCase = true) == true
+        uiState.currentUserEmail?.trim()?.equals(user.email.trim(), ignoreCase = true) == true
     }
     val hasOthers = uiState.collaborators.any { !isMe(it) }
 

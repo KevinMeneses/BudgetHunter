@@ -51,7 +51,22 @@ Proposal with before/after screenshots and mockups: https://claude.ai/artifact/T
   needs a query or a server field.
 - No entry count per category in metrics: it needs a change in the aggregation use case.
 
+## After the PR review
+
+- Sign out in Settings catches a failure, keeps the user signed in and shows "No se pudo cerrar
+  sesión" in a snackbar, instead of crashing.
+- Sign up keeps one error per field (`nameError`, `emailError`, `passwordError`) besides the general
+  one, and checks every field at once.
+- The metrics filter travels in two `savedStateHandle` keys, only to a budget detail, read once and
+  removed.
+- Day grouping is the pure `groupedByDay()` (`budgetDetail/domain/EntryDays.kt`), remembered per list;
+  "Hoy / Ayer" is the pure `LocalDate.relativeTo(today)`.
+- Strings the redesign left unused were removed from both locales.
+
 ## Pending / ideas
+
+- Password recovery: without the confirmation field a typo in the password is only caught by the
+  eye icon; there is no "forgot password" flow yet (product decision).
 
 
 - Collaborator count on budget cards (needs data).

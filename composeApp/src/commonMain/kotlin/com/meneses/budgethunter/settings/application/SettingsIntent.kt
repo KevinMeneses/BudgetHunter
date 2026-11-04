@@ -20,6 +20,7 @@ sealed interface SettingsIntent {
     data class SavePassword(val currentPassword: String, val newPassword: String) : SettingsIntent
     data class ToggleSignOutConfirmation(val show: Boolean) : SettingsIntent
     data object SignOut : SettingsIntent
+    data object DismissSignOutError : SettingsIntent
 }
 
 sealed interface SettingsEvent {
