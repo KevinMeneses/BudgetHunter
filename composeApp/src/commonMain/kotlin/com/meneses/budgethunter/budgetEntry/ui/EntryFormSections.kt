@@ -20,8 +20,11 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.AttachFile
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
@@ -51,6 +54,7 @@ import budgethunter.composeapp.generated.resources.attach_receipt_subtitle
 import budgethunter.composeapp.generated.resources.created_by
 import budgethunter.composeapp.generated.resources.edited_by
 import budgethunter.composeapp.generated.resources.file_missing
+import budgethunter.composeapp.generated.resources.more_categories
 import budgethunter.composeapp.generated.resources.other_date
 import budgethunter.composeapp.generated.resources.scan_receipt
 import budgethunter.composeapp.generated.resources.scan_receipt_subtitle
@@ -251,39 +255,109 @@ fun ReceiptCard(
     }
 }
 
-/** Every category as a chip with its icon: choosing one is a single tap. */
+/** The categories most entries fall into, always one tap away in the form. */
+private val COMMON_CATEGORIES = listOf(
+    BudgetEntry.Category.FOOD,
+    BudgetEntry.Category.GROCERIES,
+    BudgetEntry.Category.TRANSPORTATION,
+    BudgetEntry.Category.SERVICES
+)
+
+/**
+ * The common categories as chips, plus the selected one when it is not among them, and a "More"
+ * chip that opens the rest in a menu. Two rows instead of five, so the form keeps its save
+ * button in view.
+ */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun CategoryChips(
     selected: BudgetEntry.Category,
     onCategorySelected: (BudgetEntry.Category) -> Unit
 ) {
-    val categories = remember { BudgetEntry.getCategories() }
+    // The selection goes first when it is not a common one, so it is always visible
+    val visible = remember(selected) {
+        if (selected in COMMON_CATEGORIES) COMMON_CATEGORIES else listOf(selected) + COMMON_CATEGORIES
+    }
+    val others = remember(visible) { BudgetEntry.getCategories().filterNot { it in visible } }
+    var isMenuOpen by remember { mutableStateOf(false) }
+
     FlowRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
-        categories.forEach { category ->
+        visible.forEach { category ->
+            CategoryChip(
+                category = category,
+                isSelected = category == selected,
+                onClick = { onCategorySelected(category) }
+            )
+        }
+
+        Box {
             FilterChip(
-                selected = category == selected,
-                onClick = { onCategorySelected(category) },
-                label = { Text(category.toStringResource(), fontSize = 13.sp) },
-                leadingIcon = {
+                selected = false,
+                onClick = { isMenuOpen = true },
+                label = { Text(stringResource(Res.string.more_categories), fontSize = 13.sp) },
+                trailingIcon = {
                     Icon(
-                        imageVector = category.icon,
+                        imageVector = Icons.Default.ArrowDropDown,
                         contentDescription = null,
                         modifier = Modifier.size(FilterChipDefaults.IconSize)
                     )
                 },
-                shape = MaterialTheme.shapes.small,
-                colors = FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = AppColors.primaryContainer,
-                    selectedLabelColor = AppColors.onPrimaryContainer,
-                    selectedLeadingIconColor = AppColors.onPrimaryContainer
-                )
+                shape = MaterialTheme.shapes.small
             )
+            DropdownMenu(
+                expanded = isMenuOpen,
+                onDismissRequest = { isMenuOpen = false },
+                shape = MaterialTheme.shapes.medium,
+                containerColor = AppColors.surfaceContainer
+            ) {
+                others.forEach { category ->
+                    DropdownMenuItem(
+                        text = { Text(category.toStringResource(), fontSize = 15.sp) },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = category.icon,
+                                contentDescription = null,
+                                tint = AppColors.onSurfaceVariant
+                            )
+                        },
+                        onClick = {
+                            isMenuOpen = false
+                            onCategorySelected(category)
+                        }
+                    )
+                }
+            }
         }
     }
+}
+
+@Composable
+private fun CategoryChip(
+    category: BudgetEntry.Category,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    FilterChip(
+        selected = isSelected,
+        onClick = onClick,
+        label = { Text(category.toStringResource(), fontSize = 13.sp) },
+        leadingIcon = {
+            Icon(
+                imageVector = category.icon,
+                contentDescription = null,
+                modifier = Modifier.size(FilterChipDefaults.IconSize)
+            )
+        },
+        shape = MaterialTheme.shapes.small,
+        colors = FilterChipDefaults.filterChipColors(
+            selectedContainerColor = AppColors.primaryContainer,
+            selectedLabelColor = AppColors.onPrimaryContainer,
+            selectedLeadingIconColor = AppColors.onPrimaryContainer
+        )
+    )
 }
 
 /** Today and yesterday cover most entries; any other day goes through the calendar. */

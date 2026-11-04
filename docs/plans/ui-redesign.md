@@ -33,8 +33,11 @@ Proposal with before/after screenshots and mockups: https://claude.ai/artifact/T
 
 - Category badges are neutral (only "Sin categoría" is blue): the metrics screen colors categories by
   rank, so a fixed color per category in the list would contradict it.
-- All categories are chips in the form (no "More" chip): with a flow layout they fit in four rows and
-  every category stays one tap away.
+- The form shows the common categories (Food, Groceries, Transportation, Services) plus the selected
+  one, and a "More" chip with the rest in a menu: all twelve as chips took five rows and pushed the
+  save button down.
+- `MainActivity` uses `windowSoftInputMode="adjustResize"`: without it, on Android 14 and older the
+  keyboard covered the save button instead of resizing the screen.
 - The list's ⋮ became an account circle (`AccountButton`, initial of `PreferencesManager.getLastSignedInEmail()`):
   signed in it opens Settings, where signing out now lives; in offline mode it shows a person icon and
   opens the old menu, which offers to sign in.

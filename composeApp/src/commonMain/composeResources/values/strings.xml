@@ -488,4 +488,7 @@
     <string name="sign_up_link">Sign up</string>
     <string name="have_account_prompt">Already have an account?</string>
     <string name="sign_in_link">Sign in</string>
+
+    <!-- Redesign: entry form categories -->
+    <string name="more_categories">More</string>
 </resources>
