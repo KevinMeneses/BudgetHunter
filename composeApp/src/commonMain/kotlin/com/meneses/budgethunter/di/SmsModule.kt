@@ -3,6 +3,7 @@ package com.meneses.budgethunter.di
 import com.meneses.budgethunter.sms.application.ProcessSmsUseCase
 import com.meneses.budgethunter.sms.application.RegisterSmsEntryUseCase
 import com.meneses.budgethunter.sms.application.RegisterSmsFromShortcutUseCase
+import com.meneses.budgethunter.sms.application.RequestSmsPermissionsIfNeededUseCase
 import com.meneses.budgethunter.sms.data.SmsMapper
 import com.meneses.budgethunter.sms.domain.SmsService
 import org.koin.dsl.module
@@ -36,6 +37,14 @@ val smsModule = module {
         RegisterSmsFromShortcutUseCase(
             registerSmsEntry = get(),
             stringResourceProvider = get()
+        )
+    }
+
+    // Single: it remembers having asked, so the prompt shows at most once per process.
+    single {
+        RequestSmsPermissionsIfNeededUseCase(
+            preferencesManager = get(),
+            permissionsManager = get()
         )
     }
 }

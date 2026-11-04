@@ -13,6 +13,9 @@ actual class PermissionsManager {
         return false
     }
 
+    // The shortcut answers with a dialog: there is no notification permission to ask for here.
+    actual fun hasNotificationPermission(): Boolean = true
+
     actual fun requestSmsPermissions(callback: (granted: Boolean) -> Unit) {
         // iOS doesn't support SMS reading like Android
         // On iOS, this would need alternative implementation

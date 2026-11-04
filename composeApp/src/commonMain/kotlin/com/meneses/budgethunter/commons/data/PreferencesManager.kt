@@ -7,6 +7,8 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 
@@ -15,6 +17,11 @@ class PreferencesManager(private val preferences: DataStore<Preferences>) {
     suspend fun isSmsReadingEnabled() = preferences.data
         .map { it[KEY_SMS_READING_ENABLED] }
         .firstOrNull() == true
+
+    /** Emits on every change, so a value restored from the account is seen as it lands. */
+    val smsReadingEnabled: Flow<Boolean> = preferences.data
+        .map { it[KEY_SMS_READING_ENABLED] == true }
+        .distinctUntilChanged()
 
     suspend fun setSmsReadingEnabled(value: Boolean) {
         preferences.edit { it[KEY_SMS_READING_ENABLED] = value }

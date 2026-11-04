@@ -75,6 +75,7 @@ val budgetListModule = module {
             authRepository = get(),
             signOutUseCase = get(),
             preferencesManager = get(),
+            requestSmsPermissionsIfNeeded = get(),
             logger = get()
         )
     }

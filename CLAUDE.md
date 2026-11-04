@@ -92,6 +92,9 @@ Type-safe navigation using Navigation Compose with serializable route objects. M
 - Bank-specific configuration in `sms/domain/SupportedBanks.kt` for different SMS formats
 - Automatic budget entry creation from SMS transactions (`RegisterSmsEntryUseCase`, shared by both platforms),
   always in the default budget of Settings
+- Settings asks for the SMS and notification permissions when the switch is turned on. When the preference comes back
+  on without them (reinstall, new phone: restored by `SyncUserPreferencesUseCase.pull()` or the Android backup),
+  `RequestSmsPermissionsIfNeededUseCase`, observed from the budget list, asks once per process unless already denied
 - iOS cannot read SMS: a Shortcuts automation (trigger "Mensaje") passes the text to the App Intent
   `RegisterExpenseFromMessageIntent` (iosApp/, also an App Shortcut), which calls
   `SmsShortcutEntryPoint` (iosMain) -> `RegisterSmsFromShortcutUseCase` and answers with a dialog.

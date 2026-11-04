@@ -183,10 +183,12 @@ class SettingsViewModel(
         pushPreferences()
         if (!enabled) return@launch
 
+        val isMissingPermission = !permissionsManager.hasSmsPermission() ||
+            !permissionsManager.hasNotificationPermission()
         when {
-            !permissionsManager.hasSmsPermission() && !permissionsManager.shouldShowSMSPermissionRationale() -> {
-                permissionsManager.requestSmsPermissions { granted ->
-                    _uiState.update { it.copy(hasSmsPermission = granted) }
+            isMissingPermission && !permissionsManager.shouldShowSMSPermissionRationale() -> {
+                permissionsManager.requestSmsPermissions {
+                    _uiState.update { it.copy(hasSmsPermission = permissionsManager.hasSmsPermission()) }
                 }
             }
 

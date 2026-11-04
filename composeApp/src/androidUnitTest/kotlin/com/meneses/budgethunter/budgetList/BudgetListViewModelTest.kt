@@ -10,6 +10,7 @@ import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.commons.data.PreferencesManager
 import com.meneses.budgethunter.commons.data.sync.NoOpLogger
+import com.meneses.budgethunter.sms.application.RequestSmsPermissionsIfNeededUseCase
 import io.mockk.coEvery
 import io.mockk.coJustRun
 import io.mockk.mockk
@@ -49,6 +50,7 @@ class BudgetListViewModelTest {
     private val authRepository = mockk<AuthRepository>(relaxed = true)
     private val preferencesManager = mockk<PreferencesManager>(relaxed = true)
     private val signOutUseCase = mockk<SignOutUseCase>(relaxed = true)
+    private val requestSmsPermissionsIfNeeded = mockk<RequestSmsPermissionsIfNeededUseCase>(relaxed = true)
 
     // System under test
     private lateinit var viewModel: BudgetListViewModel
@@ -67,6 +69,7 @@ class BudgetListViewModelTest {
             authRepository = authRepository,
             signOutUseCase = signOutUseCase,
             preferencesManager = preferencesManager,
+            requestSmsPermissionsIfNeeded = requestSmsPermissionsIfNeeded,
             logger = NoOpLogger()
         )
     }
@@ -161,6 +164,7 @@ class BudgetListViewModelTest {
         authRepository = authRepository,
         signOutUseCase = signOutUseCase,
         preferencesManager = preferencesManager,
+        requestSmsPermissionsIfNeeded = requestSmsPermissionsIfNeeded,
         logger = NoOpLogger()
     )
 

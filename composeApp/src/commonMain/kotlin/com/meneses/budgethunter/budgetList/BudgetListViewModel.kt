@@ -16,6 +16,7 @@ import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.commons.data.PreferencesManager
 import com.meneses.budgethunter.commons.data.sync.Logger
+import com.meneses.budgethunter.sms.application.RequestSmsPermissionsIfNeededUseCase
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,6 +32,7 @@ class BudgetListViewModel(
     private val authRepository: AuthRepository,
     private val signOutUseCase: SignOutUseCase,
     private val preferencesManager: PreferencesManager,
+    private val requestSmsPermissionsIfNeeded: RequestSmsPermissionsIfNeededUseCase,
     private val logger: Logger
 ) : ViewModel() {
     private val tag = "BudgetListViewModel"
@@ -43,6 +45,9 @@ class BudgetListViewModel(
     init {
         collectBudgetList()
         checkAuthState()
+        // The main screen, shown on every launch and right after sign in: the place where a
+        // restored "read SMS" preference gets its permissions back.
+        viewModelScope.launch { requestSmsPermissionsIfNeeded.observe() }
     }
 
     private fun checkAuthState() {
