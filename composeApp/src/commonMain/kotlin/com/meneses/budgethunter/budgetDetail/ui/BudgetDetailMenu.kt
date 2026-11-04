@@ -1,14 +1,12 @@
 package com.meneses.budgethunter.budgetDetail.ui
 
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -17,8 +15,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import budgethunter.composeapp.generated.resources.Res
 import budgethunter.composeapp.generated.resources.delete_budget
-import budgethunter.composeapp.generated.resources.manage_collaborators
-import budgethunter.composeapp.generated.resources.metrics
 import budgethunter.composeapp.generated.resources.settings
 import com.meneses.budgethunter.theme.AppColors
 import org.jetbrains.compose.resources.stringResource
@@ -27,61 +23,37 @@ import org.jetbrains.compose.resources.stringResource
 fun BudgetDetailMenu(
     expanded: Boolean,
     onDismiss: () -> Unit,
-    onMetricsClick: () -> Unit,
     onDeleteClick: () -> Unit,
-    onSettingsClick: () -> Unit,
-    showCollaboratorsOption: Boolean,
-    onCollaboratorsClick: () -> Unit
+    onSettingsClick: () -> Unit
 ) {
     DropdownMenu(
         expanded = expanded,
         onDismissRequest = onDismiss,
-        shape = AbsoluteRoundedCornerShape(10.dp),
-        containerColor = AppColors.surface
+        shape = MaterialTheme.shapes.medium,
+        containerColor = AppColors.surfaceContainer
     ) {
-        if (showCollaboratorsOption) {
-            DropdownMenuItem(
-                text = {
-                    Text(
-                        text = stringResource(Res.string.manage_collaborators),
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                },
-                onClick = {
-                    onDismiss()
-                    onCollaboratorsClick()
-                },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.Group,
-                        contentDescription = stringResource(Res.string.manage_collaborators),
-                        modifier = Modifier.size(18.dp),
-                        tint = AppColors.secondary
-                    )
-                }
-            )
-        }
-
         DropdownMenuItem(
             text = {
                 Text(
-                    text = stringResource(Res.string.metrics),
+                    text = stringResource(Res.string.settings),
                     style = MaterialTheme.typography.bodyMedium
                 )
             },
             onClick = {
                 onDismiss()
-                onMetricsClick()
+                onSettingsClick()
             },
             leadingIcon = {
                 Icon(
-                    imageVector = Icons.Default.Star,
-                    contentDescription = stringResource(Res.string.metrics),
+                    imageVector = Icons.Default.Settings,
+                    contentDescription = stringResource(Res.string.settings),
                     modifier = Modifier.size(18.dp),
-                    tint = AppColors.secondary
+                    tint = AppColors.onSurfaceVariant
                 )
             }
         )
+        // Last and apart from the rest: the only action here that cannot be undone
+        HorizontalDivider()
         DropdownMenuItem(
             text = {
                 Text(
@@ -100,26 +72,6 @@ fun BudgetDetailMenu(
                     contentDescription = stringResource(Res.string.delete_budget),
                     modifier = Modifier.size(18.dp),
                     tint = AppColors.error
-                )
-            }
-        )
-        DropdownMenuItem(
-            text = {
-                Text(
-                    text = stringResource(Res.string.settings),
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            },
-            onClick = {
-                onDismiss()
-                onSettingsClick()
-            },
-            leadingIcon = {
-                Icon(
-                    imageVector = Icons.Default.Settings,
-                    contentDescription = stringResource(Res.string.settings),
-                    modifier = Modifier.size(18.dp),
-                    tint = AppColors.primary
                 )
             }
         )

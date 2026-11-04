@@ -35,10 +35,12 @@ import com.meneses.budgethunter.auth.ui.SignInScreen
 import com.meneses.budgethunter.auth.ui.SignUpScreen
 import com.meneses.budgethunter.budgetDetail.BudgetDetailViewModel
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailEvent
+import com.meneses.budgethunter.budgetDetail.application.BudgetDetailIntent
 import com.meneses.budgethunter.budgetDetail.ui.BudgetDetailScreen
 import com.meneses.budgethunter.budgetEntry.BudgetEntryViewModel
 import com.meneses.budgethunter.budgetEntry.application.BudgetEntryEvent
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
+import com.meneses.budgethunter.budgetEntry.domain.BudgetEntryFilter
 import com.meneses.budgethunter.budgetEntry.ui.BudgetEntryScreen
 import com.meneses.budgethunter.budgetList.BudgetListViewModel
 import com.meneses.budgethunter.budgetList.application.BudgetListEvent
@@ -54,6 +56,7 @@ import com.meneses.budgethunter.commons.data.PreferencesManager
 import com.meneses.budgethunter.commons.platform.NetworkMonitor
 import com.meneses.budgethunter.commons.util.serializableType
 import com.meneses.budgethunter.settings.SettingsViewModel
+import com.meneses.budgethunter.settings.application.SettingsEvent
 import com.meneses.budgethunter.settings.ui.SettingsScreen
 import com.meneses.budgethunter.settings.ui.SmsShortcutTutorialScreen
 import com.meneses.budgethunter.splash.SplashScreenViewModel
@@ -65,6 +68,10 @@ import org.koin.compose.getKoin
 import org.koin.compose.koinInject
 import org.koin.core.parameter.parametersOf
 import kotlin.reflect.typeOf
+
+/** Category and type the metrics screen leaves for the budget detail to filter its entries by. */
+private const val METRICS_FILTER_CATEGORY_KEY = "metrics_filter_category"
+private const val METRICS_FILTER_TYPE_KEY = "metrics_filter_type"
 
 @Composable
 fun BudgetHunterNavigation() {
@@ -253,6 +260,20 @@ fun BudgetHunterNavigation() {
                 val settingsViewModel: SettingsViewModel = koinInject()
                 val uiState by settingsViewModel.uiState.collectAsStateWithLifecycle()
 
+                LaunchedEffect(Unit) {
+                    settingsViewModel.events.collect { event ->
+                        when (event) {
+                            // Nothing behind Settings is valid without the account
+                            is SettingsEvent.NavigateToSignIn -> navController.navigate(
+                                route = SignInScreen,
+                                navOptions = navOptions {
+                                    popUpTo(navController.graph.id) { inclusive = true }
+                                }
+                            )
+                        }
+                    }
+                }
+
                 SettingsScreen.Show(
                     uiState = uiState,
                     onIntent = settingsViewModel::sendIntent,
@@ -276,6 +297,25 @@ fun BudgetHunterNavigation() {
                 val koin = getKoin()
                 val budgetDetailViewModel = viewModel { koin.get<BudgetDetailViewModel>() }
                 val uiState by budgetDetailViewModel.uiState.collectAsStateWithLifecycle()
+
+                // A category chosen in the metrics screen: show its entries. Read once and
+                // cleared right away, so a rotation or a restored process does not apply it again
+                // over a filter the user changed since.
+                val metricsCategoryName by backStackEntry.savedStateHandle
+                    .getStateFlow<String?>(METRICS_FILTER_CATEGORY_KEY, null)
+                    .collectAsStateWithLifecycle()
+                LaunchedEffect(metricsCategoryName) {
+                    val categoryName = metricsCategoryName ?: return@LaunchedEffect
+                    val typeName = backStackEntry.savedStateHandle.get<String>(METRICS_FILTER_TYPE_KEY)
+                    backStackEntry.savedStateHandle.remove<String>(METRICS_FILTER_CATEGORY_KEY)
+                    backStackEntry.savedStateHandle.remove<String>(METRICS_FILTER_TYPE_KEY)
+                    val type = BudgetEntry.Type.entries.firstOrNull { it.name == typeName }
+                    val category = BudgetEntry.Category.entries.firstOrNull { it.name == categoryName }
+                        ?: return@LaunchedEffect
+                    budgetDetailViewModel.sendIntent(
+                        BudgetDetailIntent.ShowFilteredEntries(BudgetEntryFilter(type = type, category = category))
+                    )
+                }
                 val networkMonitor: NetworkMonitor = koinInject()
                 val snackbarHostState = remember { SnackbarHostState() }
                 var errorResource by remember { mutableStateOf<StringResource?>(null) }
@@ -287,7 +327,7 @@ fun BudgetHunterNavigation() {
                         when (event) {
                             is BudgetDetailEvent.NavigateBack -> navController.popBackStackOnce(backStackEntry)
                             is BudgetDetailEvent.ShowEntry -> navController.navigateOnce(
-                                BudgetEntryScreen(event.entry)
+                                BudgetEntryScreen(event.entry, event.scanReceipt)
                             )
                             is BudgetDetailEvent.ShowError -> errorResource = event.message
                             is BudgetDetailEvent.ShowSuccess -> successResource = event.message
@@ -381,7 +421,19 @@ fun BudgetHunterNavigation() {
                 budgetMetricsRoute.Show(
                     uiState = uiState,
                     onIntent = budgetMetricsViewModel::sendIntent,
-                    goBack = { navController.popBackStackOnce(backStackEntry) }
+                    goBack = { navController.popBackStackOnce(backStackEntry) },
+                    showCategoryEntries = { category, type ->
+                        // Handed back to the budget detail, which filters its list with it. Metrics
+                        // is only opened from there; anywhere else it just goes back.
+                        navController.previousBackStackEntry
+                            ?.takeIf { it.destination.hasRoute<BudgetDetailScreen>() }
+                            ?.savedStateHandle
+                            ?.let { handle ->
+                                handle[METRICS_FILTER_TYPE_KEY] = type.name
+                                handle[METRICS_FILTER_CATEGORY_KEY] = category.name
+                            }
+                        navController.popBackStackOnce(backStackEntry)
+                    }
                 )
             }
 

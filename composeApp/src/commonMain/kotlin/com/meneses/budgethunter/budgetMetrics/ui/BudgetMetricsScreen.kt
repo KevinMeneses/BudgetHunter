@@ -25,6 +25,7 @@ import budgethunter.composeapp.generated.resources.categorize_done
 import budgethunter.composeapp.generated.resources.categorize_done_pending
 import budgethunter.composeapp.generated.resources.come_back
 import budgethunter.composeapp.generated.resources.error_unknown
+import budgethunter.composeapp.generated.resources.metrics
 import budgethunter.composeapp.generated.resources.metrics_expenses
 import budgethunter.composeapp.generated.resources.metrics_incomes
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
@@ -44,7 +45,8 @@ data class BudgetMetricsScreen(val budget: Budget) {
     fun Show(
         uiState: BudgetMetricsState,
         onIntent: (BudgetMetricsIntent) -> Unit,
-        goBack: () -> Unit
+        goBack: () -> Unit,
+        showCategoryEntries: (BudgetEntry.Category, BudgetEntry.Type) -> Unit
     ) {
         val snackbarHostState = remember { SnackbarHostState() }
         val outcome = uiState.categorizationOutcome
@@ -69,7 +71,8 @@ data class BudgetMetricsScreen(val budget: Budget) {
             snackbarHost = { SnackbarHost(snackbarHostState) },
             topBar = {
                 AppBar(
-                    title = budget.name,
+                    title = stringResource(Res.string.metrics),
+                    subtitle = budget.name,
                     leftButtonIcon = Icons.AutoMirrored.Filled.ArrowBack,
                     leftButtonDescription = stringResource(Res.string.come_back),
                     onLeftButtonClick = goBack
@@ -89,7 +92,10 @@ data class BudgetMetricsScreen(val budget: Budget) {
                         .padding(horizontal = 20.dp, vertical = 12.dp)
                 )
 
-                BudgetMetricsContent(uiState = uiState)
+                BudgetMetricsContent(
+                    uiState = uiState,
+                    onCategoryClick = { showCategoryEntries(it, uiState.selectedType) }
+                )
             }
         }
     }

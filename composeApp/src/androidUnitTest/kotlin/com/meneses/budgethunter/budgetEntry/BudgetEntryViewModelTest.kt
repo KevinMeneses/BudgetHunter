@@ -170,4 +170,33 @@ class BudgetEntryViewModelTest {
         assertEquals(Res.string.error_no_app_to_open_file, event.message)
         assertTrue(event.isError)
     }
+
+    // ========== isAiProcessingEnabled Tests ==========
+
+    private fun createViewModel() = BudgetEntryViewModel(
+        budgetEntryRepository = budgetEntryRepository,
+        createBudgetEntryFromImageUseCase = createBudgetEntryFromImageUseCase,
+        validateFilePathUseCase = validateFilePathUseCase,
+        preferencesManager = preferencesManager,
+        fileManager = fileManager,
+        cameraManager = cameraManager,
+        filePickerManager = filePickerManager,
+        shareManager = shareManager
+    )
+
+    @Test
+    fun `state mirrors AI processing enabled in preferences`() = runTest {
+        coEvery { preferencesManager.isAiProcessingEnabled() } returns true
+        val enabledViewModel = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertTrue(enabledViewModel.uiState.value.isAiProcessingEnabled)
+    }
+
+    @Test
+    fun `state mirrors AI processing disabled in preferences`() = runTest {
+        coEvery { preferencesManager.isAiProcessingEnabled() } returns false
+        val disabledViewModel = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertFalse(disabledViewModel.uiState.value.isAiProcessingEnabled)
+    }
 }

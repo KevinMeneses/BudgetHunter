@@ -5,7 +5,7 @@ import org.jetbrains.compose.resources.StringResource
 
 sealed interface BudgetDetailEvent {
     data object NavigateBack : BudgetDetailEvent
-    data class ShowEntry(val entry: BudgetEntry) : BudgetDetailEvent
+    data class ShowEntry(val entry: BudgetEntry, val scanReceipt: Boolean = false) : BudgetDetailEvent
     data class ShowError(val message: StringResource) : BudgetDetailEvent
     data class ShowSuccess(val message: StringResource) : BudgetDetailEvent
     data class ShowCollaboratorEntry(val collaboratorName: String) : BudgetDetailEvent

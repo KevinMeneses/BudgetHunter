@@ -3,14 +3,12 @@ package com.meneses.budgethunter.auth
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import budgethunter.composeapp.generated.resources.Res
-import budgethunter.composeapp.generated.resources.error_confirm_password_required
 import budgethunter.composeapp.generated.resources.error_email_required
 import budgethunter.composeapp.generated.resources.error_google_no_account
 import budgethunter.composeapp.generated.resources.error_google_sign_in_failed
 import budgethunter.composeapp.generated.resources.error_name_required
 import budgethunter.composeapp.generated.resources.error_password_required
 import budgethunter.composeapp.generated.resources.error_password_too_short
-import budgethunter.composeapp.generated.resources.error_passwords_do_not_match
 import budgethunter.composeapp.generated.resources.error_sign_up_failed
 import com.meneses.budgethunter.auth.application.GoogleAuthOutcome
 import com.meneses.budgethunter.auth.application.SignInWithGoogleUseCase
@@ -44,7 +42,6 @@ class SignUpViewModel(
             is SignUpIntent.EmailChanged -> updateEmail(intent.email)
             is SignUpIntent.NameChanged -> updateName(intent.name)
             is SignUpIntent.PasswordChanged -> updatePassword(intent.password)
-            is SignUpIntent.ConfirmPasswordChanged -> updateConfirmPassword(intent.confirmPassword)
             is SignUpIntent.SignUpClicked -> signUp()
             is SignUpIntent.GoogleSignUpClicked -> signUpWithGoogle()
             is SignUpIntent.DismissError -> dismissError()
@@ -52,59 +49,45 @@ class SignUpViewModel(
         }
     }
 
+    // Editing a field clears its own error, the others stay until the next attempt
     private fun updateEmail(email: String) {
-        _uiState.update { it.copy(email = email) }
+        _uiState.update { it.copy(email = email, emailError = null) }
     }
 
     private fun updateName(name: String) {
-        _uiState.update { it.copy(name = name) }
+        _uiState.update { it.copy(name = name, nameError = null) }
     }
 
     private fun updatePassword(password: String) {
-        _uiState.update { it.copy(password = password) }
-    }
-
-    private fun updateConfirmPassword(confirmPassword: String) {
-        _uiState.update { it.copy(confirmPassword = confirmPassword) }
+        _uiState.update { it.copy(password = password, passwordError = null) }
     }
 
     private fun signUp() {
         val currentState = _uiState.value
 
-        // Validation
-        when {
-            currentState.email.isBlank() -> {
-                _uiState.update { it.copy(error = Res.string.error_email_required) }
-                return
+        // Every field is checked at once, so all its problems show in one attempt, each under its
+        // field. There is no confirmation field: the eye icon shows the password to check it.
+        val nameError = Res.string.error_name_required.takeIf { currentState.name.isBlank() }
+        val emailError = Res.string.error_email_required.takeIf { currentState.email.isBlank() }
+        val passwordError = when {
+            currentState.password.isBlank() -> Res.string.error_password_required
+            currentState.password.length < MIN_PASSWORD_LENGTH -> Res.string.error_password_too_short
+            else -> null
+        }
+        if (nameError != null || emailError != null || passwordError != null) {
+            _uiState.update {
+                it.copy(nameError = nameError, emailError = emailError, passwordError = passwordError, error = null)
             }
-            currentState.name.isBlank() -> {
-                _uiState.update { it.copy(error = Res.string.error_name_required) }
-                return
-            }
-            currentState.password.isBlank() -> {
-                _uiState.update { it.copy(error = Res.string.error_password_required) }
-                return
-            }
-            currentState.confirmPassword.isBlank() -> {
-                _uiState.update { it.copy(error = Res.string.error_confirm_password_required) }
-                return
-            }
-            currentState.password != currentState.confirmPassword -> {
-                _uiState.update { it.copy(error = Res.string.error_passwords_do_not_match) }
-                return
-            }
-            currentState.password.length < 6 -> {
-                _uiState.update { it.copy(error = Res.string.error_password_too_short) }
-                return
-            }
+            return
         }
 
         _uiState.update { it.copy(isLoading = true, error = null) }
 
         viewModelScope.launch {
+            // Autocomplete often leaves a trailing space; the password is sent exactly as typed
             authRepository.signUp(
-                email = currentState.email,
-                name = currentState.name,
+                email = currentState.email.trim(),
+                name = currentState.name.trim(),
                 password = currentState.password
             ).fold(
                 onSuccess = {
@@ -154,3 +137,5 @@ class SignUpViewModel(
         _uiState.update { it.copy(error = null) }
     }
 }
+
+private const val MIN_PASSWORD_LENGTH = 6

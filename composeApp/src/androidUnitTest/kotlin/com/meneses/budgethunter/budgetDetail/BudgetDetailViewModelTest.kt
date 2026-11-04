@@ -270,6 +270,35 @@ class BudgetDetailViewModelTest {
     }
 
     @Test
+    fun `the budget totals cover every entry, whatever the filter`() = runTest {
+        showDetail(
+            listOf(
+                entry(3, "Mercado", amount = "100"),
+                entry(2, "Gasolina", amount = "40"),
+                entry(1, "Salario", amount = "500").copy(type = BudgetEntry.Type.INCOME)
+            )
+        )
+
+        viewModel.sendIntent(BudgetDetailIntent.FilterEntries(BudgetEntryFilter(description = "merc")))
+
+        // The summary describes the budget; only the list is narrowed
+        assertEquals(140.0, viewModel.uiState.value.budgetExpenses)
+        assertEquals(500.0, viewModel.uiState.value.budgetIncomes)
+        assertEquals(listOf("Mercado"), shownDescriptions())
+    }
+
+    @Test
+    fun `showing filtered entries applies the filter and opens the bar in one step`() = runTest {
+        showDetail(listOf(entry(2, "Mercado"), entry(1, "Gasolina")))
+        assertEquals(false, viewModel.uiState.value.isFilterBarVisible)
+
+        viewModel.sendIntent(BudgetDetailIntent.ShowFilteredEntries(BudgetEntryFilter(description = "merc")))
+
+        assertEquals(true, viewModel.uiState.value.isFilterBarVisible)
+        assertEquals(listOf("Mercado"), shownDescriptions())
+    }
+
+    @Test
     fun `an entry arriving while filtering is filtered too`() = runTest {
         val source = MutableStateFlow(BudgetDetail(budget, listOf(entry(1, "Mercado"))))
         every { budgetDetailRepository.getBudgetDetailById(budget.id) } returns source
@@ -738,5 +767,30 @@ class BudgetDetailViewModelTest {
 
         // Then
         assertEquals(2, received.count { it is BudgetDetailEvent.ShowError }, "Got $received")
+    }
+
+    // ========== showEntry scanReceipt Tests ==========
+
+    @Test
+    fun `showEntry with scanReceipt true emits ShowEntry event asking to scan the receipt`() = runTest {
+        val entry = BudgetEntry(id = 5, budgetId = 10)
+
+        viewModel.sendIntent(BudgetDetailIntent.ShowEntry(entry, scanReceipt = true))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val event = viewModel.events.first()
+        assertIs<BudgetDetailEvent.ShowEntry>(event)
+        assertEquals(entry, event.entry)
+        assertTrue(event.scanReceipt)
+    }
+
+    @Test
+    fun `showEntry without scanReceipt emits ShowEntry event that does not scan the receipt`() = runTest {
+        viewModel.sendIntent(BudgetDetailIntent.ShowEntry(BudgetEntry(id = 5, budgetId = 10)))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val event = viewModel.events.first()
+        assertIs<BudgetDetailEvent.ShowEntry>(event)
+        assertFalse(event.scanReceipt)
     }
 }

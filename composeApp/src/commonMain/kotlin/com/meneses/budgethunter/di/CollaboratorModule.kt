@@ -28,6 +28,7 @@ val collaboratorModule = module {
     factory { (budgetServerId: Long) ->
         CollaboratorsViewModel(
             collaboratorRepository = get(),
+            preferencesManager = get(),
             budgetServerId = budgetServerId
         )
     }

@@ -12,6 +12,8 @@ data class BudgetListState(
     val isSearchMode: Boolean = false,
     val searchQuery: String = "",
     val isAuthenticated: Boolean = false,
+    /** The signed-in account, whose initial the app bar shows; null in offline mode. */
+    val accountEmail: String? = null,
     val isSyncing: Boolean = false,
     val isSigningOut: Boolean = false,
     val isCreatingBudget: Boolean = false,

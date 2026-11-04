@@ -49,6 +49,13 @@ class BudgetEntryViewModel(
     private val _events = Channel<BudgetEntryEvent>(Channel.BUFFERED)
     val events = _events.receiveAsFlow()
 
+    init {
+        viewModelScope.launch {
+            val isAiEnabled = preferencesManager.isAiProcessingEnabled()
+            _uiState.update { it.copy(isAiProcessingEnabled = isAiEnabled) }
+        }
+    }
+
     private var wasNewInvoiceAttached: Boolean = false
     private var invoiceToDelete: String? = null
 

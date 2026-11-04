@@ -8,6 +8,7 @@ import com.meneses.budgethunter.budgetList.application.DeleteBudgetUseCase
 import com.meneses.budgethunter.budgetList.application.DuplicateBudgetUseCase
 import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.budgetList.domain.Budget
+import com.meneses.budgethunter.commons.data.PreferencesManager
 import com.meneses.budgethunter.commons.data.sync.NoOpLogger
 import io.mockk.coEvery
 import io.mockk.coJustRun
@@ -25,6 +26,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.test.assertNull
 
 /**
  * Unit tests for BudgetListViewModel event emissions.
@@ -45,6 +47,7 @@ class BudgetListViewModelTest {
     private val duplicateBudgetUseCase = mockk<DuplicateBudgetUseCase>(relaxed = true)
     private val deleteBudgetUseCase = mockk<DeleteBudgetUseCase>(relaxed = true)
     private val authRepository = mockk<AuthRepository>(relaxed = true)
+    private val preferencesManager = mockk<PreferencesManager>(relaxed = true)
     private val signOutUseCase = mockk<SignOutUseCase>(relaxed = true)
 
     // System under test
@@ -63,6 +66,7 @@ class BudgetListViewModelTest {
             deleteBudgetUseCase = deleteBudgetUseCase,
             authRepository = authRepository,
             signOutUseCase = signOutUseCase,
+            preferencesManager = preferencesManager,
             logger = NoOpLogger()
         )
     }
@@ -146,5 +150,39 @@ class BudgetListViewModelTest {
         // Then - a ShowMessage event is still emitted so the user is informed of the failure
         val event = viewModel.events.first()
         assertIs<BudgetListEvent.ShowMessage>(event)
+    }
+
+    // ========== accountEmail Tests ==========
+
+    private fun createViewModel() = BudgetListViewModel(
+        budgetRepository = budgetRepository,
+        duplicateBudgetUseCase = duplicateBudgetUseCase,
+        deleteBudgetUseCase = deleteBudgetUseCase,
+        authRepository = authRepository,
+        signOutUseCase = signOutUseCase,
+        preferencesManager = preferencesManager,
+        logger = NoOpLogger()
+    )
+
+    @Test
+    fun `accountEmail is the last signed in email when authenticated`() = runTest {
+        coEvery { authRepository.isAuthenticated() } returns true
+        coEvery { preferencesManager.getLastSignedInEmail() } returns "me@example.com"
+
+        val authenticatedViewModel = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals("me@example.com", authenticatedViewModel.uiState.value.accountEmail)
+    }
+
+    @Test
+    fun `accountEmail is null when not authenticated`() = runTest {
+        coEvery { authRepository.isAuthenticated() } returns false
+        coEvery { preferencesManager.getLastSignedInEmail() } returns "stale@example.com"
+
+        val offlineViewModel = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertNull(offlineViewModel.uiState.value.accountEmail)
     }
 }

@@ -133,11 +133,14 @@ class BudgetDetailViewModel(
             is BudgetDetailIntent.GetBudgetDetail -> getBudgetDetail()
             is BudgetDetailIntent.UpdateBudgetAmount -> updateBudgetAmount(intent.amount)
             is BudgetDetailIntent.FilterEntries -> filterEntries(intent.filter)
+            is BudgetDetailIntent.ShowFilteredEntries -> _uiState.update {
+                it.copy(filter = intent.filter, isFilterBarVisible = true).withEntries(allEntries)
+            }
             is BudgetDetailIntent.ClearFilter -> clearFilter()
             is BudgetDetailIntent.ToggleFilterBar -> _uiState.update { it.copy(isFilterBarVisible = !it.isFilterBarVisible) }
             is BudgetDetailIntent.DeleteBudget -> deleteBudget()
             is BudgetDetailIntent.DeleteSelectedEntries -> deleteSelectedEntries()
-            is BudgetDetailIntent.ShowEntry -> showEntry(intent.budgetItem)
+            is BudgetDetailIntent.ShowEntry -> showEntry(intent.budgetItem, intent.scanReceipt)
             is BudgetDetailIntent.ToggleBudgetModal -> setBudgetModalVisibility(intent.isVisible)
             is BudgetDetailIntent.ToggleDeleteBudgetModal -> setDeleteBudgetModalVisibility(intent.isVisible)
             is BudgetDetailIntent.ToggleDeleteEntriesModal -> setDeleteEntriesModalVisibility(intent.isVisible)
@@ -170,9 +173,14 @@ class BudgetDetailViewModel(
             .map { if (it.id in selectedIds) it.copy(isSelected = true) else it }
         return copy(
             budgetDetail = budgetDetail.copy(entries = shown),
-            totalEntryCount = entries.size
+            totalEntryCount = entries.size,
+            budgetIncomes = entries.totalOf(BudgetEntry.Type.INCOME),
+            budgetExpenses = entries.totalOf(BudgetEntry.Type.OUTCOME)
         )
     }
+
+    private fun List<BudgetEntry>.totalOf(type: BudgetEntry.Type): Double =
+        filter { it.type == type }.sumOf { it.amount.toDoubleOrNull() ?: 0.0 }
 
     private fun List<BudgetEntry>.sortedBy(order: BudgetDetailState.ListOrder): List<BudgetEntry> {
         val newestFirst = compareByDescending<BudgetEntry> { it.date }.thenByDescending { it.id }
@@ -258,8 +266,8 @@ class BudgetDetailViewModel(
         }
     }
 
-    private fun showEntry(budgetItem: BudgetEntry) =
-        _events.trySend(BudgetDetailEvent.ShowEntry(budgetItem))
+    private fun showEntry(budgetItem: BudgetEntry, scanReceipt: Boolean) =
+        _events.trySend(BudgetDetailEvent.ShowEntry(budgetItem, scanReceipt))
 
     private fun updateBudgetAmount(amount: Double) = viewModelScope.launch {
         budgetDetailRepository.updateBudgetAmount(amount)

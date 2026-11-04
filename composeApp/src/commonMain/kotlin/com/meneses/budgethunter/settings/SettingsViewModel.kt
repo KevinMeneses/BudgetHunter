@@ -5,19 +5,25 @@ import androidx.lifecycle.viewModelScope
 import budgethunter.composeapp.generated.resources.Res
 import budgethunter.composeapp.generated.resources.error_current_password_incorrect
 import budgethunter.composeapp.generated.resources.error_password_too_short
+import budgethunter.composeapp.generated.resources.sign_out_failed
+import com.meneses.budgethunter.auth.application.SignOutUseCase
 import com.meneses.budgethunter.auth.data.AuthRepository
 import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.commons.data.PreferencesManager
 import com.meneses.budgethunter.commons.platform.PermissionsManager
+import com.meneses.budgethunter.settings.application.SettingsEvent
 import com.meneses.budgethunter.settings.application.SettingsIntent
 import com.meneses.budgethunter.settings.application.SettingsState
 import com.meneses.budgethunter.settings.application.SyncUserPreferencesUseCase
 import com.meneses.budgethunter.sms.domain.BankSmsConfig
 import com.meneses.budgethunter.sms.domain.SupportedBanks
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -27,12 +33,16 @@ class SettingsViewModel(
     private val permissionsManager: PermissionsManager,
     private val authRepository: AuthRepository,
     private val syncUserPreferences: SyncUserPreferencesUseCase,
+    private val signOutUseCase: SignOutUseCase,
     // Pushes outlive the screen: leaving Settings right after a toggle must not drop the save.
     private val applicationScope: CoroutineScope
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsState())
     val uiState = _uiState.asStateFlow()
+
+    private val _events = Channel<SettingsEvent>(Channel.BUFFERED)
+    val events = _events.receiveAsFlow()
 
     init {
         loadSettings()
@@ -55,10 +65,33 @@ class SettingsViewModel(
             is SettingsIntent.ShowPasswordDialog -> showPasswordDialog()
             is SettingsIntent.HidePasswordDialog -> hidePasswordDialog()
             is SettingsIntent.SavePassword -> savePassword(intent.currentPassword, intent.newPassword)
+            is SettingsIntent.ToggleSignOutConfirmation ->
+                _uiState.update { it.copy(isSignOutConfirmationVisible = intent.show) }
+            is SettingsIntent.SignOut -> signOut()
+            is SettingsIntent.DismissSignOutError -> _uiState.update { it.copy(signOutError = null) }
         }
     }
 
-    private fun setSelectedBanks(bankConfigs: Set<com.meneses.budgethunter.sms.domain.BankSmsConfig>) = viewModelScope.launch {
+    // Outlives the screen, like the preference pushes: leaving Settings half way must not stop
+    // the wipe of the local data and the session with only part of it done.
+    private fun signOut() = applicationScope.launch {
+        _uiState.update {
+            it.copy(isSignOutConfirmationVisible = false, isSigningOut = true, signOutError = null)
+        }
+        try {
+            signOutUseCase.execute()
+            _events.trySend(SettingsEvent.NavigateToSignIn)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            // Clearing the local data or the session failed: stay here, the user can try again
+            _uiState.update { it.copy(signOutError = Res.string.sign_out_failed) }
+        } finally {
+            _uiState.update { it.copy(isSigningOut = false) }
+        }
+    }
+
+    private fun setSelectedBanks(bankConfigs: Set<BankSmsConfig>) = viewModelScope.launch {
         val selectedBankIds = bankConfigs.map { it.id }.toSet()
         preferencesManager.setSelectedBankIds(selectedBankIds)
         _uiState.update { it.copy(selectedBanks = bankConfigs) }
@@ -211,7 +244,9 @@ class SettingsViewModel(
             if (!authRepository.isAuthenticated()) return@launch
 
             authRepository.getCurrentUser().onSuccess { user ->
-                _uiState.update { it.copy(isSignedIn = true, hasPassword = user.hasPassword) }
+                _uiState.update {
+                    it.copy(isSignedIn = true, hasPassword = user.hasPassword, email = user.email)
+                }
             }
         }
     }

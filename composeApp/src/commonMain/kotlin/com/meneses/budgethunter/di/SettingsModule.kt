@@ -1,5 +1,6 @@
 package com.meneses.budgethunter.di
 
+import com.meneses.budgethunter.auth.application.SignOutUseCase
 import com.meneses.budgethunter.auth.data.AuthRepository
 import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.commons.data.PreferencesManager
@@ -39,6 +40,7 @@ val settingsModule = module {
             permissionsManager = get<PermissionsManager>(),
             authRepository = get<AuthRepository>(),
             syncUserPreferences = get<SyncUserPreferencesUseCase>(),
+            signOutUseCase = get<SignOutUseCase>(),
             applicationScope = get<CoroutineScope>(named("ApplicationScope"))
         )
     }

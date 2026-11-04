@@ -1,8 +1,10 @@
 package com.meneses.budgethunter.commons.util
 
 import kotlinx.datetime.Clock
+import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
 
 /**
@@ -24,3 +26,15 @@ fun String.toCalendarDate(): String? =
     substringBefore('T').takeIf { date ->
         runCatching { LocalDate.parse(date) }.isSuccess
     }
+
+/** Where a date falls from today's point of view, for labels like "Hoy" and "Ayer". */
+enum class RelativeDay { TODAY, YESTERDAY, OTHER }
+
+fun LocalDate.relativeTo(today: LocalDate): RelativeDay = when (this) {
+    today -> RelativeDay.TODAY
+    today.minus(DatePeriod(days = 1)) -> RelativeDay.YESTERDAY
+    else -> RelativeDay.OTHER
+}
+
+/** The stored "yyyy-MM-dd" date, or null when it does not parse. */
+fun String.toLocalDateOrNull(): LocalDate? = runCatching { LocalDate.parse(this) }.getOrNull()
