@@ -10,6 +10,9 @@ sealed interface BudgetDetailIntent {
     data class UpdateBudgetAmount(val amount: Double) : BudgetDetailIntent
     data class FilterEntries(val filter: BudgetEntryFilter) : BudgetDetailIntent
     data class ShowEntry(val budgetItem: BudgetEntry, val scanReceipt: Boolean = false) : BudgetDetailIntent
+
+    /** Applies [filter] and opens the filter bar at once, e.g. for a category chosen in the metrics. */
+    data class ShowFilteredEntries(val filter: BudgetEntryFilter) : BudgetDetailIntent
     data object ClearFilter : BudgetDetailIntent
     data object ToggleFilterBar : BudgetDetailIntent
     data object DeleteBudget : BudgetDetailIntent

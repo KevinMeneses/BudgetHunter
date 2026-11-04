@@ -288,6 +288,17 @@ class BudgetDetailViewModelTest {
     }
 
     @Test
+    fun `showing filtered entries applies the filter and opens the bar in one step`() = runTest {
+        showDetail(listOf(entry(2, "Mercado"), entry(1, "Gasolina")))
+        assertEquals(false, viewModel.uiState.value.isFilterBarVisible)
+
+        viewModel.sendIntent(BudgetDetailIntent.ShowFilteredEntries(BudgetEntryFilter(description = "merc")))
+
+        assertEquals(true, viewModel.uiState.value.isFilterBarVisible)
+        assertEquals(listOf("Mercado"), shownDescriptions())
+    }
+
+    @Test
     fun `an entry arriving while filtering is filtered too`() = runTest {
         val source = MutableStateFlow(BudgetDetail(budget, listOf(entry(1, "Mercado"))))
         every { budgetDetailRepository.getBudgetDetailById(budget.id) } returns source

@@ -133,6 +133,9 @@ class BudgetDetailViewModel(
             is BudgetDetailIntent.GetBudgetDetail -> getBudgetDetail()
             is BudgetDetailIntent.UpdateBudgetAmount -> updateBudgetAmount(intent.amount)
             is BudgetDetailIntent.FilterEntries -> filterEntries(intent.filter)
+            is BudgetDetailIntent.ShowFilteredEntries -> _uiState.update {
+                it.copy(filter = intent.filter, isFilterBarVisible = true).withEntries(allEntries)
+            }
             is BudgetDetailIntent.ClearFilter -> clearFilter()
             is BudgetDetailIntent.ToggleFilterBar -> _uiState.update { it.copy(isFilterBarVisible = !it.isFilterBarVisible) }
             is BudgetDetailIntent.DeleteBudget -> deleteBudget()

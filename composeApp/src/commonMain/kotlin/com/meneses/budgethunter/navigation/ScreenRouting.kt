@@ -313,11 +313,8 @@ fun BudgetHunterNavigation() {
                     val category = BudgetEntry.Category.entries.firstOrNull { it.name == categoryName }
                         ?: return@LaunchedEffect
                     budgetDetailViewModel.sendIntent(
-                        BudgetDetailIntent.FilterEntries(BudgetEntryFilter(type = type, category = category))
+                        BudgetDetailIntent.ShowFilteredEntries(BudgetEntryFilter(type = type, category = category))
                     )
-                    if (!budgetDetailViewModel.uiState.value.isFilterBarVisible) {
-                        budgetDetailViewModel.sendIntent(BudgetDetailIntent.ToggleFilterBar)
-                    }
                 }
                 val networkMonitor: NetworkMonitor = koinInject()
                 val snackbarHostState = remember { SnackbarHostState() }

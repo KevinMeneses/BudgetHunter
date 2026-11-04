@@ -89,7 +89,7 @@ class SettingsViewModel(
         }
     }
 
-    private fun setSelectedBanks(bankConfigs: Set<com.meneses.budgethunter.sms.domain.BankSmsConfig>) = viewModelScope.launch {
+    private fun setSelectedBanks(bankConfigs: Set<BankSmsConfig>) = viewModelScope.launch {
         val selectedBankIds = bankConfigs.map { it.id }.toSet()
         preferencesManager.setSelectedBankIds(selectedBankIds)
         _uiState.update { it.copy(selectedBanks = bankConfigs) }

@@ -90,6 +90,25 @@ class SignUpViewModelTest {
         assertIs<SignUpEvent.NavigateToSignIn>(event)
     }
 
+    @Test
+    fun `signUp sends the name and email without surrounding spaces`() = runTest {
+        // Given - autocomplete left spaces around the name and the email
+        viewModel.sendIntent(SignUpIntent.EmailChanged(" newuser@example.com "))
+        viewModel.sendIntent(SignUpIntent.NameChanged("New User "))
+        viewModel.sendIntent(SignUpIntent.PasswordChanged("password123"))
+        coEvery {
+            authRepository.signUp(email = "newuser@example.com", name = "New User", password = "password123")
+        } returns Result.success(SignUpResponse(email = "newuser@example.com", name = "New User"))
+
+        // When
+        viewModel.sendIntent(SignUpIntent.SignUpClicked)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then - the trimmed values reached the server and the sign up went through
+        coVerify { authRepository.signUp(email = "newuser@example.com", name = "New User", password = "password123") }
+        assertIs<SignUpEvent.NavigateToSignIn>(viewModel.events.first())
+    }
+
     // ========== Google sign up Tests ==========
 
     @Test

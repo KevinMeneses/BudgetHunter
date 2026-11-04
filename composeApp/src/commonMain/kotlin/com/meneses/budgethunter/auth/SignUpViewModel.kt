@@ -84,9 +84,10 @@ class SignUpViewModel(
         _uiState.update { it.copy(isLoading = true, error = null) }
 
         viewModelScope.launch {
+            // Autocomplete often leaves a trailing space; the password is sent exactly as typed
             authRepository.signUp(
-                email = currentState.email,
-                name = currentState.name,
+                email = currentState.email.trim(),
+                name = currentState.name.trim(),
                 password = currentState.password
             ).fold(
                 onSuccess = {
