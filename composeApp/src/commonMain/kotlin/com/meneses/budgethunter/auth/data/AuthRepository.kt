@@ -46,7 +46,7 @@ class AuthRepository(
                 val emailTaken = response.status == HttpStatusCode.Conflict ||
                     (
                         response.status == HttpStatusCode.BadRequest &&
-                            response.bodyAsText().contains(EMAIL_EXISTS_MESSAGE)
+                            response.bodyAsText().contains(EMAIL_EXISTS_MESSAGE, ignoreCase = true)
                         )
                 val error =
                     if (emailTaken) EmailAlreadyRegisteredException()

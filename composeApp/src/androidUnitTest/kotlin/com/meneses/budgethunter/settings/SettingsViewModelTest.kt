@@ -121,6 +121,15 @@ class SettingsViewModelTest {
     }
 
     @Test
+    fun `cancelling before the unsynced check finishes keeps the confirmation closed`() = runTest {
+        viewModel.sendIntent(SettingsIntent.ToggleSignOutConfirmation(true))
+        viewModel.sendIntent(SettingsIntent.ToggleSignOutConfirmation(false))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertFalse(viewModel.uiState.value.isSignOutConfirmationVisible)
+    }
+
+    @Test
     fun `SignOut success runs the sign out and closes the confirmation`() = runTest {
         viewModel.sendIntent(SettingsIntent.ToggleSignOutConfirmation(true))
         testDispatcher.scheduler.advanceUntilIdle()

@@ -38,10 +38,10 @@ class CollaboratorRepository(
     /**
      * Fetches all collaborators for a specific budget.
      *
-     * @param budgetServerId Server-side budget ID
      * The list is everyone with access, the user included, so its size is also the budget card's
      * count; storing it here shows an addition or removal on the list without waiting for a sync.
      *
+     * @param budgetServerId Server-side budget ID
      * @return Result containing list of collaborators (UserInfo) or error
      */
     suspend fun getCollaborators(budgetServerId: Long): Result<List<UserInfo>> =

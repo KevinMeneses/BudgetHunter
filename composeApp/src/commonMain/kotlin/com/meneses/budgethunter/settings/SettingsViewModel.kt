@@ -19,6 +19,7 @@ import com.meneses.budgethunter.sms.domain.BankSmsConfig
 import com.meneses.budgethunter.sms.domain.SupportedBanks
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -65,12 +66,16 @@ class SettingsViewModel(
         }
     }
 
+    // A cancel tapped while the check is still running must not see the dialog reopen afterwards
+    private var signOutConfirmationJob: Job? = null
+
     private fun toggleSignOutConfirmation(show: Boolean) {
+        signOutConfirmationJob?.cancel()
         if (!show) {
             _uiState.update { it.copy(isSignOutConfirmationVisible = false) }
             return
         }
-        viewModelScope.launch {
+        signOutConfirmationJob = viewModelScope.launch {
             // Signing out deletes the device's data, so say so when some of it never reached the
             // server. Unable to tell, warn anyway: a needless warning costs less than lost work.
             val hasUnsyncedChanges = try {
