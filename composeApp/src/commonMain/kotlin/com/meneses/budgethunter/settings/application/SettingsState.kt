@@ -31,4 +31,10 @@ data class SettingsState(
     val isSigningOut: Boolean = false,
     /** Why the last sign out failed; the user stays signed in and can try again. */
     val signOutError: StringResource? = null
-)
+) {
+    /** What the switch shows: SMS are only read with the preference on and the permission granted. */
+    val isSmsReadingActive: Boolean get() = isSmsReadingEnabled && hasSmsPermission
+
+    /** On in the preferences (e.g. restored after a reinstall) but nothing is read: warn the user. */
+    val isSmsPermissionMissing: Boolean get() = isSmsReadingEnabled && !hasSmsPermission
+}

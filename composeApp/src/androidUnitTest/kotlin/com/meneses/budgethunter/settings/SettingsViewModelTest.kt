@@ -12,7 +12,11 @@ import com.meneses.budgethunter.settings.application.SettingsEvent
 import com.meneses.budgethunter.settings.application.SettingsIntent
 import com.meneses.budgethunter.settings.application.SyncUserPreferencesUseCase
 import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
+import io.mockk.slot
+import io.mockk.verify
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -32,7 +36,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
- * Unit tests for SettingsViewModel: the sign out flow and the account section.
+ * Unit tests for SettingsViewModel: the sign out flow, the account section and SMS reading.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class SettingsViewModelTest {
@@ -144,5 +148,168 @@ class SettingsViewModelTest {
     @Test
     fun `email stays null when not authenticated`() = runTest {
         assertNull(viewModel.uiState.value.email)
+    }
+
+    // ========== SMS reading and its permission ==========
+
+    private var smsGranted = false
+    private var smsRationale = false
+    private val permissionCallback = slot<(Boolean) -> Unit>()
+
+    private fun givenPermissions(granted: Boolean, rationale: Boolean = false) {
+        smsGranted = granted
+        smsRationale = rationale
+        every { permissionsManager.hasSmsPermission() } answers { smsGranted }
+        every { permissionsManager.hasNotificationPermission() } returns true
+        every { permissionsManager.shouldShowSMSPermissionRationale() } answers { smsRationale }
+        every { permissionsManager.requestSmsPermissions(capture(permissionCallback)) } returns Unit
+    }
+
+    /** What the system dialog answers. */
+    private fun answerPermissionDialog(granted: Boolean, rationaleAfter: Boolean = !granted) {
+        smsGranted = granted
+        smsRationale = rationaleAfter
+        permissionCallback.captured(granted)
+        testDispatcher.scheduler.advanceUntilIdle()
+    }
+
+    @Test
+    fun `turning sms reading on with the permission granted saves it`() = runTest {
+        givenPermissions(granted = true)
+
+        viewModel.sendIntent(SettingsIntent.ToggleSmsReading(true))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        coVerify { preferencesManager.setSmsReadingEnabled(true) }
+        verify(exactly = 0) { permissionsManager.requestSmsPermissions(any()) }
+        assertTrue(viewModel.uiState.value.isSmsReadingActive)
+    }
+
+    @Test
+    fun `turning sms reading on and granting the permission turns it on`() = runTest {
+        givenPermissions(granted = false)
+
+        viewModel.sendIntent(SettingsIntent.ToggleSmsReading(true))
+        testDispatcher.scheduler.advanceUntilIdle()
+        coVerify(exactly = 0) { preferencesManager.setSmsReadingEnabled(true) }
+
+        answerPermissionDialog(granted = true)
+
+        coVerify { preferencesManager.setSmsReadingEnabled(true) }
+        assertTrue(viewModel.uiState.value.isSmsReadingActive)
+    }
+
+    @Test
+    fun `turning sms reading on and denying the permission keeps it off`() = runTest {
+        givenPermissions(granted = false)
+
+        viewModel.sendIntent(SettingsIntent.ToggleSmsReading(true))
+        testDispatcher.scheduler.advanceUntilIdle()
+        answerPermissionDialog(granted = false)
+
+        coVerify(exactly = 0) { preferencesManager.setSmsReadingEnabled(true) }
+        val state = viewModel.uiState.value
+        assertFalse(state.isSmsReadingActive)
+        assertFalse(state.isSmsPermissionMissing)
+        assertFalse(state.isManualPermissionDialogVisible)
+    }
+
+    @Test
+    fun `a permission denied for good leads to the app settings and turns on on return`() = runTest {
+        givenPermissions(granted = false)
+
+        viewModel.sendIntent(SettingsIntent.ToggleSmsReading(true))
+        testDispatcher.scheduler.advanceUntilIdle()
+        // The system does not show its dialog any more: denied, and no rationale either
+        answerPermissionDialog(granted = false, rationaleAfter = false)
+        assertTrue(viewModel.uiState.value.isManualPermissionDialogVisible)
+
+        viewModel.sendIntent(SettingsIntent.OpenAppSettings)
+        smsGranted = true
+        viewModel.sendIntent(SettingsIntent.RefreshPermissions)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        coVerify { preferencesManager.setSmsReadingEnabled(true) }
+        assertTrue(viewModel.uiState.value.isSmsReadingActive)
+    }
+
+    @Test
+    fun `cancelling the app settings dialog keeps sms reading off`() = runTest {
+        givenPermissions(granted = false, rationale = true)
+
+        viewModel.sendIntent(SettingsIntent.ToggleSmsReading(true))
+        testDispatcher.scheduler.advanceUntilIdle()
+        viewModel.sendIntent(SettingsIntent.HideManualPermissionDialog)
+        smsGranted = true
+        viewModel.sendIntent(SettingsIntent.RefreshPermissions)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        coVerify(exactly = 0) { preferencesManager.setSmsReadingEnabled(true) }
+    }
+
+    @Test
+    fun `a restored preference without the permission shows the warning`() = runTest {
+        givenPermissions(granted = false)
+        coEvery { preferencesManager.isSmsReadingEnabled() } returns true
+
+        val restoredViewModel = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = restoredViewModel.uiState.value
+        assertTrue(state.isSmsPermissionMissing)
+        assertFalse(state.isSmsReadingActive)
+    }
+
+    @Test
+    fun `denying from the warning keeps the restored preference`() = runTest {
+        givenPermissions(granted = false)
+        coEvery { preferencesManager.isSmsReadingEnabled() } returns true
+        val restoredViewModel = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        restoredViewModel.sendIntent(SettingsIntent.GrantSmsPermission)
+        answerPermissionDialog(granted = false)
+
+        coVerify(exactly = 0) { preferencesManager.setSmsReadingEnabled(false) }
+        assertTrue(restoredViewModel.uiState.value.isSmsPermissionMissing)
+    }
+
+    @Test
+    fun `granting from the warning turns the switch on`() = runTest {
+        givenPermissions(granted = false)
+        coEvery { preferencesManager.isSmsReadingEnabled() } returns true
+        val restoredViewModel = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        restoredViewModel.sendIntent(SettingsIntent.GrantSmsPermission)
+        answerPermissionDialog(granted = true)
+
+        val state = restoredViewModel.uiState.value
+        assertTrue(state.isSmsReadingActive)
+        assertFalse(state.isSmsPermissionMissing)
+    }
+
+    @Test
+    fun `a permission granted in the system settings is picked up on resume`() = runTest {
+        givenPermissions(granted = false)
+        coEvery { preferencesManager.isSmsReadingEnabled() } returns true
+        val restoredViewModel = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        smsGranted = true
+        restoredViewModel.sendIntent(SettingsIntent.RefreshPermissions)
+
+        assertTrue(restoredViewModel.uiState.value.isSmsReadingActive)
+    }
+
+    @Test
+    fun `turning sms reading off saves it`() = runTest {
+        givenPermissions(granted = true)
+
+        viewModel.sendIntent(SettingsIntent.ToggleSmsReading(false))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        coVerify { preferencesManager.setSmsReadingEnabled(false) }
+        coVerify { syncUserPreferences.push() }
     }
 }

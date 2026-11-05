@@ -131,6 +131,8 @@
     <string name="sms_reading_description">Read bank messages to create entries automatically</string>
     <string name="sms_permission_required">Permission to read SMS is required</string>
     <string name="sms_permission_explanation">This feature reads bank messages to create budget entries automatically</string>
+    <string name="sms_permission_missing_title">Permission to read SMS is missing</string>
+    <string name="sms_permission_missing_description">SMS reading is on, but bank expenses are not being recorded on this phone. Tap to grant the permission.</string>
     <string name="transaction_detected">Transaction detected</string>
     <string name="transaction_detected_message">A transaction for %1$s was detected</string>
     <string name="ignore_transaction">Ignore</string>

@@ -95,6 +95,9 @@ Type-safe navigation using Navigation Compose with serializable route objects. M
 - Settings asks for the SMS and notification permissions when the switch is turned on. When the preference comes back
   on without them (reinstall, new phone: restored by `SyncUserPreferencesUseCase.pull()` or the Android backup),
   `RequestSmsPermissionsIfNeededUseCase`, observed from the budget list, asks once per process unless already denied
+- The Settings switch shows `isSmsReadingActive` (preference on AND permission granted). Turning it on and denying keeps
+  the preference off; a preference that is on without the permission (restored, then denied) is kept and Settings shows
+  a warning row (`GrantSmsPermission`). The permission is re-read on every resume (`RefreshPermissions`)
 - iOS cannot read SMS: a Shortcuts automation (trigger "Mensaje") passes the text to the App Intent
   `RegisterExpenseFromMessageIntent` (iosApp/, also an App Shortcut), which calls
   `SmsShortcutEntryPoint` (iosMain) -> `RegisterSmsFromShortcutUseCase` and answers with a dialog.

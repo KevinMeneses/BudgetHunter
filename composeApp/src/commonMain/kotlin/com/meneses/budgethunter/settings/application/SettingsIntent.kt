@@ -15,6 +15,8 @@ sealed interface SettingsIntent {
     data object ShowManualPermissionDialog : SettingsIntent
     data object HideManualPermissionDialog : SettingsIntent
     data object OpenAppSettings : SettingsIntent
+    data object GrantSmsPermission : SettingsIntent
+    data object RefreshPermissions : SettingsIntent
     data object ShowPasswordDialog : SettingsIntent
     data object HidePasswordDialog : SettingsIntent
     data class SavePassword(val currentPassword: String, val newPassword: String) : SettingsIntent

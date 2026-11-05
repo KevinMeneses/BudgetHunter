@@ -44,6 +44,10 @@ class SettingsViewModel(
     private val _events = Channel<SettingsEvent>(Channel.BUFFERED)
     val events = _events.receiveAsFlow()
 
+    // The user turned the switch on but the permission can only be granted from the system
+    // settings: the preference is saved once they come back with it.
+    private var pendingSmsEnable = false
+
     init {
         loadSettings()
         loadAccount()
@@ -60,7 +64,12 @@ class SettingsViewModel(
             is SettingsIntent.SetSelectedBanks -> setSelectedBanks(intent.bankConfigs)
             is SettingsIntent.ToggleAiProcessing -> toggleAiProcessing(intent.enabled)
             is SettingsIntent.ShowManualPermissionDialog -> showManualPermissionDialog()
-            is SettingsIntent.HideManualPermissionDialog -> hideManualPermissionDialog()
+            is SettingsIntent.HideManualPermissionDialog -> {
+                pendingSmsEnable = false
+                hideManualPermissionDialog()
+            }
+            is SettingsIntent.GrantSmsPermission -> grantSmsPermission()
+            is SettingsIntent.RefreshPermissions -> refreshPermissions()
             is SettingsIntent.OpenAppSettings -> openAppSettings()
             is SettingsIntent.ShowPasswordDialog -> showPasswordDialog()
             is SettingsIntent.HidePasswordDialog -> hidePasswordDialog()
@@ -177,29 +186,87 @@ class SettingsViewModel(
         val selectedBanks: Set<BankSmsConfig>
     )
 
+    /**
+     * The switch is on only when SMS can really be read: the preference is on AND the permission
+     * is granted (see [SettingsState.isSmsReadingActive]). Turning it on asks for the permission
+     * and keeps the preference off if the user says no, so it never shows on while doing nothing.
+     */
     private fun toggleSmsReading(enabled: Boolean) = viewModelScope.launch {
-        preferencesManager.setSmsReadingEnabled(enabled)
-        _uiState.update { it.copy(isSmsReadingEnabled = enabled) }
-        pushPreferences()
-        if (!enabled) return@launch
+        pendingSmsEnable = false
+        if (!enabled) {
+            saveSmsReadingEnabled(false)
+            return@launch
+        }
 
-        val isMissingPermission = !permissionsManager.hasSmsPermission() ||
-            !permissionsManager.hasNotificationPermission()
         when {
-            isMissingPermission && !permissionsManager.shouldShowSMSPermissionRationale() -> {
-                permissionsManager.requestSmsPermissions {
-                    _uiState.update { it.copy(hasSmsPermission = permissionsManager.hasSmsPermission()) }
+            permissionsManager.hasSmsPermission() -> {
+                saveSmsReadingEnabled(true)
+                // Without notifications the entry is still recorded, only the alert is lost:
+                // ask, but the switch does not depend on it.
+                if (!permissionsManager.hasNotificationPermission()) {
+                    permissionsManager.requestSmsPermissions { refreshPermissions() }
                 }
             }
 
-            permissionsManager.shouldShowSMSPermissionRationale() -> {
-                showManualPermissionDialog()
-            }
+            permissionsManager.shouldShowSMSPermissionRationale() -> askToGrantFromAppSettings()
 
-            else -> {
-                _uiState.update { it.copy(hasSmsPermission = true) }
+            else -> requestSmsPermissions { granted ->
+                when {
+                    granted -> viewModelScope.launch { saveSmsReadingEnabled(true) }
+                    // Denied for good: the system did not even show its dialog
+                    !permissionsManager.shouldShowSMSPermissionRationale() -> askToGrantFromAppSettings()
+                    // Denied now: the preference stays off, as the user just chose
+                    else -> Unit
+                }
             }
         }
+    }
+
+    /**
+     * The preference is on (restored from the account or a backup) but the permission is
+     * missing. Unlike the switch, a refusal here keeps the preference: the user did not turn it
+     * off, and the account would carry the "off" to every device.
+     */
+    private fun grantSmsPermission() {
+        if (permissionsManager.shouldShowSMSPermissionRationale()) {
+            showManualPermissionDialog()
+            return
+        }
+        requestSmsPermissions { granted ->
+            if (!granted && !permissionsManager.shouldShowSMSPermissionRationale()) {
+                showManualPermissionDialog()
+            }
+        }
+    }
+
+    /** The system will not ask again: the permission can only be granted from the app's settings. */
+    private fun askToGrantFromAppSettings() {
+        // Turned on once the user comes back with the permission, see refreshPermissions
+        pendingSmsEnable = true
+        showManualPermissionDialog()
+    }
+
+    private fun requestSmsPermissions(onResult: (granted: Boolean) -> Unit) {
+        permissionsManager.requestSmsPermissions {
+            refreshPermissions()
+            onResult(permissionsManager.hasSmsPermission())
+        }
+    }
+
+    /** Called on every resume too: the permission may have been changed in the system settings. */
+    private fun refreshPermissions() {
+        val hasSmsPermission = permissionsManager.hasSmsPermission()
+        _uiState.update { it.copy(hasSmsPermission = hasSmsPermission) }
+        if (pendingSmsEnable && hasSmsPermission) {
+            pendingSmsEnable = false
+            viewModelScope.launch { saveSmsReadingEnabled(true) }
+        }
+    }
+
+    private suspend fun saveSmsReadingEnabled(enabled: Boolean) {
+        preferencesManager.setSmsReadingEnabled(enabled)
+        _uiState.update { it.copy(isSmsReadingEnabled = enabled) }
+        pushPreferences()
     }
 
     private fun toggleAiProcessing(enabled: Boolean) = viewModelScope.launch {

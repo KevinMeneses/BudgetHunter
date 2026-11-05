@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Sms
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -45,6 +46,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import budgethunter.composeapp.generated.resources.Res
 import budgethunter.composeapp.generated.resources.account
 import budgethunter.composeapp.generated.resources.ai_processing
@@ -68,6 +71,8 @@ import budgethunter.composeapp.generated.resources.settings
 import budgethunter.composeapp.generated.resources.sign_out
 import budgethunter.composeapp.generated.resources.sign_out_confirmation
 import budgethunter.composeapp.generated.resources.signed_in
+import budgethunter.composeapp.generated.resources.sms_permission_missing_description
+import budgethunter.composeapp.generated.resources.sms_permission_missing_title
 import budgethunter.composeapp.generated.resources.sms_reading_description
 import budgethunter.composeapp.generated.resources.sms_shortcut_settings_description
 import budgethunter.composeapp.generated.resources.sms_shortcut_settings_row
@@ -97,6 +102,10 @@ object SettingsScreen {
         showSmsShortcutTutorial: () -> Unit
     ) {
         val snackbarHostState = remember { SnackbarHostState() }
+        // The permission can change in the system settings while the app is in the background
+        LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+            onIntent(SettingsIntent.RefreshPermissions)
+        }
         uiState.signOutError?.let { error ->
             val message = stringResource(error)
             LaunchedEffect(error) {
@@ -246,9 +255,19 @@ object SettingsScreen {
                 icon = Icons.Default.Sms,
                 title = stringResource(Res.string.read_bank_sms),
                 subtitle = stringResource(Res.string.sms_reading_description),
-                switchChecked = uiState.isSmsReadingEnabled,
+                switchChecked = uiState.isSmsReadingActive,
                 onSwitchChange = { onIntent(SettingsIntent.ToggleSmsReading(it)) }
             )
+            if (uiState.isSmsPermissionMissing) {
+                GroupDivider()
+                SettingRow(
+                    icon = Icons.Default.Warning,
+                    title = stringResource(Res.string.sms_permission_missing_title),
+                    subtitle = stringResource(Res.string.sms_permission_missing_description),
+                    contentColor = AppColors.error,
+                    onClick = { onIntent(SettingsIntent.GrantSmsPermission) }
+                )
+            }
             GroupDivider()
             SettingRow(
                 icon = Icons.Default.AccountBalanceWallet,

@@ -131,6 +131,8 @@
     <string name="sms_reading_description">Leer mensajes de bancos para crear entradas automáticamente</string>
     <string name="sms_permission_required">Se requiere permiso para leer SMS</string>
     <string name="sms_permission_explanation">Esta función lee mensajes de bancos para crear entradas de presupuesto automáticamente</string>
+    <string name="sms_permission_missing_title">Falta el permiso para leer SMS</string>
+    <string name="sms_permission_missing_description">La lectura de SMS está activada, pero los gastos de tus bancos no se están registrando en este teléfono. Toca para conceder el permiso.</string>
     <string name="transaction_detected">Transacción detectada</string>
     <string name="transaction_detected_message">Se detectó una transacción por %1$s</string>
     <string name="ignore_transaction">Ignorar</string>
