@@ -23,5 +23,6 @@ fun mapSelectAllToBudget(
     serverId = serverId,
     isSynced = isSynced == 1L,
     lastSyncedAt = lastSyncedAt,
-    collaboratorCount = collaboratorCount.toInt()
+    // The user always has access, so less than one can only be a bad value
+    collaboratorCount = collaboratorCount.toInt().coerceAtLeast(1)
 )

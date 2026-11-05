@@ -239,4 +239,22 @@ class BudgetMapperTest {
         assertFalse(budget.isSynced)
         assertNull(budget.lastSyncedAt)
     }
+
+    @Test
+    fun `mapSelectAllToBudget raises a collaborator count below one to one`() {
+        val budget = mapSelectAllToBudget(
+            id = 1L,
+            amount = 500.0,
+            name = "Bad Count",
+            date = "2024-01-01",
+            serverId = 7L,
+            isSynced = 1L,
+            lastSyncedAt = null,
+            collaboratorCount = 0L,
+            totalExpenses = 0.0,
+            totalIncomes = 0.0
+        )
+
+        assertEquals(1, budget.collaboratorCount)
+    }
 }

@@ -44,12 +44,23 @@ class SignOutUseCaseTest {
 
         coVerifyOrder {
             authRepository.signOut()
+            preferencesManager.setOfflineModeEnabled(false)
             googleSignInManager.signOut()
             budgetRepository.clearAllData()
             budgetEntryRepository.clearAllData()
             preferencesManager.clearUserPreferences()
-            preferencesManager.setOfflineModeEnabled(false)
         }
+    }
+
+    @Test
+    fun `a failing cleanup step does not stop the ones after it`() = runTest {
+        coEvery { budgetRepository.clearAllData() } throws RuntimeException("disk I/O error")
+
+        useCase.execute()
+
+        coVerify(exactly = 1) { budgetEntryRepository.clearAllData() }
+        coVerify(exactly = 1) { preferencesManager.clearUserPreferences() }
+        assertTrue(authSession.isSignInRedirectPending.value)
     }
 
     @Test

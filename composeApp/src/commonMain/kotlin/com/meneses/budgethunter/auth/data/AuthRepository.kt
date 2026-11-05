@@ -41,7 +41,8 @@ class AuthRepository(
             }
             if (!response.status.isSuccess()) {
                 // 409 is the answer for an existing account; servers before that change sent a
-                // 400 with this message, kept until every deployment answers 409.
+                // 400 with this message.
+                // TODO: drop the 400 match once the production backend answers 409 for a taken email.
                 val emailTaken = response.status == HttpStatusCode.Conflict ||
                     (
                         response.status == HttpStatusCode.BadRequest &&

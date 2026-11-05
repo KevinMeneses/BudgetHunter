@@ -459,11 +459,6 @@ fun BudgetHunterNavigation() {
 }
 
 /**
- * Opens the default budget, on top of the budget list, when the platform asks for it (the
- * user tapped a transaction notification). The request waits while the user is still on
- * splash or sign in.
- */
-/**
  * Sends the user to sign in once a sign out finishes, wherever they are by then. The sign out runs
  * outside the screen that started it, so that screen may already be gone; collecting with the
  * lifecycle also holds the redirect while the app is in the background.
@@ -492,6 +487,11 @@ private fun NavigateToSignInOnSignOut(navController: NavController) {
     }
 }
 
+/**
+ * Opens the default budget, on top of the budget list, when the platform asks for it (the
+ * user tapped a transaction notification). The request waits while the user is still on
+ * splash or sign in.
+ */
 @Composable
 private fun OpenDefaultBudgetOnRequest(navController: NavController) {
     val launchRequest: DefaultBudgetLaunchRequest = koinInject()

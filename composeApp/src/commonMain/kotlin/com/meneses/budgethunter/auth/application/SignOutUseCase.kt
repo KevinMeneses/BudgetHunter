@@ -49,30 +49,30 @@ class SignOutUseCase(
         authRepository.signOut()
 
         try {
-            clearAccountData()
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            logger.warn(TAG, "Signed out, but clearing the device failed", e)
+            // Each step on its own: one failing must not leave the ones after it undone
+            cleanUp("offline mode") { preferencesManager.setOfflineModeEnabled(false) }
+            // Without this the platform keeps auto-selecting the last Google account, so the user
+            // could never sign back in as somebody else.
+            cleanUp("Google credential") { googleSignInManager.signOut() }
+            // The budgets and entries belong to the account that just left
+            cleanUp("budgets") { budgetRepository.clearAllData() }
+            cleanUp("entries") { budgetEntryRepository.clearAllData() }
+            // Settings belong to the account; the next one to sign in gets its own.
+            cleanUp("settings") { preferencesManager.clearUserPreferences() }
         } finally {
             // Last, so the sign-in screen never shows before the cleanup is done
             authSession.onSignedOut()
         }
     }
 
-    private suspend fun clearAccountData() {
-        // Without this the platform keeps auto-selecting the last Google account, so the user
-        // could never sign back in as somebody else.
-        googleSignInManager.signOut()
-
-        // The budgets and entries belong to the account that just left
-        budgetRepository.clearAllData()
-        budgetEntryRepository.clearAllData()
-
-        // Settings belong to the account; the next one to sign in gets its own.
-        preferencesManager.clearUserPreferences()
-
-        preferencesManager.setOfflineModeEnabled(false)
+    private suspend fun cleanUp(what: String, step: suspend () -> Unit) {
+        try {
+            step()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            logger.warn(TAG, "Signed out, but clearing the $what failed", e)
+        }
     }
 
     private companion object {

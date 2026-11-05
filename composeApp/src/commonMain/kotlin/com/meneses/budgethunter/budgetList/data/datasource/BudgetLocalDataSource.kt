@@ -92,8 +92,12 @@ class BudgetLocalDataSource(
         collaborator_count = budget.collaboratorCount.toLong()
     )
 
+    /** Writes only a changed count: every write makes the budget list query run again. */
     suspend fun updateCollaboratorCount(serverId: Long, count: Int) = withContext(dispatcher) {
-        queries.updateCollaboratorCount(collaborator_count = count.toLong(), server_id = serverId)
+        val current = queries.selectByServerId(serverId, ::mapSelectAllToBudget).executeAsOneOrNull()
+        if (current != null && current.collaboratorCount != count) {
+            queries.updateCollaboratorCount(collaborator_count = count.toLong(), server_id = serverId)
+        }
     }
 
     fun markAsSynced(id: Int, serverId: Long, lastSyncedAt: String) = queries.markAsSynced(
