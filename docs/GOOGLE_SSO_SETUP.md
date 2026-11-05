@@ -150,8 +150,7 @@ tus valores. Sin ellos la app compila igual y el botón simplemente no aparece e
 
 ### 5.2 Ponerlo en la app
 
-Edita `iosApp/Config.xcconfig` (está en `.gitignore`; es el que usa la configuración Debug y el
-mismo donde ya tienes `GEMINI_API_KEY`):
+Edita `iosApp/Config.xcconfig` (está en `.gitignore`; es el que usa la configuración Debug):
 
 ```
 GOOGLE_IOS_CLIENT_ID = 123456789012-abcdef.apps.googleusercontent.com
@@ -166,8 +165,7 @@ devuelve el control a la app; si está mal, el login se abre pero nunca termina.
 ninguno lo contiene, pero no pegues URLs completas.
 
 > La configuración **Release** lee `iosApp/Configuration/Config.xcconfig` (el commiteado), que
-> trae las dos claves vacías. Es el mismo arreglo que ya tiene `GEMINI_API_KEY`: para compilar
-> Release con Google habría que poner los valores también ahí.
+> trae las dos claves vacías: para compilar Release con Google habría que poner los valores también ahí.
 
 ### 5.3 Agregarlo al backend
 

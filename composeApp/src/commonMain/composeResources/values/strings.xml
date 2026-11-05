@@ -292,6 +292,8 @@
     <string name="ai_error_timeout">The AI took too long to respond. Please try again or fill in the details manually</string>
     <string name="ai_error_busy">The AI service is busy right now. Please try again in a few minutes</string>
     <string name="ai_error_generic">The file could not be read with AI. Please fill in the details manually</string>
+    <string name="ai_error_quota_exceeded">You have used all your AI receipt scans for this month. They renew on the 1st; meanwhile, fill in the details manually</string>
+    <string name="ai_error_sign_in_required">Sign in to read receipts with AI. Meanwhile, fill in the details manually</string>
     <string name="error_no_app_to_open_file">No app was found to open this file. You can share it instead</string>
     <string name="error_loading_file">Something went wrong while loading the file. Please try again</string>
     <string name="creating">Creating...</string>

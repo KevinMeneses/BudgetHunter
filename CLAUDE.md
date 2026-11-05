@@ -15,7 +15,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Running the App
 - **Android**: Use Android Studio or `./gradlew :app:installDebug` to install on device/emulator
-- Debug builds use local.properties for GEMINI_API_KEY configuration
+- Debug builds read `BACKEND_URL` (and optionally `GOOGLE_SERVER_CLIENT_ID`) from local.properties. There is no AI key in
+  the app: every AI call goes through the backend
 
 ## Architecture Overview
 
@@ -27,8 +28,8 @@ BudgetHunter is a **Kotlin Multiplatform** budget tracking app (Android and iOS)
 - **Navigation Compose** for type-safe screen navigation
 - **SqlDelight 2.0.2** for local database with SQLite
 - **Koin 4.0.0** for dependency injection
-- **Ktor 3.3.3** for the backend API, SSE and Gemini calls
-- **Google Gemini** for AI-powered budget entry extraction from images
+- **Ktor 3.3.3** for the backend API and SSE
+- **Google Gemini** (called by the backend, never by the app) for receipt reading and categorization
 
 ### Current Project Structure
 Single Gradle module `composeApp` (shared code plus the Android and iOS source sets), with an Xcode wrapper in `iosApp/`:
@@ -82,9 +83,13 @@ Type-safe navigation using Navigation Compose with serializable route objects. M
 - Settings and UserGuide accessible from various screens
 
 ### AI Integration
-- Google Generative AI (Gemini) processes receipt images to extract budget entries
-- API key stored in local.properties as GEMINI_API_KEY
-- AI functionality in `CreateBudgetEntryFromImageUseCase` and `GeminiApiClient`
+- Receipts (images and PDFs) are read by the backend: `ReceiptApiService` posts the file Base64-encoded to
+  `POST /api/receipts/extract`; the server holds the Gemini key and the prompt, and answers what it read.
+  `CreateBudgetEntryFromImageUseCase` merges that into the form; the platform `AIImageProcessor`s only turn the
+  file into Base64 (PDFs as-is up to 12 MB, otherwise the first page as JPEG).
+- Reading a receipt needs a signed-in account (offline mode gets `SIGN_IN_REQUIRED`) and counts against the
+  plan's monthly scans; past them the server answers 402 (`QUOTA_EXCEEDED`). See "Monetization" below.
+- The HTTP log never prints that request (it carries the whole file).
 - The AI processing toggle in settings is kept on the account too (`SyncUserPreferencesUseCase`), because it also gates the server-side categorization below
 
 ### SMS Processing
@@ -117,3 +122,10 @@ not `OTHER` ("looked at it, nothing fits"). It is never offered in the AI's cate
 - SMS entries are created `UNCATEGORIZED`; a category chosen by the receipt AI is a normal category and is never
   overwritten. The server's rules live in the backend repository.
 - Design notes and decisions: `docs/plans/auto-categorization.md`.
+
+### Monetization
+Freemium, with RevenueCat for the store purchases (in progress; plan and decisions in `docs/plans/monetization.md`).
+- Free: everything manual, SMS reading, metrics, and a monthly allowance of AI receipt scans (server setting,
+  10 by default). Premium: a much larger allowance (fair use) and, later, the other paid features.
+- The server is the source of truth: `users.plan` and the monthly count live there (`GET /api/receipts/usage`).
+  The app never decides on its own whether something is allowed.

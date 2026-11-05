@@ -9,11 +9,11 @@ import com.meneses.budgethunter.commons.data.sync.NoOpLogger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class CreateBudgetEntryFromImageUseCaseTest {
@@ -23,11 +23,11 @@ class CreateBudgetEntryFromImageUseCaseTest {
         private val error: Exception? = null
     ) : AIImageProcessor {
         var imageData: ImageData? = null
-        var prompt: String? = null
+        var today: LocalDate? = null
 
-        override suspend fun processImage(imageData: ImageData, prompt: String): AiExtractionResult {
+        override suspend fun processImage(imageData: ImageData, today: LocalDate): AiExtractionResult {
             this.imageData = imageData
-            this.prompt = prompt
+            this.today = today
             error?.let { throw it }
             return result
         }
@@ -37,19 +37,12 @@ class CreateBudgetEntryFromImageUseCaseTest {
         CreateBudgetEntryFromImageUseCase(processor, Dispatchers.Unconfined, NoOpLogger())
 
     @Test
-    fun `prompt lists every category, today's date and no broken JSON example`() = runTest {
+    fun `the user's local date is passed on for documents without one`() = runTest {
         val processor = FakeProcessor()
 
         useCase(processor).execute("file:///a.jpg", BudgetEntry())
 
-        val prompt = processor.prompt.orEmpty()
-        BudgetEntry.getAssignableCategories().forEach { assertTrue(prompt.contains("- ${it.name}:"), it.name) }
-        // "Sin categoría" is the absence of a category, so the model must never be offered it.
-        assertFalse(prompt.contains(BudgetEntry.Category.UNCATEGORIZED.name))
-        val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
-        assertTrue(prompt.contains(today.toString()))
-        assertTrue(prompt.contains("FINAL TOTAL"))
-        assertFalse(prompt.contains("\"date:\""))
+        assertEquals(Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date, processor.today)
     }
 
     @Test

@@ -22,7 +22,7 @@ enum class AiFailureReason {
     /** HTTP 429: quota or rate limit reached. */
     RATE_LIMITED,
 
-    /** HTTP 5xx from the AI service. */
+    /** HTTP 5xx from the server or the AI service. */
     SERVER,
 
     /** The model refused to process the content (safety / policy). */
@@ -34,8 +34,14 @@ enum class AiFailureReason {
     /** The response could not be understood. */
     INVALID_RESPONSE,
 
-    /** The invoice file could not be read or converted. */
+    /** The invoice file could not be read or converted, or is too large or of an unsupported type. */
     FILE,
+
+    /** The account used all the receipt scans its plan includes this month (HTTP 402). */
+    QUOTA_EXCEEDED,
+
+    /** Reading receipts goes through the account, so it needs a signed-in user (HTTP 401, offline mode). */
+    SIGN_IN_REQUIRED,
 
     UNKNOWN
 }

@@ -7,6 +7,8 @@ import budgethunter.composeapp.generated.resources.ai_error_busy
 import budgethunter.composeapp.generated.resources.ai_error_generic
 import budgethunter.composeapp.generated.resources.ai_error_network
 import budgethunter.composeapp.generated.resources.ai_error_not_an_invoice
+import budgethunter.composeapp.generated.resources.ai_error_quota_exceeded
+import budgethunter.composeapp.generated.resources.ai_error_sign_in_required
 import budgethunter.composeapp.generated.resources.ai_error_timeout
 import budgethunter.composeapp.generated.resources.amount_is_mandatory
 import budgethunter.composeapp.generated.resources.error_loading_file
@@ -182,12 +184,15 @@ class BudgetEntryViewModel(
             AiFailureReason.NETWORK -> Res.string.ai_error_network
             AiFailureReason.TIMEOUT -> Res.string.ai_error_timeout
             AiFailureReason.RATE_LIMITED, AiFailureReason.SERVER -> Res.string.ai_error_busy
+            AiFailureReason.QUOTA_EXCEEDED -> Res.string.ai_error_quota_exceeded
+            AiFailureReason.SIGN_IN_REQUIRED -> Res.string.ai_error_sign_in_required
             else -> Res.string.ai_error_generic
         }
         _events.trySend(
             BudgetEntryEvent.ShowNotification(
                 message = message,
-                isError = reason != AiFailureReason.NOT_AN_INVOICE
+                // Not errors: the file was fine, the plan or the account is what stops the AI
+                isError = reason !in NOT_ERRORS
             )
         )
     }
@@ -351,5 +356,13 @@ class BudgetEntryViewModel(
                 validatedFilePath = validatedPath
             )
         }
+    }
+
+    private companion object {
+        val NOT_ERRORS = setOf(
+            AiFailureReason.NOT_AN_INVOICE,
+            AiFailureReason.QUOTA_EXCEEDED,
+            AiFailureReason.SIGN_IN_REQUIRED
+        )
     }
 }

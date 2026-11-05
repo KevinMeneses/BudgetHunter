@@ -22,6 +22,7 @@ import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
+import io.ktor.http.encodedPath
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
@@ -55,6 +56,8 @@ fun createHttpClient(
         install(Logging) {
             logger = Logger.SIMPLE
             level = logLevel
+            // A receipt scan carries the whole photo or PDF (megabytes of Base64): never dump it to the log
+            filter { request -> !request.url.encodedPath.endsWith(ApiEndpoints.RECEIPTS_EXTRACT) }
         }
 
         // Install SSE plugin for Server-Sent Events support

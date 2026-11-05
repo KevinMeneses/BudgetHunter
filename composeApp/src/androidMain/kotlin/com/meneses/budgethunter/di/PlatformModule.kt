@@ -4,12 +4,11 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
-import com.meneses.budgethunter.BuildConfig
 import com.meneses.budgethunter.BuildKonfig
 import com.meneses.budgethunter.auth.data.AndroidSecureTokenStorage
 import com.meneses.budgethunter.auth.data.TokenStorage
 import com.meneses.budgethunter.budgetEntry.data.ImageProcessor
-import com.meneses.budgethunter.budgetEntry.data.remote.GeminiApiClient
+import com.meneses.budgethunter.budgetEntry.data.network.ReceiptApiService
 import com.meneses.budgethunter.budgetEntry.domain.AIImageProcessor
 import com.meneses.budgethunter.budgetEntry.domain.AndroidAIImageProcessor
 import com.meneses.budgethunter.commons.data.DatabaseFactory
@@ -30,15 +29,10 @@ import com.meneses.budgethunter.commons.platform.NotificationManager
 import com.meneses.budgethunter.commons.platform.PermissionsManager
 import com.meneses.budgethunter.commons.platform.ShareManager
 import com.meneses.budgethunter.db.Database
-import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngineFactory
-import io.ktor.client.engine.android.Android
 import io.ktor.client.engine.okhttp.OkHttp
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.serialization.json.Json
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
@@ -101,33 +95,9 @@ val androidPlatformModule = module {
         )
     }
 
-    // HTTP Client for AI API calls (using Android engine)
-    single<HttpClient> {
-        HttpClient(Android) {
-            install(ContentNegotiation) {
-                json(get<Json>())
-            }
-        }
-    }
-
-    // API key from BuildConfig
-    single(named("GEMINI_API_KEY")) {
-        BuildConfig.GEMINI_API_KEY
-    }
-
-    // Shared Gemini API client (from commonMain data layer)
-    single<GeminiApiClient> {
-        GeminiApiClient(
-            httpClient = get<HttpClient>(),
-            apiKey = get(named("GEMINI_API_KEY")),
-            json = get<Json>(),
-            logger = get()
-        )
-    }
-
     single<AIImageProcessor> {
         AndroidAIImageProcessor(
-            geminiApiClient = get<GeminiApiClient>(),
+            receiptApiService = get<ReceiptApiService>(),
             imageProcessor = get<ImageProcessor>(),
             ioDispatcher = get<CoroutineDispatcher>(named("IO")),
             logger = get()

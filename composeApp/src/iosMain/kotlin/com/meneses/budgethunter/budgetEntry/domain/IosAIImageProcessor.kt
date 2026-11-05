@@ -1,11 +1,12 @@
 package com.meneses.budgethunter.budgetEntry.domain
 
 import com.meneses.budgethunter.budgetEntry.data.ImageProcessor
-import com.meneses.budgethunter.budgetEntry.data.remote.GeminiApiClient
+import com.meneses.budgethunter.budgetEntry.data.network.ReceiptApiService
 import com.meneses.budgethunter.commons.data.sync.Logger
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
+import kotlinx.datetime.LocalDate
 import kotlin.coroutines.cancellation.CancellationException
 import platform.Foundation.NSData
 import platform.Foundation.base64EncodedStringWithOptions
@@ -14,10 +15,10 @@ import platform.UIKit.UIImageJPEGRepresentation
 
 /**
  * iOS-specific implementation of AIImageProcessor.
- * Converts UIImage to base64 and delegates to shared GeminiApiClient.
+ * Converts UIImage to base64 and sends it to the server through the shared ReceiptApiService.
  */
 class IosAIImageProcessor(
-    private val geminiApiClient: GeminiApiClient,
+    private val receiptApiService: ReceiptApiService,
     private val imageProcessor: ImageProcessor,
     private val ioDispatcher: CoroutineDispatcher,
     private val logger: Logger
@@ -25,13 +26,13 @@ class IosAIImageProcessor(
     private val tag = "IosAIImageProcessor"
 
     @OptIn(ExperimentalForeignApi::class)
-    override suspend fun processImage(imageData: ImageData, prompt: String): AiExtractionResult =
+    override suspend fun processImage(imageData: ImageData, today: LocalDate): AiExtractionResult =
         withContext(ioDispatcher) {
             try {
-                // PDFs go as-is: Gemini reads every page natively, which beats rendering only page 1
+                // PDFs go as-is: the AI reads every page natively, which beats rendering only page 1
                 if (imageData.isPdfFile()) {
                     imageProcessor.readFileAsBase64(imageData, MAX_INLINE_PDF_BYTES)?.let { base64Pdf ->
-                        return@withContext geminiApiClient.extract(base64Pdf, "application/pdf", prompt)
+                        return@withContext receiptApiService.extract(base64Pdf, "application/pdf", today)
                     }
                     logger.info(tag, "PDF unreadable or too large to send as-is, rendering first page instead")
                 }
@@ -42,7 +43,7 @@ class IosAIImageProcessor(
                 val jpegData = UIImageJPEGRepresentation(uiImage, 0.9) as NSData
                 val base64Image = jpegData.base64EncodedStringWithOptions(0u)
 
-                geminiApiClient.extract(base64Image, "image/jpeg", prompt)
+                receiptApiService.extract(base64Image, "image/jpeg", today)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {

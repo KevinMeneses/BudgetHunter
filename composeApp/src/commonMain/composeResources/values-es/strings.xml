@@ -292,6 +292,8 @@
     <string name="ai_error_timeout">La IA tardó demasiado en responder, intenta de nuevo o completa los datos manualmente</string>
     <string name="ai_error_busy">El servicio de IA está ocupado en este momento, intenta de nuevo en unos minutos</string>
     <string name="ai_error_generic">No se pudo leer el archivo con IA, completa los datos manualmente</string>
+    <string name="ai_error_quota_exceeded">Ya usaste todos tus escaneos de recibos con IA de este mes. Se renuevan el día 1; mientras tanto, completa los datos manualmente</string>
+    <string name="ai_error_sign_in_required">Inicia sesión para leer recibos con IA. Mientras tanto, completa los datos manualmente</string>
     <string name="error_no_app_to_open_file">No hay ninguna app para abrir este archivo, puedes compartirlo en su lugar</string>
     <string name="error_loading_file">Algo salió mal al cargar el archivo, por favor intenta de nuevo</string>
     <string name="creating">Creando...</string>

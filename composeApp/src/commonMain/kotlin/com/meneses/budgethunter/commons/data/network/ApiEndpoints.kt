@@ -24,6 +24,10 @@ object ApiEndpoints {
     fun budgetEntriesStream(budgetId: Long) = "/api/budgets/$budgetId/entries/stream"
     fun budgetEntriesCategorize(budgetId: Long) = "/api/budgets/$budgetId/entries/categorize"
 
+    // Receipt endpoints (AI, counted against the plan's monthly scans)
+    const val RECEIPTS_EXTRACT = "/api/receipts/extract"
+    const val RECEIPTS_USAGE = "/api/receipts/usage"
+
     // Collaborator endpoints
     fun budgetCollaborators(budgetId: Long) = "/api/budgets/$budgetId/collaborators"
     fun budgetCollaborator(budgetId: Long, encodedEmail: String) = "/api/budgets/$budgetId/collaborators/$encodedEmail"

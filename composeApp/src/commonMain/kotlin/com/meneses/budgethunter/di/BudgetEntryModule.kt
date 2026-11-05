@@ -6,6 +6,7 @@ import com.meneses.budgethunter.budgetEntry.data.BudgetEntryRepository
 import com.meneses.budgethunter.budgetEntry.data.BudgetEntrySyncManager
 import com.meneses.budgethunter.budgetEntry.data.datasource.BudgetEntryLocalDataSource
 import com.meneses.budgethunter.budgetEntry.data.network.BudgetEntryApiService
+import com.meneses.budgethunter.budgetEntry.data.network.ReceiptApiService
 import com.meneses.budgethunter.budgetEntry.data.sync.RealTimeSyncManager
 import com.meneses.budgethunter.budgetEntry.domain.AIImageProcessor
 import com.meneses.budgethunter.budgetList.data.datasource.BudgetLocalDataSource
@@ -73,6 +74,15 @@ val budgetEntryModule = module {
             localDataSource = get<BudgetEntryLocalDataSource>(),
             ioDispatcher = get<CoroutineDispatcher>(named("IO")),
             scope = get<CoroutineScope>(named("ApplicationScope")),
+            logger = get()
+        )
+    }
+
+    // Receipt reading through the server, which holds the AI key and counts scans per plan
+    single<ReceiptApiService> {
+        ReceiptApiService(
+            httpClient = get<HttpClient>(named("AuthHttpClient")),
+            json = get<Json>(),
             logger = get()
         )
     }
