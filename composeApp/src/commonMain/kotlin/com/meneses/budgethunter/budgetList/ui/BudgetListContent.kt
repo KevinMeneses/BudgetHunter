@@ -201,12 +201,14 @@ private fun BudgetItem(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 6.dp, end = 12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
+                    // When both don't fit, the spent amount wraps and the percentage stays on one line
                     Text(
                         text = stringResource(Res.string.spent_amount, budget.totalExpenses.toCurrency()),
                         style = MaterialTheme.typography.labelMedium,
-                        color = AppColors.onSurfaceVariant
+                        color = AppColors.onSurfaceVariant,
+                        modifier = Modifier.weight(1f)
                     )
                     if (budget.totalAvailable > 0) {
                         Text(
@@ -216,7 +218,9 @@ private fun BudgetItem(
                                 budget.totalAvailable.toCurrency()
                             ),
                             style = MaterialTheme.typography.labelMedium,
-                            color = AppColors.onSurfaceVariant
+                            color = AppColors.onSurfaceVariant,
+                            maxLines = 1,
+                            softWrap = false
                         )
                     }
                 }

@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import budgethunter.composeapp.generated.resources.Res
 import budgethunter.composeapp.generated.resources.metrics_empty_expenses_message
@@ -177,12 +178,16 @@ private fun CategoryRowBody(
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.Bottom,
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
+            // The name takes what the numbers leave and wraps; the numbers never break.
             Text(
                 text = metric.category.toStringResource(),
                 style = MaterialTheme.typography.bodyLarge,
-                color = AppColors.onSurface
+                color = AppColors.onSurface,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f)
             )
             Row(
                 verticalAlignment = Alignment.Bottom,
@@ -192,12 +197,16 @@ private fun CategoryRowBody(
                     text = metric.amount.toCurrency(),
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.SemiBold,
-                    color = AppColors.onSurface
+                    color = AppColors.onSurface,
+                    maxLines = 1,
+                    softWrap = false
                 )
                 Text(
                     text = metric.percentage.asPercentage(),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = AppColors.onSurfaceVariant
+                    color = AppColors.onSurfaceVariant,
+                    maxLines = 1,
+                    softWrap = false
                 )
             }
         }
