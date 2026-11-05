@@ -53,6 +53,19 @@ class PreferencesManager(private val preferences: DataStore<Preferences>) {
     }
 
     /**
+     * Set when a sign out could not delete the device's budgets and entries; whoever uses the
+     * app next finishes the job (`PrepareDataForAccountUseCase.finishPendingWipe`). Like the last
+     * email, it survives [clearUserPreferences].
+     */
+    suspend fun isLocalWipePending() = preferences.data
+        .map { it[KEY_LOCAL_WIPE_PENDING] }
+        .firstOrNull() == true
+
+    suspend fun setLocalWipePending(value: Boolean) {
+        preferences.edit { it[KEY_LOCAL_WIPE_PENDING] = value }
+    }
+
+    /**
      * Email of the last account that signed in on this device. Deliberately left alone by sign out
      * and [clearUserPreferences]: it is what tells the next sign in whether the account changed.
      */
@@ -84,5 +97,6 @@ class PreferencesManager(private val preferences: DataStore<Preferences>) {
         private val KEY_AI_PROCESSING_ENABLED = booleanPreferencesKey("ai_processing_enabled")
         private val KEY_OFFLINE_MODE_ENABLED = booleanPreferencesKey("offline_mode_enabled")
         private val KEY_LAST_SIGNED_IN_EMAIL = stringPreferencesKey("last_signed_in_email")
+        private val KEY_LOCAL_WIPE_PENDING = booleanPreferencesKey("local_wipe_pending")
     }
 }

@@ -141,6 +141,9 @@ class SignInViewModel(
 
     private fun continueOffline() {
         viewModelScope.launch {
+            // A sign out that could not delete the previous account's data finishes it here, or
+            // offline mode would show that account's budgets
+            prepareDataForAccount.finishPendingWipe()
             // Save offline mode preference
             preferencesManager.setOfflineModeEnabled(true)
             _events.trySend(SignInEvent.NavigateToBudgetList(email = ""))

@@ -66,8 +66,10 @@ Proposal with before/after screenshots and mockups: https://claude.ai/artifact/T
 ## Follow-ups (after #66)
 
 - Sign out ends the session first and clears the device afterwards (`SignOutUseCase`). A failure
-  ending the session throws with nothing deleted; a failure in the cleanup is logged and left to
-  `PrepareDataForAccountUseCase`, which drops the previous account's data when somebody else signs in.
+  ending the session throws with nothing deleted. Each cleanup step runs on its own and cannot be
+  cancelled; if deleting budgets or entries fails, a persisted marker (`local_wipe_pending`) makes
+  `PrepareDataForAccountUseCase.finishPendingWipe` delete everything at the next sign in or before
+  offline mode.
 - The sign-out confirmation warns when budgets or entries were never synced, since signing out
   deletes them (`SignOutUseCase.hasUnsyncedChanges`, `sign_out_unsynced_warning`).
 - Navigation to sign in after a sign out follows `AuthSession.isSignInRedirectPending`, consumed once

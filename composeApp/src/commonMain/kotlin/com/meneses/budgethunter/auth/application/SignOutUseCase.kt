@@ -40,9 +40,10 @@ class SignOutUseCase(
      * Ends the session first and clears the device afterwards.
      *
      * The other way round, a failure after the wipe left the user signed in with their unsynced
-     * work gone. Now a failure ending the session throws with nothing touched, and a failure in
-     * the cleanup does not reach the next account: [PrepareDataForAccountUseCase] drops what the
-     * previous account left when somebody else signs in.
+     * work gone. Now a failure ending the session throws with nothing touched. A failure deleting
+     * the budgets or entries leaves a marker, and [PrepareDataForAccountUseCase.finishPendingWipe]
+     * completes the wipe at the next sign in or before offline mode, so nothing reaches the next
+     * account.
      *
      * @throws Exception when the session could not be ended; the user stays signed in.
      */
@@ -56,31 +57,38 @@ class SignOutUseCase(
 
     private suspend fun clearAccountData() {
         try {
+            // Set before deleting and cleared only once both deletes worked
+            cleanUp("wipe marker") { preferencesManager.setLocalWipePending(true) }
             // Each step on its own: one failing must not leave the ones after it undone
             cleanUp("offline mode") { preferencesManager.setOfflineModeEnabled(false) }
             // Without this the platform keeps auto-selecting the last Google account, so the user
             // could never sign back in as somebody else.
             cleanUp("Google credential") { googleSignInManager.signOut() }
             // The budgets and entries belong to the account that just left
-            cleanUp("budgets") { budgetRepository.clearAllData() }
-            cleanUp("entries") { budgetEntryRepository.clearAllData() }
+            val budgetsCleared = cleanUp("budgets") { budgetRepository.clearAllData() }
+            val entriesCleared = cleanUp("entries") { budgetEntryRepository.clearAllData() }
             // Settings belong to the account; the next one to sign in gets its own.
             cleanUp("settings") { preferencesManager.clearUserPreferences() }
+            if (budgetsCleared && entriesCleared) {
+                cleanUp("wipe marker") { preferencesManager.setLocalWipePending(false) }
+            }
         } finally {
             // Last, so the sign-in screen never shows before the cleanup is done
             authSession.onSignedOut()
         }
     }
 
-    private suspend fun cleanUp(what: String, step: suspend () -> Unit) {
+    /** @return false when the step failed; the failure is logged, never thrown. */
+    private suspend fun cleanUp(what: String, step: suspend () -> Unit): Boolean =
         try {
             step()
+            true
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             logger.warn(TAG, "Signed out, but clearing the $what failed", e)
+            false
         }
-    }
 
     private companion object {
         const val TAG = "SignOutUseCase"

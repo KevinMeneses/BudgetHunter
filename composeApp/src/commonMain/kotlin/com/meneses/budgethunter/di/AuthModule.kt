@@ -75,7 +75,8 @@ val authModule = module {
     factory<PrepareDataForAccountUseCase> {
         PrepareDataForAccountUseCase(
             preferencesManager = get(),
-            budgetRepository = get()
+            budgetRepository = get(),
+            budgetEntryRepository = get()
         )
     }
 

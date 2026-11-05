@@ -117,4 +117,26 @@ class SignOutUseCaseTest {
 
         assertFalse(useCase.hasUnsyncedChanges())
     }
+
+    @Test
+    fun `the wipe marker is set before deleting and cleared once both deletes worked`() = runTest {
+        useCase.execute()
+
+        coVerifyOrder {
+            preferencesManager.setLocalWipePending(true)
+            budgetRepository.clearAllData()
+            budgetEntryRepository.clearAllData()
+            preferencesManager.setLocalWipePending(false)
+        }
+    }
+
+    @Test
+    fun `the wipe marker stays when deleting the entries fails`() = runTest {
+        coEvery { budgetEntryRepository.clearAllData() } throws RuntimeException("disk I/O error")
+
+        useCase.execute()
+
+        coVerify(exactly = 1) { preferencesManager.setLocalWipePending(true) }
+        coVerify(exactly = 0) { preferencesManager.setLocalWipePending(false) }
+    }
 }
