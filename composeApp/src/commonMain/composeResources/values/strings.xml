@@ -470,4 +470,8 @@
 
     <!-- Redesign: review fixes -->
     <string name="sign_out_failed">Could not sign out. Please try again</string>
+    <!-- Follow-ups of the redesign -->
+    <string name="sign_out_unsynced_warning">Some budgets or entries have not been synced yet. Signing out deletes them from this device. Sign out anyway?</string>
+    <string name="error_email_already_registered">An account with this email already exists</string>
+    <string name="shared_with_people">Shared by %1$d people</string>
 </resources>

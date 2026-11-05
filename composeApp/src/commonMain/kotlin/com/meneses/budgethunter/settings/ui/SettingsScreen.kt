@@ -67,6 +67,7 @@ import budgethunter.composeapp.generated.resources.set_password_description
 import budgethunter.composeapp.generated.resources.settings
 import budgethunter.composeapp.generated.resources.sign_out
 import budgethunter.composeapp.generated.resources.sign_out_confirmation
+import budgethunter.composeapp.generated.resources.sign_out_unsynced_warning
 import budgethunter.composeapp.generated.resources.signed_in
 import budgethunter.composeapp.generated.resources.sms_reading_description
 import budgethunter.composeapp.generated.resources.sms_shortcut_settings_description
@@ -228,7 +229,10 @@ object SettingsScreen {
 
         ConfirmationModal(
             show = uiState.isSignOutConfirmationVisible,
-            message = stringResource(Res.string.sign_out_confirmation),
+            message = stringResource(
+                if (uiState.signOutLosesUnsyncedChanges) Res.string.sign_out_unsynced_warning
+                else Res.string.sign_out_confirmation
+            ),
             confirmButtonText = stringResource(Res.string.sign_out),
             cancelButtonText = stringResource(Res.string.cancel),
             onDismiss = { onIntent(SettingsIntent.ToggleSignOutConfirmation(false)) },

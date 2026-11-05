@@ -470,4 +470,8 @@
 
     <!-- Redesign: review fixes -->
     <string name="sign_out_failed">No se pudo cerrar sesión. Inténtalo de nuevo</string>
+    <!-- Follow-ups of the redesign -->
+    <string name="sign_out_unsynced_warning">Hay presupuestos o movimientos que aún no se han sincronizado. Al cerrar sesión se borrarán de este dispositivo. ¿Quieres cerrar sesión de todos modos?</string>
+    <string name="error_email_already_registered">Ya existe una cuenta con este correo</string>
+    <string name="shared_with_people">Compartido entre %1$d personas</string>
 </resources>

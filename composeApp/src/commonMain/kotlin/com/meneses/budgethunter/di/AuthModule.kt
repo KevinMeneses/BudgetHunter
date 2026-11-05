@@ -7,6 +7,7 @@ import com.meneses.budgethunter.auth.application.PrepareDataForAccountUseCase
 import com.meneses.budgethunter.auth.application.SignInWithGoogleUseCase
 import com.meneses.budgethunter.auth.application.SignOutUseCase
 import com.meneses.budgethunter.auth.data.AuthRepository
+import com.meneses.budgethunter.auth.data.AuthSession
 import com.meneses.budgethunter.auth.data.TokenStorage
 import com.meneses.budgethunter.commons.data.network.createHttpClient
 import com.meneses.budgethunter.commons.data.network.getBaseUrl
@@ -44,13 +45,17 @@ val authModule = module {
         )
     }
 
+    single<AuthSession> { AuthSession() }
+
     single<SignOutUseCase> {
         SignOutUseCase(
             authRepository = get<AuthRepository>(),
+            authSession = get(),
             budgetRepository = get(),
             budgetEntryRepository = get(),
             preferencesManager = get(),
             googleSignInManager = get(),
+            logger = get(),
             ioDispatcher = get<CoroutineDispatcher>(named("IO"))
         )
     }
@@ -70,7 +75,8 @@ val authModule = module {
     factory<PrepareDataForAccountUseCase> {
         PrepareDataForAccountUseCase(
             preferencesManager = get(),
-            budgetRepository = get()
+            budgetRepository = get(),
+            budgetEntryRepository = get()
         )
     }
 

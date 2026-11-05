@@ -155,6 +155,17 @@ class SignInViewModelTest {
         assertTrue(event.email.isBlank(), "Email should be blank for offline mode")
     }
 
+    @Test
+    fun `continueOffline finishes a pending wipe before turning offline mode on`() = runTest {
+        viewModel.sendIntent(SignInIntent.ContinueOfflineClicked)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        coVerifyOrder {
+            prepareDataForAccount.finishPendingWipe()
+            preferencesManager.setOfflineModeEnabled(true)
+        }
+    }
+
     // ========== Google sign in Tests ==========
 
     @Test

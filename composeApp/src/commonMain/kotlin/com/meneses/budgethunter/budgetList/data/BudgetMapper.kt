@@ -10,6 +10,7 @@ fun mapSelectAllToBudget(
     serverId: Long?,
     isSynced: Long,
     lastSyncedAt: String?,
+    collaboratorCount: Long,
     totalExpenses: Double,
     totalIncomes: Double
 ) = Budget(
@@ -21,5 +22,7 @@ fun mapSelectAllToBudget(
     date = date,
     serverId = serverId,
     isSynced = isSynced == 1L,
-    lastSyncedAt = lastSyncedAt
+    lastSyncedAt = lastSyncedAt,
+    // The user always has access, so less than one can only be a bad value
+    collaboratorCount = collaboratorCount.toInt().coerceAtLeast(1)
 )

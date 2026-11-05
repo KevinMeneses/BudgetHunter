@@ -2,7 +2,6 @@ package com.meneses.budgethunter.budgetList
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.meneses.budgethunter.auth.application.SignOutUseCase
 import com.meneses.budgethunter.auth.data.AuthRepository
 import budgethunter.composeapp.generated.resources.Res
 import budgethunter.composeapp.generated.resources.budget_synced_successfully
@@ -29,7 +28,6 @@ class BudgetListViewModel(
     private val duplicateBudgetUseCase: DuplicateBudgetUseCase,
     private val deleteBudgetUseCase: DeleteBudgetUseCase,
     private val authRepository: AuthRepository,
-    private val signOutUseCase: SignOutUseCase,
     private val preferencesManager: PreferencesManager,
     private val logger: Logger
 ) : ViewModel() {
@@ -84,7 +82,6 @@ class BudgetListViewModel(
             is BudgetListIntent.ToggleSearchMode -> setSearchMode(intent.isSearchMode)
             is BudgetListIntent.UpdateSearchQuery -> updateSearchQuery(intent.query)
             is BudgetListIntent.ClearFilter -> clearFilter()
-            is BudgetListIntent.SignOut -> signOut()
             is BudgetListIntent.SignIn -> signIn()
             is BudgetListIntent.SyncBudgets -> syncBudgets()
         }
@@ -190,19 +187,6 @@ class BudgetListViewModel(
                     else -> currentBudgets
                 }
                 currentState.copy(budgetList = filteredList)
-            }
-        }
-    }
-
-    private fun signOut() {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isSigningOut = true) }
-            try {
-                signOutUseCase.execute()
-                _uiState.update { it.copy(isAuthenticated = false) }
-                _events.trySend(BudgetListEvent.NavigateToSignIn)
-            } finally {
-                _uiState.update { it.copy(isSigningOut = false) }
             }
         }
     }

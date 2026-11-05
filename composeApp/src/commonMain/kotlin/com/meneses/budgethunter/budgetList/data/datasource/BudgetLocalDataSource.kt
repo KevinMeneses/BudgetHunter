@@ -48,6 +48,8 @@ class BudgetLocalDataSource(
     fun getUnsynced(): List<Budget> =
         queries.selectUnsynced(::mapSelectAllToBudget).executeAsList()
 
+    fun countUnsynced(): Long = queries.countUnsynced().executeAsOne()
+
     suspend fun getAllFilteredBy(filter: BudgetFilter): List<Budget> = cacheMutex.withLock {
         cachedList.filter {
             if (filter.name.isNullOrBlank()) true
@@ -66,7 +68,8 @@ class BudgetLocalDataSource(
                 date = budget.date,
                 server_id = budget.serverId,
                 is_synced = if (budget.isSynced) 1L else 0L,
-                last_synced_at = budget.lastSyncedAt
+                last_synced_at = budget.lastSyncedAt,
+                collaborator_count = budget.collaboratorCount.toLong()
             )
 
             savedId = queries
@@ -85,8 +88,17 @@ class BudgetLocalDataSource(
         date = budget.date,
         server_id = budget.serverId,
         is_synced = if (budget.isSynced) 1L else 0L,
-        last_synced_at = budget.lastSyncedAt
+        last_synced_at = budget.lastSyncedAt,
+        collaborator_count = budget.collaboratorCount.toLong()
     )
+
+    /** Writes only a changed count: every write makes the budget list query run again. */
+    suspend fun updateCollaboratorCount(serverId: Long, count: Int) = withContext(dispatcher) {
+        val current = queries.selectByServerId(serverId, ::mapSelectAllToBudget).executeAsOneOrNull()
+        if (current != null && current.collaboratorCount != count) {
+            queries.updateCollaboratorCount(collaborator_count = count.toLong(), server_id = serverId)
+        }
+    }
 
     fun markAsSynced(id: Int, serverId: Long, lastSyncedAt: String) = queries.markAsSynced(
         server_id = serverId,

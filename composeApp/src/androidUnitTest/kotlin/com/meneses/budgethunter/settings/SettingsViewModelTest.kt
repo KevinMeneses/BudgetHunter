@@ -8,26 +8,23 @@ import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.commons.data.PreferencesManager
 import com.meneses.budgethunter.commons.data.network.models.CurrentUser
 import com.meneses.budgethunter.commons.platform.PermissionsManager
-import com.meneses.budgethunter.settings.application.SettingsEvent
 import com.meneses.budgethunter.settings.application.SettingsIntent
 import com.meneses.budgethunter.settings.application.SyncUserPreferencesUseCase
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
-import kotlin.test.assertIs
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -76,26 +73,71 @@ class SettingsViewModelTest {
     @Test
     fun `ToggleSignOutConfirmation true shows the confirmation`() = runTest {
         viewModel.sendIntent(SettingsIntent.ToggleSignOutConfirmation(true))
+        testDispatcher.scheduler.advanceUntilIdle()
 
         assertTrue(viewModel.uiState.value.isSignOutConfirmationVisible)
     }
 
     @Test
+    fun `ToggleSignOutConfirmation true warns when there are unsynced changes`() = runTest {
+        coEvery { signOutUseCase.hasUnsyncedChanges() } returns true
+
+        viewModel.sendIntent(SettingsIntent.ToggleSignOutConfirmation(true))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.isSignOutConfirmationVisible)
+        assertTrue(viewModel.uiState.value.signOutLosesUnsyncedChanges)
+    }
+
+    @Test
+    fun `ToggleSignOutConfirmation true does not warn when everything is synced`() = runTest {
+        coEvery { signOutUseCase.hasUnsyncedChanges() } returns false
+
+        viewModel.sendIntent(SettingsIntent.ToggleSignOutConfirmation(true))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.isSignOutConfirmationVisible)
+        assertFalse(viewModel.uiState.value.signOutLosesUnsyncedChanges)
+    }
+
+    @Test
+    fun `ToggleSignOutConfirmation true still shows the warning when unsynced changes cannot be checked`() = runTest {
+        coEvery { signOutUseCase.hasUnsyncedChanges() } throws RuntimeException("db closed")
+
+        viewModel.sendIntent(SettingsIntent.ToggleSignOutConfirmation(true))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.isSignOutConfirmationVisible)
+        assertTrue(viewModel.uiState.value.signOutLosesUnsyncedChanges)
+    }
+
+    @Test
     fun `ToggleSignOutConfirmation false hides the confirmation`() = runTest {
         viewModel.sendIntent(SettingsIntent.ToggleSignOutConfirmation(true))
+        testDispatcher.scheduler.advanceUntilIdle()
         viewModel.sendIntent(SettingsIntent.ToggleSignOutConfirmation(false))
 
         assertFalse(viewModel.uiState.value.isSignOutConfirmationVisible)
     }
 
     @Test
-    fun `SignOut success emits NavigateToSignIn and closes the confirmation`() = runTest {
+    fun `cancelling before the unsynced check finishes keeps the confirmation closed`() = runTest {
         viewModel.sendIntent(SettingsIntent.ToggleSignOutConfirmation(true))
+        viewModel.sendIntent(SettingsIntent.ToggleSignOutConfirmation(false))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertFalse(viewModel.uiState.value.isSignOutConfirmationVisible)
+    }
+
+    @Test
+    fun `SignOut success runs the sign out and closes the confirmation`() = runTest {
+        viewModel.sendIntent(SettingsIntent.ToggleSignOutConfirmation(true))
+        testDispatcher.scheduler.advanceUntilIdle()
 
         viewModel.sendIntent(SettingsIntent.SignOut)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        assertIs<SettingsEvent.NavigateToSignIn>(viewModel.events.first())
+        coVerify(exactly = 1) { signOutUseCase.execute() }
         val state = viewModel.uiState.value
         assertFalse(state.isSignOutConfirmationVisible)
         assertFalse(state.isSigningOut)
@@ -103,13 +145,12 @@ class SettingsViewModelTest {
     }
 
     @Test
-    fun `SignOut failure sets signOutError and does not navigate`() = runTest {
-        coEvery { signOutUseCase.execute() } throws RuntimeException("disk full")
+    fun `SignOut failure sets signOutError`() = runTest {
+        coEvery { signOutUseCase.execute() } throws RuntimeException("keystore unavailable")
 
         viewModel.sendIntent(SettingsIntent.SignOut)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        assertNull(withTimeoutOrNull(100) { viewModel.events.first() })
         val state = viewModel.uiState.value
         assertEquals(Res.string.sign_out_failed, state.signOutError)
         assertFalse(state.isSigningOut)

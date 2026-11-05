@@ -1,7 +1,9 @@
 package com.meneses.budgethunter.auth
 
 import budgethunter.composeapp.generated.resources.Res
+import budgethunter.composeapp.generated.resources.error_email_already_registered
 import budgethunter.composeapp.generated.resources.error_email_required
+import budgethunter.composeapp.generated.resources.error_sign_up_failed
 import budgethunter.composeapp.generated.resources.error_name_required
 import budgethunter.composeapp.generated.resources.error_password_required
 import budgethunter.composeapp.generated.resources.error_password_too_short
@@ -10,6 +12,7 @@ import com.meneses.budgethunter.auth.application.SignInWithGoogleUseCase
 import com.meneses.budgethunter.auth.application.SignUpEvent
 import com.meneses.budgethunter.auth.application.SignUpIntent
 import com.meneses.budgethunter.auth.data.AuthRepository
+import com.meneses.budgethunter.auth.data.EmailAlreadyRegisteredException
 import com.meneses.budgethunter.commons.data.network.models.SignUpResponse
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -27,6 +30,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertIs
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 
 /**
@@ -228,6 +232,32 @@ class SignUpViewModelTest {
         assertEquals(Res.string.error_email_required, state.emailError)
         assertEquals(Res.string.error_password_required, state.passwordError)
         coVerify(exactly = 0) { authRepository.signUp(any(), any(), any()) }
+    }
+
+    @Test
+    fun `signUp failing with EmailAlreadyRegisteredException shows the error under the email`() = runTest {
+        coEvery { authRepository.signUp(any(), any(), any()) } returns
+            Result.failure(EmailAlreadyRegisteredException())
+        fill()
+        clickSignUp()
+
+        val state = viewModel.uiState.value
+        assertEquals(Res.string.error_email_already_registered, state.emailError)
+        assertNull(state.error)
+        assertFalse(state.isLoading)
+    }
+
+    @Test
+    fun `signUp failing for another reason keeps the general error`() = runTest {
+        coEvery { authRepository.signUp(any(), any(), any()) } returns
+            Result.failure(IllegalStateException("500"))
+        fill()
+        clickSignUp()
+
+        val state = viewModel.uiState.value
+        assertEquals(Res.string.error_sign_up_failed, state.error)
+        assertNull(state.emailError)
+        assertFalse(state.isLoading)
     }
 
     @Test

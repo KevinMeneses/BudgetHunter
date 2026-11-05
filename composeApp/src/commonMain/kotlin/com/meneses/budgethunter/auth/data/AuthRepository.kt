@@ -17,6 +17,9 @@ import io.ktor.client.plugins.auth.providers.BearerAuthProvider
 import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsText
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.isSuccess
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 
@@ -35,6 +38,21 @@ class AuthRepository(
         try {
             val response = httpClient.post(ApiEndpoints.SIGN_UP) {
                 setBody(SignUpRequest(email, name, password))
+            }
+            if (!response.status.isSuccess()) {
+                // 409 is the answer for an existing account; servers before that change sent a
+                // 400 with this message.
+                // TODO: drop the 400 match once the production backend answers 409 for a taken email.
+                val emailTaken = response.status == HttpStatusCode.Conflict ||
+                    (
+                        response.status == HttpStatusCode.BadRequest &&
+                            response.bodyAsText().contains(EMAIL_EXISTS_MESSAGE, ignoreCase = true)
+                        )
+                val error =
+                    if (emailTaken) EmailAlreadyRegisteredException()
+                    else IllegalStateException("Sign up answered ${response.status}")
+                logger.warn(TAG, "Sign up refused: ${response.status}")
+                return@withContext Result.failure(error)
             }
             val signUpResponse = response.body<SignUpResponse>()
 
@@ -184,5 +202,6 @@ class AuthRepository(
 
     private companion object {
         const val TAG = "AuthRepository"
+        const val EMAIL_EXISTS_MESSAGE = "Email already exists"
     }
 }

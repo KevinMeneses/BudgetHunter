@@ -47,8 +47,8 @@ Proposal with before/after screenshots and mockups: https://claude.ai/artifact/T
   signed in it opens Settings, where signing out now lives; in offline mode it shows a person icon and
   opens the old menu, which offers to sign in.
 - The entry form closes with an X instead of a back arrow; unsaved changes are still confirmed.
-- No collaborator count on the list cards or the detail chip: `Budget` does not carry it and adding it
-  needs a query or a server field.
+- No collaborator count on the list cards or the detail chip at first; the cards got it later (see
+  "Follow-ups").
 - No entry count per category in metrics: it needs a change in the aggregation use case.
 
 ## After the PR review
@@ -63,12 +63,33 @@ Proposal with before/after screenshots and mockups: https://claude.ai/artifact/T
   "Hoy / Ayer" is the pure `LocalDate.relativeTo(today)`.
 - Strings the redesign left unused were removed from both locales.
 
+## Follow-ups (after #66)
+
+- Sign out ends the session first and clears the device afterwards (`SignOutUseCase`). A failure
+  ending the session throws with nothing deleted. Each cleanup step runs on its own and cannot be
+  cancelled; if deleting budgets or entries fails, a persisted marker (`local_wipe_pending`) makes
+  `PrepareDataForAccountUseCase.finishPendingWipe` delete everything at the next sign in or before
+  offline mode.
+- The sign-out confirmation warns when budgets or entries were never synced, since signing out
+  deletes them (`SignOutUseCase.hasUnsyncedChanges`, `sign_out_unsynced_warning`).
+- Navigation to sign in after a sign out follows `AuthSession.isSignInRedirectPending`, consumed once
+  in `ScreenRouting` (`NavigateToSignInOnSignOut`), instead of `SettingsEvent.NavigateToSignIn`: the
+  sign out runs in the application scope and the event was lost if the user had left Settings.
+  The list menu's sign-out option was removed: that menu only opens in offline mode.
+- Sign up with an email that already has an account shows the error under the email field
+  (`EmailAlreadyRegisteredException`). The backend now answers 409; the app also accepts the old
+  400 "Email already exists" until every deployment is updated.
+- Budget cards show a people icon with the number of people sharing the budget, only when more than
+  one. `collaboratorCount` comes in the server's `BudgetResponse` (one grouped query per list), is
+  stored in `budget.collaborator_count` (migration `3.sqm`, default 1) and refreshed when the
+  collaborators screen loads its list.
+- Decided not to do: checking `MIN_PASSWORD_LENGTH` against the backend, and the WorkManager/goAsync
+  hardening of the SMS push.
+
 ## Pending / ideas
 
 - Password recovery: without the confirmation field a typo in the password is only caught by the
   eye icon; there is no "forgot password" flow yet (product decision).
-
-
-- Collaborator count on budget cards (needs data).
+- Collaborator count on the detail's chip.
 - Entry count per category in metrics.
 - Sign in / sign up and the iOS Shortcuts guide were not reviewed.

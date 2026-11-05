@@ -82,6 +82,8 @@ class BudgetEntryLocalDataSource(
         queries.selectByServerId(serverId).executeAsOneOrNull()
     }
 
+    fun countUnsynced(): Long = queries.countUnsynced().executeAsOne()
+
     fun getUnsynced(localBudgetId: Int): List<BudgetEntry> {
         return queries.selectUnsyncedByBudgetId(localBudgetId.toLong())
             .executeAsList()

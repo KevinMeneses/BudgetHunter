@@ -24,7 +24,6 @@ import com.meneses.budgethunter.budgetList.application.BudgetListIntent
 import com.meneses.budgethunter.budgetList.application.BudgetListState
 import com.meneses.budgethunter.commons.platform.NetworkMonitor
 import com.meneses.budgethunter.commons.ui.AppBar
-import com.meneses.budgethunter.commons.ui.LoadingOverlay
 import com.meneses.budgethunter.theme.AppColors
 import kotlinx.serialization.Serializable
 import org.jetbrains.compose.resources.stringResource
@@ -82,8 +81,6 @@ object BudgetListScreen {
                                     expanded = dropdownExpanded,
                                     onDismiss = { dropdownExpanded = false },
                                     onSettingsClick = showSettings,
-                                    isAuthenticated = uiState.isAuthenticated,
-                                    onSignOutClick = { BudgetListIntent.SignOut.run(onIntent) },
                                     onSignInClick = { BudgetListIntent.SignIn.run(onIntent) }
                                 )
                             }
@@ -128,9 +125,5 @@ object BudgetListScreen {
             onIntent = onIntent,
             isUpdating = uiState.isUpdatingBudget
         )
-
-        if (uiState.isSigningOut) {
-            LoadingOverlay()
-        }
     }
 }

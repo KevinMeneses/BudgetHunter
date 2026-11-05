@@ -31,6 +31,7 @@ import com.meneses.budgethunter.auth.SignInViewModel
 import com.meneses.budgethunter.auth.SignUpViewModel
 import com.meneses.budgethunter.auth.application.SignInEvent
 import com.meneses.budgethunter.auth.application.SignUpEvent
+import com.meneses.budgethunter.auth.data.AuthSession
 import com.meneses.budgethunter.auth.ui.SignInScreen
 import com.meneses.budgethunter.auth.ui.SignUpScreen
 import com.meneses.budgethunter.budgetDetail.BudgetDetailViewModel
@@ -56,7 +57,6 @@ import com.meneses.budgethunter.commons.data.PreferencesManager
 import com.meneses.budgethunter.commons.platform.NetworkMonitor
 import com.meneses.budgethunter.commons.util.serializableType
 import com.meneses.budgethunter.settings.SettingsViewModel
-import com.meneses.budgethunter.settings.application.SettingsEvent
 import com.meneses.budgethunter.settings.ui.SettingsScreen
 import com.meneses.budgethunter.settings.ui.SmsShortcutTutorialScreen
 import com.meneses.budgethunter.splash.SplashScreenViewModel
@@ -83,6 +83,7 @@ fun BudgetHunterNavigation() {
         var signedInEmail by remember { mutableStateOf<String?>(null) }
 
         OpenDefaultBudgetOnRequest(navController)
+        NavigateToSignInOnSignOut(navController)
 
         NavHost(
             navController = navController,
@@ -259,20 +260,6 @@ fun BudgetHunterNavigation() {
             composable<SettingsScreen> { backStackEntry ->
                 val settingsViewModel: SettingsViewModel = koinInject()
                 val uiState by settingsViewModel.uiState.collectAsStateWithLifecycle()
-
-                LaunchedEffect(Unit) {
-                    settingsViewModel.events.collect { event ->
-                        when (event) {
-                            // Nothing behind Settings is valid without the account
-                            is SettingsEvent.NavigateToSignIn -> navController.navigate(
-                                route = SignInScreen,
-                                navOptions = navOptions {
-                                    popUpTo(navController.graph.id) { inclusive = true }
-                                }
-                            )
-                        }
-                    }
-                }
 
                 SettingsScreen.Show(
                     uiState = uiState,
@@ -468,6 +455,35 @@ fun BudgetHunterNavigation() {
                 )
             }
         }
+    }
+}
+
+/**
+ * Sends the user to sign in once a sign out finishes, wherever they are by then. The sign out runs
+ * outside the screen that started it, so that screen may already be gone; collecting with the
+ * lifecycle also holds the redirect while the app is in the background.
+ */
+@Composable
+private fun NavigateToSignInOnSignOut(navController: NavController) {
+    val authSession: AuthSession = koinInject()
+    val isPending by authSession.isSignInRedirectPending.collectAsStateWithLifecycle()
+
+    LaunchedEffect(isPending) {
+        if (!isPending) return@LaunchedEffect
+        authSession.consumeSignInRedirect()
+
+        val destination = navController.currentBackStackEntry?.destination
+        val isOnAuth = destination?.hasRoute<SignInScreen>() == true ||
+            destination?.hasRoute<SignUpScreen>() == true
+        if (isOnAuth) return@LaunchedEffect
+
+        // Nothing in the back stack is valid without the account
+        navController.navigate(
+            route = SignInScreen,
+            navOptions = navOptions {
+                popUpTo(navController.graph.id) { inclusive = true }
+            }
+        )
     }
 }
 
