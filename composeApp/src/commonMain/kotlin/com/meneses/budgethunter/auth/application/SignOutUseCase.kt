@@ -9,6 +9,7 @@ import com.meneses.budgethunter.commons.data.sync.Logger
 import com.meneses.budgethunter.commons.platform.GoogleSignInManager
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 
 /**
@@ -48,6 +49,12 @@ class SignOutUseCase(
     suspend fun execute() = withContext(ioDispatcher) {
         authRepository.signOut()
 
+        // The session is already gone, so a cancellation here would only leave the device half
+        // cleared: the cleanup finishes regardless.
+        withContext(NonCancellable) { clearAccountData() }
+    }
+
+    private suspend fun clearAccountData() {
         try {
             // Each step on its own: one failing must not leave the ones after it undone
             cleanUp("offline mode") { preferencesManager.setOfflineModeEnabled(false) }
