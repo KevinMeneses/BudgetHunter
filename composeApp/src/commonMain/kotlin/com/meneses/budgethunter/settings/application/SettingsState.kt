@@ -8,6 +8,13 @@ data class SettingsState(
     val isSmsReadingEnabled: Boolean = false,
     val defaultBudget: Budget? = null,
     val hasSmsPermission: Boolean = false,
+    /** Reading the notifications of bank apps that send no SMS (Nequi, Nu). Android only. */
+    val isBankNotificationReadingEnabled: Boolean = false,
+    /** Whether the system lets the app read notifications; granted in the system settings. */
+    val hasNotificationListenerAccess: Boolean = false,
+    val notificationBanks: List<BankSmsConfig> = emptyList(),
+    /** Explains what is read before sending the user to the system's notification access screen. */
+    val isNotificationAccessDialogVisible: Boolean = false,
     val isDefaultBudgetSelectorVisible: Boolean = false,
     val allBudgets: List<Budget> = emptyList(),
     // True from the first frame: the device's values are read right after creation, and without

@@ -25,4 +25,9 @@ actual class PermissionsManager {
         // This would open iOS Settings app using UIApplication.shared.open
         println("PermissionsManager.openAppSettings() called - iOS implementation needed")
     }
+
+    // iOS does not let apps read other apps' notifications
+    actual fun hasNotificationListenerAccess(): Boolean = false
+
+    actual fun openNotificationListenerSettings() = Unit
 }

@@ -153,7 +153,7 @@
     <string name="no_default_budget">No hay presupuesto por defecto configurado</string>
     <string name="save_default_budget">Guardar</string>
     <string name="select_default_budget_description">Selecciona un presupuesto por defecto para las transacciones automáticas:</string>
-    <string name="bank_for_sms_notifications">Bancos para notificaciones SMS</string>
+    <string name="bank_for_sms_notifications">Bancos</string>
     <string name="select_a_bank">Selecciona un banco</string>
     <string name="no_banks_configured">No hay bancos configurados</string>
     <string name="select_banks">Selecciona los bancos</string>
@@ -476,4 +476,13 @@
     <string name="sign_out_unsynced_warning">Hay presupuestos o movimientos que aún no se han sincronizado. Al cerrar sesión se borrarán de este dispositivo. ¿Quieres cerrar sesión de todos modos?</string>
     <string name="error_email_already_registered">Ya existe una cuenta con este correo</string>
     <string name="shared_with_people">Compartido entre %1$d personas</string>
+    <string name="read_bank_app_notifications">Leer notificaciones de apps bancarias</string>
+    <string name="bank_notification_reading_description">Crea entradas con los movimientos que notifican las apps de los bancos seleccionados</string>
+    <string name="notification_access_title">Acceso a las notificaciones</string>
+    <string name="notification_access_missing">Falta el acceso a las notificaciones. Toca para darlo</string>
+    <string name="notification_access_explanation">Budget Hunter leerá solo las notificaciones de las apps de los bancos que selecciones en Bancos, para registrar en tu presupuesto por defecto los movimientos que muestran. Las notificaciones de las demás apps se descartan sin leerse.\n\nEn la siguiente pantalla activa Budget Hunter. Android muestra una advertencia porque este acceso podría ver todas las notificaciones.\n\nSi la opción aparece deshabilitada, abre la información de la app, toca el menú ⋮ y elige “Permitir ajustes restringidos”.</string>
+    <string name="bank_source_sms">SMS</string>
+    <string name="bank_source_notifications">Notificaciones de la app</string>
+    <string name="bank_source_sms_and_notifications">SMS y notificaciones de la app</string>
+    <string name="no_notification_bank_selected">Ninguno con notificaciones de la app</string>
 </resources>

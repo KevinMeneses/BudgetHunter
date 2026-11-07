@@ -132,7 +132,60 @@ object SupportedBanks {
         SCOTIABANK_COLPATRIA
     ).sortedBy { it.displayName }
 
+    /*
+     * Banks and wallets that report movements only in their app notifications, never by SMS.
+     * They are kept out of [ALL_BANKS], which the SMS receiver and the iOS shortcut try.
+     * A bank that does both (an SMS bank whose app also notifies) is not listed here: it keeps
+     * its SMS configuration and gets its app packages there.
+     */
+    val NEQUI = BankSmsConfig(
+        id = "nequi",
+        displayName = "Nequi",
+        // "VALENTINA ARCINIEGAS te envió 1000, ¡lo mejor!": the amount carries no currency sign
+        transactionAmountRegex = Regex(
+            """(?:envi[oó]|enviaste|recibiste|pagaste)\s+(?:por\s+)?\$?\s*([0-9][0-9.,]*)""",
+            RegexOption.IGNORE_CASE
+        ),
+        appPackages = listOf("com.nequi.MobileApp")
+    )
+
+    val NU = BankSmsConfig(
+        id = "nu",
+        displayName = "Nu",
+        // "Recibiste 2.000,00 en tu cuenta": the amount carries no currency sign
+        transactionAmountRegex = Regex(
+            """(?:recibiste|enviaste|pagaste|compraste|transferiste)\s+(?:por\s+)?\$?\s*([0-9][0-9.,]*)""",
+            RegexOption.IGNORE_CASE
+        ),
+        appPackages = listOf("com.nu.production")
+    )
+
+    private val NOTIFICATION_ONLY_BANKS = listOf(NEQUI, NU)
+
+    /**
+     * Every bank the user can pick in Settings: the SMS ones and the notification ones share one
+     * selection, so a bank is read, by SMS or from its app, only when it is selected.
+     */
+    val SELECTABLE_BANKS = (ALL_BANKS + NOTIFICATION_ONLY_BANKS)
+        .distinctBy { it.id }
+        .sortedBy { it.displayName }
+
+    /** The banks read from their app notifications on Android: any bank with app packages. */
+    val NOTIFICATION_BANKS = SELECTABLE_BANKS.filter { it.readsNotifications }
+
+    /** An SMS bank by id. Notification banks are left out: the SMS receiver must never try them. */
     fun getBankConfigById(id: String?): BankSmsConfig? {
         return ALL_BANKS.find { it.id == id }
+    }
+
+    /** Any selectable bank by id, SMS or notification. */
+    fun getSelectableBankById(id: String?): BankSmsConfig? {
+        return SELECTABLE_BANKS.find { it.id == id }
+    }
+
+    /** The bank whose app posted a notification, or null for any other app. */
+    fun getNotificationBankByPackage(packageName: String?): BankSmsConfig? {
+        if (packageName == null) return null
+        return NOTIFICATION_BANKS.find { packageName in it.appPackages }
     }
 }

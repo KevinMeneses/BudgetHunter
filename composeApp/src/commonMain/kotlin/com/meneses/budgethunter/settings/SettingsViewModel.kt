@@ -47,6 +47,10 @@ class SettingsViewModel(
     fun sendIntent(intent: SettingsIntent) {
         when (intent) {
             is SettingsIntent.ToggleSmsReading -> toggleSmsReading(intent.enabled)
+            is SettingsIntent.ToggleBankNotificationReading -> toggleBankNotificationReading(intent.enabled)
+            is SettingsIntent.OpenNotificationAccessSettings -> openNotificationAccessSettings()
+            is SettingsIntent.HideNotificationAccessDialog -> hideNotificationAccessDialog()
+            is SettingsIntent.RefreshPermissions -> refreshPermissions()
             is SettingsIntent.SetDefaultBudget -> setDefaultBudget(intent.budget)
             is SettingsIntent.ShowDefaultBudgetSelector -> showDefaultBudgetSelector()
             is SettingsIntent.HideDefaultBudgetSelector -> hideDefaultBudgetSelector()
@@ -145,7 +149,10 @@ class SettingsViewModel(
                         defaultBudget = preferences.defaultBudget,
                         allBudgets = budgetRepository.getAllCached(),
                         hasSmsPermission = permissionsManager.hasSmsPermission(),
-                        availableBanks = SupportedBanks.ALL_BANKS,
+                        isBankNotificationReadingEnabled = preferencesManager.isBankNotificationReadingEnabled(),
+                        hasNotificationListenerAccess = permissionsManager.hasNotificationListenerAccess(),
+                        notificationBanks = SupportedBanks.NOTIFICATION_BANKS,
+                        availableBanks = SupportedBanks.SELECTABLE_BANKS,
                         selectedBanks = preferences.selectedBanks,
                         isAiProcessingEnabled = preferences.isAiProcessingEnabled,
                         isLoading = false
@@ -184,7 +191,7 @@ class SettingsViewModel(
             isAiProcessingEnabled = preferencesManager.isAiProcessingEnabled(),
             defaultBudget = if (defaultBudgetId != -1) budgetRepository.getById(defaultBudgetId) else null,
             selectedBanks = preferencesManager.getSelectedBankIds()
-                .mapNotNull { SupportedBanks.getBankConfigById(it) }
+                .mapNotNull { SupportedBanks.getSelectableBankById(it) }
                 .toSet()
         )
     }
@@ -216,6 +223,40 @@ class SettingsViewModel(
             else -> {
                 _uiState.update { it.copy(hasSmsPermission = true) }
             }
+        }
+    }
+
+    /**
+     * Notification access is not a runtime permission: it is granted in a system screen, after a
+     * warning of its own. The dialog says first what is read and why, then leads there.
+     */
+    private fun toggleBankNotificationReading(enabled: Boolean) = viewModelScope.launch {
+        preferencesManager.setBankNotificationReadingEnabled(enabled)
+        val hasAccess = permissionsManager.hasNotificationListenerAccess()
+        _uiState.update {
+            it.copy(
+                isBankNotificationReadingEnabled = enabled,
+                hasNotificationListenerAccess = hasAccess,
+                isNotificationAccessDialogVisible = enabled && !hasAccess
+            )
+        }
+    }
+
+    private fun openNotificationAccessSettings() {
+        hideNotificationAccessDialog()
+        permissionsManager.openNotificationListenerSettings()
+    }
+
+    private fun hideNotificationAccessDialog() {
+        _uiState.update { it.copy(isNotificationAccessDialogVisible = false) }
+    }
+
+    private fun refreshPermissions() {
+        _uiState.update {
+            it.copy(
+                hasSmsPermission = permissionsManager.hasSmsPermission(),
+                hasNotificationListenerAccess = permissionsManager.hasNotificationListenerAccess()
+            )
         }
     }
 

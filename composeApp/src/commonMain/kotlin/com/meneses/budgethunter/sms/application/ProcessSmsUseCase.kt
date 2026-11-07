@@ -16,21 +16,47 @@ import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.commons.platform.NotificationManager
 import com.meneses.budgethunter.commons.resources.StringResourceProvider
 import com.meneses.budgethunter.commons.util.toCurrency
+import com.meneses.budgethunter.sms.domain.BankNotification
+import com.meneses.budgethunter.sms.domain.BankNotificationService
 import com.meneses.budgethunter.sms.domain.BankSmsConfig
 import com.meneses.budgethunter.sms.domain.SmsParseResult
 import com.meneses.budgethunter.sms.domain.SmsService
+import kotlinx.coroutines.CancellationException
 
 class ProcessSmsUseCase(
     private val registerSmsEntry: RegisterSmsEntryUseCase,
     private val notificationManager: NotificationManager,
     private val stringResourceProvider: StringResourceProvider
-) : SmsService {
+) : SmsService, BankNotificationService {
     override suspend fun processSms(messageBody: String, bankConfigs: Set<BankSmsConfig>) {
         try {
             when (val result = registerSmsEntry(messageBody, bankConfigs)) {
                 is SmsParseResult.Success -> notifyEntryAdded(result.entry)
                 else -> notifyFailure(result, messageBody)
             }
+        } catch (e: Exception) {
+            notificationManager.showNotification(
+                title = stringResourceProvider.getString(Res.string.transaction_error),
+                message = stringResourceProvider.getString(
+                    Res.string.transaction_error_message,
+                    e.message.orEmpty()
+                )
+            )
+        }
+    }
+
+    override suspend fun processBankNotification(notification: BankNotification, bankConfig: BankSmsConfig) {
+        try {
+            when (val result = registerSmsEntry.registerNotification(notification, bankConfig)) {
+                is SmsParseResult.Success -> notifyEntryAdded(result.entry)
+                // Bank apps also notify codes, news and reminders. Unlike an SMS from a bank, a
+                // notification nobody can read is far more likely one of those than a movement,
+                // so warning about each would only be noise.
+                SmsParseResult.Unrecognized -> Unit
+                else -> notifyFailure(result, notification.message)
+            }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             notificationManager.showNotification(
                 title = stringResourceProvider.getString(Res.string.transaction_error),
