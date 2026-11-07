@@ -74,6 +74,7 @@ val budgetListModule = module {
             deleteBudgetUseCase = get<DeleteBudgetUseCase>(),
             authRepository = get(),
             preferencesManager = get(),
+            isNotificationReaderStopped = get(),
             logger = get()
         )
     }

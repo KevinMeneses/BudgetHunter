@@ -15,4 +15,7 @@ sealed interface BudgetListIntent {
     data object ClearFilter : BudgetListIntent
     data object SignIn : BudgetListIntent
     data object SyncBudgets : BudgetListIntent
+
+    /** The screen came to the front: the bank notification reader may have stopped meanwhile. */
+    data object CheckNotificationReader : BudgetListIntent
 }

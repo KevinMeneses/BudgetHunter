@@ -2,6 +2,7 @@ package com.meneses.budgethunter.sms.application
 
 import com.meneses.budgethunter.budgetEntry.data.BudgetEntryRepository
 import com.meneses.budgethunter.sms.data.SmsMapper
+import com.meneses.budgethunter.sms.domain.BankNotification
 import com.meneses.budgethunter.sms.domain.BankSmsConfig
 import com.meneses.budgethunter.sms.domain.SmsParseResult
 
@@ -30,6 +31,23 @@ class RegisterSmsEntryUseCase(
         }
 
         return pendingResult
+    }
+
+    /**
+     * Registers a movement read from a bank app notification. The app that posted it already
+     * says which bank it is, so only that bank is tried, and the entry is described with the
+     * notification's text rather than with its title.
+     */
+    suspend fun registerNotification(notification: BankNotification, bankConfig: BankSmsConfig): SmsParseResult {
+        val result = smsMapper.smsToBudgetEntry(notification.message, bankConfig)
+        if (result !is SmsParseResult.Success) return result
+
+        // The text says who the money came from or went to; the app never names itself in it
+        val entry = notification.description
+            ?.let { result.entry.copy(description = bankConfig.describe(it)) }
+            ?: result.entry
+        budgetEntryRepository.create(entry)
+        return SmsParseResult.Success(entry)
     }
 
     /**

@@ -2,23 +2,6 @@ package com.meneses.budgethunter.settings.ui
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
-import budgethunter.composeapp.generated.resources.change_password
-import budgethunter.composeapp.generated.resources.current_password
-import budgethunter.composeapp.generated.resources.hide_password
-import budgethunter.composeapp.generated.resources.new_password
-import budgethunter.composeapp.generated.resources.save
-import budgethunter.composeapp.generated.resources.set_password
-import budgethunter.composeapp.generated.resources.set_password_description
-import budgethunter.composeapp.generated.resources.show_password
-import org.jetbrains.compose.resources.StringResource
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -28,15 +11,20 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -47,17 +35,32 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import budgethunter.composeapp.generated.resources.Res
 import budgethunter.composeapp.generated.resources.apply
+import budgethunter.composeapp.generated.resources.bank_source_notifications
+import budgethunter.composeapp.generated.resources.bank_source_sms
+import budgethunter.composeapp.generated.resources.bank_source_sms_and_notifications
 import budgethunter.composeapp.generated.resources.cancel
+import budgethunter.composeapp.generated.resources.change_password
+import budgethunter.composeapp.generated.resources.current_password
+import budgethunter.composeapp.generated.resources.hide_password
+import budgethunter.composeapp.generated.resources.new_password
+import budgethunter.composeapp.generated.resources.save
 import budgethunter.composeapp.generated.resources.select_banks
+import budgethunter.composeapp.generated.resources.set_password
+import budgethunter.composeapp.generated.resources.set_password_description
 import budgethunter.composeapp.generated.resources.settings
+import budgethunter.composeapp.generated.resources.show_password
 import budgethunter.composeapp.generated.resources.sms_permission_explanation
 import budgethunter.composeapp.generated.resources.sms_permission_required
 import com.meneses.budgethunter.sms.domain.BankSmsConfig
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -152,12 +155,25 @@ private fun BankOptionItem(
                 onCheckedChange = onToggle
             )
             Spacer(modifier = Modifier.width(12.dp))
-            Text(
-                text = bank.displayName,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
+            Column {
+                Text(
+                    text = bank.displayName,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                // Which switch reads this bank, so the user knows what selecting it does
+                val source = when {
+                    bank.readsSms && bank.readsNotifications -> Res.string.bank_source_sms_and_notifications
+                    bank.readsNotifications -> Res.string.bank_source_notifications
+                    else -> Res.string.bank_source_sms
+                }
+                Text(
+                    text = stringResource(source),
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 }
@@ -165,7 +181,9 @@ private fun BankOptionItem(
 @Composable
 fun ManualPermissionDialog(
     onDismiss: () -> Unit,
-    onOpenSettings: () -> Unit
+    onOpenSettings: () -> Unit,
+    title: String = stringResource(Res.string.sms_permission_required),
+    explanation: String = stringResource(Res.string.sms_permission_explanation)
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -181,7 +199,7 @@ fun ManualPermissionDialog(
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
-                    text = stringResource(Res.string.sms_permission_required),
+                    text = title,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
@@ -190,7 +208,7 @@ fun ManualPermissionDialog(
         },
         text = {
             Text(
-                text = stringResource(Res.string.sms_permission_explanation),
+                text = explanation,
                 fontSize = 14.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

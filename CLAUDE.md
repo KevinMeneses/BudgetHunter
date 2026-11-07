@@ -96,7 +96,22 @@ Type-safe navigation using Navigation Compose with serializable route objects. M
 - SmsService and SmsBroadcastReceiver handle incoming transaction SMS
 - Bank-specific configuration in `sms/domain/SupportedBanks.kt` for different SMS formats
 - Automatic budget entry creation from SMS transactions (`RegisterSmsEntryUseCase`, shared by both platforms),
-  always in the default budget of Settings
+  always in the default budget of Settings. The description is the message's first sentence, opened with the bank
+  name ("Bancolombia: Transferiste ...") unless it already names the bank (`BankSmsConfig.describe`); notifications too
+- Banks that notify in their app instead of by SMS (Nequi, Nu: `SupportedBanks.NOTIFICATION_BANKS`, matched by
+  package name) are read on Android by `BankNotificationListenerService`, only while selected: they share the one
+  bank selection of Settings (`SupportedBanks.SELECTABLE_BANKS`, `selectedBankIds`) with the SMS banks, and
+  `getBankConfigById` keeps returning SMS banks only. A bank is read from its app when its config has
+  `appPackages`: notification-only banks are listed apart from `ALL_BANKS`, while an SMS bank whose app also
+  notifies just gets its packages in its existing config. It needs notification access, granted in
+  a system screen (Settings explains it first and reopens it from a warning row), and the app's own notifications
+  on: while they are off Android drops the listener (Settings warns too). Some devices (seen on Samsung) then leave it
+  unbound for good, with everything granted: requestRebind, toggling the component, re-granting the access or the app
+  killing itself do not help, only a force stop from the system settings does. `IsNotificationReaderStoppedUseCase`
+  detects it (`BankNotificationListenerService.isConnected`, rechecked after a grace period): the budget list shows a
+  banner that leads to Settings, which asks the user for that force stop. Title and text are parsed together
+  (`BankNotification`) by the same parser, the entry is described by the text (with the bank name, "Nu: ..."), and
+  unreadable notifications are dropped silently (apps also post codes and news). The switch is kept on the device only, not on the account.
 - iOS cannot read SMS: a Shortcuts automation (trigger "Mensaje") passes the text to the App Intent
   `RegisterExpenseFromMessageIntent` (iosApp/, also an App Shortcut), which calls
   `SmsShortcutEntryPoint` (iosMain) -> `RegisterSmsFromShortcutUseCase` and answers with a dialog.

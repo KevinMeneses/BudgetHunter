@@ -8,11 +8,12 @@ import com.meneses.budgethunter.commons.platform.PermissionsManager
 import com.meneses.budgethunter.settings.SettingsViewModel
 import com.meneses.budgethunter.settings.application.SyncUserPreferencesUseCase
 import com.meneses.budgethunter.settings.data.UserPreferencesRepository
+import com.meneses.budgethunter.sms.application.IsNotificationReaderStoppedUseCase
 import io.ktor.client.HttpClient
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.CoroutineScope
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 
 val settingsModule = module {
 
@@ -41,6 +42,7 @@ val settingsModule = module {
             authRepository = get<AuthRepository>(),
             syncUserPreferences = get<SyncUserPreferencesUseCase>(),
             signOutUseCase = get<SignOutUseCase>(),
+            isNotificationReaderStopped = get<IsNotificationReaderStoppedUseCase>(),
             applicationScope = get<CoroutineScope>(named("ApplicationScope"))
         )
     }

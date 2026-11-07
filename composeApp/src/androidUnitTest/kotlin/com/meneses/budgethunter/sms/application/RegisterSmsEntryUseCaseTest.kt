@@ -7,6 +7,7 @@ import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.commons.data.PreferencesManager
 import com.meneses.budgethunter.commons.resources.StringResourceProvider
 import com.meneses.budgethunter.sms.data.SmsMapper
+import com.meneses.budgethunter.sms.domain.BankNotification
 import com.meneses.budgethunter.sms.domain.SmsParseResult
 import com.meneses.budgethunter.sms.domain.SupportedBanks
 import io.mockk.coEvery
@@ -167,6 +168,40 @@ class RegisterSmsEntryUseCaseTest {
         val result = registerSmsEntry("Bancolombia: Compraste $25.000 en EXITO.", emptyList())
 
         assertEquals(SmsParseResult.Ignored, result)
+        coVerify(exactly = 0) { budgetEntryRepository.create(any()) }
+    }
+
+    @Test
+    fun `registers a Nu notification described by its text after the bank name`() = runTest {
+        givenDefaultBudget()
+        val stored = slot<BudgetEntry>()
+        coEvery { budgetEntryRepository.create(capture(stored)) } returns Unit
+
+        val result = registerSmsEntry.registerNotification(
+            BankNotification(
+                title = "Enviaste $1.952,00",
+                text = "Le enviaste a KEV**** MEN****** en su cuenta de Bancolombia."
+            ),
+            SupportedBanks.NU
+        )
+
+        assertIs<SmsParseResult.Success>(result)
+        assertEquals("1952.00", stored.captured.amount)
+        assertEquals(BudgetEntry.Type.OUTCOME, stored.captured.type)
+        assertEquals("Nu: Le enviaste a KEV**** MEN****** en su cuenta de Bancolombia", stored.captured.description)
+        assertEquals(BudgetEntry.Category.UNCATEGORIZED, stored.captured.category)
+    }
+
+    @Test
+    fun `does not store a notification that reports no movement`() = runTest {
+        givenDefaultBudget()
+
+        val result = registerSmsEntry.registerNotification(
+            BankNotification(title = "Nequi", text = "Ya puedes usar tu nueva tarjeta en cualquier comercio"),
+            SupportedBanks.NEQUI
+        )
+
+        assertIs<SmsParseResult.Unrecognized>(result)
         coVerify(exactly = 0) { budgetEntryRepository.create(any()) }
     }
 }

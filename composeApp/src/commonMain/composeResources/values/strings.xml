@@ -153,7 +153,7 @@
     <string name="no_default_budget">No default budget set</string>
     <string name="save_default_budget">Save</string>
     <string name="select_default_budget_description">Select a default budget for automatic transactions:</string>
-    <string name="bank_for_sms_notifications">Banks for SMS notifications</string>
+    <string name="bank_for_sms_notifications">Banks</string>
     <string name="select_a_bank">Select a bank</string>
     <string name="no_banks_configured">No banks configured</string>
     <string name="select_banks">Select banks</string>
@@ -476,4 +476,22 @@
     <string name="sign_out_unsynced_warning">Some budgets or entries have not been synced yet. Signing out deletes them from this device. Sign out anyway?</string>
     <string name="error_email_already_registered">An account with this email already exists</string>
     <string name="shared_with_people">Shared by %1$d people</string>
+    <string name="read_bank_app_notifications">Read bank app notifications</string>
+    <string name="bank_notification_reading_description">Create entries from the movements that the apps of the selected banks notify</string>
+    <string name="notification_access_title">Notification access</string>
+    <string name="notification_access_missing">Notification access is missing. Tap to grant it</string>
+    <string name="app_notifications_off_explanation">Budget Hunter's notifications are off. While they stay off, Android does not hand it your banks' notifications, so no movement is registered.\n\nOn the next screen, turn on the notifications of Budget Hunter.</string>
+    <string name="notification_reader_stopped_banner">Bank notifications are not being read. Tap to fix it</string>
+    <string name="notification_reader_stopped_title">Reading stopped</string>
+    <string name="notification_reader_stopped_description">Android stopped handing over your banks' notifications. Tap to see how to resume it</string>
+    <string name="notification_reader_stopped_explanation">Android stopped handing Budget Hunter your banks' notifications, which can happen after its notifications are switched off and on. The app cannot resume it by itself.\n\nOn the next screen, tap “Force stop” and confirm. Then open Budget Hunter again.</string>
+    <string name="app_notifications_off_title">Notifications are off</string>
+    <string name="app_notifications_off_description">With this app's notifications off, Android does not let it read your banks' ones. Tap to turn them on</string>
+    <string name="notification_access_explanation">Budget Hunter will read only the notifications of the apps of the banks you select in Banks, to register the movements they show in your default budget. Notifications from every other app are discarded without being read.\n\nOn the next screen turn on Budget Hunter. Android shows a warning because this access could see every notification.\n\nIf the option is grayed out, open the app info, tap the ⋮ menu and choose “Allow restricted settings”.</string>
+    <string name="bank_source_sms">SMS</string>
+    <string name="bank_source_notifications">App notifications</string>
+    <string name="bank_source_sms_and_notifications">SMS and app notifications</string>
+    <string name="no_notification_bank_selected">None read from app notifications</string>
+    <string name="notification_bank_needs_reading">Some are read only from app notifications: turn them on above</string>
+    <string name="sms_bank_needs_reading">Some are read only by SMS: turn SMS reading on above</string>
 </resources>

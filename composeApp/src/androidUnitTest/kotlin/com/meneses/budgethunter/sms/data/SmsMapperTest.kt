@@ -41,6 +41,37 @@ class SmsMapperTest {
     }
 
     @Test
+    fun `smsToBudgetEntry keeps a description that already names the bank`() = runTest {
+        coEvery { preferencesManager.getDefaultBudgetId() } returns 7
+        coEvery { budgetLocalDataSource.getById(7) } returns Budget(id = 7, name = "Default", amount = 100.0)
+
+        val result = mapper.smsToBudgetEntry(purchaseSms, bankConfig)
+
+        assertIs<SmsParseResult.Success>(result)
+        assertEquals(
+            "Bancolombia le informa Compra por $50.000 en EXITO POBLADO desde su cuenta *1234",
+            result.entry.description
+        )
+    }
+
+    @Test
+    fun `smsToBudgetEntry opens with the bank name when the message does not say it`() = runTest {
+        coEvery { preferencesManager.getDefaultBudgetId() } returns 7
+        coEvery { budgetLocalDataSource.getById(7) } returns Budget(id = 7, name = "Default", amount = 100.0)
+
+        val result = mapper.smsToBudgetEntry(
+            "Transferiste $15,000.00 desde tu cuenta *4050 a la cuenta *3147179097 el 05/11/26 a las 17:07",
+            bankConfig
+        )
+
+        assertIs<SmsParseResult.Success>(result)
+        assertEquals(
+            "Bancolombia: Transferiste $15,000.00 desde tu cuenta *4050 a la cuenta *3147179097 el 05/11/26 a las 17:07",
+            result.entry.description
+        )
+    }
+
+    @Test
     fun `smsToBudgetEntry leaves the entry without a category for the server to categorize`() = runTest {
         coEvery { preferencesManager.getDefaultBudgetId() } returns 7
         coEvery { budgetLocalDataSource.getById(7) } returns Budget(id = 7, name = "Default", amount = 100.0)

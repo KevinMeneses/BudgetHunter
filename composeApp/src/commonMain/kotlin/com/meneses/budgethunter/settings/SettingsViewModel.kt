@@ -15,6 +15,7 @@ import com.meneses.budgethunter.commons.platform.PermissionsManager
 import com.meneses.budgethunter.settings.application.SettingsIntent
 import com.meneses.budgethunter.settings.application.SettingsState
 import com.meneses.budgethunter.settings.application.SyncUserPreferencesUseCase
+import com.meneses.budgethunter.sms.application.IsNotificationReaderStoppedUseCase
 import com.meneses.budgethunter.sms.domain.BankSmsConfig
 import com.meneses.budgethunter.sms.domain.SupportedBanks
 import kotlinx.coroutines.CancellationException
@@ -32,11 +33,17 @@ class SettingsViewModel(
     private val authRepository: AuthRepository,
     private val syncUserPreferences: SyncUserPreferencesUseCase,
     private val signOutUseCase: SignOutUseCase,
+    private val isNotificationReaderStopped: IsNotificationReaderStoppedUseCase,
     // Pushes outlive the screen: leaving Settings right after a toggle must not drop the save.
     private val applicationScope: CoroutineScope
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsState())
+
+    private var notificationReaderCheck: Job? = null
+
+    // The dialog is shown once per visit; the warning row stays while the reader is stopped
+    private var notificationReaderStoppedDialogShown = false
     val uiState = _uiState.asStateFlow()
 
     init {
@@ -47,6 +54,14 @@ class SettingsViewModel(
     fun sendIntent(intent: SettingsIntent) {
         when (intent) {
             is SettingsIntent.ToggleSmsReading -> toggleSmsReading(intent.enabled)
+            is SettingsIntent.ToggleBankNotificationReading -> toggleBankNotificationReading(intent.enabled)
+            is SettingsIntent.OpenNotificationAccessSettings -> openNotificationAccessSettings()
+            is SettingsIntent.HideNotificationAccessDialog -> hideNotificationAccessDialog()
+            is SettingsIntent.OpenAppNotificationSettings -> openAppNotificationSettings()
+            is SettingsIntent.HideAppNotificationsDialog -> hideAppNotificationsDialog()
+            is SettingsIntent.OpenAppInfoToRestartReader -> openAppInfoToRestartReader()
+            is SettingsIntent.HideNotificationReaderStoppedDialog -> hideNotificationReaderStoppedDialog()
+            is SettingsIntent.RefreshPermissions -> refreshPermissions()
             is SettingsIntent.SetDefaultBudget -> setDefaultBudget(intent.budget)
             is SettingsIntent.ShowDefaultBudgetSelector -> showDefaultBudgetSelector()
             is SettingsIntent.HideDefaultBudgetSelector -> hideDefaultBudgetSelector()
@@ -145,12 +160,17 @@ class SettingsViewModel(
                         defaultBudget = preferences.defaultBudget,
                         allBudgets = budgetRepository.getAllCached(),
                         hasSmsPermission = permissionsManager.hasSmsPermission(),
-                        availableBanks = SupportedBanks.ALL_BANKS,
+                        isBankNotificationReadingEnabled = preferencesManager.isBankNotificationReadingEnabled(),
+                        hasNotificationListenerAccess = permissionsManager.hasNotificationListenerAccess(),
+                        areAppNotificationsEnabled = permissionsManager.areAppNotificationsEnabled(),
+                        notificationBanks = SupportedBanks.NOTIFICATION_BANKS,
+                        availableBanks = SupportedBanks.SELECTABLE_BANKS,
                         selectedBanks = preferences.selectedBanks,
                         isAiProcessingEnabled = preferences.isAiProcessingEnabled,
                         isLoading = false
                     )
                 }
+                checkNotificationReader()
             } catch (_: Exception) {
                 _uiState.update { it.copy(isLoading = false) }
             }
@@ -184,7 +204,7 @@ class SettingsViewModel(
             isAiProcessingEnabled = preferencesManager.isAiProcessingEnabled(),
             defaultBudget = if (defaultBudgetId != -1) budgetRepository.getById(defaultBudgetId) else null,
             selectedBanks = preferencesManager.getSelectedBankIds()
-                .mapNotNull { SupportedBanks.getBankConfigById(it) }
+                .mapNotNull { SupportedBanks.getSelectableBankById(it) }
                 .toSet()
         )
     }
@@ -217,6 +237,83 @@ class SettingsViewModel(
                 _uiState.update { it.copy(hasSmsPermission = true) }
             }
         }
+    }
+
+    /**
+     * Notification access is not a runtime permission: it is granted in a system screen, after a
+     * warning of its own. The dialog says first what is read and why, then leads there.
+     */
+    private fun toggleBankNotificationReading(enabled: Boolean) = viewModelScope.launch {
+        preferencesManager.setBankNotificationReadingEnabled(enabled)
+        val hasAccess = permissionsManager.hasNotificationListenerAccess()
+        val appNotificationsEnabled = permissionsManager.areAppNotificationsEnabled()
+        _uiState.update {
+            it.copy(
+                isBankNotificationReadingEnabled = enabled,
+                hasNotificationListenerAccess = hasAccess,
+                areAppNotificationsEnabled = appNotificationsEnabled,
+                isNotificationAccessDialogVisible = enabled && !hasAccess,
+                // One step at a time: the access first, the app's own notifications once it is granted
+                isAppNotificationsDialogVisible = enabled && hasAccess && !appNotificationsEnabled
+            )
+        }
+        checkNotificationReader()
+    }
+
+    /** The reader can stop with everything granted; then the user is asked for a force stop. */
+    private fun checkNotificationReader() {
+        // A check under way reads everything again after its grace period: restarting it on every
+        // resume would only push the warning further away
+        if (notificationReaderCheck?.isActive == true) return
+        notificationReaderCheck = viewModelScope.launch {
+            val stopped = isNotificationReaderStopped()
+            val showDialog = stopped && !notificationReaderStoppedDialogShown
+            if (showDialog) notificationReaderStoppedDialogShown = true
+            _uiState.update {
+                it.copy(
+                    isNotificationReaderStopped = stopped,
+                    isNotificationReaderStoppedDialogVisible = showDialog || (stopped && it.isNotificationReaderStoppedDialogVisible)
+                )
+            }
+        }
+    }
+
+    private fun openAppInfoToRestartReader() {
+        hideNotificationReaderStoppedDialog()
+        permissionsManager.openAppSettings()
+    }
+
+    private fun hideNotificationReaderStoppedDialog() {
+        _uiState.update { it.copy(isNotificationReaderStoppedDialogVisible = false) }
+    }
+
+    private fun openAppNotificationSettings() {
+        hideAppNotificationsDialog()
+        permissionsManager.openAppNotificationSettings()
+    }
+
+    private fun hideAppNotificationsDialog() {
+        _uiState.update { it.copy(isAppNotificationsDialogVisible = false) }
+    }
+
+    private fun openNotificationAccessSettings() {
+        hideNotificationAccessDialog()
+        permissionsManager.openNotificationListenerSettings()
+    }
+
+    private fun hideNotificationAccessDialog() {
+        _uiState.update { it.copy(isNotificationAccessDialogVisible = false) }
+    }
+
+    private fun refreshPermissions() {
+        _uiState.update {
+            it.copy(
+                hasSmsPermission = permissionsManager.hasSmsPermission(),
+                hasNotificationListenerAccess = permissionsManager.hasNotificationListenerAccess(),
+                areAppNotificationsEnabled = permissionsManager.areAppNotificationsEnabled()
+            )
+        }
+        checkNotificationReader()
     }
 
     private fun toggleAiProcessing(enabled: Boolean) = viewModelScope.launch {

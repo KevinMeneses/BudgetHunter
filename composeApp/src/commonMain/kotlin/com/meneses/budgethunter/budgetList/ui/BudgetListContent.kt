@@ -41,6 +41,7 @@ import budgethunter.composeapp.generated.resources.Res
 import budgethunter.composeapp.generated.resources.available_label
 import budgethunter.composeapp.generated.resources.budget_options
 import budgethunter.composeapp.generated.resources.not_synced
+import budgethunter.composeapp.generated.resources.notification_reader_stopped_banner
 import budgethunter.composeapp.generated.resources.over_budget
 import budgethunter.composeapp.generated.resources.percent_of_total
 import budgethunter.composeapp.generated.resources.shared_with_people
@@ -52,6 +53,7 @@ import com.meneses.budgethunter.commons.ui.LoadingScreen
 import com.meneses.budgethunter.commons.ui.OfflineBanner
 import com.meneses.budgethunter.commons.ui.SpendingProgressBar
 import com.meneses.budgethunter.commons.ui.StatusChip
+import com.meneses.budgethunter.commons.ui.WarningBanner
 import com.meneses.budgethunter.commons.ui.fadingBottomEdge
 import com.meneses.budgethunter.commons.util.toCurrency
 import com.meneses.budgethunter.theme.AppColors
@@ -66,6 +68,8 @@ fun BudgetListContent(
     isSyncing: Boolean,
     isOnline: Boolean,
     showSyncState: Boolean,
+    isNotificationReaderStopped: Boolean,
+    onNotificationReaderStoppedClick: () -> Unit,
     paddingValues: PaddingValues,
     onIntent: (BudgetListIntent) -> Unit
 ) {
@@ -81,6 +85,12 @@ fun BudgetListContent(
         ) {
             Column {
                 OfflineBanner(isOffline = !isOnline)
+                // Settings holds the explanation and the way to the force stop
+                WarningBanner(
+                    visible = isNotificationReaderStopped,
+                    text = stringResource(Res.string.notification_reader_stopped_banner),
+                    onClick = onNotificationReaderStoppedClick
+                )
                 val listState = rememberLazyListState()
                 LazyColumn(
                     state = listState,

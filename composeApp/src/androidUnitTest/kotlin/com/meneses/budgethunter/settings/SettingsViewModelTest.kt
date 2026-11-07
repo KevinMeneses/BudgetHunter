@@ -10,16 +10,13 @@ import com.meneses.budgethunter.commons.data.network.models.CurrentUser
 import com.meneses.budgethunter.commons.platform.PermissionsManager
 import com.meneses.budgethunter.settings.application.SettingsIntent
 import com.meneses.budgethunter.settings.application.SyncUserPreferencesUseCase
+import com.meneses.budgethunter.sms.application.IsNotificationReaderStoppedUseCase
+import com.meneses.budgethunter.sms.domain.SupportedBanks
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
+import io.mockk.verify
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -27,6 +24,13 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
 
 /**
  * Unit tests for SettingsViewModel: the sign out flow and the account section.
@@ -67,6 +71,7 @@ class SettingsViewModelTest {
         authRepository = authRepository,
         syncUserPreferences = syncUserPreferences,
         signOutUseCase = signOutUseCase,
+        isNotificationReaderStopped = IsNotificationReaderStoppedUseCase(preferencesManager, permissionsManager),
         applicationScope = CoroutineScope(testDispatcher)
     )
 
@@ -185,5 +190,146 @@ class SettingsViewModelTest {
     @Test
     fun `email stays null when not authenticated`() = runTest {
         assertNull(viewModel.uiState.value.email)
+    }
+
+    @Test
+    fun `turning on bank notifications without access explains it before the system settings`() = runTest {
+        every { permissionsManager.hasNotificationListenerAccess() } returns false
+
+        viewModel.sendIntent(SettingsIntent.ToggleBankNotificationReading(true))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        coVerify { preferencesManager.setBankNotificationReadingEnabled(true) }
+        assertTrue(viewModel.uiState.value.isBankNotificationReadingEnabled)
+        assertTrue(viewModel.uiState.value.isNotificationAccessDialogVisible)
+
+        viewModel.sendIntent(SettingsIntent.OpenNotificationAccessSettings)
+
+        verify { permissionsManager.openNotificationListenerSettings() }
+        assertFalse(viewModel.uiState.value.isNotificationAccessDialogVisible)
+    }
+
+    @Test
+    fun `turning on bank notifications with access granted asks nothing`() = runTest {
+        every { permissionsManager.hasNotificationListenerAccess() } returns true
+
+        viewModel.sendIntent(SettingsIntent.ToggleBankNotificationReading(true))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.hasNotificationListenerAccess)
+        assertFalse(viewModel.uiState.value.isNotificationAccessDialogVisible)
+    }
+
+    @Test
+    fun `coming back to the screen reads whether the app's notifications are on`() = runTest {
+        every { permissionsManager.areAppNotificationsEnabled() } returns false
+
+        viewModel.sendIntent(SettingsIntent.RefreshPermissions)
+
+        assertFalse(viewModel.uiState.value.areAppNotificationsEnabled)
+    }
+
+    @Test
+    fun `turning on bank notifications with the app's notifications off explains it before their screen`() = runTest {
+        every { permissionsManager.hasNotificationListenerAccess() } returns true
+        every { permissionsManager.areAppNotificationsEnabled() } returns false
+
+        viewModel.sendIntent(SettingsIntent.ToggleBankNotificationReading(true))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.isAppNotificationsDialogVisible)
+        assertFalse(viewModel.uiState.value.isNotificationAccessDialogVisible)
+
+        viewModel.sendIntent(SettingsIntent.OpenAppNotificationSettings)
+
+        verify { permissionsManager.openAppNotificationSettings() }
+        assertFalse(viewModel.uiState.value.isAppNotificationsDialogVisible)
+    }
+
+    @Test
+    fun `a reader left unbound with everything granted asks for a force stop once`() = runTest {
+        coEvery { preferencesManager.isBankNotificationReadingEnabled() } returns true
+        every { permissionsManager.hasNotificationListenerAccess() } returns true
+        every { permissionsManager.areAppNotificationsEnabled() } returns true
+        every { permissionsManager.isNotificationListenerConnected() } returns false
+
+        viewModel.sendIntent(SettingsIntent.ToggleBankNotificationReading(true))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.isNotificationReaderStopped)
+        assertTrue(viewModel.uiState.value.isNotificationReaderStoppedDialogVisible)
+
+        viewModel.sendIntent(SettingsIntent.OpenAppInfoToRestartReader)
+
+        verify { permissionsManager.openAppSettings() }
+        assertFalse(viewModel.uiState.value.isNotificationReaderStoppedDialogVisible)
+
+        // Back from the system screen without the force stop: the row stays, the dialog does not return
+        viewModel.sendIntent(SettingsIntent.RefreshPermissions)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.isNotificationReaderStopped)
+        assertFalse(viewModel.uiState.value.isNotificationReaderStoppedDialogVisible)
+    }
+
+    @Test
+    fun `a reader that connects within the grace period is not reported`() = runTest {
+        coEvery { preferencesManager.isBankNotificationReadingEnabled() } returns true
+        every { permissionsManager.hasNotificationListenerAccess() } returns true
+        every { permissionsManager.areAppNotificationsEnabled() } returns true
+        every { permissionsManager.isNotificationListenerConnected() } returnsMany listOf(false, true)
+
+        viewModel.sendIntent(SettingsIntent.ToggleBankNotificationReading(true))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertFalse(viewModel.uiState.value.isNotificationReaderStopped)
+        assertFalse(viewModel.uiState.value.isNotificationReaderStoppedDialogVisible)
+    }
+
+    @Test
+    fun `a connected reader is not reported`() = runTest {
+        coEvery { preferencesManager.isBankNotificationReadingEnabled() } returns true
+        every { permissionsManager.hasNotificationListenerAccess() } returns true
+        every { permissionsManager.areAppNotificationsEnabled() } returns true
+        every { permissionsManager.isNotificationListenerConnected() } returns true
+
+        viewModel.sendIntent(SettingsIntent.ToggleBankNotificationReading(true))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertFalse(viewModel.uiState.value.isNotificationReaderStopped)
+    }
+
+    @Test
+    fun `without notification access only the access is asked for first`() = runTest {
+        every { permissionsManager.hasNotificationListenerAccess() } returns false
+        every { permissionsManager.areAppNotificationsEnabled() } returns false
+
+        viewModel.sendIntent(SettingsIntent.ToggleBankNotificationReading(true))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.isNotificationAccessDialogVisible)
+        assertFalse(viewModel.uiState.value.isAppNotificationsDialogVisible)
+    }
+
+    @Test
+    fun `coming back to the screen reads the notification access again`() = runTest {
+        every { permissionsManager.hasNotificationListenerAccess() } returns true
+
+        viewModel.sendIntent(SettingsIntent.RefreshPermissions)
+
+        assertTrue(viewModel.uiState.value.hasNotificationListenerAccess)
+    }
+
+    @Test
+    fun `the bank selector offers the notification apps and keeps them selected`() = runTest {
+        coEvery { preferencesManager.getSelectedBankIds() } returns setOf("nequi", "bancolombia")
+
+        val viewModel = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertTrue(SupportedBanks.NEQUI in state.availableBanks)
+        assertTrue(SupportedBanks.NU in state.availableBanks)
+        assertEquals(setOf(SupportedBanks.NEQUI, SupportedBanks.BANCOLOMBIA), state.selectedBanks)
     }
 }
