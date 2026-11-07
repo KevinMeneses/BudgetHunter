@@ -34,5 +34,7 @@ actual class PermissionsManager {
     // Nothing on iOS depends on it: no notification is read there
     actual fun areAppNotificationsEnabled(): Boolean = true
 
+    actual fun isNotificationListenerConnected(): Boolean = true
+
     actual fun openAppNotificationSettings() = Unit
 }

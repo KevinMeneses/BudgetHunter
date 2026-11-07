@@ -1,8 +1,8 @@
 package com.meneses.budgethunter.budgetList.ui
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.foundation.layout.Box
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
@@ -16,6 +16,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import budgethunter.composeapp.generated.resources.Res
 import budgethunter.composeapp.generated.resources.budgets
 import budgethunter.composeapp.generated.resources.new_budget
@@ -25,8 +27,8 @@ import com.meneses.budgethunter.budgetList.application.BudgetListState
 import com.meneses.budgethunter.commons.platform.NetworkMonitor
 import com.meneses.budgethunter.commons.ui.AppBar
 import com.meneses.budgethunter.theme.AppColors
-import kotlinx.serialization.Serializable
 import org.jetbrains.compose.resources.stringResource
+import kotlinx.serialization.Serializable
 
 @Serializable
 object BudgetListScreen {
@@ -39,6 +41,10 @@ object BudgetListScreen {
         snackbarHostState: SnackbarHostState
     ) {
         var dropdownExpanded by remember { mutableStateOf(false) }
+        // Back from the system settings or from the background: the notification reader may have stopped
+        LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+            BudgetListIntent.CheckNotificationReader.run(onIntent)
+        }
         val isOnline by networkMonitor.isOnline.collectAsState()
 
         Scaffold(
@@ -109,6 +115,8 @@ object BudgetListScreen {
                 isSyncing = uiState.isSyncing,
                 isOnline = if (uiState.isAuthenticated) isOnline else true,
                 showSyncState = uiState.isAuthenticated,
+                isNotificationReaderStopped = uiState.isNotificationReaderStopped,
+                onNotificationReaderStoppedClick = showSettings,
                 paddingValues = paddingValues,
                 onIntent = onIntent
             )

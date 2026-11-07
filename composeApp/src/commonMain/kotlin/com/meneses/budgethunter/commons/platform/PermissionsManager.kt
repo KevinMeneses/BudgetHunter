@@ -18,6 +18,12 @@ expect class PermissionsManager {
      */
     fun areAppNotificationsEnabled(): Boolean
 
+    /**
+     * Whether the system has the notification listener bound right now. It can stay unbound with
+     * the access granted, and then only a force stop of the app from its system screen brings it back.
+     */
+    fun isNotificationListenerConnected(): Boolean
+
     /** Opens the system screen with this app's notification switch. */
     fun openAppNotificationSettings()
 }

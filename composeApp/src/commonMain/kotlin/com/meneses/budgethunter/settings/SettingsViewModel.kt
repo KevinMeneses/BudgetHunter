@@ -15,6 +15,7 @@ import com.meneses.budgethunter.commons.platform.PermissionsManager
 import com.meneses.budgethunter.settings.application.SettingsIntent
 import com.meneses.budgethunter.settings.application.SettingsState
 import com.meneses.budgethunter.settings.application.SyncUserPreferencesUseCase
+import com.meneses.budgethunter.sms.application.IsNotificationReaderStoppedUseCase
 import com.meneses.budgethunter.sms.domain.BankSmsConfig
 import com.meneses.budgethunter.sms.domain.SupportedBanks
 import kotlinx.coroutines.CancellationException
@@ -32,11 +33,17 @@ class SettingsViewModel(
     private val authRepository: AuthRepository,
     private val syncUserPreferences: SyncUserPreferencesUseCase,
     private val signOutUseCase: SignOutUseCase,
+    private val isNotificationReaderStopped: IsNotificationReaderStoppedUseCase,
     // Pushes outlive the screen: leaving Settings right after a toggle must not drop the save.
     private val applicationScope: CoroutineScope
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsState())
+
+    private var notificationReaderCheck: Job? = null
+
+    // The dialog is shown once per visit; the warning row stays while the reader is stopped
+    private var notificationReaderStoppedDialogShown = false
     val uiState = _uiState.asStateFlow()
 
     init {
@@ -52,6 +59,8 @@ class SettingsViewModel(
             is SettingsIntent.HideNotificationAccessDialog -> hideNotificationAccessDialog()
             is SettingsIntent.OpenAppNotificationSettings -> openAppNotificationSettings()
             is SettingsIntent.HideAppNotificationsDialog -> hideAppNotificationsDialog()
+            is SettingsIntent.OpenAppInfoToRestartReader -> openAppInfoToRestartReader()
+            is SettingsIntent.HideNotificationReaderStoppedDialog -> hideNotificationReaderStoppedDialog()
             is SettingsIntent.RefreshPermissions -> refreshPermissions()
             is SettingsIntent.SetDefaultBudget -> setDefaultBudget(intent.budget)
             is SettingsIntent.ShowDefaultBudgetSelector -> showDefaultBudgetSelector()
@@ -161,6 +170,7 @@ class SettingsViewModel(
                         isLoading = false
                     )
                 }
+                checkNotificationReader()
             } catch (_: Exception) {
                 _uiState.update { it.copy(isLoading = false) }
             }
@@ -247,6 +257,34 @@ class SettingsViewModel(
                 isAppNotificationsDialogVisible = enabled && hasAccess && !appNotificationsEnabled
             )
         }
+        checkNotificationReader()
+    }
+
+    /** The reader can stop with everything granted; then the user is asked for a force stop. */
+    private fun checkNotificationReader() {
+        // A check under way reads everything again after its grace period: restarting it on every
+        // resume would only push the warning further away
+        if (notificationReaderCheck?.isActive == true) return
+        notificationReaderCheck = viewModelScope.launch {
+            val stopped = isNotificationReaderStopped()
+            val showDialog = stopped && !notificationReaderStoppedDialogShown
+            if (showDialog) notificationReaderStoppedDialogShown = true
+            _uiState.update {
+                it.copy(
+                    isNotificationReaderStopped = stopped,
+                    isNotificationReaderStoppedDialogVisible = showDialog || (stopped && it.isNotificationReaderStoppedDialogVisible)
+                )
+            }
+        }
+    }
+
+    private fun openAppInfoToRestartReader() {
+        hideNotificationReaderStoppedDialog()
+        permissionsManager.openAppSettings()
+    }
+
+    private fun hideNotificationReaderStoppedDialog() {
+        _uiState.update { it.copy(isNotificationReaderStoppedDialogVisible = false) }
     }
 
     private fun openAppNotificationSettings() {
@@ -275,6 +313,7 @@ class SettingsViewModel(
                 areAppNotificationsEnabled = permissionsManager.areAppNotificationsEnabled()
             )
         }
+        checkNotificationReader()
     }
 
     private fun toggleAiProcessing(enabled: Boolean) = viewModelScope.launch {

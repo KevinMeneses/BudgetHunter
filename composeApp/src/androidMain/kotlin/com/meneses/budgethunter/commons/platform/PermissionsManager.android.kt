@@ -83,6 +83,8 @@ actual class PermissionsManager(private val context: Context) {
         }
     }
 
+    actual fun isNotificationListenerConnected(): Boolean = BankNotificationListenerService.isConnected
+
     actual fun areAppNotificationsEnabled(): Boolean =
         NotificationManagerCompat.from(context).areNotificationsEnabled()
 

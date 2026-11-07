@@ -11,6 +11,10 @@ sealed interface SettingsIntent {
     data object OpenAppNotificationSettings : SettingsIntent
     data object HideAppNotificationsDialog : SettingsIntent
 
+    /** Opens the app's system screen, where the user force stops it to get the reader bound again. */
+    data object OpenAppInfoToRestartReader : SettingsIntent
+    data object HideNotificationReaderStoppedDialog : SettingsIntent
+
     /** The screen came back to the front, maybe from the system settings: access may have changed. */
     data object RefreshPermissions : SettingsIntent
 

@@ -16,6 +16,9 @@ data class SettingsState(
     val areAppNotificationsEnabled: Boolean = true,
     /** Explains why the app's own notifications must be on before sending the user to switch them. */
     val isAppNotificationsDialogVisible: Boolean = false,
+    /** Everything is granted but the system left the listener unbound: only a force stop brings it back. */
+    val isNotificationReaderStopped: Boolean = false,
+    val isNotificationReaderStoppedDialogVisible: Boolean = false,
     val notificationBanks: List<BankSmsConfig> = emptyList(),
     /** Explains what is read before sending the user to the system's notification access screen. */
     val isNotificationAccessDialogVisible: Boolean = false,

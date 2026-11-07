@@ -2,10 +2,10 @@ package com.meneses.budgethunter.budgetList
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.meneses.budgethunter.auth.data.AuthRepository
 import budgethunter.composeapp.generated.resources.Res
 import budgethunter.composeapp.generated.resources.budget_synced_successfully
 import budgethunter.composeapp.generated.resources.sync_failed_retry_online
+import com.meneses.budgethunter.auth.data.AuthRepository
 import com.meneses.budgethunter.budgetList.application.BudgetListEvent
 import com.meneses.budgethunter.budgetList.application.BudgetListIntent
 import com.meneses.budgethunter.budgetList.application.BudgetListState
@@ -15,6 +15,8 @@ import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.commons.data.PreferencesManager
 import com.meneses.budgethunter.commons.data.sync.Logger
+import com.meneses.budgethunter.sms.application.IsNotificationReaderStoppedUseCase
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,6 +31,7 @@ class BudgetListViewModel(
     private val deleteBudgetUseCase: DeleteBudgetUseCase,
     private val authRepository: AuthRepository,
     private val preferencesManager: PreferencesManager,
+    private val isNotificationReaderStopped: IsNotificationReaderStoppedUseCase,
     private val logger: Logger
 ) : ViewModel() {
     private val tag = "BudgetListViewModel"
@@ -84,6 +87,18 @@ class BudgetListViewModel(
             is BudgetListIntent.ClearFilter -> clearFilter()
             is BudgetListIntent.SignIn -> signIn()
             is BudgetListIntent.SyncBudgets -> syncBudgets()
+            is BudgetListIntent.CheckNotificationReader -> checkNotificationReader()
+        }
+    }
+
+    private var notificationReaderCheck: Job? = null
+
+    private fun checkNotificationReader() {
+        // A check under way reads everything again after its grace period
+        if (notificationReaderCheck?.isActive == true) return
+        notificationReaderCheck = viewModelScope.launch {
+            val stopped = isNotificationReaderStopped()
+            _uiState.update { it.copy(isNotificationReaderStopped = stopped) }
         }
     }
 

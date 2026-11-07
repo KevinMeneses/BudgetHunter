@@ -1,11 +1,8 @@
 package com.meneses.budgethunter.sms.platform
 
 import android.app.Notification
-import android.content.ComponentName
-import android.content.Context
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
-import androidx.core.app.NotificationManagerCompat
 import com.meneses.budgethunter.commons.data.PreferencesManager
 import com.meneses.budgethunter.sms.domain.BankNotification
 import com.meneses.budgethunter.sms.domain.BankNotificationService
@@ -74,31 +71,28 @@ class BankNotificationListenerService : NotificationListenerService(), KoinCompo
         }
     }
 
-    /**
-     * The system drops the binding now and then (the app's notifications switched off and on, the app
-     * updated, memory pressure) and does not always bind again by itself, so the access stays granted
-     * while nothing is read. Asking for it here brings the listener back.
-     */
+    override fun onListenerConnected() {
+        super.onListenerConnected()
+        isConnected = true
+    }
+
     override fun onListenerDisconnected() {
         super.onListenerDisconnected()
-        rebindIfGranted(this)
+        isConnected = false
     }
 
     companion object {
         // Shared by the instances the system creates on each bind; notifications arrive on the main thread
         private val recentNotifications = RecentNotifications()
 
-        /** Asks the system to bind the listener again, when the user granted notification access. */
-        fun rebindIfGranted(context: Context) {
-            if (context.packageName !in NotificationManagerCompat.getEnabledListenerPackages(context)) return
-            // With the app's own notifications off Android drops the listener right after binding it,
-            // and onListenerDisconnected would ask again in a loop. The next resume asks once they are on
-            if (!NotificationManagerCompat.from(context).areNotificationsEnabled()) return
-            try {
-                NotificationListenerService.requestRebind(ComponentName(context, BankNotificationListenerService::class.java))
-            } catch (_: RuntimeException) {
-                // The access was taken away in between: Settings shows it missing
-            }
-        }
+        /**
+         * Whether the system has the listener bound in this process. After the app's own notifications
+         * are switched off and on, some devices leave it unbound for good: the access stays granted
+         * while nothing is read, and neither requestRebind nor anything else the app can do brings it
+         * back. Only a force stop from the system settings does, so Settings asks the user for it.
+         */
+        @Volatile
+        var isConnected = false
+            private set
     }
 }

@@ -9,9 +9,18 @@ import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.commons.data.PreferencesManager
 import com.meneses.budgethunter.commons.data.sync.NoOpLogger
+import com.meneses.budgethunter.sms.application.IsNotificationReaderStoppedUseCase
 import io.mockk.coEvery
 import io.mockk.coJustRun
 import io.mockk.mockk
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertIs
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -20,12 +29,6 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertIs
-import kotlin.test.assertNull
 
 /**
  * Unit tests for BudgetListViewModel event emissions.
@@ -47,6 +50,7 @@ class BudgetListViewModelTest {
     private val deleteBudgetUseCase = mockk<DeleteBudgetUseCase>(relaxed = true)
     private val authRepository = mockk<AuthRepository>(relaxed = true)
     private val preferencesManager = mockk<PreferencesManager>(relaxed = true)
+    private val isNotificationReaderStopped = mockk<IsNotificationReaderStoppedUseCase>(relaxed = true)
 
     // System under test
     private lateinit var viewModel: BudgetListViewModel
@@ -64,6 +68,7 @@ class BudgetListViewModelTest {
             deleteBudgetUseCase = deleteBudgetUseCase,
             authRepository = authRepository,
             preferencesManager = preferencesManager,
+            isNotificationReaderStopped = isNotificationReaderStopped,
             logger = NoOpLogger()
         )
     }
@@ -141,6 +146,7 @@ class BudgetListViewModelTest {
         deleteBudgetUseCase = deleteBudgetUseCase,
         authRepository = authRepository,
         preferencesManager = preferencesManager,
+        isNotificationReaderStopped = isNotificationReaderStopped,
         logger = NoOpLogger()
     )
 
@@ -164,5 +170,22 @@ class BudgetListViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertNull(offlineViewModel.uiState.value.accountEmail)
+    }
+
+    @Test
+    fun `coming to the front shows whether the notification reader stopped`() = runTest {
+        coEvery { isNotificationReaderStopped() } returns true
+
+        viewModel.sendIntent(BudgetListIntent.CheckNotificationReader)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.isNotificationReaderStopped)
+
+        coEvery { isNotificationReaderStopped() } returns false
+
+        viewModel.sendIntent(BudgetListIntent.CheckNotificationReader)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertFalse(viewModel.uiState.value.isNotificationReaderStopped)
     }
 }

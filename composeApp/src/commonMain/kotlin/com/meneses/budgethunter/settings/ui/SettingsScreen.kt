@@ -70,8 +70,11 @@ import budgethunter.composeapp.generated.resources.no_default_budget
 import budgethunter.composeapp.generated.resources.no_notification_bank_selected
 import budgethunter.composeapp.generated.resources.notification_access_explanation
 import budgethunter.composeapp.generated.resources.notification_access_missing
-import budgethunter.composeapp.generated.resources.notification_bank_needs_reading
 import budgethunter.composeapp.generated.resources.notification_access_title
+import budgethunter.composeapp.generated.resources.notification_bank_needs_reading
+import budgethunter.composeapp.generated.resources.notification_reader_stopped_description
+import budgethunter.composeapp.generated.resources.notification_reader_stopped_explanation
+import budgethunter.composeapp.generated.resources.notification_reader_stopped_title
 import budgethunter.composeapp.generated.resources.read_bank_app_notifications
 import budgethunter.composeapp.generated.resources.read_bank_sms
 import budgethunter.composeapp.generated.resources.section_ai
@@ -257,6 +260,15 @@ object SettingsScreen {
             )
         }
 
+        if (uiState.isNotificationReaderStoppedDialogVisible) {
+            ManualPermissionDialog(
+                title = stringResource(Res.string.notification_reader_stopped_title),
+                explanation = stringResource(Res.string.notification_reader_stopped_explanation),
+                onDismiss = { onIntent(SettingsIntent.HideNotificationReaderStoppedDialog) },
+                onOpenSettings = { onIntent(SettingsIntent.OpenAppInfoToRestartReader) }
+            )
+        }
+
         if (uiState.isManualPermissionDialogVisible) {
             ManualPermissionDialog(
                 onDismiss = { onIntent(SettingsIntent.HideManualPermissionDialog) },
@@ -317,6 +329,16 @@ object SettingsScreen {
                     subtitle = stringResource(Res.string.app_notifications_off_description),
                     contentColor = AppColors.error,
                     onClick = { onIntent(SettingsIntent.OpenAppNotificationSettings) }
+                )
+            } else if (uiState.isBankNotificationReadingEnabled && uiState.isNotificationReaderStopped) {
+                // Everything granted, yet the system left the reader unbound: only a force stop helps
+                GroupDivider()
+                SettingRow(
+                    icon = Icons.Default.Warning,
+                    title = stringResource(Res.string.notification_reader_stopped_title),
+                    subtitle = stringResource(Res.string.notification_reader_stopped_description),
+                    contentColor = AppColors.error,
+                    onClick = { onIntent(SettingsIntent.OpenAppInfoToRestartReader) }
                 )
             }
             GroupDivider()
