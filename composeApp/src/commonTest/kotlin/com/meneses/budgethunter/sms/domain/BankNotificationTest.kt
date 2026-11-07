@@ -92,6 +92,13 @@ class BankNotificationTest {
     }
 
     @Test
+    fun `a title that closes its own sentence is not given a second dot`() {
+        assertEquals("¡Listo! Enviaste $2.000", BankNotification(title = "¡Listo!", text = "Enviaste $2.000").message)
+        assertEquals("Envío. Te envió 1000", BankNotification(title = "Envío.", text = "Te envió 1000").message)
+        assertEquals("Te envió 1000", BankNotification(title = "", text = "Te envió 1000").message)
+    }
+
+    @Test
     fun `only the apps of supported banks are read`() {
         assertEquals(SupportedBanks.NEQUI, SupportedBanks.getNotificationBankByPackage("com.nequi.MobileApp"))
         assertEquals(SupportedBanks.NU, SupportedBanks.getNotificationBankByPackage("com.nu.production"))

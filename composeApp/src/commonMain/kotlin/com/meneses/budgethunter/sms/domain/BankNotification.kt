@@ -13,9 +13,17 @@ data class BankNotification(
 ) {
     /** Title and text read as one message, the title first as the opening sentence. */
     val message: String
-        get() = listOf(title.trim().trimEnd('.'), text.trim())
-            .filter { it.isNotEmpty() }
-            .joinToString(". ")
+        get() {
+            val opening = title.trim()
+            val body = text.trim()
+            return when {
+                opening.isEmpty() -> body
+                body.isEmpty() -> opening.trimEnd('.')
+                // A title that already closes its sentence ("¡Listo!") only needs a space
+                opening.last() in SENTENCE_ENDS -> "$opening $body"
+                else -> "$opening. $body"
+            }
+        }
 
     /**
      * The text says who the money came from or went to, which the title rarely does, so it
@@ -26,6 +34,10 @@ data class BankNotification(
 
     val isBlank: Boolean
         get() = title.isBlank() && text.isBlank()
+
+    private companion object {
+        val SENTENCE_ENDS = setOf('.', '!', '?')
+    }
 }
 
 /**
