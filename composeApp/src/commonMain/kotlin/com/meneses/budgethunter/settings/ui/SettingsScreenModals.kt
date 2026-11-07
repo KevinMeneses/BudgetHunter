@@ -165,7 +165,9 @@ private fun BankOptionItem(
 @Composable
 fun ManualPermissionDialog(
     onDismiss: () -> Unit,
-    onOpenSettings: () -> Unit
+    onOpenSettings: () -> Unit,
+    title: String = stringResource(Res.string.sms_permission_required),
+    explanation: String = stringResource(Res.string.sms_permission_explanation)
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -181,7 +183,7 @@ fun ManualPermissionDialog(
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
-                    text = stringResource(Res.string.sms_permission_required),
+                    text = title,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
@@ -190,7 +192,7 @@ fun ManualPermissionDialog(
         },
         text = {
             Text(
-                text = stringResource(Res.string.sms_permission_explanation),
+                text = explanation,
                 fontSize = 14.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

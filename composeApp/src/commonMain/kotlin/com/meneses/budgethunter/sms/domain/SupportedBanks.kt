@@ -132,7 +132,41 @@ object SupportedBanks {
         SCOTIABANK_COLPATRIA
     ).sortedBy { it.displayName }
 
+    /**
+     * Banks and wallets that report movements in their app notifications instead of by SMS.
+     * They are read on Android only, and are kept out of [ALL_BANKS] because they send no SMS.
+     */
+    val NEQUI = BankSmsConfig(
+        id = "nequi",
+        displayName = "Nequi",
+        // "VALENTINA ARCINIEGAS te envió 1000, ¡lo mejor!": the amount carries no currency sign
+        transactionAmountRegex = Regex(
+            """(?:envi[oó]|enviaste|recibiste|pagaste)\s+(?:por\s+)?\$?\s*([0-9][0-9.,]*)""",
+            RegexOption.IGNORE_CASE
+        ),
+        appPackages = listOf("com.nequi.MobileApp")
+    )
+
+    val NU = BankSmsConfig(
+        id = "nu",
+        displayName = "Nu",
+        // "Recibiste 2.000,00 en tu cuenta": the amount carries no currency sign
+        transactionAmountRegex = Regex(
+            """(?:recibiste|enviaste|pagaste|compraste|transferiste)\s+(?:por\s+)?\$?\s*([0-9][0-9.,]*)""",
+            RegexOption.IGNORE_CASE
+        ),
+        appPackages = listOf("com.nu.production")
+    )
+
+    val NOTIFICATION_BANKS = listOf(NEQUI, NU).sortedBy { it.displayName }
+
     fun getBankConfigById(id: String?): BankSmsConfig? {
         return ALL_BANKS.find { it.id == id }
+    }
+
+    /** The bank whose app posted a notification, or null for any other app. */
+    fun getNotificationBankByPackage(packageName: String?): BankSmsConfig? {
+        if (packageName == null) return null
+        return NOTIFICATION_BANKS.find { packageName in it.appPackages }
     }
 }

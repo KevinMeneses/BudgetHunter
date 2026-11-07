@@ -103,8 +103,11 @@ object SmsTransactionParser {
      * categorized by hand later on.
      */
     private fun extractDescription(messageBody: String, bankConfig: BankSmsConfig): String? =
-        messageBody
-            .removeBankPrefix(bankConfig)
+        firstSentence(messageBody.removeBankPrefix(bankConfig))
+
+    /** The first sentence of [text], cut to the length of a description, or null when empty. */
+    fun firstSentence(text: String): String? =
+        text
             .takeFirstSentence()
             .trim()
             .take(MAX_DESCRIPTION_LENGTH)
@@ -217,6 +220,7 @@ object SmsTransactionParser {
         "has recibido",
         "recepcion de",
         "te enviaron",
+        "te envio",
         "te transfirieron",
         "te consignaron",
         "te llego",
@@ -254,6 +258,7 @@ object SmsTransactionParser {
         "transferiste",
         "enviaste",
         "envio de dinero",
+        "envio de plata",
         "se debito",
         "debito por",
         "debitamos",

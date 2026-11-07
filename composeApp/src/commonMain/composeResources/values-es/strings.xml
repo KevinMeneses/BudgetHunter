@@ -476,4 +476,9 @@
     <string name="sign_out_unsynced_warning">Hay presupuestos o movimientos que aún no se han sincronizado. Al cerrar sesión se borrarán de este dispositivo. ¿Quieres cerrar sesión de todos modos?</string>
     <string name="error_email_already_registered">Ya existe una cuenta con este correo</string>
     <string name="shared_with_people">Compartido entre %1$d personas</string>
+    <string name="read_bank_app_notifications">Leer notificaciones de apps bancarias</string>
+    <string name="bank_notification_reading_description">Crea entradas con los movimientos que notifican estas apps: %1$s</string>
+    <string name="notification_access_title">Acceso a las notificaciones</string>
+    <string name="notification_access_missing">Falta el acceso a las notificaciones. Toca para darlo</string>
+    <string name="notification_access_explanation">Budget Hunter leerá solo las notificaciones de %1$s para registrar en tu presupuesto por defecto los movimientos que muestran. Las notificaciones de las demás apps se descartan sin leerse.\n\nEn la siguiente pantalla activa Budget Hunter. Android muestra una advertencia porque este acceso podría ver todas las notificaciones.\n\nSi la opción aparece deshabilitada, abre la información de la app, toca el menú ⋮ y elige “Permitir ajustes restringidos”.</string>
 </resources>

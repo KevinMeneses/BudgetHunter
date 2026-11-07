@@ -12,7 +12,9 @@ import com.meneses.budgethunter.settings.application.SettingsIntent
 import com.meneses.budgethunter.settings.application.SyncUserPreferencesUseCase
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -185,5 +187,42 @@ class SettingsViewModelTest {
     @Test
     fun `email stays null when not authenticated`() = runTest {
         assertNull(viewModel.uiState.value.email)
+    }
+
+    @Test
+    fun `turning on bank notifications without access explains it before the system settings`() = runTest {
+        every { permissionsManager.hasNotificationListenerAccess() } returns false
+
+        viewModel.sendIntent(SettingsIntent.ToggleBankNotificationReading(true))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        coVerify { preferencesManager.setBankNotificationReadingEnabled(true) }
+        assertTrue(viewModel.uiState.value.isBankNotificationReadingEnabled)
+        assertTrue(viewModel.uiState.value.isNotificationAccessDialogVisible)
+
+        viewModel.sendIntent(SettingsIntent.OpenNotificationAccessSettings)
+
+        verify { permissionsManager.openNotificationListenerSettings() }
+        assertFalse(viewModel.uiState.value.isNotificationAccessDialogVisible)
+    }
+
+    @Test
+    fun `turning on bank notifications with access granted asks nothing`() = runTest {
+        every { permissionsManager.hasNotificationListenerAccess() } returns true
+
+        viewModel.sendIntent(SettingsIntent.ToggleBankNotificationReading(true))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.hasNotificationListenerAccess)
+        assertFalse(viewModel.uiState.value.isNotificationAccessDialogVisible)
+    }
+
+    @Test
+    fun `coming back to the screen reads the notification access again`() = runTest {
+        every { permissionsManager.hasNotificationListenerAccess() } returns true
+
+        viewModel.sendIntent(SettingsIntent.RefreshPermissions)
+
+        assertTrue(viewModel.uiState.value.hasNotificationListenerAccess)
     }
 }
