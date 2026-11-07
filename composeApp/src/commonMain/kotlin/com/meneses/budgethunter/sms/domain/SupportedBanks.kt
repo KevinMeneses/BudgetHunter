@@ -132,9 +132,11 @@ object SupportedBanks {
         SCOTIABANK_COLPATRIA
     ).sortedBy { it.displayName }
 
-    /**
-     * Banks and wallets that report movements in their app notifications instead of by SMS.
-     * They are read on Android only, and are kept out of [ALL_BANKS] because they send no SMS.
+    /*
+     * Banks and wallets that report movements only in their app notifications, never by SMS.
+     * They are kept out of [ALL_BANKS], which the SMS receiver and the iOS shortcut try.
+     * A bank that does both (an SMS bank whose app also notifies) is not listed here: it keeps
+     * its SMS configuration and gets its app packages there.
      */
     val NEQUI = BankSmsConfig(
         id = "nequi",
@@ -158,13 +160,18 @@ object SupportedBanks {
         appPackages = listOf("com.nu.production")
     )
 
-    val NOTIFICATION_BANKS = listOf(NEQUI, NU).sortedBy { it.displayName }
+    private val NOTIFICATION_ONLY_BANKS = listOf(NEQUI, NU)
 
     /**
      * Every bank the user can pick in Settings: the SMS ones and the notification ones share one
      * selection, so a bank is read, by SMS or from its app, only when it is selected.
      */
-    val SELECTABLE_BANKS = (ALL_BANKS + NOTIFICATION_BANKS).sortedBy { it.displayName }
+    val SELECTABLE_BANKS = (ALL_BANKS + NOTIFICATION_ONLY_BANKS)
+        .distinctBy { it.id }
+        .sortedBy { it.displayName }
+
+    /** The banks read from their app notifications on Android: any bank with app packages. */
+    val NOTIFICATION_BANKS = SELECTABLE_BANKS.filter { it.readsNotifications }
 
     /** An SMS bank by id. Notification banks are left out: the SMS receiver must never try them. */
     fun getBankConfigById(id: String?): BankSmsConfig? {

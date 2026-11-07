@@ -477,10 +477,13 @@
     <string name="error_email_already_registered">An account with this email already exists</string>
     <string name="shared_with_people">Shared by %1$d people</string>
     <string name="read_bank_app_notifications">Read bank app notifications</string>
-    <string name="bank_notification_reading_description">Create entries from the movements the selected apps notify (%1$s)</string>
+    <string name="bank_notification_reading_description">Create entries from the movements that the apps of the selected banks notify</string>
     <string name="notification_access_title">Notification access</string>
     <string name="notification_access_missing">Notification access is missing. Tap to grant it</string>
-    <string name="notification_access_explanation">Budget Hunter will read only the notifications of %1$s to register the movements they show in your default budget. Notifications from every other app are discarded without being read.\n\nOn the next screen turn on Budget Hunter. Android shows a warning because this access could see every notification.\n\nIf the option is grayed out, open the app info, tap the ⋮ menu and choose “Allow restricted settings”.</string>
-    <string name="notification_banks_not_selected_title">No app selected</string>
-    <string name="notification_banks_not_selected">Select %1$s in Banks to read their notifications</string>
+    <string name="notification_access_explanation">Budget Hunter will read only the notifications of the apps of the banks you select in Banks, to register the movements they show in your default budget. Notifications from every other app are discarded without being read.\n\nOn the next screen turn on Budget Hunter. Android shows a warning because this access could see every notification.\n\nIf the option is grayed out, open the app info, tap the ⋮ menu and choose “Allow restricted settings”.</string>
+    <string name="notification_banks_not_selected_title">No bank selected for notifications</string>
+    <string name="notification_banks_not_selected">In Banks, select the ones whose app notifications should be read</string>
+    <string name="bank_source_sms">SMS</string>
+    <string name="bank_source_notifications">App notifications</string>
+    <string name="bank_source_sms_and_notifications">SMS and app notifications</string>
 </resources>

@@ -110,6 +110,19 @@ class BankNotificationTest {
     }
 
     @Test
+    fun `notification banks are the selectable banks with app packages, each listed once`() {
+        assertEquals(listOf(SupportedBanks.NEQUI, SupportedBanks.NU), SupportedBanks.NOTIFICATION_BANKS)
+        assertEquals(
+            SupportedBanks.SELECTABLE_BANKS.size,
+            SupportedBanks.SELECTABLE_BANKS.map { it.id }.toSet().size
+        )
+        assertTrue(SupportedBanks.NEQUI.readsNotifications)
+        assertFalse(SupportedBanks.NEQUI.readsSms)
+        assertTrue(SupportedBanks.BANCOLOMBIA.readsSms)
+        assertFalse(SupportedBanks.BANCOLOMBIA.readsNotifications)
+    }
+
+    @Test
     fun `a reposted notification is handled once`() {
         val recent = RecentNotifications(capacity = 2)
 

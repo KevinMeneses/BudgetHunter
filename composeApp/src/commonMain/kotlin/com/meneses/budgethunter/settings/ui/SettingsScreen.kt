@@ -238,10 +238,7 @@ object SettingsScreen {
         if (uiState.isNotificationAccessDialogVisible) {
             ManualPermissionDialog(
                 title = stringResource(Res.string.notification_access_title),
-                explanation = stringResource(
-                    Res.string.notification_access_explanation,
-                    uiState.notificationBanks.joinToString(", ") { it.displayName }
-                ),
+                explanation = stringResource(Res.string.notification_access_explanation),
                 onDismiss = { onIntent(SettingsIntent.HideNotificationAccessDialog) },
                 onOpenSettings = { onIntent(SettingsIntent.OpenNotificationAccessSettings) }
             )
@@ -284,10 +281,7 @@ object SettingsScreen {
             SettingRow(
                 icon = Icons.Default.Notifications,
                 title = stringResource(Res.string.read_bank_app_notifications),
-                subtitle = stringResource(
-                    Res.string.bank_notification_reading_description,
-                    uiState.notificationBanks.joinToString(", ") { it.displayName }
-                ),
+                subtitle = stringResource(Res.string.bank_notification_reading_description),
                 switchChecked = uiState.isBankNotificationReadingEnabled,
                 onSwitchChange = { onIntent(SettingsIntent.ToggleBankNotificationReading(it)) }
             )
@@ -326,10 +320,7 @@ object SettingsScreen {
                 SettingRow(
                     icon = Icons.Default.Warning,
                     title = stringResource(Res.string.notification_banks_not_selected_title),
-                    subtitle = stringResource(
-                        Res.string.notification_banks_not_selected,
-                        uiState.notificationBanks.joinToString(", ") { it.displayName }
-                    ),
+                    subtitle = stringResource(Res.string.notification_banks_not_selected),
                     contentColor = AppColors.error,
                     onClick = { onIntent(SettingsIntent.ShowBankSelector) }
                 )
