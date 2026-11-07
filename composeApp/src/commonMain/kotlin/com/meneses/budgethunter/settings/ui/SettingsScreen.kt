@@ -54,6 +54,9 @@ import budgethunter.composeapp.generated.resources.account
 import budgethunter.composeapp.generated.resources.ai_processing
 import budgethunter.composeapp.generated.resources.ai_processing_description
 import budgethunter.composeapp.generated.resources.app_description
+import budgethunter.composeapp.generated.resources.app_notifications_off_description
+import budgethunter.composeapp.generated.resources.app_notifications_off_explanation
+import budgethunter.composeapp.generated.resources.app_notifications_off_title
 import budgethunter.composeapp.generated.resources.app_version
 import budgethunter.composeapp.generated.resources.bank_for_sms_notifications
 import budgethunter.composeapp.generated.resources.bank_notification_reading_description
@@ -67,6 +70,7 @@ import budgethunter.composeapp.generated.resources.no_default_budget
 import budgethunter.composeapp.generated.resources.no_notification_bank_selected
 import budgethunter.composeapp.generated.resources.notification_access_explanation
 import budgethunter.composeapp.generated.resources.notification_access_missing
+import budgethunter.composeapp.generated.resources.notification_bank_needs_reading
 import budgethunter.composeapp.generated.resources.notification_access_title
 import budgethunter.composeapp.generated.resources.read_bank_app_notifications
 import budgethunter.composeapp.generated.resources.read_bank_sms
@@ -79,6 +83,7 @@ import budgethunter.composeapp.generated.resources.sign_out
 import budgethunter.composeapp.generated.resources.sign_out_confirmation
 import budgethunter.composeapp.generated.resources.sign_out_unsynced_warning
 import budgethunter.composeapp.generated.resources.signed_in
+import budgethunter.composeapp.generated.resources.sms_bank_needs_reading
 import budgethunter.composeapp.generated.resources.sms_reading_description
 import budgethunter.composeapp.generated.resources.sms_shortcut_settings_description
 import budgethunter.composeapp.generated.resources.sms_shortcut_settings_row
@@ -243,6 +248,15 @@ object SettingsScreen {
             )
         }
 
+        if (uiState.isAppNotificationsDialogVisible) {
+            ManualPermissionDialog(
+                title = stringResource(Res.string.app_notifications_off_title),
+                explanation = stringResource(Res.string.app_notifications_off_explanation),
+                onDismiss = { onIntent(SettingsIntent.HideAppNotificationsDialog) },
+                onOpenSettings = { onIntent(SettingsIntent.OpenAppNotificationSettings) }
+            )
+        }
+
         if (uiState.isManualPermissionDialogVisible) {
             ManualPermissionDialog(
                 onDismiss = { onIntent(SettingsIntent.HideManualPermissionDialog) },
@@ -294,9 +308,24 @@ object SettingsScreen {
                     contentColor = AppColors.error,
                     onClick = { onIntent(SettingsIntent.OpenNotificationAccessSettings) }
                 )
+            } else if (uiState.isBankNotificationReadingEnabled && !uiState.areAppNotificationsEnabled) {
+                // With the app's own notifications off, Android stops handing over the banks' ones
+                GroupDivider()
+                SettingRow(
+                    icon = Icons.Default.Warning,
+                    title = stringResource(Res.string.app_notifications_off_title),
+                    subtitle = stringResource(Res.string.app_notifications_off_description),
+                    contentColor = AppColors.error,
+                    onClick = { onIntent(SettingsIntent.OpenAppNotificationSettings) }
+                )
             }
             GroupDivider()
             val hasNotificationBankSelected = uiState.selectedBanks.any { it in uiState.notificationBanks }
+            // A selected bank that only one source reads is not read while that source is off
+            val hasUnreadNotificationBank = !uiState.isBankNotificationReadingEnabled &&
+                uiState.selectedBanks.any { it.readsNotifications && !it.readsSms }
+            val hasUnreadSmsBank = !uiState.isSmsReadingEnabled &&
+                uiState.selectedBanks.any { it.readsSms && !it.readsNotifications }
             SettingRow(
                 icon = Icons.Default.AccountBalance,
                 title = stringResource(Res.string.bank_for_sms_notifications),
@@ -311,10 +340,12 @@ object SettingsScreen {
                 },
                 // Only the selected apps are read: with none of them selected the switch reads
                 // nothing, said here since this row is also where it is fixed
-                warning = if (uiState.isBankNotificationReadingEnabled && !hasNotificationBankSelected) {
-                    stringResource(Res.string.no_notification_bank_selected)
-                } else {
-                    null
+                warning = when {
+                    hasUnreadNotificationBank -> stringResource(Res.string.notification_bank_needs_reading)
+                    hasUnreadSmsBank -> stringResource(Res.string.sms_bank_needs_reading)
+                    uiState.isBankNotificationReadingEnabled && !hasNotificationBankSelected ->
+                        stringResource(Res.string.no_notification_bank_selected)
+                    else -> null
                 },
                 // One selection for both sources: SMS banks and the apps read from their notifications
                 enabled = uiState.isSmsReadingEnabled || uiState.isBankNotificationReadingEnabled,

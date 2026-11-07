@@ -11,4 +11,13 @@ expect class PermissionsManager {
 
     /** Opens the system screen where that access is granted; it cannot be asked for in a dialog. */
     fun openNotificationListenerSettings()
+
+    /**
+     * Whether the user lets this app post notifications. Android stops handing a listener the other
+     * apps' notifications while its own are switched off, so the access alone is not enough.
+     */
+    fun areAppNotificationsEnabled(): Boolean
+
+    /** Opens the system screen with this app's notification switch. */
+    fun openAppNotificationSettings()
 }

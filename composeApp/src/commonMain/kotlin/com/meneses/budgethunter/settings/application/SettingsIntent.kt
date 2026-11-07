@@ -8,6 +8,8 @@ sealed interface SettingsIntent {
     data class ToggleBankNotificationReading(val enabled: Boolean) : SettingsIntent
     data object OpenNotificationAccessSettings : SettingsIntent
     data object HideNotificationAccessDialog : SettingsIntent
+    data object OpenAppNotificationSettings : SettingsIntent
+    data object HideAppNotificationsDialog : SettingsIntent
 
     /** The screen came back to the front, maybe from the system settings: access may have changed. */
     data object RefreshPermissions : SettingsIntent

@@ -83,6 +83,20 @@ actual class PermissionsManager(private val context: Context) {
         }
     }
 
+    actual fun areAppNotificationsEnabled(): Boolean =
+        NotificationManagerCompat.from(context).areNotificationsEnabled()
+
+    actual fun openAppNotificationSettings() {
+        val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+            .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        try {
+            context.startActivity(intent)
+        } catch (_: ActivityNotFoundException) {
+            openAppSettings()
+        }
+    }
+
     fun handlePermissionResult(granted: Boolean) {
         permissionResultCallback?.invoke(granted)
         permissionResultCallback = null

@@ -50,6 +50,8 @@ class SettingsViewModel(
             is SettingsIntent.ToggleBankNotificationReading -> toggleBankNotificationReading(intent.enabled)
             is SettingsIntent.OpenNotificationAccessSettings -> openNotificationAccessSettings()
             is SettingsIntent.HideNotificationAccessDialog -> hideNotificationAccessDialog()
+            is SettingsIntent.OpenAppNotificationSettings -> openAppNotificationSettings()
+            is SettingsIntent.HideAppNotificationsDialog -> hideAppNotificationsDialog()
             is SettingsIntent.RefreshPermissions -> refreshPermissions()
             is SettingsIntent.SetDefaultBudget -> setDefaultBudget(intent.budget)
             is SettingsIntent.ShowDefaultBudgetSelector -> showDefaultBudgetSelector()
@@ -151,6 +153,7 @@ class SettingsViewModel(
                         hasSmsPermission = permissionsManager.hasSmsPermission(),
                         isBankNotificationReadingEnabled = preferencesManager.isBankNotificationReadingEnabled(),
                         hasNotificationListenerAccess = permissionsManager.hasNotificationListenerAccess(),
+                        areAppNotificationsEnabled = permissionsManager.areAppNotificationsEnabled(),
                         notificationBanks = SupportedBanks.NOTIFICATION_BANKS,
                         availableBanks = SupportedBanks.SELECTABLE_BANKS,
                         selectedBanks = preferences.selectedBanks,
@@ -233,13 +236,26 @@ class SettingsViewModel(
     private fun toggleBankNotificationReading(enabled: Boolean) = viewModelScope.launch {
         preferencesManager.setBankNotificationReadingEnabled(enabled)
         val hasAccess = permissionsManager.hasNotificationListenerAccess()
+        val appNotificationsEnabled = permissionsManager.areAppNotificationsEnabled()
         _uiState.update {
             it.copy(
                 isBankNotificationReadingEnabled = enabled,
                 hasNotificationListenerAccess = hasAccess,
-                isNotificationAccessDialogVisible = enabled && !hasAccess
+                areAppNotificationsEnabled = appNotificationsEnabled,
+                isNotificationAccessDialogVisible = enabled && !hasAccess,
+                // One step at a time: the access first, the app's own notifications once it is granted
+                isAppNotificationsDialogVisible = enabled && hasAccess && !appNotificationsEnabled
             )
         }
+    }
+
+    private fun openAppNotificationSettings() {
+        hideAppNotificationsDialog()
+        permissionsManager.openAppNotificationSettings()
+    }
+
+    private fun hideAppNotificationsDialog() {
+        _uiState.update { it.copy(isAppNotificationsDialogVisible = false) }
     }
 
     private fun openNotificationAccessSettings() {
@@ -255,7 +271,8 @@ class SettingsViewModel(
         _uiState.update {
             it.copy(
                 hasSmsPermission = permissionsManager.hasSmsPermission(),
-                hasNotificationListenerAccess = permissionsManager.hasNotificationListenerAccess()
+                hasNotificationListenerAccess = permissionsManager.hasNotificationListenerAccess(),
+                areAppNotificationsEnabled = permissionsManager.areAppNotificationsEnabled()
             )
         }
     }

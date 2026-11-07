@@ -219,6 +219,44 @@ class SettingsViewModelTest {
     }
 
     @Test
+    fun `coming back to the screen reads whether the app's notifications are on`() = runTest {
+        every { permissionsManager.areAppNotificationsEnabled() } returns false
+
+        viewModel.sendIntent(SettingsIntent.RefreshPermissions)
+
+        assertFalse(viewModel.uiState.value.areAppNotificationsEnabled)
+    }
+
+    @Test
+    fun `turning on bank notifications with the app's notifications off explains it before their screen`() = runTest {
+        every { permissionsManager.hasNotificationListenerAccess() } returns true
+        every { permissionsManager.areAppNotificationsEnabled() } returns false
+
+        viewModel.sendIntent(SettingsIntent.ToggleBankNotificationReading(true))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.isAppNotificationsDialogVisible)
+        assertFalse(viewModel.uiState.value.isNotificationAccessDialogVisible)
+
+        viewModel.sendIntent(SettingsIntent.OpenAppNotificationSettings)
+
+        verify { permissionsManager.openAppNotificationSettings() }
+        assertFalse(viewModel.uiState.value.isAppNotificationsDialogVisible)
+    }
+
+    @Test
+    fun `without notification access only the access is asked for first`() = runTest {
+        every { permissionsManager.hasNotificationListenerAccess() } returns false
+        every { permissionsManager.areAppNotificationsEnabled() } returns false
+
+        viewModel.sendIntent(SettingsIntent.ToggleBankNotificationReading(true))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.isNotificationAccessDialogVisible)
+        assertFalse(viewModel.uiState.value.isAppNotificationsDialogVisible)
+    }
+
+    @Test
     fun `coming back to the screen reads the notification access again`() = runTest {
         every { permissionsManager.hasNotificationListenerAccess() } returns true
 
