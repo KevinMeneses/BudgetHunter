@@ -8,6 +8,7 @@ import com.meneses.budgethunter.sms.domain.BankNotification
 import com.meneses.budgethunter.sms.domain.BankNotificationService
 import com.meneses.budgethunter.sms.domain.RecentNotifications
 import com.meneses.budgethunter.sms.domain.SupportedBanks
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
@@ -52,10 +53,18 @@ class BankNotificationListenerService : NotificationListenerService(), KoinCompo
         if (!recentNotifications.markIfNew(fingerprint)) return
 
         ioScope.launch {
-            if (!preferencesManager.isBankNotificationReadingEnabled()) return@launch
-            // Like an SMS bank, an app is read only while the user has it among the selected banks
-            if (bankConfig.id !in preferencesManager.getSelectedBankIds()) return@launch
-            bankNotificationService.processBankNotification(bankNotification, bankConfig)
+            // The shared IO scope has no exception handler: a failure here (reading the
+            // preferences) must not take down the app, which runs this with no screen open
+            try {
+                if (!preferencesManager.isBankNotificationReadingEnabled()) return@launch
+                // Like an SMS bank, an app is read only while the user has it among the selected banks
+                if (bankConfig.id !in preferencesManager.getSelectedBankIds()) return@launch
+                bankNotificationService.processBankNotification(bankNotification, bankConfig)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                // Nothing to log: the notification text holds names and amounts
+            }
         }
     }
 
