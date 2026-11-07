@@ -31,7 +31,8 @@ data class BankNotification(
 /**
  * Remembers the last notifications handled, because apps post the same one again when they
  * update it (a heads-up followed by a silent copy, an expanded text arriving later) and each
- * repost must not become another entry.
+ * repost must not become another entry. Callers identify a notification by what survives an
+ * update (on Android, its key and its time), never by its text.
  */
 class RecentNotifications(private val capacity: Int = DEFAULT_CAPACITY) {
 

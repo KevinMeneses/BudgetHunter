@@ -46,8 +46,9 @@ class BankNotificationListenerService : NotificationListenerService(), KoinCompo
         )
         if (bankNotification.isBlank) return
 
-        // An update of the same notification keeps its key and its time
-        val fingerprint = "${posted.key}|${notification.`when`}|${bankNotification.message}"
+        // An update of the same notification keeps its key and its time, even when its text grows
+        // (a short text first, the expanded one later), so the text is left out on purpose
+        val fingerprint = "${posted.key}|${notification.`when`}"
         if (!recentNotifications.markIfNew(fingerprint)) return
 
         ioScope.launch {
