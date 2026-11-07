@@ -13,4 +13,36 @@ data class BankSmsConfig(
 
     /** Movements come in the notifications of the bank's app (Android only). */
     val readsNotifications: Boolean get() = appPackages.isNotEmpty()
+
+    /**
+     * The description of an entry from this bank, opening with its name ("Bancolombia: Compraste ...")
+     * so the entry tells which bank it came from. Most messages do not say it, since the sender or
+     * the app already does; one that already names the bank is kept as it is.
+     */
+    fun describe(text: String): String = when {
+        text.isBlank() -> displayName
+        mentionsItself(text) -> text
+        else -> "$displayName: $text"
+    }
+
+    /** Whether [text] names the bank, by its name or a sender keyword that is a word, never a number. */
+    private fun mentionsItself(text: String): Boolean {
+        val normalizedText = text.normalizeForMatching()
+        return (senderKeywords + displayName)
+            .filter { name -> name.any { it.isLetter() } }
+            .map { it.normalizeForMatching() }
+            .any { normalizedText.containsWord(it) }
+    }
+
+    /** Whole words only: "Nu" is not found inside "nueva". */
+    private fun String.containsWord(word: String): Boolean {
+        var index = indexOf(word)
+        while (index >= 0) {
+            val before = getOrNull(index - 1)
+            val after = getOrNull(index + word.length)
+            if (before?.isLetterOrDigit() != true && after?.isLetterOrDigit() != true) return true
+            index = indexOf(word, index + 1)
+        }
+        return false
+    }
 }

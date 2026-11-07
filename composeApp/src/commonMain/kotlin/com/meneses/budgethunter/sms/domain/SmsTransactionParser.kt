@@ -23,7 +23,7 @@ object SmsTransactionParser {
         // No marker tells where the money went, the wording is not covered yet
         val type = detectType(text) ?: return SmsAnalysis.Unrecognized
         val amount = extractAmount(messageBody, bankConfig) ?: return SmsAnalysis.AmountNotFound
-        val description = extractDescription(messageBody, bankConfig)
+        val description = extractDescription(messageBody)
 
         return SmsAnalysis.Transaction(
             amount = amount,
@@ -98,12 +98,13 @@ object SmsTransactionParser {
     }
 
     /**
-     * The first sentence of the message, without the bank name that opens it. It keeps the
+     * The first sentence of the message, without the "Bank:" label that may open it. It keeps the
      * merchant, the account and the date together so the entry can be reviewed and
-     * categorized by hand later on.
+     * categorized by hand later on. A bank named inside the sentence ("Bancolombia le informa
+     * Compra ...") is kept: [BankSmsConfig.describe] puts the name back only where it is missing.
      */
-    private fun extractDescription(messageBody: String, bankConfig: BankSmsConfig): String? =
-        firstSentence(messageBody.removeBankPrefix(bankConfig))
+    private fun extractDescription(messageBody: String): String? =
+        firstSentence(messageBody.removeBankPrefix())
 
     /** The first sentence of [text], cut to the length of a description, or null when empty. */
     fun firstSentence(text: String): String? =
@@ -114,14 +115,9 @@ object SmsTransactionParser {
             .trim()
             .takeIf { it.isNotEmpty() }
 
-    private fun String.removeBankPrefix(bankConfig: BankSmsConfig): String {
+    private fun String.removeBankPrefix(): String {
         val colonIndex = indexOf(':')
-        if (colonIndex in 0 until BANK_PREFIX_MAX_LENGTH) {
-            return substring(colonIndex + 1)
-        }
-
-        val keyword = bankConfig.senderKeywords.firstOrNull { startsWith(it, ignoreCase = true) }
-        return if (keyword != null) substring(keyword.length) else this
+        return if (colonIndex in 0 until BANK_PREFIX_MAX_LENGTH) substring(colonIndex + 1) else this
     }
 
     /**
@@ -175,23 +171,6 @@ object SmsTransactionParser {
     private fun String.resolveSingleSeparator(separator: Char): String {
         val isThousands = count { it == separator } > 1 || substringAfterLast(separator).length == 3
         return if (isThousands) replace(separator.toString(), "") else replace(separator, '.')
-    }
-
-    private fun String.normalizeForMatching(): String {
-        val builder = StringBuilder(length)
-        for (char in lowercase()) {
-            val replacement = when (char) {
-                'á' -> 'a'
-                'é' -> 'e'
-                'í' -> 'i'
-                'ó' -> 'o'
-                'ú', 'ü' -> 'u'
-                'ñ' -> 'n'
-                else -> char
-            }
-            builder.append(replacement)
-        }
-        return builder.toString()
     }
 
     /** Length of the longest bank name that can open a message, "Scotiabank Colpatria:". */
@@ -373,4 +352,22 @@ object SmsTransactionParser {
     private val TRANSFER_PATTERN = markersPattern(TRANSFER_MARKERS)
 
     private val IGNORED_PATTERN = markersPattern(PROMOTIONAL_MARKERS, NON_MOVEMENT_MARKERS)
+}
+
+/** Lowercase and without the Spanish accents, since banks are not consistent with them. */
+internal fun String.normalizeForMatching(): String {
+    val builder = StringBuilder(length)
+    for (char in lowercase()) {
+        val replacement = when (char) {
+            'á' -> 'a'
+            'é' -> 'e'
+            'í' -> 'i'
+            'ó' -> 'o'
+            'ú', 'ü' -> 'u'
+            'ñ' -> 'n'
+            else -> char
+        }
+        builder.append(replacement)
+    }
+    return builder.toString()
 }

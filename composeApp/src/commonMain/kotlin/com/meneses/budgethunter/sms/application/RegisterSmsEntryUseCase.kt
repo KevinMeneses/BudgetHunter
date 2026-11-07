@@ -42,8 +42,9 @@ class RegisterSmsEntryUseCase(
         val result = smsMapper.smsToBudgetEntry(notification.message, bankConfig)
         if (result !is SmsParseResult.Success) return result
 
+        // The text says who the money came from or went to; the app never names itself in it
         val entry = notification.description
-            ?.let { result.entry.copy(description = it) }
+            ?.let { result.entry.copy(description = bankConfig.describe(it)) }
             ?: result.entry
         budgetEntryRepository.create(entry)
         return SmsParseResult.Success(entry)

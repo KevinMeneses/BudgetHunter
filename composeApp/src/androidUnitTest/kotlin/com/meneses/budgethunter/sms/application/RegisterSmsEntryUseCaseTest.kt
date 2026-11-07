@@ -172,7 +172,7 @@ class RegisterSmsEntryUseCaseTest {
     }
 
     @Test
-    fun `registers a Nu notification described by its text`() = runTest {
+    fun `registers a Nu notification described by its text after the bank name`() = runTest {
         givenDefaultBudget()
         val stored = slot<BudgetEntry>()
         coEvery { budgetEntryRepository.create(capture(stored)) } returns Unit
@@ -188,7 +188,7 @@ class RegisterSmsEntryUseCaseTest {
         assertIs<SmsParseResult.Success>(result)
         assertEquals("1952.00", stored.captured.amount)
         assertEquals(BudgetEntry.Type.OUTCOME, stored.captured.type)
-        assertEquals("Le enviaste a KEV**** MEN****** en su cuenta de Bancolombia", stored.captured.description)
+        assertEquals("Nu: Le enviaste a KEV**** MEN****** en su cuenta de Bancolombia", stored.captured.description)
         assertEquals(BudgetEntry.Category.UNCATEGORIZED, stored.captured.category)
     }
 

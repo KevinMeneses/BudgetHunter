@@ -43,7 +43,7 @@ class SmsMapper(
 
         val entry = BudgetEntry(
             amount = analysis.amount,
-            description = analysis.description ?: stringResourceProvider.getString(
+            description = analysis.description?.let(bankConfig::describe) ?: stringResourceProvider.getString(
                 Res.string.sms_transaction_from_bank,
                 bankConfig.displayName
             ),
