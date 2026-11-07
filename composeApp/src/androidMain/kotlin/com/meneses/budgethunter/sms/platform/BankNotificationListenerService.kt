@@ -1,8 +1,11 @@
 package com.meneses.budgethunter.sms.platform
 
 import android.app.Notification
+import android.content.ComponentName
+import android.content.Context
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
+import androidx.core.app.NotificationManagerCompat
 import com.meneses.budgethunter.commons.data.PreferencesManager
 import com.meneses.budgethunter.sms.domain.BankNotification
 import com.meneses.budgethunter.sms.domain.BankNotificationService
@@ -68,8 +71,28 @@ class BankNotificationListenerService : NotificationListenerService(), KoinCompo
         }
     }
 
-    private companion object {
+    /**
+     * The system drops the binding now and then (the app's notifications switched off and on, the app
+     * updated, memory pressure) and does not always bind again by itself, so the access stays granted
+     * while nothing is read. Asking for it here brings the listener back.
+     */
+    override fun onListenerDisconnected() {
+        super.onListenerDisconnected()
+        rebindIfGranted(this)
+    }
+
+    companion object {
         // Shared by the instances the system creates on each bind; notifications arrive on the main thread
-        val recentNotifications = RecentNotifications()
+        private val recentNotifications = RecentNotifications()
+
+        /** Asks the system to bind the listener again, when the user granted notification access. */
+        fun rebindIfGranted(context: Context) {
+            if (context.packageName !in NotificationManagerCompat.getEnabledListenerPackages(context)) return
+            try {
+                NotificationListenerService.requestRebind(ComponentName(context, BankNotificationListenerService::class.java))
+            } catch (_: RuntimeException) {
+                // The access was taken away in between: Settings shows it missing
+            }
+        }
     }
 }

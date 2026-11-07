@@ -20,6 +20,7 @@ import com.meneses.budgethunter.commons.platform.GoogleSignInActivityDelegate
 import com.meneses.budgethunter.commons.platform.PermissionsLauncherDelegate
 import com.meneses.budgethunter.commons.platform.PermissionsManager
 import com.meneses.budgethunter.navigation.DefaultBudgetLaunchRequest
+import com.meneses.budgethunter.sms.platform.BankNotificationListenerService
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
@@ -92,6 +93,13 @@ class MainActivity :
         }
         intent.removeExtra(AndroidNotificationManager.EXTRA_OPEN_DEFAULT_BUDGET)
         intent.removeExtra(AndroidNotificationManager.EXTRA_OPEN_SETTINGS)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Coming back from the system settings: the app's notifications may have been switched on
+        // again, and Android does not bind the bank notification listener again by itself
+        BankNotificationListenerService.rebindIfGranted(this)
     }
 
     override fun onDestroy() {
