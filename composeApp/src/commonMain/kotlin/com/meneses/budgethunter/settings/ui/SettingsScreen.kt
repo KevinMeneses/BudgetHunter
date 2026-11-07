@@ -282,6 +282,28 @@ object SettingsScreen {
             )
             GroupDivider()
             SettingRow(
+                icon = Icons.Default.Notifications,
+                title = stringResource(Res.string.read_bank_app_notifications),
+                subtitle = stringResource(
+                    Res.string.bank_notification_reading_description,
+                    uiState.notificationBanks.joinToString(", ") { it.displayName }
+                ),
+                switchChecked = uiState.isBankNotificationReadingEnabled,
+                onSwitchChange = { onIntent(SettingsIntent.ToggleBankNotificationReading(it)) }
+            )
+            // The switch alone reads nothing until the system grants access
+            if (uiState.isBankNotificationReadingEnabled && !uiState.hasNotificationListenerAccess) {
+                GroupDivider()
+                SettingRow(
+                    icon = Icons.Default.Warning,
+                    title = stringResource(Res.string.notification_access_title),
+                    subtitle = stringResource(Res.string.notification_access_missing),
+                    contentColor = AppColors.error,
+                    onClick = { onIntent(SettingsIntent.OpenNotificationAccessSettings) }
+                )
+            }
+            GroupDivider()
+            SettingRow(
                 icon = Icons.Default.AccountBalance,
                 title = stringResource(Res.string.bank_for_sms_notifications),
                 subtitle = if (uiState.selectedBanks.isNotEmpty()) {
@@ -297,17 +319,6 @@ object SettingsScreen {
                 enabled = uiState.isSmsReadingEnabled || uiState.isBankNotificationReadingEnabled,
                 onClick = { onIntent(SettingsIntent.ShowBankSelector) }
             )
-            GroupDivider()
-            SettingRow(
-                icon = Icons.Default.Notifications,
-                title = stringResource(Res.string.read_bank_app_notifications),
-                subtitle = stringResource(
-                    Res.string.bank_notification_reading_description,
-                    uiState.notificationBanks.joinToString(", ") { it.displayName }
-                ),
-                switchChecked = uiState.isBankNotificationReadingEnabled,
-                onSwitchChange = { onIntent(SettingsIntent.ToggleBankNotificationReading(it)) }
-            )
             // Only the selected apps are read: with none of them selected the switch reads nothing
             val hasNotificationBankSelected = uiState.selectedBanks.any { it in uiState.notificationBanks }
             if (uiState.isBankNotificationReadingEnabled && !hasNotificationBankSelected) {
@@ -321,17 +332,6 @@ object SettingsScreen {
                     ),
                     contentColor = AppColors.error,
                     onClick = { onIntent(SettingsIntent.ShowBankSelector) }
-                )
-            }
-            // The switch alone reads nothing until the system grants access
-            if (uiState.isBankNotificationReadingEnabled && !uiState.hasNotificationListenerAccess) {
-                GroupDivider()
-                SettingRow(
-                    icon = Icons.Default.Warning,
-                    title = stringResource(Res.string.notification_access_title),
-                    subtitle = stringResource(Res.string.notification_access_missing),
-                    contentColor = AppColors.error,
-                    onClick = { onIntent(SettingsIntent.OpenNotificationAccessSettings) }
                 )
             }
             GroupDivider()
