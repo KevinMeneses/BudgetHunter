@@ -10,6 +10,7 @@ import com.meneses.budgethunter.commons.data.network.models.CurrentUser
 import com.meneses.budgethunter.commons.platform.PermissionsManager
 import com.meneses.budgethunter.settings.application.SettingsIntent
 import com.meneses.budgethunter.settings.application.SyncUserPreferencesUseCase
+import com.meneses.budgethunter.sms.domain.SupportedBanks
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -224,5 +225,18 @@ class SettingsViewModelTest {
         viewModel.sendIntent(SettingsIntent.RefreshPermissions)
 
         assertTrue(viewModel.uiState.value.hasNotificationListenerAccess)
+    }
+
+    @Test
+    fun `the bank selector offers the notification apps and keeps them selected`() = runTest {
+        coEvery { preferencesManager.getSelectedBankIds() } returns setOf("nequi", "bancolombia")
+
+        val viewModel = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertTrue(SupportedBanks.NEQUI in state.availableBanks)
+        assertTrue(SupportedBanks.NU in state.availableBanks)
+        assertEquals(setOf(SupportedBanks.NEQUI, SupportedBanks.BANCOLOMBIA), state.selectedBanks)
     }
 }

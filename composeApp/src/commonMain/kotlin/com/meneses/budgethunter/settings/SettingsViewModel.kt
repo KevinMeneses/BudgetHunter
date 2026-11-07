@@ -152,7 +152,7 @@ class SettingsViewModel(
                         isBankNotificationReadingEnabled = preferencesManager.isBankNotificationReadingEnabled(),
                         hasNotificationListenerAccess = permissionsManager.hasNotificationListenerAccess(),
                         notificationBanks = SupportedBanks.NOTIFICATION_BANKS,
-                        availableBanks = SupportedBanks.ALL_BANKS,
+                        availableBanks = SupportedBanks.SELECTABLE_BANKS,
                         selectedBanks = preferences.selectedBanks,
                         isAiProcessingEnabled = preferences.isAiProcessingEnabled,
                         isLoading = false
@@ -191,7 +191,7 @@ class SettingsViewModel(
             isAiProcessingEnabled = preferencesManager.isAiProcessingEnabled(),
             defaultBudget = if (defaultBudgetId != -1) budgetRepository.getById(defaultBudgetId) else null,
             selectedBanks = preferencesManager.getSelectedBankIds()
-                .mapNotNull { SupportedBanks.getBankConfigById(it) }
+                .mapNotNull { SupportedBanks.getSelectableBankById(it) }
                 .toSet()
         )
     }

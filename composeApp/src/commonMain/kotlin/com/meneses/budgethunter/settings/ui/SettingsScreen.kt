@@ -67,6 +67,8 @@ import budgethunter.composeapp.generated.resources.no_default_budget
 import budgethunter.composeapp.generated.resources.notification_access_explanation
 import budgethunter.composeapp.generated.resources.notification_access_missing
 import budgethunter.composeapp.generated.resources.notification_access_title
+import budgethunter.composeapp.generated.resources.notification_banks_not_selected
+import budgethunter.composeapp.generated.resources.notification_banks_not_selected_title
 import budgethunter.composeapp.generated.resources.read_bank_app_notifications
 import budgethunter.composeapp.generated.resources.read_bank_sms
 import budgethunter.composeapp.generated.resources.section_ai
@@ -291,7 +293,8 @@ object SettingsScreen {
                 } else {
                     stringResource(Res.string.no_banks_selected)
                 },
-                enabled = uiState.isSmsReadingEnabled,
+                // One selection for both sources: SMS banks and the apps read from their notifications
+                enabled = uiState.isSmsReadingEnabled || uiState.isBankNotificationReadingEnabled,
                 onClick = { onIntent(SettingsIntent.ShowBankSelector) }
             )
             GroupDivider()
@@ -305,6 +308,21 @@ object SettingsScreen {
                 switchChecked = uiState.isBankNotificationReadingEnabled,
                 onSwitchChange = { onIntent(SettingsIntent.ToggleBankNotificationReading(it)) }
             )
+            // Only the selected apps are read: with none of them selected the switch reads nothing
+            val hasNotificationBankSelected = uiState.selectedBanks.any { it in uiState.notificationBanks }
+            if (uiState.isBankNotificationReadingEnabled && !hasNotificationBankSelected) {
+                GroupDivider()
+                SettingRow(
+                    icon = Icons.Default.Warning,
+                    title = stringResource(Res.string.notification_banks_not_selected_title),
+                    subtitle = stringResource(
+                        Res.string.notification_banks_not_selected,
+                        uiState.notificationBanks.joinToString(", ") { it.displayName }
+                    ),
+                    contentColor = AppColors.error,
+                    onClick = { onIntent(SettingsIntent.ShowBankSelector) }
+                )
+            }
             // The switch alone reads nothing until the system grants access
             if (uiState.isBankNotificationReadingEnabled && !uiState.hasNotificationListenerAccess) {
                 GroupDivider()

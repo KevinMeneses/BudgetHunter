@@ -153,7 +153,7 @@
     <string name="no_default_budget">No default budget set</string>
     <string name="save_default_budget">Save</string>
     <string name="select_default_budget_description">Select a default budget for automatic transactions:</string>
-    <string name="bank_for_sms_notifications">Banks for SMS notifications</string>
+    <string name="bank_for_sms_notifications">Banks</string>
     <string name="select_a_bank">Select a bank</string>
     <string name="no_banks_configured">No banks configured</string>
     <string name="select_banks">Select banks</string>
@@ -477,8 +477,10 @@
     <string name="error_email_already_registered">An account with this email already exists</string>
     <string name="shared_with_people">Shared by %1$d people</string>
     <string name="read_bank_app_notifications">Read bank app notifications</string>
-    <string name="bank_notification_reading_description">Create entries from the movements these apps notify: %1$s</string>
+    <string name="bank_notification_reading_description">Create entries from the movements the selected apps notify (%1$s)</string>
     <string name="notification_access_title">Notification access</string>
     <string name="notification_access_missing">Notification access is missing. Tap to grant it</string>
     <string name="notification_access_explanation">Budget Hunter will read only the notifications of %1$s to register the movements they show in your default budget. Notifications from every other app are discarded without being read.\n\nOn the next screen turn on Budget Hunter. Android shows a warning because this access could see every notification.\n\nIf the option is grayed out, open the app info, tap the ⋮ menu and choose “Allow restricted settings”.</string>
+    <string name="notification_banks_not_selected_title">No app selected</string>
+    <string name="notification_banks_not_selected">Select %1$s in Banks to read their notifications</string>
 </resources>

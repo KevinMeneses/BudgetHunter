@@ -100,6 +100,16 @@ class BankNotificationTest {
     }
 
     @Test
+    fun `notification banks share the selection with SMS banks but never reach the SMS receiver`() {
+        assertTrue(SupportedBanks.NEQUI in SupportedBanks.SELECTABLE_BANKS)
+        assertTrue(SupportedBanks.NU in SupportedBanks.SELECTABLE_BANKS)
+        assertTrue(SupportedBanks.BANCOLOMBIA in SupportedBanks.SELECTABLE_BANKS)
+        assertEquals(SupportedBanks.NEQUI, SupportedBanks.getSelectableBankById("nequi"))
+        assertNull(SupportedBanks.getBankConfigById("nequi"))
+        assertNull(SupportedBanks.getBankConfigById("nu"))
+    }
+
+    @Test
     fun `a reposted notification is handled once`() {
         val recent = RecentNotifications(capacity = 2)
 

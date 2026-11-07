@@ -18,7 +18,7 @@ import org.koin.core.qualifier.named
  * Reads the notifications of bank apps that report movements there instead of by SMS (Nequi, Nu).
  *
  * The system binds it once the user grants notification access in its settings; the switch in
- * Settings decides whether what it reads is registered. Every other app's notification is
+ * Settings and the selected banks decide whether what it reads is registered. Every other app's notification is
  * dropped on the spot, before its text is even read.
  */
 class BankNotificationListenerService : NotificationListenerService(), KoinComponent {
@@ -53,6 +53,8 @@ class BankNotificationListenerService : NotificationListenerService(), KoinCompo
 
         ioScope.launch {
             if (!preferencesManager.isBankNotificationReadingEnabled()) return@launch
+            // Like an SMS bank, an app is read only while the user has it among the selected banks
+            if (bankConfig.id !in preferencesManager.getSelectedBankIds()) return@launch
             bankNotificationService.processBankNotification(bankNotification, bankConfig)
         }
     }

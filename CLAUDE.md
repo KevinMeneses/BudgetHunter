@@ -98,7 +98,9 @@ Type-safe navigation using Navigation Compose with serializable route objects. M
 - Automatic budget entry creation from SMS transactions (`RegisterSmsEntryUseCase`, shared by both platforms),
   always in the default budget of Settings
 - Banks that notify in their app instead of by SMS (Nequi, Nu: `SupportedBanks.NOTIFICATION_BANKS`, matched by
-  package name) are read on Android by `BankNotificationListenerService`. It needs notification access, granted in
+  package name) are read on Android by `BankNotificationListenerService`, only while selected: they share the one
+  bank selection of Settings (`SupportedBanks.SELECTABLE_BANKS`, `selectedBankIds`) with the SMS banks, and
+  `getBankConfigById` keeps returning SMS banks only. It needs notification access, granted in
   a system screen (Settings explains it first and reopens it from a warning row). Title and text are parsed together
   (`BankNotification`) by the same parser, the entry is described by the text, and unreadable notifications are
   dropped silently (apps also post codes and news). The switch is kept on the device only, not on the account.

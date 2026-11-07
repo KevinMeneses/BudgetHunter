@@ -160,8 +160,20 @@ object SupportedBanks {
 
     val NOTIFICATION_BANKS = listOf(NEQUI, NU).sortedBy { it.displayName }
 
+    /**
+     * Every bank the user can pick in Settings: the SMS ones and the notification ones share one
+     * selection, so a bank is read, by SMS or from its app, only when it is selected.
+     */
+    val SELECTABLE_BANKS = (ALL_BANKS + NOTIFICATION_BANKS).sortedBy { it.displayName }
+
+    /** An SMS bank by id. Notification banks are left out: the SMS receiver must never try them. */
     fun getBankConfigById(id: String?): BankSmsConfig? {
         return ALL_BANKS.find { it.id == id }
+    }
+
+    /** Any selectable bank by id, SMS or notification. */
+    fun getSelectableBankById(id: String?): BankSmsConfig? {
+        return SELECTABLE_BANKS.find { it.id == id }
     }
 
     /** The bank whose app posted a notification, or null for any other app. */
