@@ -52,7 +52,10 @@ class BankNotificationListenerService : NotificationListenerService(), KoinCompo
 
         // An update of the same notification keeps its key and its time, even when its text grows
         // (a short text first, the expanded one later), so the text is left out on purpose
-        val fingerprint = "${posted.key}|${notification.`when`}"
+        // An app that leaves `when` unset would give every movement under the same id one fingerprint,
+        // so then the text tells them apart
+        val postedAt = notification.`when`
+        val fingerprint = if (postedAt != 0L) "${posted.key}|$postedAt" else "${posted.key}|${bankNotification.message}"
         if (!recentNotifications.markIfNew(fingerprint)) return
 
         ioScope.launch {
@@ -88,6 +91,9 @@ class BankNotificationListenerService : NotificationListenerService(), KoinCompo
         /** Asks the system to bind the listener again, when the user granted notification access. */
         fun rebindIfGranted(context: Context) {
             if (context.packageName !in NotificationManagerCompat.getEnabledListenerPackages(context)) return
+            // With the app's own notifications off Android drops the listener right after binding it,
+            // and onListenerDisconnected would ask again in a loop. The next resume asks once they are on
+            if (!NotificationManagerCompat.from(context).areNotificationsEnabled()) return
             try {
                 NotificationListenerService.requestRebind(ComponentName(context, BankNotificationListenerService::class.java))
             } catch (_: RuntimeException) {
