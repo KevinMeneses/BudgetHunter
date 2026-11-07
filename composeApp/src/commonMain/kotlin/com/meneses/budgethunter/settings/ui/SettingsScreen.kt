@@ -64,11 +64,10 @@ import budgethunter.composeapp.generated.resources.come_back
 import budgethunter.composeapp.generated.resources.default_budget
 import budgethunter.composeapp.generated.resources.no_banks_selected
 import budgethunter.composeapp.generated.resources.no_default_budget
+import budgethunter.composeapp.generated.resources.no_notification_bank_selected
 import budgethunter.composeapp.generated.resources.notification_access_explanation
 import budgethunter.composeapp.generated.resources.notification_access_missing
 import budgethunter.composeapp.generated.resources.notification_access_title
-import budgethunter.composeapp.generated.resources.notification_banks_not_selected
-import budgethunter.composeapp.generated.resources.notification_banks_not_selected_title
 import budgethunter.composeapp.generated.resources.read_bank_app_notifications
 import budgethunter.composeapp.generated.resources.read_bank_sms
 import budgethunter.composeapp.generated.resources.section_ai
@@ -297,6 +296,7 @@ object SettingsScreen {
                 )
             }
             GroupDivider()
+            val hasNotificationBankSelected = uiState.selectedBanks.any { it in uiState.notificationBanks }
             SettingRow(
                 icon = Icons.Default.AccountBalance,
                 title = stringResource(Res.string.bank_for_sms_notifications),
@@ -309,22 +309,17 @@ object SettingsScreen {
                 } else {
                     stringResource(Res.string.no_banks_selected)
                 },
+                // Only the selected apps are read: with none of them selected the switch reads
+                // nothing, said here since this row is also where it is fixed
+                warning = if (uiState.isBankNotificationReadingEnabled && !hasNotificationBankSelected) {
+                    stringResource(Res.string.no_notification_bank_selected)
+                } else {
+                    null
+                },
                 // One selection for both sources: SMS banks and the apps read from their notifications
                 enabled = uiState.isSmsReadingEnabled || uiState.isBankNotificationReadingEnabled,
                 onClick = { onIntent(SettingsIntent.ShowBankSelector) }
             )
-            // Only the selected apps are read: with none of them selected the switch reads nothing
-            val hasNotificationBankSelected = uiState.selectedBanks.any { it in uiState.notificationBanks }
-            if (uiState.isBankNotificationReadingEnabled && !hasNotificationBankSelected) {
-                GroupDivider()
-                SettingRow(
-                    icon = Icons.Default.Warning,
-                    title = stringResource(Res.string.notification_banks_not_selected_title),
-                    subtitle = stringResource(Res.string.notification_banks_not_selected),
-                    contentColor = AppColors.error,
-                    onClick = { onIntent(SettingsIntent.ShowBankSelector) }
-                )
-            }
             GroupDivider()
             // Both sources store the movements in this budget
             SettingRow(
@@ -447,6 +442,7 @@ object SettingsScreen {
         icon: ImageVector,
         title: String,
         subtitle: String? = null,
+        warning: String? = null,
         enabled: Boolean = true,
         contentColor: Color = AppColors.onSurface,
         switchChecked: Boolean? = null,
@@ -486,6 +482,15 @@ object SettingsScreen {
                         fontSize = 13.sp,
                         lineHeight = 18.sp,
                         color = AppColors.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 2.dp)
+                    )
+                }
+                if (warning != null) {
+                    Text(
+                        text = warning,
+                        fontSize = 13.sp,
+                        lineHeight = 18.sp,
+                        color = AppColors.error,
                         modifier = Modifier.padding(top = 2.dp)
                     )
                 }
