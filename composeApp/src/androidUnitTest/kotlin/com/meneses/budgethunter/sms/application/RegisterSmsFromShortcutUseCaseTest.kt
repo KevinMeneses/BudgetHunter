@@ -129,7 +129,9 @@ class RegisterSmsFromShortcutUseCaseTest {
 
             Recibiste 525.000 de NUBIA ROCELY PALTA el 1 de noviembre de 2026 a las 11:11 a.m, desde el banco BBVA. Revisa el detalle en los movimientos de tu app.
 
-            Si tienes dudas, escríbenos al chat de www.nequi.com.co
+            Si no fuiste tú, fue un error o tienes dudas, escríbenos al chat de nuestra página web: www.nequi.com.co en el botón de "Ayuda" o llama a la línea de atención: (+57) 300 600 0100
+
+            ¿Ya nos sigues en redes? ¡Siempre tenemos cosas nuevas!
         """.trimIndent()
         val passage = "Recibiste 525.000 de NUBIA ROCELY PALTA el 1 de noviembre de 2026 a las 11:11 a.m, desde el banco BBVA."
         coEvery { registerSmsEntry(passage, listOf(SupportedBanks.NEQUI)) } returns
@@ -145,7 +147,7 @@ class RegisterSmsFromShortcutUseCaseTest {
     }
 
     @Test
-    fun `reads a multi-line SMS whole when no single line holds the movement`() = runTest {
+    fun `reads a multi-line SMS whole`() = runTest {
         val message = "Bancolombia:\nCompraste\nCOP25.000,00\nen EXITO con tu T.Deb *1234."
         givenResult(message, SmsParseResult.Success(BudgetEntry(amount = "25000.00", budgetId = 7)))
         coEvery {
@@ -180,7 +182,7 @@ class RegisterSmsFromShortcutUseCaseTest {
     }
 
     @Test
-    fun `reads a short multi-line SMS whole when it names no bank`() = runTest {
+    fun `reads a multi-line SMS that names no bank whole`() = runTest {
         val message = "Compraste COP25.000,00\nen EXITO\ncon tu T.Deb *1234."
         givenResult(message, SmsParseResult.Success(BudgetEntry(amount = "25000.00", budgetId = 7)))
         coEvery {

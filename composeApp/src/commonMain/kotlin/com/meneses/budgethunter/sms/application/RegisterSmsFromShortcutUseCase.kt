@@ -41,7 +41,7 @@ class RegisterSmsFromShortcutUseCase(
         if (reading == null) {
             notRegistered(stringResourceProvider.getString(Res.string.sms_shortcut_unrecognized))
         } else {
-            register(reading.first, reading.second)
+            register(reading)
         }
     } catch (e: CancellationException) {
         throw e
@@ -49,32 +49,32 @@ class RegisterSmsFromShortcutUseCase(
         notRegistered(stringResourceProvider.getString(Res.string.sms_shortcut_error))
     }
 
-    private suspend fun register(text: String, banks: List<BankSmsConfig>): SmsShortcutReply =
-        when (val result = registerSmsEntry(text, banks)) {
-            is SmsParseResult.Success -> registered(result.entry, text)
+    private suspend fun register(reading: Reading): SmsShortcutReply =
+        when (val result = registerSmsEntry(reading.text, reading.banks)) {
+            is SmsParseResult.Success -> registered(result.entry, reading.text)
             SmsParseResult.NoDefaultBudget -> notRegistered(stringResourceProvider.getString(Res.string.sms_shortcut_no_budget))
             SmsParseResult.Ignored -> notRegistered(stringResourceProvider.getString(Res.string.sms_shortcut_ignored))
             SmsParseResult.AmountNotFound,
             SmsParseResult.Unrecognized -> notRegistered(stringResourceProvider.getString(Res.string.sms_shortcut_unrecognized))
         }
 
+    /** The text to parse and the banks to read it as. */
+    private class Reading(val text: String, val banks: List<BankSmsConfig>)
+
     /**
      * An SMS is read whole against every SMS bank. An email is cut down to the sentence of the
      * movement and read only as the bank that sent it, since it may name another one.
      *
-     * A text with no such sentence is read as an SMS, as it always was: a bank SMS broken over
-     * several lines looks like an email but may hold the verb and the amount on different lines.
-     * An email whose bank cannot be told is not registered (null): guessing would file it under
-     * the wrong bank. Text short enough for an SMS still gets the SMS reading in that case.
+     * An email with no such sentence is read as an SMS, as it always was. An email whose bank
+     * cannot be told is not registered (null): guessing would file it under the wrong bank.
      */
-    private fun whatToRead(messageBody: String): Pair<String, List<BankSmsConfig>>? {
-        val smsReading = messageBody to SupportedBanks.ALL_BANKS
+    private fun whatToRead(messageBody: String): Reading? {
+        val smsReading = Reading(messageBody, SupportedBanks.ALL_BANKS)
         if (!BankEmail.looksLikeEmail(messageBody)) return smsReading
 
         val passage = BankEmail.movementPassage(messageBody) ?: return smsReading
-        val bank = BankEmail.bankOf(messageBody, SupportedBanks.SHORTCUT_BANKS)
-            ?: return smsReading.takeIf { BankEmail.fitsInSms(messageBody) }
-        return passage to listOf(bank)
+        val bank = BankEmail.bankOf(messageBody, SupportedBanks.SHORTCUT_BANKS, passage) ?: return null
+        return Reading(passage, listOf(bank))
     }
 
     private suspend fun registered(entry: BudgetEntry, messageBody: String): SmsShortcutReply {

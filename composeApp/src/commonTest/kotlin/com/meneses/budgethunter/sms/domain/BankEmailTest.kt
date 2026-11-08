@@ -52,7 +52,7 @@ class BankEmailTest {
 
     private fun transaction(email: String): Pair<BankSmsConfig, SmsAnalysis.Transaction> {
         val passage = assertNotNull(BankEmail.movementPassage(email), "Expected a movement in: $email")
-        val bank = assertNotNull(BankEmail.bankOf(email, SupportedBanks.SHORTCUT_BANKS), "Expected a bank in: $email")
+        val bank = assertNotNull(BankEmail.bankOf(email, SupportedBanks.SHORTCUT_BANKS, passage), "Expected a bank in: $email")
         val analysis = SmsTransactionParser.analyze(passage, bank)
         assertIs<SmsAnalysis.Transaction>(analysis, "Expected a transaction for: $passage")
         return bank to analysis
@@ -115,8 +115,9 @@ class BankEmailTest {
         assertFalse(
             BankEmail.looksLikeEmail("Bancolombia: Compraste COP25.000,00 en EXITO con tu T.Deb *1234.")
         )
+        assertFalse(BankEmail.looksLikeEmail("Bancolombia:\nCompraste COP25.000,00\nen EXITO\ncon tu T.Deb *1234."))
         assertTrue(BankEmail.looksLikeEmail(nequiEmail))
-        assertTrue(BankEmail.looksLikeEmail(bancolombiaEmail))
+        assertTrue(BankEmail.looksLikeEmail(luloEmail))
     }
 
     @Test
@@ -133,5 +134,14 @@ class BankEmailTest {
             SupportedBanks.NEQUI,
             BankEmail.bankOf("De notificaciones@nequi.com.co sobre lulobank.com", SupportedBanks.SHORTCUT_BANKS)
         )
+    }
+
+    @Test
+    fun `a bank named only in the movement is the other party when the email names its own elsewhere`() {
+        val email = "Recibiste \$80.000 desde Davivienda en tu cuenta.\n\nGracias por confiar en Bancolombia."
+        val passage = "Recibiste \$80.000 desde Davivienda en tu cuenta."
+
+        assertEquals(SupportedBanks.BANCOLOMBIA, BankEmail.bankOf(email, SupportedBanks.SHORTCUT_BANKS, passage))
+        assertEquals(SupportedBanks.DAVIVIENDA, BankEmail.bankOf(passage, SupportedBanks.SHORTCUT_BANKS, passage))
     }
 }

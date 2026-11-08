@@ -121,11 +121,12 @@ Type-safe navigation using Navigation Compose with serializable route objects. M
   `AppShortcuts.strings` for the Siri phrases). The guide's screenshots are iOS 26 captures in `drawable` (English) and
   `drawable-es`; the automation filters by the bank name in the message, not by sender.
 - The same intent takes bank alert emails (Shortcuts trigger "Correo", iOS 17+, needs the account in Apple Mail).
-  A long or multi-line text is read as an email (`BankEmail`): only the first sentence that names a movement and
-  carries a number is parsed, and the bank is told by its email domain first (`BankSmsConfig.emailDomains`), then by
-  the name it mentions first, because an email may name another bank ("desde el banco BBVA" in a Nequi email).
-  A text with no such sentence is read whole as an SMS (a bank SMS may span lines); an email whose bank cannot be
-  told is answered as not recognized rather than filed under a guessed bank.
+  A text longer than an SMS (> 320 chars) is read as an email (`BankEmail`): only the first sentence that names a
+  movement and carries a number is parsed, and the bank is told by its email domain first
+  (`BankSmsConfig.emailDomains`), then by the name it mentions first outside that sentence, then inside it, because
+  the movement may name the other party's bank ("desde el banco BBVA" in a Nequi email). An email with no such
+  sentence is read whole as an SMS; one whose bank cannot be told is answered as not recognized rather than filed
+  under a guessed bank.
   Email-only banks (Lulo bank) are in `SupportedBanks.SHORTCUT_BANKS`, not in the Android selector.
 
 ### Automatic categorization
