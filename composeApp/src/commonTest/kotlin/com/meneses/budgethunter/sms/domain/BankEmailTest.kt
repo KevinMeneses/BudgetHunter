@@ -125,4 +125,13 @@ class BankEmailTest {
         assertTrue(SupportedBanks.NEQUI in SupportedBanks.SHORTCUT_BANKS)
         assertFalse(SupportedBanks.LULO_BANK in SupportedBanks.SELECTABLE_BANKS)
     }
+
+    @Test
+    fun `a domain only counts as a whole address part and the first one wins`() {
+        assertNull(BankEmail.bankOf("Visita xnequi.com.co hoy", listOf(SupportedBanks.NEQUI)))
+        assertEquals(
+            SupportedBanks.NEQUI,
+            BankEmail.bankOf("De notificaciones@nequi.com.co sobre lulobank.com", SupportedBanks.SHORTCUT_BANKS)
+        )
+    }
 }

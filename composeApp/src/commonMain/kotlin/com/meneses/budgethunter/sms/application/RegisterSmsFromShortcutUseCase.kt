@@ -65,14 +65,15 @@ class RegisterSmsFromShortcutUseCase(
      * A text with no such sentence is read as an SMS, as it always was: a bank SMS broken over
      * several lines looks like an email but may hold the verb and the amount on different lines.
      * An email whose bank cannot be told is not registered (null): guessing would file it under
-     * the wrong bank.
+     * the wrong bank. Text short enough for an SMS still gets the SMS reading in that case.
      */
     private fun whatToRead(messageBody: String): Pair<String, List<BankSmsConfig>>? {
         val smsReading = messageBody to SupportedBanks.ALL_BANKS
         if (!BankEmail.looksLikeEmail(messageBody)) return smsReading
 
         val passage = BankEmail.movementPassage(messageBody) ?: return smsReading
-        val bank = BankEmail.bankOf(messageBody, SupportedBanks.SHORTCUT_BANKS) ?: return null
+        val bank = BankEmail.bankOf(messageBody, SupportedBanks.SHORTCUT_BANKS)
+            ?: return smsReading.takeIf { BankEmail.fitsInSms(messageBody) }
         return passage to listOf(bank)
     }
 

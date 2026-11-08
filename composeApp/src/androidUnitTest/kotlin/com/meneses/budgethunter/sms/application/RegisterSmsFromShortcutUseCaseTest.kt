@@ -175,4 +175,17 @@ class RegisterSmsFromShortcutUseCaseTest {
         assertEquals("No reconocido", reply.message)
         coVerify(exactly = 0) { registerSmsEntry(any(), any()) }
     }
+
+    @Test
+    fun `reads a short multi-line SMS whole when it names no bank`() = runTest {
+        val message = "Compraste COP25.000,00\nen EXITO\ncon tu T.Deb *1234."
+        givenResult(message, SmsParseResult.Success(BudgetEntry(amount = "25000.00", budgetId = 7)))
+        coEvery {
+            stringResourceProvider.getString(Res.string.sms_shortcut_expense_registered_at, "$25,000", "Exito")
+        } returns "Registrado: $25,000 en Exito"
+
+        val reply = registerSmsFromShortcut(message)
+
+        assertTrue(reply.isRegistered)
+    }
 }

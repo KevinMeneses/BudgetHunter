@@ -14,6 +14,9 @@ object BankEmail {
     fun looksLikeEmail(text: String): Boolean =
         text.length > SMS_MAX_LENGTH || text.lines().count { it.isNotBlank() } >= EMAIL_MIN_LINES
 
+    /** Short enough to be an SMS broken over lines, even if [looksLikeEmail] says otherwise. */
+    fun fitsInSms(text: String): Boolean = text.length <= SMS_MAX_LENGTH
+
     /**
      * The first sentence that names a movement and carries a number: "Recibiste $65,680 de JUAN
      * PEREZ". The subject ("¡Recibiste plata por Bre-B!") names it too but has no amount, and the
@@ -28,15 +31,17 @@ object BankEmail {
             }
 
     /**
-     * The bank that sent the email: the one whose domain it carries, else the one it names first.
-     * Null when it names none, and the caller then reads it as an SMS would be.
+     * The bank that sent the email: the one whose domain it carries first, else the one it names
+     * first. Null when it carries or names none.
      */
     fun bankOf(text: String, banks: Collection<BankSmsConfig>): BankSmsConfig? =
-        banks.firstOrNull { it.hasEmailDomainIn(text) }
-            ?: banks
-                .mapNotNull { bank -> bank.mentionIndex(text)?.let { bank to it } }
-                .minByOrNull { (_, index) -> index }
-                ?.first
+        banks.firstMentioned { it.emailDomainIndex(text) }
+            ?: banks.firstMentioned { it.mentionIndex(text) }
+
+    private fun Collection<BankSmsConfig>.firstMentioned(indexIn: (BankSmsConfig) -> Int?): BankSmsConfig? =
+        mapNotNull { bank -> indexIn(bank)?.let { bank to it } }
+            .minByOrNull { (_, index) -> index }
+            ?.first
 
     private const val SMS_MAX_LENGTH = 320
     private const val EMAIL_MIN_LINES = 3

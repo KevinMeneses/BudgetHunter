@@ -42,10 +42,24 @@ data class BankSmsConfig(
             .minOrNull()
     }
 
-    /** Whether [text] carries one of the bank's email domains, as a sender or in a link. */
-    fun hasEmailDomainIn(text: String): Boolean {
+    /**
+     * Where [text] first carries one of the bank's email domains, as a sender or in a link, or null.
+     * The domain must start the address or follow a dot ("www.", "@"): "xnequi.com.co" is not Nequi's.
+     */
+    fun emailDomainIndex(text: String): Int? {
         val lowercaseText = text.lowercase()
-        return emailDomains.any { lowercaseText.contains(it.lowercase()) }
+        return emailDomains
+            .mapNotNull { domain -> lowercaseText.domainIndex(domain.lowercase()) }
+            .minOrNull()
+    }
+
+    private fun String.domainIndex(domain: String): Int? {
+        var index = indexOf(domain)
+        while (index >= 0) {
+            if (getOrNull(index - 1)?.isLetterOrDigit() != true) return index
+            index = indexOf(domain, index + 1)
+        }
+        return null
     }
 
     /** Whole words only: "Nu" is not found inside "nueva". */
