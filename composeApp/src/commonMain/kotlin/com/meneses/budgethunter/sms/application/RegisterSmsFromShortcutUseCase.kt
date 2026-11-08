@@ -60,15 +60,20 @@ class RegisterSmsFromShortcutUseCase(
 
     /**
      * An SMS is read whole against every SMS bank. An email is cut down to the sentence of the
-     * movement and read only as the bank that sent it, since it may name another one; null when it
-     * reports no movement.
+     * movement and read only as the bank that sent it, since it may name another one.
+     *
+     * A text with no such sentence is read as an SMS, as it always was: a bank SMS broken over
+     * several lines looks like an email but may hold the verb and the amount on different lines.
+     * An email whose bank cannot be told is not registered (null): guessing would file it under
+     * the wrong bank.
      */
     private fun whatToRead(messageBody: String): Pair<String, List<BankSmsConfig>>? {
-        if (!BankEmail.looksLikeEmail(messageBody)) return messageBody to SupportedBanks.ALL_BANKS
+        val smsReading = messageBody to SupportedBanks.ALL_BANKS
+        if (!BankEmail.looksLikeEmail(messageBody)) return smsReading
 
-        val passage = BankEmail.movementPassage(messageBody) ?: return null
-        val bank = BankEmail.bankOf(messageBody, SupportedBanks.SHORTCUT_BANKS)
-        return passage to (bank?.let { listOf(it) } ?: SupportedBanks.SHORTCUT_BANKS)
+        val passage = BankEmail.movementPassage(messageBody) ?: return smsReading
+        val bank = BankEmail.bankOf(messageBody, SupportedBanks.SHORTCUT_BANKS) ?: return null
+        return passage to listOf(bank)
     }
 
     private suspend fun registered(entry: BudgetEntry, messageBody: String): SmsShortcutReply {

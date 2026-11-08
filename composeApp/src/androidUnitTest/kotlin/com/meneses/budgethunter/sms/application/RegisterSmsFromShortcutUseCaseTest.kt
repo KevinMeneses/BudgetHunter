@@ -13,6 +13,7 @@ import com.meneses.budgethunter.commons.resources.StringResourceProvider
 import com.meneses.budgethunter.sms.domain.SmsParseResult
 import com.meneses.budgethunter.sms.domain.SupportedBanks
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
@@ -141,5 +142,36 @@ class RegisterSmsFromShortcutUseCaseTest {
 
         assertTrue(reply.isRegistered)
         assertEquals("Registrado: ingreso de $525,000 de Nubia Rocely Palta", reply.message)
+    }
+
+    @Test
+    fun `reads a multi-line SMS whole when no single line holds the movement`() = runTest {
+        val message = "Bancolombia:\nCompraste\nCOP25.000,00\nen EXITO con tu T.Deb *1234."
+        givenResult(message, SmsParseResult.Success(BudgetEntry(amount = "25000.00", budgetId = 7)))
+        coEvery {
+            stringResourceProvider.getString(Res.string.sms_shortcut_expense_registered, "$25,000")
+        } returns "Registrado: gasto de $25,000"
+
+        val reply = registerSmsFromShortcut(message)
+
+        assertTrue(reply.isRegistered)
+    }
+
+    @Test
+    fun `does not guess the bank of an email that names none`() = runTest {
+        val email = """
+            ¡Hola!
+
+            Recibiste $50.000 de JUAN PEREZ en tu cuenta.
+
+            Gracias por usar nuestros servicios.
+        """.trimIndent()
+        coEvery { stringResourceProvider.getString(Res.string.sms_shortcut_unrecognized) } returns "No reconocido"
+
+        val reply = registerSmsFromShortcut(email)
+
+        assertFalse(reply.isRegistered)
+        assertEquals("No reconocido", reply.message)
+        coVerify(exactly = 0) { registerSmsEntry(any(), any()) }
     }
 }

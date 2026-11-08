@@ -124,6 +124,8 @@ Type-safe navigation using Navigation Compose with serializable route objects. M
   A long or multi-line text is read as an email (`BankEmail`): only the first sentence that names a movement and
   carries a number is parsed, and the bank is told by its email domain first (`BankSmsConfig.emailDomains`), then by
   the name it mentions first, because an email may name another bank ("desde el banco BBVA" in a Nequi email).
+  A text with no such sentence is read whole as an SMS (a bank SMS may span lines); an email whose bank cannot be
+  told is answered as not recognized rather than filed under a guessed bank.
   Email-only banks (Lulo bank) are in `SupportedBanks.SHORTCUT_BANKS`, not in the Android selector.
 
 ### Automatic categorization
