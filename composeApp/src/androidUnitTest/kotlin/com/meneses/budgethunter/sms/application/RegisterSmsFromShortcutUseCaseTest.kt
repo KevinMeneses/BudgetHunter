@@ -165,8 +165,11 @@ class RegisterSmsFromShortcutUseCaseTest {
 
             Recibiste $50.000 de JUAN PEREZ en tu cuenta.
 
-            Gracias por usar nuestros servicios.
+            Gracias por usar nuestros servicios. Si no reconoces este movimiento, comunícate con nosotros
+            a través de los canales de atención que encuentras en la sección de ayuda de tu aplicación.
+            Recuerda que nunca te pediremos tus claves ni tus datos personales por este medio.
         """.trimIndent()
+        assertTrue(email.length > 320, "A real email is longer than any SMS")
         coEvery { stringResourceProvider.getString(Res.string.sms_shortcut_unrecognized) } returns "No reconocido"
 
         val reply = registerSmsFromShortcut(email)
