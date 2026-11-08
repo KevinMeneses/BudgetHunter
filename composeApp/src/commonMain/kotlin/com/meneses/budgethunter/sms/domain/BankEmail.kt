@@ -12,9 +12,11 @@ object BankEmail {
 
     /**
      * An SMS fits in a few hundred characters; an email, with its greeting and footer, does not.
-     * Only the length decides: a bank SMS may also be broken over several lines.
+     * A bank SMS may also be broken over several lines, so the line count says nothing. A short text
+     * that carries the email domain of one of [banks] is an email all the same: no SMS links there.
      */
-    fun looksLikeEmail(text: String): Boolean = text.length > SMS_MAX_LENGTH
+    fun looksLikeEmail(text: String, banks: Collection<BankSmsConfig> = emptyList()): Boolean =
+        text.length > SMS_MAX_LENGTH || banks.any { it.emailDomainIndex(text) != null }
 
     /**
      * The first sentence that names a movement and carries a number: "Recibiste $65,680 de JUAN

@@ -44,7 +44,9 @@ data class BankSmsConfig(
 
     /**
      * Where [text] first carries one of the bank's email domains, as a sender or in a link, or null.
-     * The domain must start the address or follow a dot ("www.", "@"): "xnequi.com.co" is not Nequi's.
+     * The domain must stand whole: nothing of a name before it ("xnequi.com.co", "-nequi.com.co") and
+     * nothing that continues it after ("nequi.com.cox", "nequi.com.co.evil.com"). "www.", "@", a space
+     * or a closing dot of a sentence are fine.
      */
     fun emailDomainIndex(text: String): Int? {
         val lowercaseText = text.lowercase()
@@ -56,11 +58,21 @@ data class BankSmsConfig(
     private fun String.domainIndex(domain: String): Int? {
         var index = indexOf(domain)
         while (index >= 0) {
-            if (getOrNull(index - 1)?.isLetterOrDigit() != true) return index
+            val end = index + domain.length
+            // A dot before is a subdomain ("www.", "alertas."); a letter, digit or hyphen is another name
+            val before = getOrNull(index - 1)
+            val startsWhole = before == null || !(before.isLetterOrDigit() || before == '-')
+            val after = getOrNull(end)
+            val endsWhole = after == null || !after.isDomainPart() ||
+                (after == '.' && getOrNull(end + 1)?.isLetterOrDigit() != true)
+            if (startsWhole && endsWhole) return index
             index = indexOf(domain, index + 1)
         }
         return null
     }
+
+    /** A character that can be part of a host name; a dot only counts when a label follows it. */
+    private fun Char.isDomainPart(): Boolean = isLetterOrDigit() || this == '-' || this == '.'
 
     /** Whole words only: "Nu" is not found inside "nueva". */
     private fun String.wordIndex(word: String): Int? {

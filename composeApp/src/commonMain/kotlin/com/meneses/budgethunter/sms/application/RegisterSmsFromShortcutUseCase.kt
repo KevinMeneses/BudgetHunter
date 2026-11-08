@@ -70,7 +70,7 @@ class RegisterSmsFromShortcutUseCase(
      */
     private fun whatToRead(messageBody: String): Reading? {
         val smsReading = Reading(messageBody, SupportedBanks.ALL_BANKS)
-        if (!BankEmail.looksLikeEmail(messageBody)) return smsReading
+        if (!BankEmail.looksLikeEmail(messageBody, SupportedBanks.SHORTCUT_BANKS)) return smsReading
 
         val passage = BankEmail.movementPassage(messageBody) ?: return smsReading
         val bank = BankEmail.bankOf(messageBody, SupportedBanks.SHORTCUT_BANKS, passage) ?: return null

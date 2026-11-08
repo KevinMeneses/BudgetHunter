@@ -144,4 +144,23 @@ class BankEmailTest {
         assertEquals(SupportedBanks.BANCOLOMBIA, BankEmail.bankOf(email, SupportedBanks.SHORTCUT_BANKS, passage))
         assertEquals(SupportedBanks.DAVIVIENDA, BankEmail.bankOf(passage, SupportedBanks.SHORTCUT_BANKS, passage))
     }
+
+    @Test
+    fun `a domain must stand whole on both sides`() {
+        val nequi = SupportedBanks.NEQUI
+        assertEquals(4, nequi.emailDomainIndex("www.nequi.com.co"))
+        assertEquals(15, nequi.emailDomainIndex("notificaciones@nequi.com.co"))
+        assertEquals(10, nequi.emailDomainIndex("Escribe a nequi.com.co. Gracias"))
+        assertNull(nequi.emailDomainIndex("-nequi.com.co"))
+        assertNull(nequi.emailDomainIndex("nequi.com.cox"))
+        assertNull(nequi.emailDomainIndex("nequi.com.co.evil.com"))
+    }
+
+    @Test
+    fun `a short text carrying a bank domain is an email`() {
+        val shortEmail = "Recibiste 525.000 de NUBIA PALTA desde el banco BBVA. Ayuda en www.nequi.com.co"
+
+        assertFalse(BankEmail.looksLikeEmail(shortEmail))
+        assertTrue(BankEmail.looksLikeEmail(shortEmail, SupportedBanks.SHORTCUT_BANKS))
+    }
 }
