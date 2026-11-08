@@ -478,6 +478,8 @@
     <string name="shared_with_people">Compartido entre %1$d personas</string>
     <string name="read_bank_app_notifications">Leer notificaciones de apps bancarias</string>
     <string name="bank_notification_reading_description">Crea entradas con los movimientos que notifican las apps de los bancos seleccionados</string>
+    <string name="read_bank_emails">Leer correos de los bancos</string>
+    <string name="bank_email_reading_description">Crea entradas con los movimientos de los correos que te envían los bancos seleccionados, leyendo la notificación de tu app de correo. Si ese banco también te avisa por SMS o en su app, el movimiento quedaría dos veces</string>
     <string name="notification_access_title">Acceso a las notificaciones</string>
     <string name="notification_access_missing">Falta el acceso a las notificaciones. Toca para darlo</string>
     <string name="app_notifications_off_explanation">Las notificaciones de Budget Hunter están apagadas. Mientras sigan así, Android no le entrega las notificaciones de tus bancos y no se registra ningún movimiento.\n\nEn la siguiente pantalla activa las notificaciones de Budget Hunter.</string>
@@ -487,7 +489,7 @@
     <string name="notification_reader_stopped_explanation">Android dejó de entregarle a Budget Hunter las notificaciones de tus bancos, algo que puede pasar después de apagar y encender sus notificaciones. La app no puede reactivarlo por su cuenta.\n\nEn la siguiente pantalla toca “Forzar detención” y confirma. Luego vuelve a abrir Budget Hunter.</string>
     <string name="app_notifications_off_title">Notificaciones desactivadas</string>
     <string name="app_notifications_off_description">Con las notificaciones de la app apagadas, Android no le deja leer las de tus bancos. Toca para activarlas</string>
-    <string name="notification_access_explanation">Budget Hunter leerá solo las notificaciones de las apps de los bancos que selecciones en Bancos, para registrar en tu presupuesto por defecto los movimientos que muestran. Las notificaciones de las demás apps se descartan sin leerse.\n\nEn la siguiente pantalla activa Budget Hunter. Android muestra una advertencia porque este acceso podría ver todas las notificaciones.\n\nSi la opción aparece deshabilitada, abre la información de la app, toca el menú ⋮ y elige “Permitir ajustes restringidos”.</string>
+    <string name="notification_access_explanation">Budget Hunter leerá solo las notificaciones de las apps de los bancos que selecciones en Bancos, para registrar en tu presupuesto por defecto los movimientos que muestran. Si lees los correos de los bancos, de las notificaciones de tu app de correo solo mira el remitente y lee únicamente las de esos bancos. Las notificaciones de las demás apps se descartan sin leerse.\n\nEn la siguiente pantalla activa Budget Hunter. Android muestra una advertencia porque este acceso podría ver todas las notificaciones.\n\nSi la opción aparece deshabilitada, abre la información de la app, toca el menú ⋮ y elige “Permitir ajustes restringidos”.</string>
     <string name="bank_source_sms">SMS</string>
     <string name="bank_source_notifications">Notificaciones de la app</string>
     <string name="bank_source_sms_and_notifications">SMS y notificaciones de la app</string>

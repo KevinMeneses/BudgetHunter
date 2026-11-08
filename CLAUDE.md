@@ -112,6 +112,14 @@ Type-safe navigation using Navigation Compose with serializable route objects. M
   banner that leads to Settings, which asks the user for that force stop. Title and text are parsed together
   (`BankNotification`) by the same parser, the entry is described by the text (with the bank name, "Nu: ..."), and
   unreadable notifications are dropped silently (apps also post codes and news). The switch is kept on the device only, not on the account.
+- Banks that report some movements only by email are read on Android from the email app's notification (Gmail,
+  Outlook, Samsung Email...: `BankEmail.EMAIL_APP_PACKAGES`), by the same `BankNotificationListenerService` and access,
+  behind a switch of its own ("Leer correos de los bancos", device only). Only the sender (the title) is read first:
+  the email is kept only when it names a selected bank (`BankSmsConfig.isSender`: its name or a sender keyword with
+  letters); then subject and the start of the body (the expanded text without its first line, the subject) are read
+  like a bank app notification (`BankEmail.toNotification`). Anything but a movement or a missing default budget is
+  dropped silently. There is no deduplication: a bank that also sends SMS or app notifications would register each
+  movement twice, which the switch's description says.
 - iOS cannot read SMS: a Shortcuts automation (trigger "Mensaje") passes the text to the App Intent
   `RegisterExpenseFromMessageIntent` (iosApp/, also an App Shortcut), which calls
   `SmsShortcutEntryPoint` (iosMain) -> `RegisterSmsFromShortcutUseCase` and answers with a dialog.

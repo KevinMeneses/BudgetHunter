@@ -10,6 +10,8 @@ data class SettingsState(
     val hasSmsPermission: Boolean = false,
     /** Reading the notifications of bank apps that send no SMS (Nequi, Nu). Android only. */
     val isBankNotificationReadingEnabled: Boolean = false,
+    /** Reading the notifications of email apps for the emails of the selected banks. Android only. */
+    val isBankEmailReadingEnabled: Boolean = false,
     /** Whether the system lets the app read notifications; granted in the system settings. */
     val hasNotificationListenerAccess: Boolean = false,
     /** Android hands no notification to the listener while the app's own ones are switched off. */
@@ -47,4 +49,8 @@ data class SettingsState(
     val isSigningOut: Boolean = false,
     /** Why the last sign out failed; the user stays signed in and can try again. */
     val signOutError: StringResource? = null
-)
+) {
+    /** The bank apps and the bank emails are both read by the notification listener. */
+    val isNotificationReaderNeeded: Boolean
+        get() = isBankNotificationReadingEnabled || isBankEmailReadingEnabled
+}

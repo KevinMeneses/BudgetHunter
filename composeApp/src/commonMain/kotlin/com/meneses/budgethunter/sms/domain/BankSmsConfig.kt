@@ -25,6 +25,12 @@ data class BankSmsConfig(
         else -> "$displayName: $text"
     }
 
+    /**
+     * Whether [sender] is this bank, as an email app shows who wrote ("Bancolombia",
+     * "Notificaciones Davivienda"): it carries the bank's name or one of its sender keywords.
+     */
+    fun isSender(sender: String): Boolean = sender.isNotBlank() && mentionsItself(sender)
+
     /** Whether [text] names the bank, by its name or a sender keyword that is a word, never a number. */
     private fun mentionsItself(text: String): Boolean {
         val normalizedText = text.normalizeForMatching()

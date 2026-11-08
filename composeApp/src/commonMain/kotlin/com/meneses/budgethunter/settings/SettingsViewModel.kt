@@ -55,6 +55,7 @@ class SettingsViewModel(
         when (intent) {
             is SettingsIntent.ToggleSmsReading -> toggleSmsReading(intent.enabled)
             is SettingsIntent.ToggleBankNotificationReading -> toggleBankNotificationReading(intent.enabled)
+            is SettingsIntent.ToggleBankEmailReading -> toggleBankEmailReading(intent.enabled)
             is SettingsIntent.OpenNotificationAccessSettings -> openNotificationAccessSettings()
             is SettingsIntent.HideNotificationAccessDialog -> hideNotificationAccessDialog()
             is SettingsIntent.OpenAppNotificationSettings -> openAppNotificationSettings()
@@ -161,6 +162,7 @@ class SettingsViewModel(
                         allBudgets = budgetRepository.getAllCached(),
                         hasSmsPermission = permissionsManager.hasSmsPermission(),
                         isBankNotificationReadingEnabled = preferencesManager.isBankNotificationReadingEnabled(),
+                        isBankEmailReadingEnabled = preferencesManager.isBankEmailReadingEnabled(),
                         hasNotificationListenerAccess = permissionsManager.hasNotificationListenerAccess(),
                         areAppNotificationsEnabled = permissionsManager.areAppNotificationsEnabled(),
                         notificationBanks = SupportedBanks.NOTIFICATION_BANKS,
@@ -245,11 +247,22 @@ class SettingsViewModel(
      */
     private fun toggleBankNotificationReading(enabled: Boolean) = viewModelScope.launch {
         preferencesManager.setBankNotificationReadingEnabled(enabled)
+        _uiState.update { it.copy(isBankNotificationReadingEnabled = enabled) }
+        askForNotificationReader(enabled)
+    }
+
+    /** Bank emails are read from the email apps' notifications: the same access, asked the same way. */
+    private fun toggleBankEmailReading(enabled: Boolean) = viewModelScope.launch {
+        preferencesManager.setBankEmailReadingEnabled(enabled)
+        _uiState.update { it.copy(isBankEmailReadingEnabled = enabled) }
+        askForNotificationReader(enabled)
+    }
+
+    private fun askForNotificationReader(enabled: Boolean) {
         val hasAccess = permissionsManager.hasNotificationListenerAccess()
         val appNotificationsEnabled = permissionsManager.areAppNotificationsEnabled()
         _uiState.update {
             it.copy(
-                isBankNotificationReadingEnabled = enabled,
                 hasNotificationListenerAccess = hasAccess,
                 areAppNotificationsEnabled = appNotificationsEnabled,
                 isNotificationAccessDialogVisible = enabled && !hasAccess,

@@ -6,6 +6,7 @@ import com.meneses.budgethunter.sms.domain.BankSmsConfig
 sealed interface SettingsIntent {
     data class ToggleSmsReading(val enabled: Boolean) : SettingsIntent
     data class ToggleBankNotificationReading(val enabled: Boolean) : SettingsIntent
+    data class ToggleBankEmailReading(val enabled: Boolean) : SettingsIntent
     data object OpenNotificationAccessSettings : SettingsIntent
     data object HideNotificationAccessDialog : SettingsIntent
     data object OpenAppNotificationSettings : SettingsIntent

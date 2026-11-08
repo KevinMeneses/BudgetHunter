@@ -20,6 +20,7 @@ class IsNotificationReaderStoppedUseCaseTest {
     @BeforeTest
     fun setup() {
         coEvery { preferencesManager.isBankNotificationReadingEnabled() } returns true
+        coEvery { preferencesManager.isBankEmailReadingEnabled() } returns false
         every { permissionsManager.hasNotificationListenerAccess() } returns true
         every { permissionsManager.areAppNotificationsEnabled() } returns true
         every { permissionsManager.isNotificationListenerConnected() } returns false
@@ -45,10 +46,18 @@ class IsNotificationReaderStoppedUseCaseTest {
     }
 
     @Test
-    fun `not stopped with the switch off`() = runTest {
+    fun `not stopped with both switches off`() = runTest {
         coEvery { preferencesManager.isBankNotificationReadingEnabled() } returns false
 
         assertFalse(isNotificationReaderStopped())
+    }
+
+    @Test
+    fun `reading bank emails alone also needs the reader`() = runTest {
+        coEvery { preferencesManager.isBankNotificationReadingEnabled() } returns false
+        coEvery { preferencesManager.isBankEmailReadingEnabled() } returns true
+
+        assertTrue(isNotificationReaderStopped())
     }
 
     @Test

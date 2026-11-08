@@ -7,6 +7,7 @@ import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.commons.data.PreferencesManager
 import com.meneses.budgethunter.commons.resources.StringResourceProvider
 import com.meneses.budgethunter.sms.data.SmsMapper
+import com.meneses.budgethunter.sms.domain.BankEmail
 import com.meneses.budgethunter.sms.domain.BankNotification
 import com.meneses.budgethunter.sms.domain.SmsParseResult
 import com.meneses.budgethunter.sms.domain.SupportedBanks
@@ -203,5 +204,28 @@ class RegisterSmsEntryUseCaseTest {
 
         assertIs<SmsParseResult.Unrecognized>(result)
         coVerify(exactly = 0) { budgetEntryRepository.create(any()) }
+    }
+
+    @Test
+    fun `registers a bank email described by its body`() = runTest {
+        givenDefaultBudget()
+        val stored = slot<BudgetEntry>()
+        coEvery { budgetEntryRepository.create(capture(stored)) } returns Unit
+        val email = BankEmail.fromNotification(
+            title = "Davivienda",
+            text = "Notificación de transacción",
+            bigText = "Notificación de transacción\nApreciado cliente: realizaste una compra por \$35.900 en " +
+                "TIENDA D1. Si no la reconoces llámanos."
+        )
+
+        val result = registerSmsEntry.registerNotification(email.toNotification(), SupportedBanks.DAVIVIENDA)
+
+        assertIs<SmsParseResult.Success>(result)
+        assertEquals("35900", stored.captured.amount)
+        assertEquals(BudgetEntry.Type.OUTCOME, stored.captured.type)
+        assertEquals(
+            "Davivienda: Apreciado cliente: realizaste una compra por \$35.900 en TIENDA D1",
+            stored.captured.description
+        )
     }
 }

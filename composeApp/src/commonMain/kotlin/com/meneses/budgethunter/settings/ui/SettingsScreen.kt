@@ -21,6 +21,7 @@ import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Sms
@@ -59,6 +60,7 @@ import budgethunter.composeapp.generated.resources.app_notifications_off_explana
 import budgethunter.composeapp.generated.resources.app_notifications_off_title
 import budgethunter.composeapp.generated.resources.app_version
 import budgethunter.composeapp.generated.resources.bank_for_sms_notifications
+import budgethunter.composeapp.generated.resources.bank_email_reading_description
 import budgethunter.composeapp.generated.resources.bank_notification_reading_description
 import budgethunter.composeapp.generated.resources.banks_selected_count
 import budgethunter.composeapp.generated.resources.cancel
@@ -77,6 +79,7 @@ import budgethunter.composeapp.generated.resources.notification_reader_stopped_d
 import budgethunter.composeapp.generated.resources.notification_reader_stopped_explanation
 import budgethunter.composeapp.generated.resources.notification_reader_stopped_title
 import budgethunter.composeapp.generated.resources.read_bank_app_notifications
+import budgethunter.composeapp.generated.resources.read_bank_emails
 import budgethunter.composeapp.generated.resources.read_bank_sms
 import budgethunter.composeapp.generated.resources.section_ai
 import budgethunter.composeapp.generated.resources.section_automatic_entries
@@ -311,8 +314,16 @@ object SettingsScreen {
                 switchChecked = uiState.isBankNotificationReadingEnabled,
                 onSwitchChange = { onIntent(SettingsIntent.ToggleBankNotificationReading(it)) }
             )
-            // The switch alone reads nothing until the system grants access
-            if (uiState.isBankNotificationReadingEnabled && !uiState.hasNotificationListenerAccess) {
+            GroupDivider()
+            SettingRow(
+                icon = Icons.Default.Email,
+                title = stringResource(Res.string.read_bank_emails),
+                subtitle = stringResource(Res.string.bank_email_reading_description),
+                switchChecked = uiState.isBankEmailReadingEnabled,
+                onSwitchChange = { onIntent(SettingsIntent.ToggleBankEmailReading(it)) }
+            )
+            // Both switches use the one notification reader: they read nothing until the system grants access
+            if (uiState.isNotificationReaderNeeded && !uiState.hasNotificationListenerAccess) {
                 GroupDivider()
                 SettingRow(
                     icon = Icons.Default.Warning,
@@ -321,7 +332,7 @@ object SettingsScreen {
                     contentColor = AppColors.error,
                     onClick = { onIntent(SettingsIntent.OpenNotificationAccessSettings) }
                 )
-            } else if (uiState.isBankNotificationReadingEnabled && !uiState.areAppNotificationsEnabled) {
+            } else if (uiState.isNotificationReaderNeeded && !uiState.areAppNotificationsEnabled) {
                 // With the app's own notifications off, Android stops handing over the banks' ones
                 GroupDivider()
                 SettingRow(
@@ -331,7 +342,7 @@ object SettingsScreen {
                     contentColor = AppColors.error,
                     onClick = { onIntent(SettingsIntent.OpenAppNotificationSettings) }
                 )
-            } else if (uiState.isBankNotificationReadingEnabled && uiState.isNotificationReaderStopped) {
+            } else if (uiState.isNotificationReaderNeeded && uiState.isNotificationReaderStopped) {
                 // Everything granted, yet the system left the reader unbound: only a force stop helps
                 GroupDivider()
                 SettingRow(
@@ -344,10 +355,13 @@ object SettingsScreen {
             }
             GroupDivider()
             val hasNotificationBankSelected = uiState.selectedBanks.any { it in uiState.notificationBanks }
-            // A selected bank that only one source reads is not read while that source is off
+            // A selected bank that only one source reads is not read while that source is off. With
+            // the emails on, every selected bank is read from its emails too
             val hasUnreadNotificationBank = !uiState.isBankNotificationReadingEnabled &&
+                !uiState.isBankEmailReadingEnabled &&
                 uiState.selectedBanks.any { it.readsNotifications && !it.readsSms }
             val hasUnreadSmsBank = !uiState.isSmsReadingEnabled &&
+                !uiState.isBankEmailReadingEnabled &&
                 uiState.selectedBanks.any { it.readsSms && !it.readsNotifications }
             SettingRow(
                 icon = Icons.Default.AccountBalance,
@@ -366,17 +380,19 @@ object SettingsScreen {
                 warning = when {
                     hasUnreadNotificationBank -> stringResource(Res.string.notification_bank_needs_reading)
                     hasUnreadSmsBank -> stringResource(Res.string.sms_bank_needs_reading)
-                    uiState.isBankNotificationReadingEnabled && !hasNotificationBankSelected ->
+                    uiState.isBankNotificationReadingEnabled && !uiState.isBankEmailReadingEnabled &&
+                        !hasNotificationBankSelected ->
                         stringResource(Res.string.no_notification_bank_selected)
                     else -> null
                 },
-                // One selection for both sources: SMS banks and the apps read from their notifications
-                enabled = uiState.isSmsReadingEnabled || uiState.isBankNotificationReadingEnabled,
+                // One selection for every source: SMS banks, the apps read from their notifications
+                // and the banks whose emails are read
+                enabled = uiState.isSmsReadingEnabled || uiState.isNotificationReaderNeeded,
                 onClick = { onIntent(SettingsIntent.ShowBankSelector) }
             )
             GroupDivider()
-            // Both sources store the movements in this budget
-            val isReadingEnabled = uiState.isSmsReadingEnabled || uiState.isBankNotificationReadingEnabled
+            // Every source stores the movements in this budget
+            val isReadingEnabled = uiState.isSmsReadingEnabled || uiState.isNotificationReaderNeeded
             SettingRow(
                 icon = Icons.Default.AccountBalanceWallet,
                 title = stringResource(Res.string.default_budget),

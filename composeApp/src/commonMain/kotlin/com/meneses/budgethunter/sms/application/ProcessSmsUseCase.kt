@@ -16,6 +16,7 @@ import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.commons.platform.NotificationManager
 import com.meneses.budgethunter.commons.resources.StringResourceProvider
 import com.meneses.budgethunter.commons.util.toCurrency
+import com.meneses.budgethunter.sms.domain.BankEmail
 import com.meneses.budgethunter.sms.domain.BankNotification
 import com.meneses.budgethunter.sms.domain.BankNotificationService
 import com.meneses.budgethunter.sms.domain.BankSmsConfig
@@ -46,7 +47,7 @@ class ProcessSmsUseCase(
     }
 
     override suspend fun processBankNotification(notification: BankNotification, bankConfig: BankSmsConfig) {
-        try {
+        reportFailures {
             when (val result = registerSmsEntry.registerNotification(notification, bankConfig)) {
                 is SmsParseResult.Success -> notifyEntryAdded(result.entry)
                 // Bank apps also notify codes, news and reminders. Unlike an SMS from a bank, a
@@ -55,6 +56,26 @@ class ProcessSmsUseCase(
                 SmsParseResult.Unrecognized -> Unit
                 else -> notifyFailure(result, notification.message)
             }
+        }
+    }
+
+    override suspend fun processBankEmail(email: BankEmail, bankConfig: BankSmsConfig) {
+        reportFailures {
+            when (val result = registerSmsEntry.registerNotification(email.toNotification(), bankConfig)) {
+                is SmsParseResult.Success -> notifyEntryAdded(result.entry)
+                // The movement was read but had nowhere to go: the user can fix that
+                SmsParseResult.NoDefaultBudget -> notifyFailure(result, email.body)
+                // Banks email statements, offers and news far more than movements, and the
+                // notification shows only the start of the body, which may stop before the amount:
+                // anything else is dropped without a word
+                else -> Unit
+            }
+        }
+    }
+
+    private suspend fun reportFailures(block: suspend () -> Unit) {
+        try {
+            block()
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {

@@ -210,6 +210,20 @@ class SettingsViewModelTest {
     }
 
     @Test
+    fun `turning on bank emails without access explains it like the bank apps`() = runTest {
+        every { permissionsManager.hasNotificationListenerAccess() } returns false
+
+        viewModel.sendIntent(SettingsIntent.ToggleBankEmailReading(true))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        coVerify { preferencesManager.setBankEmailReadingEnabled(true) }
+        assertTrue(viewModel.uiState.value.isBankEmailReadingEnabled)
+        assertFalse(viewModel.uiState.value.isBankNotificationReadingEnabled)
+        assertTrue(viewModel.uiState.value.isNotificationReaderNeeded)
+        assertTrue(viewModel.uiState.value.isNotificationAccessDialogVisible)
+    }
+
+    @Test
     fun `turning on bank notifications with access granted asks nothing`() = runTest {
         every { permissionsManager.hasNotificationListenerAccess() } returns true
 
