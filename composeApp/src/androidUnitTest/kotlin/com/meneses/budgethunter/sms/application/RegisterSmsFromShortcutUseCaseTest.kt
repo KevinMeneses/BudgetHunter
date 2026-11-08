@@ -149,12 +149,13 @@ class RegisterSmsFromShortcutUseCaseTest {
         val message = "Bancolombia:\nCompraste\nCOP25.000,00\nen EXITO con tu T.Deb *1234."
         givenResult(message, SmsParseResult.Success(BudgetEntry(amount = "25000.00", budgetId = 7)))
         coEvery {
-            stringResourceProvider.getString(Res.string.sms_shortcut_expense_registered, "$25,000")
-        } returns "Registrado: gasto de $25,000"
+            stringResourceProvider.getString(Res.string.sms_shortcut_expense_registered_at, "$25,000", "Exito")
+        } returns "Registrado: $25,000 en Exito"
 
         val reply = registerSmsFromShortcut(message)
 
         assertTrue(reply.isRegistered)
+        assertEquals("Registrado: $25,000 en Exito", reply.message)
     }
 
     @Test
