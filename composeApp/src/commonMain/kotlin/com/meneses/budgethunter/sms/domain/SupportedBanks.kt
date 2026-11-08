@@ -146,7 +146,8 @@ object SupportedBanks {
             """(?:envi[oó]|enviaste|recibiste|pagaste)\s+(?:por\s+)?\$?\s*([0-9][0-9.,]*)""",
             RegexOption.IGNORE_CASE
         ),
-        appPackages = listOf("com.nequi.MobileApp")
+        appPackages = listOf("com.nequi.MobileApp"),
+        emailDomains = listOf("nequi.com.co")
     )
 
     val NU = BankSmsConfig(
@@ -161,6 +162,26 @@ object SupportedBanks {
     )
 
     private val NOTIFICATION_ONLY_BANKS = listOf(NEQUI, NU)
+
+    /*
+     * Banks read only from their alert emails, which reach the app on iOS through a Shortcuts
+     * automation. They are not selectable: Android reads no email.
+     */
+    val LULO_BANK = BankSmsConfig(
+        id = "lulo_bank",
+        displayName = "Lulo bank",
+        emailDomains = listOf("lulobank.com")
+    )
+
+    private val EMAIL_ONLY_BANKS = listOf(LULO_BANK)
+
+    /**
+     * Every bank the iOS shortcut can be handed text from: an SMS, or an alert email from any bank,
+     * notification banks included (Nequi emails each movement too).
+     */
+    val SHORTCUT_BANKS = (ALL_BANKS + NOTIFICATION_ONLY_BANKS + EMAIL_ONLY_BANKS)
+        .distinctBy { it.id }
+        .sortedBy { it.displayName }
 
     /**
      * Every bank the user can pick in Settings: the SMS ones and the notification ones share one

@@ -6,7 +6,12 @@ data class BankSmsConfig(
     val senderKeywords: List<String> = emptyList(),
     val transactionAmountRegex: Regex? = null,
     /** Android packages of the bank's app, for banks read from their app notifications. */
-    val appPackages: List<String> = emptyList()
+    val appPackages: List<String> = emptyList(),
+    /**
+     * Domains of the bank's alert emails ("nequi.com.co"). Its emails name it reliably only there,
+     * in the sender or the links: the text may name another bank ("desde el banco BBVA").
+     */
+    val emailDomains: List<String> = emptyList()
 ) {
     /** Movements come by SMS, recognized by the sender. */
     val readsSms: Boolean get() = senderKeywords.isNotEmpty()
@@ -26,23 +31,32 @@ data class BankSmsConfig(
     }
 
     /** Whether [text] names the bank, by its name or a sender keyword that is a word, never a number. */
-    private fun mentionsItself(text: String): Boolean {
+    private fun mentionsItself(text: String): Boolean = mentionIndex(text) != null
+
+    /** Where [text] first names the bank as a whole word, or null when it does not. */
+    fun mentionIndex(text: String): Int? {
         val normalizedText = text.normalizeForMatching()
         return (senderKeywords + displayName)
             .filter { name -> name.any { it.isLetter() } }
-            .map { it.normalizeForMatching() }
-            .any { normalizedText.containsWord(it) }
+            .mapNotNull { normalizedText.wordIndex(it.normalizeForMatching()) }
+            .minOrNull()
+    }
+
+    /** Whether [text] carries one of the bank's email domains, as a sender or in a link. */
+    fun hasEmailDomainIn(text: String): Boolean {
+        val lowercaseText = text.lowercase()
+        return emailDomains.any { lowercaseText.contains(it.lowercase()) }
     }
 
     /** Whole words only: "Nu" is not found inside "nueva". */
-    private fun String.containsWord(word: String): Boolean {
+    private fun String.wordIndex(word: String): Int? {
         var index = indexOf(word)
         while (index >= 0) {
             val before = getOrNull(index - 1)
             val after = getOrNull(index + word.length)
-            if (before?.isLetterOrDigit() != true && after?.isLetterOrDigit() != true) return true
+            if (before?.isLetterOrDigit() != true && after?.isLetterOrDigit() != true) return index
             index = indexOf(word, index + 1)
         }
-        return false
+        return null
     }
 }

@@ -2,9 +2,10 @@ import AppIntents
 import ComposeApp
 
 /**
- * "Register expense from message" ("Registrar gasto desde mensaje"): receives the text of a bank SMS from a Shortcuts automation
- * (trigger "Mensaje") and registers it in the default budget, the same way Android does when it
- * reads the SMS itself. It runs in the background, the app does not need to be open.
+ * "Register expense from message" ("Registrar gasto desde mensaje"): receives the text of a bank SMS or alert
+ * email from a Shortcuts automation (trigger "Mensaje" or "Correo") and registers it in the default budget,
+ * the same way Android does when it reads the SMS itself. Telling an email from an SMS and reading only
+ * its movement sentence happens in the shared code (BankEmail). It runs in the background, the app does not need to be open.
  *
  * All the reading, the entry creation and the sync live in the shared Kotlin code
  * (SmsShortcutEntryPoint); this only passes the text and shows the answer.
@@ -17,14 +18,14 @@ struct RegisterExpenseFromMessageIntent: AppIntent {
     static var title: LocalizedStringResource = "Register expense from message"
 
     static var description = IntentDescription(
-        "Reads your bank SMS and registers the transaction in your default BudgetHunter budget."
+        "Reads your bank SMS or email and registers the transaction in your default BudgetHunter budget."
     )
 
     static var openAppWhenRun: Bool = false
 
     @Parameter(
         title: "Message",
-        description: "The text of the bank SMS.",
+        description: "The text of the bank SMS or email.",
         inputOptions: String.IntentInputOptions(multiline: true),
         requestValueDialog: IntentDialog("Which bank message do you want to register?")
     )

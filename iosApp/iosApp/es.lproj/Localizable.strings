@@ -1,7 +1,7 @@
 /* App Intent "Register expense from message" (RegisterExpenseFromMessageIntent.swift) */
 "Register expense from message" = "Registrar gasto desde mensaje";
-"Reads your bank SMS and registers the transaction in your default BudgetHunter budget." = "Lee el SMS de tu banco y registra el movimiento en tu presupuesto por defecto de BudgetHunter.";
+"Reads your bank SMS or email and registers the transaction in your default BudgetHunter budget." = "Lee el SMS o el correo de tu banco y registra el movimiento en tu presupuesto por defecto de BudgetHunter.";
 "Message" = "Mensaje";
-"The text of the bank SMS." = "El contenido del SMS del banco.";
+"The text of the bank SMS or email." = "El contenido del SMS o del correo del banco.";
 "Which bank message do you want to register?" = "¿Qué mensaje del banco quieres registrar?";
 "Register expense from ${message}" = "Registrar gasto desde ${message}";

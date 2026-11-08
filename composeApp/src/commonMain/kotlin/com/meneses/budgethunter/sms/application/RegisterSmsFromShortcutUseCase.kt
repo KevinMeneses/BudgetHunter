@@ -12,6 +12,8 @@ import budgethunter.composeapp.generated.resources.sms_shortcut_unrecognized
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.commons.resources.StringResourceProvider
 import com.meneses.budgethunter.commons.util.toCurrency
+import com.meneses.budgethunter.sms.domain.BankEmail
+import com.meneses.budgethunter.sms.domain.BankSmsConfig
 import com.meneses.budgethunter.sms.domain.SmsCounterpartExtractor
 import com.meneses.budgethunter.sms.domain.SmsParseResult
 import com.meneses.budgethunter.sms.domain.SupportedBanks
@@ -35,17 +37,38 @@ class RegisterSmsFromShortcutUseCase(
     private val stringResourceProvider: StringResourceProvider
 ) {
     suspend operator fun invoke(messageBody: String): SmsShortcutReply = try {
-        when (val result = registerSmsEntry(messageBody, SupportedBanks.ALL_BANKS)) {
-            is SmsParseResult.Success -> registered(result.entry, messageBody)
-            SmsParseResult.NoDefaultBudget -> notRegistered(stringResourceProvider.getString(Res.string.sms_shortcut_no_budget))
-            SmsParseResult.Ignored -> notRegistered(stringResourceProvider.getString(Res.string.sms_shortcut_ignored))
-            SmsParseResult.AmountNotFound,
-            SmsParseResult.Unrecognized -> notRegistered(stringResourceProvider.getString(Res.string.sms_shortcut_unrecognized))
+        val reading = whatToRead(messageBody)
+        if (reading == null) {
+            notRegistered(stringResourceProvider.getString(Res.string.sms_shortcut_unrecognized))
+        } else {
+            register(reading.first, reading.second)
         }
     } catch (e: CancellationException) {
         throw e
     } catch (_: Exception) {
         notRegistered(stringResourceProvider.getString(Res.string.sms_shortcut_error))
+    }
+
+    private suspend fun register(text: String, banks: List<BankSmsConfig>): SmsShortcutReply =
+        when (val result = registerSmsEntry(text, banks)) {
+            is SmsParseResult.Success -> registered(result.entry, text)
+            SmsParseResult.NoDefaultBudget -> notRegistered(stringResourceProvider.getString(Res.string.sms_shortcut_no_budget))
+            SmsParseResult.Ignored -> notRegistered(stringResourceProvider.getString(Res.string.sms_shortcut_ignored))
+            SmsParseResult.AmountNotFound,
+            SmsParseResult.Unrecognized -> notRegistered(stringResourceProvider.getString(Res.string.sms_shortcut_unrecognized))
+        }
+
+    /**
+     * An SMS is read whole against every SMS bank. An email is cut down to the sentence of the
+     * movement and read only as the bank that sent it, since it may name another one; null when it
+     * reports no movement.
+     */
+    private fun whatToRead(messageBody: String): Pair<String, List<BankSmsConfig>>? {
+        if (!BankEmail.looksLikeEmail(messageBody)) return messageBody to SupportedBanks.ALL_BANKS
+
+        val passage = BankEmail.movementPassage(messageBody) ?: return null
+        val bank = BankEmail.bankOf(messageBody, SupportedBanks.SHORTCUT_BANKS)
+        return passage to (bank?.let { listOf(it) } ?: SupportedBanks.SHORTCUT_BANKS)
     }
 
     private suspend fun registered(entry: BudgetEntry, messageBody: String): SmsShortcutReply {

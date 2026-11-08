@@ -32,6 +32,14 @@ object SmsTransactionParser {
         )
     }
 
+    /** Whether [text] names a movement in any direction, without telling which. */
+    fun mentionsMovement(text: String): Boolean {
+        val normalizedText = text.normalizeForMatching()
+        return INCOME_PATTERN.containsMatchIn(normalizedText) ||
+            OUTCOME_PATTERN.containsMatchIn(normalizedText) ||
+            TRANSFER_PATTERN.containsMatchIn(normalizedText)
+    }
+
     /**
      * The direction is given by the marker that appears first in the message, since banks
      * lead with the verb ("Recibiste ... de una transferencia"). Transfer only messages,

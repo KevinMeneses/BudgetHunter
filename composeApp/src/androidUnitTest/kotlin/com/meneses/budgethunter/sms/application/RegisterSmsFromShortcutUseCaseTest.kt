@@ -118,4 +118,28 @@ class RegisterSmsFromShortcutUseCaseTest {
         assertFalse(reply.isRegistered)
         assertEquals("error", reply.message)
     }
+
+    @Test
+    fun `reads only the movement of an email, as the bank that sent it`() = runTest {
+        val email = """
+            ¡Recibiste plata por Bre-B!
+
+            ¡Hola, JUAN MENESES!
+
+            Recibiste 525.000 de NUBIA ROCELY PALTA el 1 de noviembre de 2026 a las 11:11 a.m, desde el banco BBVA. Revisa el detalle en los movimientos de tu app.
+
+            Si tienes dudas, escríbenos al chat de www.nequi.com.co
+        """.trimIndent()
+        val passage = "Recibiste 525.000 de NUBIA ROCELY PALTA el 1 de noviembre de 2026 a las 11:11 a.m, desde el banco BBVA."
+        coEvery { registerSmsEntry(passage, listOf(SupportedBanks.NEQUI)) } returns
+            SmsParseResult.Success(BudgetEntry(amount = "525000", type = BudgetEntry.Type.INCOME, budgetId = 7))
+        coEvery {
+            stringResourceProvider.getString(Res.string.sms_shortcut_income_registered_from, "$525,000", "Nubia Rocely Palta")
+        } returns "Registrado: ingreso de $525,000 de Nubia Rocely Palta"
+
+        val reply = registerSmsFromShortcut(email)
+
+        assertTrue(reply.isRegistered)
+        assertEquals("Registrado: ingreso de $525,000 de Nubia Rocely Palta", reply.message)
+    }
 }

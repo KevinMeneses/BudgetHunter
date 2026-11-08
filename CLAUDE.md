@@ -120,6 +120,11 @@ Type-safe navigation using Navigation Compose with serializable route objects. M
   The intent's texts are English in the Swift code and Spanish in `iosApp/iosApp/es.lproj` (`Localizable.strings`,
   `AppShortcuts.strings` for the Siri phrases). The guide's screenshots are iOS 26 captures in `drawable` (English) and
   `drawable-es`; the automation filters by the bank name in the message, not by sender.
+- The same intent takes bank alert emails (Shortcuts trigger "Correo", iOS 17+, needs the account in Apple Mail).
+  A long or multi-line text is read as an email (`BankEmail`): only the first sentence that names a movement and
+  carries a number is parsed, and the bank is told by its email domain first (`BankSmsConfig.emailDomains`), then by
+  the name it mentions first, because an email may name another bank ("desde el banco BBVA" in a Nequi email).
+  Email-only banks (Lulo bank) are in `SupportedBanks.SHORTCUT_BANKS`, not in the Android selector.
 
 ### Automatic categorization
 Entries carry a category; `UNCATEGORIZED` ("Sin categoría") is its own value, the default for a new entry, and is
