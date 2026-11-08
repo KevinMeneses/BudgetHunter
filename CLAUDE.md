@@ -121,6 +121,10 @@ Type-safe navigation using Navigation Compose with serializable route objects. M
   `AppShortcuts.strings` for the Siri phrases). The guide's screenshots are iOS 26 captures in `drawable` (English) and
   `drawable-es`; the automation filters by the bank name in the message, not by sender.
 - The same intent takes bank alert emails (Shortcuts trigger "Correo", iOS 17+, needs the account in Apple Mail).
+  It has its own guide (`EmailShortcutTutorialScreen`, a row below the SMS one in Settings; both guides share
+  `ShortcutTutorialParts.kt`): the automation filters by the bank's sender address and passes the Shortcut Input's
+  Content property (the trigger hands over an Email object; Content is its body). Checked on the iOS 26.2
+  simulator, where Mail does not run, so the text a real email produces is still unverified.
   A text longer than an SMS (> 320 chars), or one carrying a bank's email domain, is read as an email (`BankEmail`): only the first sentence that names a
   movement and carries a number is parsed, and the bank is told by its email domain first
   (`BankSmsConfig.emailDomains`), then by the name it mentions first outside that sentence, then inside it, because

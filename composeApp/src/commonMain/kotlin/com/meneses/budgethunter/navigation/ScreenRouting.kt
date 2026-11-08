@@ -57,6 +57,7 @@ import com.meneses.budgethunter.commons.data.PreferencesManager
 import com.meneses.budgethunter.commons.platform.NetworkMonitor
 import com.meneses.budgethunter.commons.util.serializableType
 import com.meneses.budgethunter.settings.SettingsViewModel
+import com.meneses.budgethunter.settings.ui.EmailShortcutTutorialScreen
 import com.meneses.budgethunter.settings.ui.SettingsScreen
 import com.meneses.budgethunter.settings.ui.SmsShortcutTutorialScreen
 import com.meneses.budgethunter.splash.SplashScreenViewModel
@@ -265,12 +266,19 @@ fun BudgetHunterNavigation() {
                     uiState = uiState,
                     onIntent = settingsViewModel::sendIntent,
                     goBack = { navController.popBackStackOnce(backStackEntry) },
-                    showSmsShortcutTutorial = { navController.navigateOnce(SmsShortcutTutorialScreen) }
+                    showSmsShortcutTutorial = { navController.navigateOnce(SmsShortcutTutorialScreen) },
+                    showEmailShortcutTutorial = { navController.navigateOnce(EmailShortcutTutorialScreen) }
                 )
             }
 
             composable<SmsShortcutTutorialScreen> { backStackEntry ->
                 SmsShortcutTutorialScreen.Show(
+                    goBack = { navController.popBackStackOnce(backStackEntry) }
+                )
+            }
+
+            composable<EmailShortcutTutorialScreen> { backStackEntry ->
+                EmailShortcutTutorialScreen.Show(
                     goBack = { navController.popBackStackOnce(backStackEntry) }
                 )
             }

@@ -21,6 +21,7 @@ import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Sms
@@ -88,6 +89,8 @@ import budgethunter.composeapp.generated.resources.sign_out_unsynced_warning
 import budgethunter.composeapp.generated.resources.signed_in
 import budgethunter.composeapp.generated.resources.sms_bank_needs_reading
 import budgethunter.composeapp.generated.resources.sms_reading_description
+import budgethunter.composeapp.generated.resources.email_shortcut_settings_description
+import budgethunter.composeapp.generated.resources.email_shortcut_settings_row
 import budgethunter.composeapp.generated.resources.sms_shortcut_settings_description
 import budgethunter.composeapp.generated.resources.sms_shortcut_settings_row
 import com.meneses.budgethunter.commons.ui.AppBar
@@ -113,7 +116,8 @@ object SettingsScreen {
         uiState: SettingsState,
         onIntent: (SettingsIntent) -> Unit,
         goBack: () -> Unit,
-        showSmsShortcutTutorial: () -> Unit
+        showSmsShortcutTutorial: () -> Unit,
+        showEmailShortcutTutorial: () -> Unit
     ) {
         val snackbarHostState = remember { SnackbarHostState() }
         // Notification access is granted in the system settings, so it is read again on the way back
@@ -160,6 +164,7 @@ object SettingsScreen {
                         SmsShortcutGroup(
                             uiState = uiState,
                             onOpenTutorial = showSmsShortcutTutorial,
+                            onOpenEmailTutorial = showEmailShortcutTutorial,
                             onIntent = onIntent
                         )
                     }
@@ -386,13 +391,15 @@ object SettingsScreen {
     }
 
     /**
-     * iOS cannot read SMS, but a Shortcuts automation can hand them to the app. This only leads
-     * to the guide; the automation itself is the switch, so there is no toggle here.
+     * iOS cannot read SMS or emails, but a Shortcuts automation can hand them to the app. These only
+     * lead to the guides (SMS first, then bank emails); the automation itself is the switch, so there
+     * is no toggle here.
      */
     @Composable
     private fun SmsShortcutGroup(
         uiState: SettingsState,
         onOpenTutorial: () -> Unit,
+        onOpenEmailTutorial: () -> Unit,
         onIntent: (SettingsIntent) -> Unit
     ) {
         SettingsGroup {
@@ -401,6 +408,13 @@ object SettingsScreen {
                 title = stringResource(Res.string.sms_shortcut_settings_row),
                 subtitle = stringResource(Res.string.sms_shortcut_settings_description),
                 onClick = onOpenTutorial
+            )
+            GroupDivider()
+            SettingRow(
+                icon = Icons.Default.Email,
+                title = stringResource(Res.string.email_shortcut_settings_row),
+                subtitle = stringResource(Res.string.email_shortcut_settings_description),
+                onClick = onOpenEmailTutorial
             )
             GroupDivider()
             // The shortcut stores the movements in this budget, as the Android receiver does
