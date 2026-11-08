@@ -65,6 +65,7 @@ import budgethunter.composeapp.generated.resources.cancel
 import budgethunter.composeapp.generated.resources.change_password
 import budgethunter.composeapp.generated.resources.come_back
 import budgethunter.composeapp.generated.resources.default_budget
+import budgethunter.composeapp.generated.resources.default_budget_needed_for_reading
 import budgethunter.composeapp.generated.resources.no_banks_selected
 import budgethunter.composeapp.generated.resources.no_default_budget
 import budgethunter.composeapp.generated.resources.no_notification_bank_selected
@@ -375,11 +376,18 @@ object SettingsScreen {
             )
             GroupDivider()
             // Both sources store the movements in this budget
+            val isReadingEnabled = uiState.isSmsReadingEnabled || uiState.isBankNotificationReadingEnabled
             SettingRow(
                 icon = Icons.Default.AccountBalanceWallet,
                 title = stringResource(Res.string.default_budget),
                 subtitle = uiState.defaultBudget?.name ?: stringResource(Res.string.no_default_budget),
-                enabled = uiState.isSmsReadingEnabled || uiState.isBankNotificationReadingEnabled,
+                // Without it every movement read is dropped (only a notification says so, once it is lost)
+                warning = if (isReadingEnabled && uiState.defaultBudget == null) {
+                    stringResource(Res.string.default_budget_needed_for_reading)
+                } else {
+                    null
+                },
+                enabled = isReadingEnabled,
                 onClick = { onIntent(SettingsIntent.ShowDefaultBudgetSelector) }
             )
         }
