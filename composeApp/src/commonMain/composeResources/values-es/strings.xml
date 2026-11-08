@@ -494,4 +494,5 @@
     <string name="no_notification_bank_selected">Ninguno con notificaciones de la app</string>
     <string name="notification_bank_needs_reading">Algunos solo se leen por notificaciones de la app: actívalas arriba</string>
     <string name="sms_bank_needs_reading">Algunos solo se leen por SMS: activa la lectura de SMS arriba</string>
+    <string name="default_budget_needed_for_reading">Elige uno: sin él los movimientos no se registran</string>
 </resources>

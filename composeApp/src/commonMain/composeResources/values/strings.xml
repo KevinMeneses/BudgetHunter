@@ -494,4 +494,5 @@
     <string name="no_notification_bank_selected">None read from app notifications</string>
     <string name="notification_bank_needs_reading">Some are read only from app notifications: turn them on above</string>
     <string name="sms_bank_needs_reading">Some are read only by SMS: turn SMS reading on above</string>
+    <string name="default_budget_needed_for_reading">Choose one: movements are not registered without it</string>
 </resources>
