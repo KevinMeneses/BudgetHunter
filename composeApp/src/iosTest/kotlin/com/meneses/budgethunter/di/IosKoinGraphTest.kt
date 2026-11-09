@@ -65,7 +65,11 @@ class IosKoinGraphTest {
         }
 
         assertTrue(definitions.isNotEmpty(), "No definitions found in Koin")
-        assertTrue(failures.isEmpty(), "Could not create:\n" + failures.joinToString("\n"))
+        assertTrue(
+            failures.isEmpty(),
+            "Could not create:\n" + failures.joinToString("\n") +
+                "\n(a definition declared with parameters needs them in parametersFor)"
+        )
     }
 
     @Test

@@ -13,6 +13,9 @@ private val koinLock = NSLock()
  * is already running, [createNative] is not called: some managers do work when created (the
  * notification one asks for the permission), and each entry point would otherwise build them
  * again for nothing.
+ *
+ * [createNative] runs under the lock, so it must not wait on another thread that could call
+ * this too. Both entry points call this on the main thread, where the Swift managers are made.
  */
 fun startKoinIfNeeded(createNative: () -> NativeDependencies) {
     koinLock.lock()
