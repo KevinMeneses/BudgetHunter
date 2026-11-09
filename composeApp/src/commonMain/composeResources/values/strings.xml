@@ -480,7 +480,8 @@
     <string name="bank_notification_reading_description">Create entries from the movements that the apps of the selected banks notify</string>
     <string name="read_bank_emails">Read bank emails</string>
     <string name="bank_email_reading_description">Create entries from the movements in the emails of the selected banks</string>
-    <string name="reading_channels_duplicates_note">If the same movement reaches you through several of these channels, it will be added more than once</string>
+    <string name="reading_channels_duplicates_title">Possible repeated movements</string>
+    <string name="reading_channels_duplicates_note">Reading is on for more than one channel. If your bank tells you about the same movement by SMS, in its app and by email, it will be added once per channel. Turn on only the channels your bank uses, or delete the repeated entries</string>
     <string name="notification_access_title">Notification access</string>
     <string name="notification_access_missing">Notification access is missing. Tap to grant it</string>
     <string name="app_notifications_off_explanation">Budget Hunter's notifications are off. While they stay off, Android does not hand it your banks' notifications, so no movement is registered.\n\nOn the next screen, turn on the notifications of Budget Hunter.</string>

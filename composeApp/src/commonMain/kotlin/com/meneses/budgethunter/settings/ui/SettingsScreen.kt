@@ -82,6 +82,7 @@ import budgethunter.composeapp.generated.resources.read_bank_app_notifications
 import budgethunter.composeapp.generated.resources.read_bank_emails
 import budgethunter.composeapp.generated.resources.read_bank_sms
 import budgethunter.composeapp.generated.resources.reading_channels_duplicates_note
+import budgethunter.composeapp.generated.resources.reading_channels_duplicates_title
 import budgethunter.composeapp.generated.resources.section_ai
 import budgethunter.composeapp.generated.resources.section_automatic_entries
 import budgethunter.composeapp.generated.resources.set_password
@@ -330,11 +331,13 @@ object SettingsScreen {
                 uiState.isBankEmailReadingEnabled
             ).count { it }
             if (readingChannels > 1) {
-                Text(
-                    text = stringResource(Res.string.reading_channels_duplicates_note),
-                    fontSize = 12.sp,
-                    color = AppColors.onSurfaceVariant,
-                    modifier = Modifier.padding(start = 56.dp, end = 16.dp, bottom = 12.dp)
+                GroupDivider()
+                // A row of its own: it is about the switches together, not about the last one
+                SettingRow(
+                    icon = Icons.Default.Warning,
+                    title = stringResource(Res.string.reading_channels_duplicates_title),
+                    subtitle = stringResource(Res.string.reading_channels_duplicates_note),
+                    contentColor = AppColors.error
                 )
             }
             // Both switches use the one notification reader: they read nothing until the system grants access
