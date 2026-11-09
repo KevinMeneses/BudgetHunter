@@ -11,15 +11,21 @@ import ComposeApp
  * notification permission at launch).
  */
 final class IOSNativeDependencies: NativeDependencies {
-    let cameraManager: CameraManager = IOSCameraManager()
-    let filePickerManager: FilePickerManager = IOSFilePickerManager()
-    let shareManager: ShareManager = IOSShareManager()
-    let notificationManager: NotificationManager = IOSNotificationManager()
-    let keychainStore: KeychainStore = IOSKeychainStore()
-    let googleSignInManager: GoogleSignInManager = IOSGoogleSignInManager()
+    let cameraManager: CameraManager
+    let filePickerManager: FilePickerManager
+    let shareManager: ShareManager
+    let notificationManager: NotificationManager
+    let keychainStore: KeychainStore
+    let googleSignInManager: GoogleSignInManager
 
     init() {
-        // startKoinIfNeeded runs this under its lock, and the managers expect the main thread
+        // Checked before any manager exists (default values would be built before this body)
         assert(Thread.isMainThread, "IOSNativeDependencies must be created on the main thread")
+        cameraManager = IOSCameraManager()
+        filePickerManager = IOSFilePickerManager()
+        shareManager = IOSShareManager()
+        notificationManager = IOSNotificationManager()
+        keychainStore = IOSKeychainStore()
+        googleSignInManager = IOSGoogleSignInManager()
     }
 }
