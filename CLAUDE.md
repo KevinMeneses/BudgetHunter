@@ -110,7 +110,7 @@ Type-safe navigation using Navigation Compose with serializable route objects. M
   `getBankChannels` after updating turns the old switches into channels (`BankChannels.migrate`), so nothing starts
   or stops being read. A bank read from two channels shows, under it, that a movement reported by both is added
   twice: there is no deduplication.
-- Banks that notify in their app instead of by SMS (Nequi, Nu: `SupportedBanks.NOTIFICATION_BANKS`, matched by
+- Banks that notify in their app instead of by SMS (BBVA, Nequi, Nu: `SupportedBanks.NOTIFICATION_BANKS`, matched by
   package name) are read by `BankNotificationListenerService` while their APP channel is on. `getBankConfigById`
   keeps returning SMS banks only. A bank is read from its app when its config has `appPackages`: notification-only
   banks are listed apart from `ALL_BANKS`, while an SMS bank whose app also notifies just gets its packages in its

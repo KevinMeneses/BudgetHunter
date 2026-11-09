@@ -100,6 +100,7 @@ class BankNotificationTest {
 
     @Test
     fun `only the apps of supported banks are read`() {
+        assertEquals(SupportedBanks.BBVA_COLOMBIA, SupportedBanks.getNotificationBankByPackage("co.com.bbva.mb"))
         assertEquals(SupportedBanks.NEQUI, SupportedBanks.getNotificationBankByPackage("com.nequi.MobileApp"))
         assertEquals(SupportedBanks.NU, SupportedBanks.getNotificationBankByPackage("com.nu.production"))
         assertNull(SupportedBanks.getNotificationBankByPackage("com.whatsapp"))
@@ -114,11 +115,17 @@ class BankNotificationTest {
         assertEquals(SupportedBanks.NEQUI, SupportedBanks.getSelectableBankById("nequi"))
         assertNull(SupportedBanks.getBankConfigById("nequi"))
         assertNull(SupportedBanks.getBankConfigById("nu"))
+        // BBVA notifies in its app only, so the SMS receiver never tries it
+        assertNull(SupportedBanks.getBankConfigById("bbva_colombia"))
+        assertEquals(SupportedBanks.BBVA_COLOMBIA, SupportedBanks.getSelectableBankById("bbva_colombia"))
     }
 
     @Test
     fun `notification banks are the selectable banks with app packages, each listed once`() {
-        assertEquals(listOf(SupportedBanks.NEQUI, SupportedBanks.NU), SupportedBanks.NOTIFICATION_BANKS)
+        assertEquals(
+            listOf(SupportedBanks.BBVA_COLOMBIA, SupportedBanks.NEQUI, SupportedBanks.NU),
+            SupportedBanks.NOTIFICATION_BANKS
+        )
         assertEquals(
             SupportedBanks.SELECTABLE_BANKS.size,
             SupportedBanks.SELECTABLE_BANKS.map { it.id }.toSet().size

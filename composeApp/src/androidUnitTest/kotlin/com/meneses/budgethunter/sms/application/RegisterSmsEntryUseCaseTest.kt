@@ -89,11 +89,6 @@ class RegisterSmsEntryUseCaseTest {
             type = BudgetEntry.Type.OUTCOME
         )
         assertRegistered(
-            "BBVA: Realizaste una compra por $120.000,00 en FALABELLA UNICENTRO con tu tarjeta *5678 el 26/10/2026.",
-            amount = "120000.00",
-            type = BudgetEntry.Type.OUTCOME
-        )
-        assertRegistered(
             "Scotiabank Colpatria: Pago de $89.900 a CLARO COLOMBIA aprobado desde tu cuenta *3456.",
             amount = "89900",
             type = BudgetEntry.Type.OUTCOME

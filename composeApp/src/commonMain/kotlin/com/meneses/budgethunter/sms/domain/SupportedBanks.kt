@@ -85,14 +85,6 @@ object SupportedBanks {
         emailDomains = listOf("bancopopular.com.co")
     )
 
-    val BBVA_COLOMBIA = BankSmsConfig(
-        id = "bbva_colombia",
-        displayName = "BBVA Colombia",
-        senderKeywords = listOf("BBVA", "BBVA COLOMBIA", "85330", "890001"),
-        transactionAmountRegex = Regex("""(?:compra|pago|transaccion)\s*(?:por|de)\s*\$?\s*([\d.,]+)""", RegexOption.IGNORE_CASE),
-        emailDomains = listOf("bbva.com.co", "bbva.com")
-    )
-
     val CITIBANK_COLOMBIA = BankSmsConfig(
         id = "citibank_colombia",
         displayName = "Citibank (ahora Scotiabank Colpatria)",
@@ -136,7 +128,6 @@ object SupportedBanks {
         BANCO_GNB_SUDAMERIS,
         BANCO_PICHINCHA,
         BANCO_POPULAR,
-        BBVA_COLOMBIA,
         CITIBANK_COLOMBIA,
         DAVIVIENDA,
         ITAU_COLOMBIA,
@@ -173,7 +164,22 @@ object SupportedBanks {
         emailDomains = listOf("nu.com.co")
     )
 
-    private val NOTIFICATION_ONLY_BANKS = listOf(NEQUI, NU)
+    /*
+     * BBVA reports movements in its app, not by SMS. Its id is kept from when it was listed as an
+     * SMS bank, so the banks already selected on accounts keep pointing at it.
+     */
+    val BBVA_COLOMBIA = BankSmsConfig(
+        id = "bbva_colombia",
+        displayName = "BBVA",
+        transactionAmountRegex = Regex(
+            """(?:compra|pago|transaccion|transferencia)\s*(?:por|de)\s*\$?\s*([\d.,]+)""",
+            RegexOption.IGNORE_CASE
+        ),
+        appPackages = listOf("co.com.bbva.mb"),
+        emailDomains = listOf("bbva.com.co", "bbva.com")
+    )
+
+    private val NOTIFICATION_ONLY_BANKS = listOf(BBVA_COLOMBIA, NEQUI, NU)
 
     /**
      * Every bank the user can pick in Settings: the SMS ones and the notification ones share one
