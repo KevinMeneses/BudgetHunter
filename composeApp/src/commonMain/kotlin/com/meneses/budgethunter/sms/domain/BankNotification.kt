@@ -65,4 +65,7 @@ class RecentNotifications(private val capacity: Int = DEFAULT_CAPACITY) {
 
 interface BankNotificationService {
     suspend fun processBankNotification(notification: BankNotification, bankConfig: BankSmsConfig)
+
+    /** A movement read from the notification of an email that [bankConfig] sent. */
+    suspend fun processBankEmail(email: BankEmail, bankConfig: BankSmsConfig)
 }

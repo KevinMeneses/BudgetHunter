@@ -11,6 +11,7 @@ import com.meneses.budgethunter.commons.platform.PermissionsManager
 import com.meneses.budgethunter.settings.application.SettingsIntent
 import com.meneses.budgethunter.settings.application.SyncUserPreferencesUseCase
 import com.meneses.budgethunter.sms.application.IsNotificationReaderStoppedUseCase
+import com.meneses.budgethunter.sms.domain.ReadingChannel
 import com.meneses.budgethunter.sms.domain.SupportedBanks
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -54,6 +55,7 @@ class SettingsViewModelTest {
         Dispatchers.setMain(testDispatcher)
         coEvery { preferencesManager.getDefaultBudgetId() } returns -1
         coEvery { preferencesManager.getSelectedBankIds() } returns emptySet()
+        coEvery { preferencesManager.getBankChannels() } returns emptyMap()
         coEvery { authRepository.isAuthenticated() } returns false
         viewModel = createViewModel()
         testDispatcher.scheduler.advanceUntilIdle()
@@ -210,6 +212,20 @@ class SettingsViewModelTest {
     }
 
     @Test
+    fun `turning on bank emails without access explains it like the bank apps`() = runTest {
+        every { permissionsManager.hasNotificationListenerAccess() } returns false
+
+        viewModel.sendIntent(SettingsIntent.ToggleBankEmailReading(true))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        coVerify { preferencesManager.setBankEmailReadingEnabled(true) }
+        assertTrue(viewModel.uiState.value.isBankEmailReadingEnabled)
+        assertFalse(viewModel.uiState.value.isBankNotificationReadingEnabled)
+        assertTrue(viewModel.uiState.value.isNotificationReaderNeeded)
+        assertTrue(viewModel.uiState.value.isNotificationAccessDialogVisible)
+    }
+
+    @Test
     fun `turning on bank notifications with access granted asks nothing`() = runTest {
         every { permissionsManager.hasNotificationListenerAccess() } returns true
 
@@ -331,5 +347,20 @@ class SettingsViewModelTest {
         assertTrue(SupportedBanks.NEQUI in state.availableBanks)
         assertTrue(SupportedBanks.NU in state.availableBanks)
         assertEquals(setOf(SupportedBanks.NEQUI, SupportedBanks.BANCOLOMBIA), state.selectedBanks)
+    }
+
+    @Test
+    fun `the channels picked per bank are kept only for the banks still selected`() = runTest {
+        val channels = mapOf(
+            "bancolombia" to setOf(ReadingChannel.SMS, ReadingChannel.EMAIL),
+            "nu" to setOf(ReadingChannel.EMAIL)
+        )
+
+        viewModel.sendIntent(SettingsIntent.SetSelectedBanks(setOf(SupportedBanks.BANCOLOMBIA), channels))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val kept = mapOf("bancolombia" to setOf(ReadingChannel.SMS, ReadingChannel.EMAIL))
+        coVerify { preferencesManager.setBankChannels(kept) }
+        assertEquals(kept, viewModel.uiState.value.bankChannels)
     }
 }

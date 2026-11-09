@@ -478,6 +478,10 @@
     <string name="shared_with_people">Shared by %1$d people</string>
     <string name="read_bank_app_notifications">Read bank app notifications</string>
     <string name="bank_notification_reading_description">Create entries from the movements that the apps of the selected banks notify</string>
+    <string name="read_bank_emails">Read bank emails</string>
+    <string name="bank_email_reading_description">Create entries from the movements in the emails of the selected banks</string>
+    <string name="reading_channels_duplicates_title">Possible repeated movements</string>
+    <string name="reading_channels_duplicates_note">Some banks are read from more than one channel that is on. If they tell you about the same movement by several of them, it will be added once per channel. Keep for each bank only the channels its alerts reach you by, or delete the repeated entries</string>
     <string name="notification_access_title">Notification access</string>
     <string name="notification_access_missing">Notification access is missing. Tap to grant it</string>
     <string name="app_notifications_off_explanation">Budget Hunter's notifications are off. While they stay off, Android does not hand it your banks' notifications, so no movement is registered.\n\nOn the next screen, turn on the notifications of Budget Hunter.</string>
@@ -487,12 +491,18 @@
     <string name="notification_reader_stopped_explanation">Android stopped handing Budget Hunter your banks' notifications, which can happen after its notifications are switched off and on. The app cannot resume it by itself.\n\nOn the next screen, tap “Force stop” and confirm. Then open Budget Hunter again.</string>
     <string name="app_notifications_off_title">Notifications are off</string>
     <string name="app_notifications_off_description">With this app's notifications off, Android does not let it read your banks' ones. Tap to turn them on</string>
-    <string name="notification_access_explanation">Budget Hunter will read only the notifications of the apps of the banks you select in Banks, to register the movements they show in your default budget. Notifications from every other app are discarded without being read.\n\nOn the next screen turn on Budget Hunter. Android shows a warning because this access could see every notification.\n\nIf the option is grayed out, open the app info, tap the ⋮ menu and choose “Allow restricted settings”.</string>
+    <string name="notification_access_explanation">Budget Hunter will read only the notifications of the apps of the banks you select in Banks, to register the movements they show in your default budget. If you read bank emails, it looks only at the sender of your email app's notifications and reads just the ones from those banks. Notifications from every other app are discarded without being read.\n\nOn the next screen turn on Budget Hunter. Android shows a warning because this access could see every notification.\n\nIf the option is grayed out, open the app info, tap the ⋮ menu and choose “Allow restricted settings”.</string>
     <string name="bank_source_sms">SMS</string>
     <string name="bank_source_notifications">App notifications</string>
     <string name="bank_source_sms_and_notifications">SMS and app notifications</string>
     <string name="no_notification_bank_selected">None read from app notifications</string>
-    <string name="notification_bank_needs_reading">Some are read only from app notifications: turn them on above</string>
-    <string name="sms_bank_needs_reading">Some are read only by SMS: turn SMS reading on above</string>
+    <string name="notification_bank_needs_reading">Some are read from app notifications: turn them on above</string>
+    <string name="sms_bank_needs_reading">Some are read by SMS: turn SMS reading on above</string>
     <string name="default_budget_needed_for_reading">Choose one: movements are not registered without it</string>
+    <string name="email_bank_needs_reading">Some are read by email: turn bank email reading on above</string>
+    <string name="no_email_bank_selected">None read by email: pick it for each bank</string>
+    <string name="reading_channel_sms">SMS</string>
+    <string name="reading_channel_app">App</string>
+    <string name="reading_channel_email">Email</string>
+    <string name="bank_channels_hint">Read by:</string>
 </resources>

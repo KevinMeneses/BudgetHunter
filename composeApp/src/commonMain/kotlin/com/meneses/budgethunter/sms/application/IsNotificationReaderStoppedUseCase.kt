@@ -23,7 +23,8 @@ class IsNotificationReaderStoppedUseCase(
     }
 
     private suspend fun looksStopped(): Boolean =
-        preferencesManager.isBankNotificationReadingEnabled() &&
+        // The bank apps and the bank emails are both read by the one listener
+        (preferencesManager.isBankNotificationReadingEnabled() || preferencesManager.isBankEmailReadingEnabled()) &&
             permissionsManager.hasNotificationListenerAccess() &&
             permissionsManager.areAppNotificationsEnabled() &&
             !permissionsManager.isNotificationListenerConnected()
