@@ -25,11 +25,13 @@ sealed interface SettingsIntent {
     data object HideDefaultBudgetSelector : SettingsIntent
     data object ShowBankSelector : SettingsIntent
     data object HideBankSelector : SettingsIntent
+
     /** The banks picked in the selector and, for each, the channels it is read from. */
     data class SetSelectedBanks(
         val bankConfigs: Set<BankSmsConfig>,
         val channels: Map<String, Set<ReadingChannel>> = emptyMap()
     ) : SettingsIntent
+
     data class ToggleAiProcessing(val enabled: Boolean) : SettingsIntent
     data object ShowManualPermissionDialog : SettingsIntent
     data object HideManualPermissionDialog : SettingsIntent
