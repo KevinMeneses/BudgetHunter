@@ -34,6 +34,18 @@ class BankEmailTest {
     }
 
     @Test
+    fun `an expanded text that does not repeat the subject is kept whole`() {
+        val email = BankEmail.fromNotification(
+            title = "Davivienda",
+            text = "Notificación de transacción",
+            bigText = "Realizaste una compra por \$20.000 en D1."
+        )
+
+        assertEquals("Realizaste una compra por \$20.000 en D1.", email.body)
+        assertEquals("Realizaste una compra por \$20.000 en D1", email.toNotification().description)
+    }
+
+    @Test
     fun `a purchase emailed by the bank is read as an expense described by the body`() {
         val email = BankEmail.fromNotification(
             title = "Bancolombia",
@@ -57,6 +69,10 @@ class BankEmailTest {
         assertEquals(SupportedBanks.BANCOLOMBIA, BankEmail.findSender("Bancolombia", selected))
         assertEquals(SupportedBanks.DAVIVIENDA, BankEmail.findSender("Notificaciones Davivienda", selected))
         assertEquals(SupportedBanks.NU, BankEmail.findSender("Nu Colombia", selected))
+        // Case and accents do not matter
+        assertEquals(SupportedBanks.BANCOLOMBIA, BankEmail.findSender("ALERTAS BANCOLOMBIA", selected))
+        assertEquals(SupportedBanks.BANCAMIA, BankEmail.findSender("Bancamía", listOf(SupportedBanks.BANCAMIA)))
+        assertEquals(SupportedBanks.BANCAMIA, BankEmail.findSender("bancamia", listOf(SupportedBanks.BANCAMIA)))
         // A bank that is not selected, a person or a store are not read
         assertNull(BankEmail.findSender("BBVA", selected))
         assertNull(BankEmail.findSender("Nubia Rodríguez", selected))

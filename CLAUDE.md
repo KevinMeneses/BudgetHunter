@@ -119,7 +119,9 @@ Type-safe navigation using Navigation Compose with serializable route objects. M
   letters); then subject and the start of the body (the expanded text without its first line, the subject) are read
   like a bank app notification (`BankEmail.toNotification`). Anything but a movement or a missing default budget is
   dropped silently. There is no deduplication: a bank that also sends SMS or app notifications would register each
-  movement twice, which the switch's description says.
+  movement twice, which a note under the switches says while more than one channel is on. The sender is only its display
+  name (no address in the notification), so an email that fakes a selected bank's name and reads as a movement
+  would be registered: inherent to reading notifications.
 - iOS cannot read SMS: a Shortcuts automation (trigger "Mensaje") passes the text to the App Intent
   `RegisterExpenseFromMessageIntent` (iosApp/, also an App Shortcut), which calls
   `SmsShortcutEntryPoint` (iosMain) -> `RegisterSmsFromShortcutUseCase` and answers with a dialog.
