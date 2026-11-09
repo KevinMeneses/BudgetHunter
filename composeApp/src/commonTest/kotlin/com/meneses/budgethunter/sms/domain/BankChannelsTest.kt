@@ -15,7 +15,7 @@ class BankChannelsTest {
     }
 
     @Test
-    fun `a bank never picked is read as before, never by email`() {
+    fun `a bank never picked is read as before - never by email`() {
         assertEquals(setOf(ReadingChannel.SMS), BankChannels.of(SupportedBanks.BANCOLOMBIA, emptyMap()))
         assertEquals(setOf(ReadingChannel.APP), BankChannels.of(SupportedBanks.NEQUI, emptyMap()))
     }
@@ -38,7 +38,7 @@ class BankChannelsTest {
     }
 
     @Test
-    fun `a bank can be kept with no channel, read from nothing`() {
+    fun `a bank can be kept with no channel - read from nothing`() {
         val chosen = mapOf("bancolombia" to emptySet<ReadingChannel>())
 
         assertEquals(emptySet(), BankChannels.of(SupportedBanks.BANCOLOMBIA, chosen))

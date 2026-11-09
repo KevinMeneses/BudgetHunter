@@ -50,7 +50,7 @@ class BudgetEntryFilterTest {
     }
 
     @Test
-    fun `description matches anywhere, ignoring case and surrounding spaces`() {
+    fun `description matches anywhere - ignoring case and surrounding spaces`() {
         val entries = listOf(entry("Groceries Shopping"), entry("Restaurant Meal"), entry("Grocery Store"))
 
         assertEquals(
@@ -70,7 +70,7 @@ class BudgetEntryFilterTest {
     }
 
     @Test
-    fun `category keeps only that category, uncategorized included`() {
+    fun `category keeps only that category - uncategorized included`() {
         val entries = listOf(
             entry("Supermarket", category = BudgetEntry.Category.GROCERIES),
             entry("SMS", category = BudgetEntry.Category.UNCATEGORIZED)
@@ -180,7 +180,7 @@ class BudgetEntryFilterTest {
     }
 
     @Test
-    fun `a one-day custom range keeps only that day, across years too`() {
+    fun `a one-day custom range keeps only that day - across years too`() {
         val entries = listOf(entry("New year", date = "2026-01-01"), entry("Eve", date = "2025-12-31"))
 
         val oneDay = EntryDateRange.Custom(LocalDate(2026, 1, 1), LocalDate(2026, 1, 1))

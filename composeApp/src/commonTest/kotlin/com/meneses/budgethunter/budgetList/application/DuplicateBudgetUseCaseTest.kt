@@ -39,7 +39,7 @@ class DuplicateBudgetUseCaseTest {
     }
 
     @Test
-    fun `execute creates a copy of the budget with (copy) suffix`() = runTest {
+    fun `execute creates a copy of the budget with the copy suffix`() = runTest {
         val tracker = DuplicationTracker()
         val originalBudget = Budget(
             id = 1,
@@ -154,7 +154,7 @@ class DuplicateBudgetUseCaseTest {
     }
 
     @Test
-    fun `execute handles budget name that already has (copy) suffix`() = runTest {
+    fun `execute handles budget name that already has the copy suffix`() = runTest {
         val tracker = DuplicationTracker()
         val originalBudget = Budget(id = 1, name = "Budget (copy)", amount = 100.0)
 
