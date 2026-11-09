@@ -8,6 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `./gradlew build` - Build the entire project
 - `./gradlew :composeApp:assembleDebug` - Build Android APK
 - `./gradlew :composeApp:testDebugUnitTest` - Run unit tests (what CI runs; most live in `androidUnitTest`, shared ones in `commonTest`)
+- `./gradlew :composeApp:iosSimulatorArm64Test` - Run the iOS tests (Mac only, not in CI; `iosTest` checks the iOS Koin graph)
 - `./gradlew connectedAndroidTest` - Run instrumented tests on connected device/emulator
 - `./gradlew ktlintCheck` - Check Kotlin code style (CI also runs `./gradlew lint`)
 - `./gradlew ktlintFormat` - Auto-fix Kotlin code style issues
