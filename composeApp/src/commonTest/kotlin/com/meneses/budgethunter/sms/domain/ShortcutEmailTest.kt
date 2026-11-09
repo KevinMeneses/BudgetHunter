@@ -91,7 +91,7 @@ class ShortcutEmailTest {
     }
 
     @Test
-    fun `the movement sentence skips the subject, the greeting and the footer`() {
+    fun `the movement sentence skips the subject the greeting and the footer`() {
         assertEquals(
             "Recibiste $65,680 de JUAN SEBASTIAN MENESES PALTA",
             ShortcutEmail.movementPassage(luloEmail)
