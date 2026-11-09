@@ -25,8 +25,6 @@ class SmsBroadcastReceiver : BroadcastReceiver(), KoinComponent {
     override fun onReceive(context: Context, intent: Intent) {
         ioScope.launch {
             if (intent.action != Telephony.Sms.Intents.SMS_RECEIVED_ACTION) return@launch
-            if (!preferencesManager.isSmsReadingEnabled()) return@launch
-
             val selectedBankIds = preferencesManager.getSelectedBankIds()
             if (selectedBankIds.isEmpty()) return@launch
 

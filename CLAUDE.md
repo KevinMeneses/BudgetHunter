@@ -98,37 +98,41 @@ Type-safe navigation using Navigation Compose with serializable route objects. M
 - Automatic budget entry creation from SMS transactions (`RegisterSmsEntryUseCase`, shared by both platforms),
   always in the default budget of Settings. The description is the message's first sentence, opened with the bank
   name ("Bancolombia: Transferiste ...") unless it already names the bank (`BankSmsConfig.describe`); notifications too
-- Banks that notify in their app instead of by SMS (Nequi, Nu: `SupportedBanks.NOTIFICATION_BANKS`, matched by
-  package name) are read on Android by `BankNotificationListenerService`, only while selected: they share the one
-  bank selection of Settings (`SupportedBanks.SELECTABLE_BANKS`, `selectedBankIds`) with the SMS banks, and
-  `getBankConfigById` keeps returning SMS banks only. A bank is read from its app when its config has
-  `appPackages`: notification-only banks are listed apart from `ALL_BANKS`, while an SMS bank whose app also
-  notifies just gets its packages in its existing config. It needs notification access, granted in
-  a system screen (Settings explains it first and reopens it from a warning row), and the app's own notifications
-  on: while they are off Android drops the listener (Settings warns too). Some devices (seen on Samsung) then leave it
-  unbound for good, with everything granted: requestRebind, toggling the component, re-granting the access or the app
-  killing itself do not help, only a force stop from the system settings does. `IsNotificationReaderStoppedUseCase`
-  detects it (`BankNotificationListenerService.isConnected`, rechecked after a grace period): the budget list shows a
-  banner that leads to Settings, which asks the user for that force stop. Title and text are parsed together
-  (`BankNotification`) by the same parser, the entry is described by the text (with the bank name, "Nu: ..."), and
-  unreadable notifications are dropped silently (apps also post codes and news). The switch is kept on the device only, not on the account.
-- Banks that report some movements only by email are read on Android from the email app's notification (Gmail,
-  Outlook, Samsung Email...: `BankEmail.EMAIL_APP_PACKAGES`), by the same `BankNotificationListenerService` and access,
-  behind a switch of its own ("Leer correos de los bancos", device only). Only the sender (the title) is read first:
-  the email is kept only when it names a selected bank (`BankSmsConfig.isSender`: its name or a sender keyword with
-  letters); then subject and the start of the body (the expanded text without its first line, the subject) are read
-  like a bank app notification (`BankEmail.toNotification`). Anything but a movement or a missing default budget is
-  dropped silently.
-- Channels per bank (`ReadingChannel`: SMS, APP, EMAIL; `BankChannels`): each selected bank is read from the channels
-  picked for it in the bank selector (chips under the bank), several allowed since a bank may send some alerts by one
-  channel and others by another. A bank never picked is read by its defaults (its SMS and/or app, never email). Kept
-  on the device only (`PreferencesManager.getBankChannels`, "bankId:CHANNEL"); the switches stay global (permissions,
-  reader on). The SMS receiver, the app path and the email path each try only the banks read from their channel.
-  There is no deduplication: Settings warns ("Posibles movimientos repetidos", `SettingsState.mayRepeatMovements`) while
-  a selected bank is read from two channels that are on, and the bank row warns about a picked channel whose switch
-  is off (`isMissing`). The sender is only its display
-  name (no address in the notification), so an email that fakes a selected bank's name and reads as a movement
-  would be registered: inherent to reading notifications.
+- Automatic reading on Android is decided per bank: Settings lists the banks read ("Agregar banco" adds one), each
+  with chips for its channels (`ReadingChannel`: SMS, APP, EMAIL; `BankChannels`), several allowed since a bank may
+  send some alerts by one channel and others by another. There are no global switches: the channels are the one
+  source of truth, and each channel's permission is asked for when it is picked (SMS: runtime permission; APP and
+  EMAIL: notification access) and warned about in Settings while missing. A bank added gets its defaults (its SMS
+  and/or app, never email); one with nothing stored (e.g. brought by the account) is read by those defaults too; one
+  can be kept with no channel ("bankId:" stored), read from nothing. Channels live on the device only
+  (`PreferencesManager.getBankChannels`); the selection (`selectedBankIds`) is on the account, and so is
+  `smsReadingEnabled`, which now only follows the channels (SMS in use) and decides nothing. The first
+  `getBankChannels` after updating turns the old switches into channels (`BankChannels.migrate`), so nothing starts
+  or stops being read. A bank read from two channels shows, under it, that a movement reported by both is added
+  twice: there is no deduplication.
+- Banks that notify in their app instead of by SMS (BBVA, Nequi, Nu: `SupportedBanks.NOTIFICATION_BANKS`, matched by
+  package name) are read by `BankNotificationListenerService` while their APP channel is on. `getBankConfigById`
+  keeps returning SMS banks only. A bank is read from its app when its config has `appPackages`: notification-only
+  banks are listed apart from `ALL_BANKS`, while an SMS bank whose app also notifies just gets its packages in its
+  existing config. The listener needs notification access, granted in a system screen (Settings explains it first
+  and reopens it from a warning row), and the app's own notifications on: while they are off Android drops the
+  listener (Settings warns too). Some devices (seen on Samsung) then leave it unbound for good, with everything
+  granted: requestRebind, toggling the component, re-granting the access or the app killing itself do not help,
+  only a force stop from the system settings does. `IsNotificationReaderStoppedUseCase` detects it
+  (`BankNotificationListenerService.isConnected`, rechecked after a grace period) while some bank uses APP or EMAIL:
+  the budget list shows a banner that leads to Settings, which asks the user for that force stop. Title and text are
+  parsed together (`BankNotification`) by the same parser, the entry is described by the text (with the bank name,
+  "Nu: ..."), and unreadable notifications are dropped silently (apps also post codes and news).
+- Bank emails are read from the email app's notification (Gmail, Outlook, Samsung Email...:
+  `BankEmail.EMAIL_APP_PACKAGES`) by the same listener, only for banks with the EMAIL channel. The sender is checked
+  before anything else is read (`BankEmail.findSender`): the display name (the title) can be written by anyone, so
+  when the email app attaches the sender's address (`EXTRA_PEOPLE_LIST` / `EXTRA_PEOPLE`, "mailto:..."), the address
+  decides: an address under a bank's `emailDomains` is that bank's whatever its name, and a bank's name on any other
+  address is dropped as a fake. Only banks without known domains, or apps that attach no address, fall back to the
+  name (`BankSmsConfig.isSender`). The domains in `SupportedBanks` need checking against real emails: a wrong one
+  drops that bank's real emails. Then subject and the start of the body (the expanded text without its first line,
+  the subject) are read like a bank app notification (`BankEmail.toNotification`); anything but a movement or a
+  missing default budget is dropped silently.
 - iOS cannot read SMS: a Shortcuts automation (trigger "Mensaje") passes the text to the App Intent
   `RegisterExpenseFromMessageIntent` (iosApp/, also an App Shortcut), which calls
   `SmsShortcutEntryPoint` (iosMain) -> `RegisterSmsFromShortcutUseCase` and answers with a dialog.

@@ -58,9 +58,46 @@ data class BankEmail(
             )
         }
 
-        /** The bank among [banks] that wrote the email, or null when none of them is the sender. */
-        fun findSender(sender: String, banks: Collection<BankSmsConfig>): BankSmsConfig? =
-            banks.firstOrNull { it.isSender(sender) }
+        /**
+         * The bank among [banks] that sent the email, or null when none of them did.
+         *
+         * The display name ([sender]) is written by whoever sends the email, so a phishing email can
+         * call itself "Bancolombia". When the email app also tells the sender's address
+         * ([senderAddresses]), the address decides: an email from a bank's domain is that bank's,
+         * whatever its name says, and a bank's name on an address outside its domains is a fake.
+         * Only a bank whose domains are not known yet is still told by its name. Apps that give no
+         * address leave the name as the only clue.
+         */
+        fun findSender(
+            sender: String,
+            senderAddresses: Collection<String>,
+            banks: Collection<BankSmsConfig>
+        ): BankSmsConfig? {
+            val domains = senderAddresses.mapNotNull { addressDomain(it) }
+            if (domains.isEmpty()) return banks.firstOrNull { it.isSender(sender) }
+
+            return banks.firstOrNull { bank -> domains.any { bank.sendsEmailFrom(it) } }
+                ?: banks.firstOrNull { it.emailDomains.isEmpty() && it.isSender(sender) }
+        }
+
+        /**
+         * The domain of an email address as notifications carry it: "alertas@bancolombia.com.co",
+         * "mailto:alertas@bancolombia.com.co" or "Bancolombia <alertas@bancolombia.com.co>".
+         * Null for anything that is not an address, like a phone number or a contact URI.
+         */
+        fun addressDomain(address: String): String? {
+            val domain = address.trim()
+                .removePrefix("mailto:")
+                .substringAfterLast('@', missingDelimiterValue = "")
+                .substringBefore('>')
+                .substringBefore('?')
+                .trim()
+                .trimEnd('.')
+                .lowercase()
+            val isDomain = domain.contains('.') &&
+                domain.all { char -> char.isLetterOrDigit() || char == '.' || char == '-' }
+            return domain.takeIf { isDomain }
+        }
 
         private val WHITESPACE = Regex("""\s+""")
     }

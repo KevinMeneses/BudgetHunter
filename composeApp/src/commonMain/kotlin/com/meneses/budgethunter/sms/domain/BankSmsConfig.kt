@@ -6,7 +6,13 @@ data class BankSmsConfig(
     val senderKeywords: List<String> = emptyList(),
     val transactionAmountRegex: Regex? = null,
     /** Android packages of the bank's app, for banks read from their app notifications. */
-    val appPackages: List<String> = emptyList()
+    val appPackages: List<String> = emptyList(),
+    /**
+     * The domains the bank sends its emails from (subdomains included). When the email app tells
+     * the sender's address, only these prove an email comes from the bank: a display name is
+     * written by whoever sends the email, so anyone can call themselves "Bancolombia".
+     */
+    val emailDomains: List<String> = emptyList()
 ) {
     /** Movements come by SMS, recognized by the sender. */
     val readsSms: Boolean get() = senderKeywords.isNotEmpty()
@@ -30,6 +36,10 @@ data class BankSmsConfig(
      * "Notificaciones Davivienda"): it carries the bank's name or one of its sender keywords.
      */
     fun isSender(sender: String): Boolean = sender.isNotBlank() && mentionsItself(sender)
+
+    /** Whether [domain] (of a sender's address, lowercase) is one of the bank's or under one of them. */
+    fun sendsEmailFrom(domain: String): Boolean =
+        emailDomains.any { domain == it || domain.endsWith(".$it") }
 
     /** Whether [text] names the bank, by its name or a sender keyword that is a word, never a number. */
     private fun mentionsItself(text: String): Boolean {
