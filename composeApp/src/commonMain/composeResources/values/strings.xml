@@ -476,9 +476,6 @@
     <string name="app_notifications_off_title">Notifications are off</string>
     <string name="app_notifications_off_description">With this app's notifications off, Android does not let it read your banks' ones. Tap to turn them on</string>
     <string name="notification_access_explanation">Budget Hunter will read only the notifications of the apps of the banks you add with the App channel, to register the movements they show in your default budget. Of your email apps' notifications it looks only at who sent the email, and reads just those from the banks with the Email channel. Notifications from every other app are discarded without being read.\n\nOn the next screen turn on Budget Hunter. Android shows a warning because this access could see every notification.\n\nIf the option is grayed out, open the app info, tap the ⋮ menu and choose “Allow restricted settings”.</string>
-    <string name="bank_source_sms">SMS</string>
-    <string name="bank_source_notifications">App notifications</string>
-    <string name="bank_source_sms_and_notifications">SMS and app notifications</string>
     <string name="default_budget_needed_for_reading">Choose one: movements are not registered without it</string>
     <string name="reading_channel_sms">SMS</string>
     <string name="reading_channel_app">App</string>

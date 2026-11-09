@@ -1,7 +1,6 @@
 package com.meneses.budgethunter.settings.ui
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -40,9 +39,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import budgethunter.composeapp.generated.resources.Res
 import budgethunter.composeapp.generated.resources.add_bank
-import budgethunter.composeapp.generated.resources.bank_source_notifications
-import budgethunter.composeapp.generated.resources.bank_source_sms
-import budgethunter.composeapp.generated.resources.bank_source_sms_and_notifications
 import budgethunter.composeapp.generated.resources.cancel
 import budgethunter.composeapp.generated.resources.change_password
 import budgethunter.composeapp.generated.resources.current_password
@@ -78,30 +74,16 @@ fun AddBankModal(
         text = {
             LazyColumn(modifier = Modifier.heightIn(max = 400.dp)) {
                 items(banks) { bank ->
-                    Column(
+                    // Its channels are picked on its row once added
+                    Text(
+                        text = bank.displayName,
+                        fontSize = 16.sp,
+                        color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable { onBankSelected(bank) }
-                            .padding(vertical = 12.dp)
-                    ) {
-                        Text(
-                            text = bank.displayName,
-                            fontSize = 16.sp,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        // How it is read until other channels are picked for it
-                        Text(
-                            text = stringResource(
-                                when {
-                                    bank.readsSms && bank.readsNotifications -> Res.string.bank_source_sms_and_notifications
-                                    bank.readsNotifications -> Res.string.bank_source_notifications
-                                    else -> Res.string.bank_source_sms
-                                }
-                            ),
-                            fontSize = 13.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+                            .padding(vertical = 14.dp)
+                    )
                 }
             }
         },
