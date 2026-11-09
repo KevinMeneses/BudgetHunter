@@ -16,7 +16,9 @@ import com.meneses.budgethunter.settings.application.SettingsIntent
 import com.meneses.budgethunter.settings.application.SettingsState
 import com.meneses.budgethunter.settings.application.SyncUserPreferencesUseCase
 import com.meneses.budgethunter.sms.application.IsNotificationReaderStoppedUseCase
+import com.meneses.budgethunter.sms.domain.BankChannels
 import com.meneses.budgethunter.sms.domain.BankSmsConfig
+import com.meneses.budgethunter.sms.domain.ReadingChannel
 import com.meneses.budgethunter.sms.domain.SupportedBanks
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -24,6 +26,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
 
 class SettingsViewModel(
@@ -53,8 +56,10 @@ class SettingsViewModel(
 
     fun sendIntent(intent: SettingsIntent) {
         when (intent) {
-            is SettingsIntent.ToggleSmsReading -> toggleSmsReading(intent.enabled)
-            is SettingsIntent.ToggleBankNotificationReading -> toggleBankNotificationReading(intent.enabled)
+            is SettingsIntent.AddBank -> addBank(intent.bank)
+            is SettingsIntent.RemoveBank -> removeBank(intent.bank)
+            is SettingsIntent.SetBankChannel -> setBankChannel(intent.bank, intent.channel, intent.enabled)
+            is SettingsIntent.RequestSmsPermission -> requestSmsPermission()
             is SettingsIntent.OpenNotificationAccessSettings -> openNotificationAccessSettings()
             is SettingsIntent.HideNotificationAccessDialog -> hideNotificationAccessDialog()
             is SettingsIntent.OpenAppNotificationSettings -> openAppNotificationSettings()
@@ -67,7 +72,6 @@ class SettingsViewModel(
             is SettingsIntent.HideDefaultBudgetSelector -> hideDefaultBudgetSelector()
             is SettingsIntent.ShowBankSelector -> showBankSelector()
             is SettingsIntent.HideBankSelector -> hideBankSelector()
-            is SettingsIntent.SetSelectedBanks -> setSelectedBanks(intent.bankConfigs)
             is SettingsIntent.ToggleAiProcessing -> toggleAiProcessing(intent.enabled)
             is SettingsIntent.ShowManualPermissionDialog -> showManualPermissionDialog()
             is SettingsIntent.HideManualPermissionDialog -> hideManualPermissionDialog()
@@ -125,11 +129,55 @@ class SettingsViewModel(
         }
     }
 
-    private fun setSelectedBanks(bankConfigs: Set<BankSmsConfig>) = viewModelScope.launch {
-        val selectedBankIds = bankConfigs.map { it.id }.toSet()
-        preferencesManager.setSelectedBankIds(selectedBankIds)
-        _uiState.update { it.copy(selectedBanks = bankConfigs) }
-        pushPreferences()
+    private fun addBank(bank: BankSmsConfig) {
+        val channels = BankChannels.default(bank)
+        saveReading { state ->
+            state.copy(
+                selectedBanks = state.selectedBanks + bank,
+                bankChannels = state.bankChannels + (bank.id to channels),
+                isBankSelectorVisible = false
+            )
+        }
+        askForPermissions(channels)
+    }
+
+    private fun removeBank(bank: BankSmsConfig) {
+        saveReading { state ->
+            state.copy(selectedBanks = state.selectedBanks - bank, bankChannels = state.bankChannels - bank.id)
+        }
+    }
+
+    private fun setBankChannel(bank: BankSmsConfig, channel: ReadingChannel, enabled: Boolean) {
+        saveReading { state ->
+            val current = state.channelsOf(bank)
+            val channels = if (enabled) current + channel else current - channel
+            state.copy(bankChannels = state.bankChannels + (bank.id to channels))
+        }
+        if (enabled) askForPermissions(setOf(channel))
+    }
+
+    /**
+     * Applies a change to the banks read and their channels, and stores it. The selection is kept on
+     * the account; the channels only on the device. The SMS switch the account still keeps follows
+     * the channels.
+     */
+    private fun saveReading(change: (SettingsState) -> SettingsState) {
+        val state = _uiState.updateAndGet(change)
+        val selectedBankIds = state.selectedBanks.map { it.id }.toSet()
+        val bankChannels = state.bankChannels.filterKeys { it in selectedBankIds }
+        viewModelScope.launch {
+            preferencesManager.setSelectedBankIds(selectedBankIds)
+            preferencesManager.setBankChannels(bankChannels)
+            preferencesManager.setSmsReadingEnabled(ReadingChannel.SMS in state.channelsInUse)
+            pushPreferences()
+            checkNotificationReader()
+        }
+    }
+
+    /** Each channel needs its own permission: SMS a runtime one, apps and emails the notification access. */
+    private fun askForPermissions(channels: Set<ReadingChannel>) {
+        if (ReadingChannel.SMS in channels && !permissionsManager.hasSmsPermission()) requestSmsPermission()
+        if (ReadingChannel.APP in channels || ReadingChannel.EMAIL in channels) askForNotificationReader()
     }
 
     private fun pushPreferences() {
@@ -156,16 +204,14 @@ class SettingsViewModel(
                 val preferences = readPreferences()
                 _uiState.update {
                     it.copy(
-                        isSmsReadingEnabled = preferences.isSmsReadingEnabled,
                         defaultBudget = preferences.defaultBudget,
                         allBudgets = budgetRepository.getAllCached(),
                         hasSmsPermission = permissionsManager.hasSmsPermission(),
-                        isBankNotificationReadingEnabled = preferencesManager.isBankNotificationReadingEnabled(),
                         hasNotificationListenerAccess = permissionsManager.hasNotificationListenerAccess(),
                         areAppNotificationsEnabled = permissionsManager.areAppNotificationsEnabled(),
-                        notificationBanks = SupportedBanks.NOTIFICATION_BANKS,
                         availableBanks = SupportedBanks.SELECTABLE_BANKS,
                         selectedBanks = preferences.selectedBanks,
+                        bankChannels = preferences.bankChannels,
                         isAiProcessingEnabled = preferences.isAiProcessingEnabled,
                         isLoading = false
                     )
@@ -185,10 +231,11 @@ class SettingsViewModel(
             val preferences = readPreferences()
             _uiState.update {
                 it.copy(
-                    isSmsReadingEnabled = preferences.isSmsReadingEnabled,
                     defaultBudget = preferences.defaultBudget,
                     allBudgets = budgetRepository.getAllCached(),
+                    // The account may bring banks this device never read: they start from their defaults
                     selectedBanks = preferences.selectedBanks,
+                    bankChannels = preferences.bankChannels,
                     isAiProcessingEnabled = preferences.isAiProcessingEnabled
                 )
             }
@@ -200,28 +247,23 @@ class SettingsViewModel(
     private suspend fun readPreferences(): StoredPreferences {
         val defaultBudgetId = preferencesManager.getDefaultBudgetId()
         return StoredPreferences(
-            isSmsReadingEnabled = preferencesManager.isSmsReadingEnabled(),
             isAiProcessingEnabled = preferencesManager.isAiProcessingEnabled(),
             defaultBudget = if (defaultBudgetId != -1) budgetRepository.getById(defaultBudgetId) else null,
             selectedBanks = preferencesManager.getSelectedBankIds()
                 .mapNotNull { SupportedBanks.getSelectableBankById(it) }
-                .toSet()
+                .toSet(),
+            bankChannels = preferencesManager.getBankChannels()
         )
     }
 
     private class StoredPreferences(
-        val isSmsReadingEnabled: Boolean,
         val isAiProcessingEnabled: Boolean,
         val defaultBudget: Budget?,
-        val selectedBanks: Set<BankSmsConfig>
+        val selectedBanks: Set<BankSmsConfig>,
+        val bankChannels: Map<String, Set<ReadingChannel>>
     )
 
-    private fun toggleSmsReading(enabled: Boolean) = viewModelScope.launch {
-        preferencesManager.setSmsReadingEnabled(enabled)
-        _uiState.update { it.copy(isSmsReadingEnabled = enabled) }
-        pushPreferences()
-        if (!enabled) return@launch
-
+    private fun requestSmsPermission() {
         when {
             !permissionsManager.hasSmsPermission() && !permissionsManager.shouldShowSMSPermissionRationale() -> {
                 permissionsManager.requestSmsPermissions { granted ->
@@ -243,18 +285,16 @@ class SettingsViewModel(
      * Notification access is not a runtime permission: it is granted in a system screen, after a
      * warning of its own. The dialog says first what is read and why, then leads there.
      */
-    private fun toggleBankNotificationReading(enabled: Boolean) = viewModelScope.launch {
-        preferencesManager.setBankNotificationReadingEnabled(enabled)
+    private fun askForNotificationReader() {
         val hasAccess = permissionsManager.hasNotificationListenerAccess()
         val appNotificationsEnabled = permissionsManager.areAppNotificationsEnabled()
         _uiState.update {
             it.copy(
-                isBankNotificationReadingEnabled = enabled,
                 hasNotificationListenerAccess = hasAccess,
                 areAppNotificationsEnabled = appNotificationsEnabled,
-                isNotificationAccessDialogVisible = enabled && !hasAccess,
+                isNotificationAccessDialogVisible = !hasAccess,
                 // One step at a time: the access first, the app's own notifications once it is granted
-                isAppNotificationsDialogVisible = enabled && hasAccess && !appNotificationsEnabled
+                isAppNotificationsDialogVisible = hasAccess && !appNotificationsEnabled
             )
         }
         checkNotificationReader()

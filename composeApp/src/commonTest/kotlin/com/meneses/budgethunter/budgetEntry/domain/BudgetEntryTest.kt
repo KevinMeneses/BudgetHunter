@@ -13,7 +13,7 @@ class BudgetEntryTest {
     }
 
     @Test
-    fun `the assignable categories are the original eleven, in order, without the absence of one`() {
+    fun `the assignable categories are the original eleven - in order - without the absence of one`() {
         assertEquals(
             listOf(
                 BudgetEntry.Category.FOOD,

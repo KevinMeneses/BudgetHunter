@@ -1,5 +1,6 @@
 package com.meneses.budgethunter.sms.platform
 
+import com.meneses.budgethunter.di.NativeDependencies
 import com.meneses.budgethunter.di.startKoinIfNeeded
 import com.meneses.budgethunter.sms.application.RegisterSmsFromShortcutUseCase
 import com.meneses.budgethunter.sms.application.SmsShortcutReply
@@ -10,12 +11,12 @@ import kotlin.coroutines.cancellation.CancellationException
 /**
  * Called by the "Registrar gasto desde mensaje" App Intent (iosApp) with the text of the SMS that
  * a Shortcuts automation received. It works with the app closed: Koin is started here if no
- * screen did it first. The Swift side has to fill IOSBridge before calling it.
+ * screen did it first, with the Swift [NativeDependencies].
  */
-class SmsShortcutEntryPoint : KoinComponent {
+class SmsShortcutEntryPoint(createNative: () -> NativeDependencies) : KoinComponent {
 
     init {
-        startKoinIfNeeded()
+        startKoinIfNeeded(createNative)
     }
 
     private val registerSmsFromShortcut: RegisterSmsFromShortcutUseCase by inject()

@@ -1,11 +1,17 @@
 package com.meneses.budgethunter.sms.platform
 
 import android.app.Notification
+import android.app.Person
+import android.os.Build
+import android.os.Bundle
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import com.meneses.budgethunter.commons.data.PreferencesManager
+import com.meneses.budgethunter.sms.domain.BankChannels
+import com.meneses.budgethunter.sms.domain.BankEmail
 import com.meneses.budgethunter.sms.domain.BankNotification
 import com.meneses.budgethunter.sms.domain.BankNotificationService
+import com.meneses.budgethunter.sms.domain.ReadingChannel
 import com.meneses.budgethunter.sms.domain.RecentNotifications
 import com.meneses.budgethunter.sms.domain.SupportedBanks
 import kotlinx.coroutines.CancellationException
@@ -16,11 +22,13 @@ import org.koin.core.component.inject
 import org.koin.core.qualifier.named
 
 /**
- * Reads the notifications of bank apps that report movements there instead of by SMS (Nequi, Nu).
+ * Reads the notifications of bank apps that report movements there instead of by SMS (Nequi, Nu),
+ * and those of email apps announcing an email from a selected bank.
  *
- * The system binds it once the user grants notification access in its settings; the switch in
+ * The system binds it once the user grants notification access in its settings; the switches in
  * Settings and the selected banks decide whether what it reads is registered. Every other app's notification is
- * dropped on the spot, before its text is even read.
+ * dropped on the spot, before its text is even read; of an email, the sender is read first and
+ * the rest only when a selected bank wrote it.
  */
 class BankNotificationListenerService : NotificationListenerService(), KoinComponent {
 
@@ -30,12 +38,13 @@ class BankNotificationListenerService : NotificationListenerService(), KoinCompo
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
         val posted = sbn ?: return
+        if (BankEmail.isEmailApp(posted.packageName)) {
+            onEmailNotificationPosted(posted)
+            return
+        }
         val bankConfig = SupportedBanks.getNotificationBankByPackage(posted.packageName) ?: return
         val notification = posted.notification ?: return
-
-        // The summary of a group repeats its children, an ongoing one is a progress or a session
-        if (notification.flags and Notification.FLAG_GROUP_SUMMARY != 0) return
-        if (notification.flags and Notification.FLAG_ONGOING_EVENT != 0) return
+        if (!notification.isSingleMessage()) return
 
         val extras = notification.extras ?: return
         // The expanded text is the whole message; the short one may be cut by the app
@@ -59,9 +68,10 @@ class BankNotificationListenerService : NotificationListenerService(), KoinCompo
             // The shared IO scope has no exception handler: a failure here (reading the
             // preferences) must not take down the app, which runs this with no screen open
             try {
-                if (!preferencesManager.isBankNotificationReadingEnabled()) return@launch
-                // Like an SMS bank, an app is read only while the user has it among the selected banks
+                // An app is read only while its bank is selected with its app among its channels
                 if (bankConfig.id !in preferencesManager.getSelectedBankIds()) return@launch
+                val channels = BankChannels.of(bankConfig, preferencesManager.getBankChannels())
+                if (ReadingChannel.APP !in channels) return@launch
                 bankNotificationService.processBankNotification(bankNotification, bankConfig)
             } catch (e: CancellationException) {
                 throw e
@@ -70,6 +80,75 @@ class BankNotificationListenerService : NotificationListenerService(), KoinCompo
             }
         }
     }
+
+    /**
+     * An email app announces an email: when a selected bank sent it, the subject and the start
+     * of the body are read like a bank app notification. Any other email is dropped as soon as
+     * its sender is known.
+     */
+    private fun onEmailNotificationPosted(posted: StatusBarNotification) {
+        val notification = posted.notification ?: return
+        // A group summary ("3 new emails") lists several emails at once; each one has its own
+        if (!notification.isSingleMessage()) return
+
+        val extras = notification.extras ?: return
+        val sender = extras.getCharSequence(Notification.EXTRA_TITLE)?.toString().orEmpty()
+        if (sender.isBlank()) return
+
+        ioScope.launch {
+            try {
+                val selectedBanks = preferencesManager.getSelectedBankIds()
+                    .mapNotNull { SupportedBanks.getSelectableBankById(it) }
+                // Only the banks whose emails the user picked: their emails are read for nobody else
+                val emailBanks = BankChannels.readBy(
+                    ReadingChannel.EMAIL,
+                    selectedBanks,
+                    preferencesManager.getBankChannels()
+                )
+                if (emailBanks.isEmpty()) return@launch
+                val bankConfig = BankEmail.findSender(sender, extras.senderAddresses(), emailBanks) ?: return@launch
+
+                val email = BankEmail.fromNotification(
+                    title = sender,
+                    text = extras.getCharSequence(Notification.EXTRA_TEXT)?.toString().orEmpty(),
+                    bigText = extras.getCharSequence(Notification.EXTRA_BIG_TEXT)?.toString()
+                )
+                if (email.isBlank) return@launch
+
+                // Same identity as a bank app notification: an update keeps its key and its time
+                val postedAt = notification.`when`
+                val fingerprint = if (postedAt != 0L) "${posted.key}|$postedAt" else "${posted.key}|${email.body}"
+                // Marked off the main thread, unlike the bank apps' ones, so these have their own lock
+                if (!synchronized(recentEmails) { recentEmails.markIfNew(fingerprint) }) return@launch
+
+                bankNotificationService.processBankEmail(email, bankConfig)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                // Nothing to log: the email holds names and amounts
+            }
+        }
+    }
+
+    /**
+     * The addresses an email app attaches to the people of a notification ("mailto:..."), which
+     * tell who really sent an email when its display name could be anyone's. Not every app adds them.
+     */
+    private fun Bundle.senderAddresses(): List<String> {
+        val addresses = mutableListOf<String>()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            @Suppress("DEPRECATION")
+            getParcelableArrayList<Person>(Notification.EXTRA_PEOPLE_LIST)
+                ?.mapNotNullTo(addresses) { it.uri }
+        }
+        @Suppress("DEPRECATION")
+        getStringArray(Notification.EXTRA_PEOPLE)?.let { addresses += it }
+        return addresses
+    }
+
+    /** The summary of a group repeats its children, an ongoing one is a progress or a session. */
+    private fun Notification.isSingleMessage(): Boolean =
+        flags and Notification.FLAG_GROUP_SUMMARY == 0 && flags and Notification.FLAG_ONGOING_EVENT == 0
 
     override fun onListenerConnected() {
         super.onListenerConnected()
@@ -84,6 +163,9 @@ class BankNotificationListenerService : NotificationListenerService(), KoinCompo
     companion object {
         // Shared by the instances the system creates on each bind; notifications arrive on the main thread
         private val recentNotifications = RecentNotifications()
+
+        // Only the emails of selected banks get here, marked from the IO scope
+        private val recentEmails = RecentNotifications()
 
         /**
          * Whether the system has the listener bound in this process. After the app's own notifications

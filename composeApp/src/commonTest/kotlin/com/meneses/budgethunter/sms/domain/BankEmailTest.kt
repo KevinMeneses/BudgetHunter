@@ -5,162 +5,136 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
-import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-/** Alert emails copied from real ones, as plain text: subject, greeting, movement and footer. */
+/** Email notifications as email apps post them: sender as the title, subject as the text. */
 class BankEmailTest {
 
-    private val nequiEmail = """
-        ¡Recibiste plata por Bre-B!
+    @Test
+    fun `the subject repeated on the first line of the expanded text is taken off the body`() {
+        val email = BankEmail.fromNotification(
+            title = "Bancolombia",
+            text = "Alertas y Notificaciones",
+            bigText = "Alertas y Notificaciones\nBancolombia le informa Compra por \$50.000,00 en EXITO\nCALLE 80. Hora 10:12"
+        )
 
-        ¡Hola, JUAN MENESES!
-
-        Recibiste 525.000 de NUBIA ROCELY PALTA el 1 de noviembre de 2026 a las 11:11 a.m, desde el banco BBVA. Revisa el detalle en los movimientos de tu app o descarga el comprobante si lo necesitas.
-
-        Si no fuiste tú, fue un error o tienes dudas, escríbenos al chat de nuestra página web: www.nequi.com.co en el botón de "Ayuda" o llama a la línea de atención: (+57) 300 600 0100
-
-        ¿Ya nos sigues en redes? ¡Siempre tenemos cosas nuevas!
-    """.trimIndent()
-
-    private val luloEmail = """
-        Conoce el detalle de la transacción
-
-        Recibiste $65,680 de JUAN SEBASTIAN MENESES PALTA
-
-        Origen cuenta • 1248
-        Destino ahorro • 3936
-        ID. transacción • 170280812
-
-        Fecha 1 de noviembre de 2026
-        Hora 11:24 a.m.
-
-        © 2026. Lulo bank, Bogotá, Colombia.
-
-        En Lulo bank, nunca te pediremos datos como claves o usuarios mediante correo electrónico. Si tienes alguna pregunta nos puedes contactar a través de tu app en la sección Ayuda o consulta www.lulobank.com
-    """.trimIndent()
-
-    private val bancolombiaEmail = """
-        ¡Listo!
-        Todo salió bien con tus movimientos
-
-        Bancolombia: Pagaste $110,000.00 a GOU PAYMENTS S A EASPBV desde tu producto 4050 el 05/11/2026 18:03:38. ¿Dudas? Llamanos al 6045109095. Estamos cerca
-
-        ¿Quieres ver el equilibrio de tus gastos y tus ingresos? Haz eso y mucho más desde Día a Día en nuestra app Mi Bancolombia.
-    """.trimIndent()
-
-    private fun transaction(email: String): Pair<BankSmsConfig, SmsAnalysis.Transaction> {
-        val passage = assertNotNull(BankEmail.movementPassage(email), "Expected a movement in: $email")
-        val bank = assertNotNull(BankEmail.bankOf(email, SupportedBanks.SHORTCUT_BANKS, passage), "Expected a bank in: $email")
-        val analysis = SmsTransactionParser.analyze(passage, bank)
-        assertIs<SmsAnalysis.Transaction>(analysis, "Expected a transaction for: $passage")
-        return bank to analysis
+        assertEquals("Bancolombia", email.sender)
+        assertEquals("Alertas y Notificaciones", email.subject)
+        assertEquals("Bancolombia le informa Compra por \$50.000,00 en EXITO CALLE 80. Hora 10:12", email.body)
     }
 
     @Test
-    fun `a Nequi email is read as Nequi even though it names the sending bank`() {
-        val (bank, result) = transaction(nequiEmail)
+    fun `without an expanded text the subject is all there is`() {
+        val email = BankEmail.fromNotification(title = "Davivienda", text = "Compra aprobada por \$20.000", bigText = null)
 
-        assertEquals(SupportedBanks.NEQUI, bank)
-        assertEquals("525000", result.amount)
-        assertEquals(BudgetEntry.Type.INCOME, result.type)
+        assertEquals("Compra aprobada por \$20.000", email.subject)
+        assertEquals("", email.body)
+        assertFalse(email.isBlank)
+    }
+
+    @Test
+    fun `an expanded text that does not repeat the subject is kept whole`() {
+        val email = BankEmail.fromNotification(
+            title = "Davivienda",
+            text = "Notificación de transacción",
+            bigText = "Realizaste una compra por \$20.000 en D1."
+        )
+
+        assertEquals("Realizaste una compra por \$20.000 en D1.", email.body)
+        assertEquals("Realizaste una compra por \$20.000 en D1", email.toNotification().description)
+    }
+
+    @Test
+    fun `a purchase emailed by the bank is read as an expense described by the body`() {
+        val email = BankEmail.fromNotification(
+            title = "Bancolombia",
+            text = "Alertas y Notificaciones",
+            bigText = "Alertas y Notificaciones\nBancolombia le informa Compra por \$50.000,00 en EXITO. Hora 10:12"
+        )
+        val notification = email.toNotification()
+
+        val analysis = SmsTransactionParser.analyze(notification.message, SupportedBanks.BANCOLOMBIA)
+
+        assertIs<SmsAnalysis.Transaction>(analysis)
+        assertEquals("50000.00", analysis.amount)
+        assertEquals(BudgetEntry.Type.OUTCOME, analysis.type)
+        assertEquals("Bancolombia le informa Compra por \$50.000,00 en EXITO", notification.description)
+    }
+
+    @Test
+    fun `without an address the sender is matched against the selected banks by name`() {
+        val selected = listOf(SupportedBanks.BANCOLOMBIA, SupportedBanks.DAVIVIENDA, SupportedBanks.NU)
+
+        assertEquals(SupportedBanks.BANCOLOMBIA, BankEmail.findSender("Bancolombia", emptyList(), selected))
+        assertEquals(SupportedBanks.DAVIVIENDA, BankEmail.findSender("Notificaciones Davivienda", emptyList(), selected))
+        assertEquals(SupportedBanks.NU, BankEmail.findSender("Nu Colombia", emptyList(), selected))
+        // Case and accents do not matter
+        assertEquals(SupportedBanks.BANCOLOMBIA, BankEmail.findSender("ALERTAS BANCOLOMBIA", emptyList(), selected))
         assertEquals(
-            "Recibiste 525.000 de NUBIA ROCELY PALTA el 1 de noviembre de 2026 a las 11:11 a.m, desde el banco BBVA",
-            result.description
+            SupportedBanks.BANCAMIA,
+            BankEmail.findSender("Bancamía", emptyList(), listOf(SupportedBanks.BANCAMIA))
         )
-    }
-
-    @Test
-    fun `a Lulo bank email is read by its domain`() {
-        val (bank, result) = transaction(luloEmail)
-
-        assertEquals(SupportedBanks.LULO_BANK, bank)
-        assertEquals("65680", result.amount)
-        assertEquals(BudgetEntry.Type.INCOME, result.type)
-        assertEquals("Recibiste $65,680 de JUAN SEBASTIAN MENESES PALTA", result.description)
-    }
-
-    @Test
-    fun `a Bancolombia email is read by its name`() {
-        val (bank, result) = transaction(bancolombiaEmail)
-
-        assertEquals(SupportedBanks.BANCOLOMBIA, bank)
-        assertEquals("110000.00", result.amount)
-        assertEquals(BudgetEntry.Type.OUTCOME, result.type)
-    }
-
-    @Test
-    fun `the movement sentence skips the subject, the greeting and the footer`() {
         assertEquals(
-            "Recibiste $65,680 de JUAN SEBASTIAN MENESES PALTA",
-            BankEmail.movementPassage(luloEmail)
+            SupportedBanks.BANCAMIA,
+            BankEmail.findSender("bancamia", emptyList(), listOf(SupportedBanks.BANCAMIA))
         )
+        // A bank that is not selected, a person or a store are not read
+        assertNull(BankEmail.findSender("BBVA", emptyList(), selected))
+        assertNull(BankEmail.findSender("Nubia Rodríguez", emptyList(), selected))
+        assertNull(BankEmail.findSender("Rappi", emptyList(), selected))
+        assertNull(BankEmail.findSender("", emptyList(), selected))
     }
 
     @Test
-    fun `an email without a movement has no passage`() {
-        val newsletter = """
-            ¡Hola, JUAN!
+    fun `an address from the bank's domain proves the sender whatever its name`() {
+        val selected = listOf(SupportedBanks.BANCOLOMBIA, SupportedBanks.DAVIVIENDA)
 
-            Conoce las novedades de tu app.
-            Activa tus alertas desde la sección Ayuda.
-        """.trimIndent()
-
-        assertNull(BankEmail.movementPassage(newsletter))
-    }
-
-    @Test
-    fun `an SMS is not taken for an email`() {
-        assertFalse(
-            BankEmail.looksLikeEmail("Bancolombia: Compraste COP25.000,00 en EXITO con tu T.Deb *1234.")
-        )
-        assertFalse(BankEmail.looksLikeEmail("Bancolombia:\nCompraste COP25.000,00\nen EXITO\ncon tu T.Deb *1234."))
-        assertTrue(BankEmail.looksLikeEmail(nequiEmail))
-        assertTrue(BankEmail.looksLikeEmail(luloEmail))
-    }
-
-    @Test
-    fun `email banks are offered to the shortcut but not to the Android selector`() {
-        assertTrue(SupportedBanks.LULO_BANK in SupportedBanks.SHORTCUT_BANKS)
-        assertTrue(SupportedBanks.NEQUI in SupportedBanks.SHORTCUT_BANKS)
-        assertFalse(SupportedBanks.LULO_BANK in SupportedBanks.SELECTABLE_BANKS)
-    }
-
-    @Test
-    fun `a domain only counts as a whole address part and the first one wins`() {
-        assertNull(BankEmail.bankOf("Visita xnequi.com.co hoy", listOf(SupportedBanks.NEQUI)))
         assertEquals(
-            SupportedBanks.NEQUI,
-            BankEmail.bankOf("De notificaciones@nequi.com.co sobre lulobank.com", SupportedBanks.SHORTCUT_BANKS)
+            SupportedBanks.BANCOLOMBIA,
+            BankEmail.findSender(
+                "Alertas y Notificaciones",
+                listOf("mailto:alertasynotificaciones@an.notificacionesbancolombia.com"),
+                selected
+            )
+        )
+        assertEquals(
+            SupportedBanks.DAVIVIENDA,
+            BankEmail.findSender("Davivienda", listOf("Davivienda <notificaciones@davivienda.com>"), selected)
         )
     }
 
     @Test
-    fun `a bank named only in the movement is the other party when the email names its own elsewhere`() {
-        val email = "Recibiste \$80.000 desde Davivienda en tu cuenta.\n\nGracias por confiar en Bancolombia."
-        val passage = "Recibiste \$80.000 desde Davivienda en tu cuenta."
+    fun `a bank's name on an address outside its domains is a fake`() {
+        val selected = listOf(SupportedBanks.BANCOLOMBIA)
 
-        assertEquals(SupportedBanks.BANCOLOMBIA, BankEmail.bankOf(email, SupportedBanks.SHORTCUT_BANKS, passage))
-        assertEquals(SupportedBanks.DAVIVIENDA, BankEmail.bankOf(passage, SupportedBanks.SHORTCUT_BANKS, passage))
+        assertNull(BankEmail.findSender("Bancolombia", listOf("mailto:alertas@bancolombia-seguro.co"), selected))
+        // A lookalike domain is not under the bank's
+        assertNull(BankEmail.findSender("Bancolombia", listOf("alertas@fakebancolombia.com.co"), selected))
     }
 
     @Test
-    fun `a domain must stand whole on both sides`() {
-        val nequi = SupportedBanks.NEQUI
-        assertEquals(4, nequi.emailDomainIndex("www.nequi.com.co"))
-        assertEquals(15, nequi.emailDomainIndex("notificaciones@nequi.com.co"))
-        assertEquals(10, nequi.emailDomainIndex("Escribe a nequi.com.co. Gracias"))
-        assertNull(nequi.emailDomainIndex("-nequi.com.co"))
-        assertNull(nequi.emailDomainIndex("nequi.com.cox"))
-        assertNull(nequi.emailDomainIndex("nequi.com.co.evil.com"))
+    fun `a bank with no known domain is still told by its name`() {
+        assertEquals(
+            SupportedBanks.BANCAMIA,
+            BankEmail.findSender("Bancamía", listOf("mailto:avisos@correo.example"), listOf(SupportedBanks.BANCAMIA))
+        )
     }
 
     @Test
-    fun `a short text carrying a bank domain is an email`() {
-        val shortEmail = "Recibiste 525.000 de NUBIA PALTA desde el banco BBVA. Ayuda en www.nequi.com.co"
+    fun `only email addresses give a domain`() {
+        assertEquals("bancolombia.com.co", BankEmail.addressDomain("mailto:a@Bancolombia.com.co"))
+        assertEquals("davivienda.com", BankEmail.addressDomain("Davivienda <x@davivienda.com>"))
+        assertNull(BankEmail.addressDomain("tel:+573001234567"))
+        assertNull(BankEmail.addressDomain("content://com.android.contacts/contacts/lookup/1"))
+        assertNull(BankEmail.addressDomain(""))
+    }
 
-        assertFalse(BankEmail.looksLikeEmail(shortEmail))
-        assertTrue(BankEmail.looksLikeEmail(shortEmail, SupportedBanks.SHORTCUT_BANKS))
+    @Test
+    fun `only known email apps are looked at`() {
+        assertTrue(BankEmail.isEmailApp("com.google.android.gm"))
+        assertTrue(BankEmail.isEmailApp("com.microsoft.office.outlook"))
+        assertFalse(BankEmail.isEmailApp("com.whatsapp"))
+        assertFalse(BankEmail.isEmailApp(null))
     }
 }

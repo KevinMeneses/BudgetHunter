@@ -8,8 +8,11 @@ data class BankSmsConfig(
     /** Android packages of the bank's app, for banks read from their app notifications. */
     val appPackages: List<String> = emptyList(),
     /**
-     * Domains of the bank's alert emails ("nequi.com.co"). Its emails name it reliably only there,
-     * in the sender or the links: the text may name another bank ("desde el banco BBVA").
+     * The domains the bank sends its emails from (subdomains included). When the email app tells
+     * the sender's address, only these prove an email comes from the bank: a display name is
+     * written by whoever sends the email, so anyone can call themselves "Bancolombia". In the body
+     * of an email handed over by the iOS shortcut they name the bank more reliably than its text,
+     * which may name another bank ("desde el banco BBVA").
      */
     val emailDomains: List<String> = emptyList()
 ) {
@@ -29,6 +32,16 @@ data class BankSmsConfig(
         mentionsItself(text) -> text
         else -> "$displayName: $text"
     }
+
+    /**
+     * Whether [sender] is this bank, as an email app shows who wrote ("Bancolombia",
+     * "Notificaciones Davivienda"): it carries the bank's name or one of its sender keywords.
+     */
+    fun isSender(sender: String): Boolean = sender.isNotBlank() && mentionsItself(sender)
+
+    /** Whether [domain] (of a sender's address, lowercase) is one of the bank's or under one of them. */
+    fun sendsEmailFrom(domain: String): Boolean =
+        emailDomains.any { domain == it || domain.endsWith(".$it") }
 
     /** Whether [text] names the bank, by its name or a sender keyword that is a word, never a number. */
     private fun mentionsItself(text: String): Boolean = mentionIndex(text) != null

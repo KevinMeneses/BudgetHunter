@@ -2,6 +2,7 @@ package com.meneses.budgethunter.sms.application
 
 import com.meneses.budgethunter.commons.data.PreferencesManager
 import com.meneses.budgethunter.commons.platform.PermissionsManager
+import com.meneses.budgethunter.sms.domain.ReadingChannel
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
@@ -19,7 +20,7 @@ class IsNotificationReaderStoppedUseCaseTest {
 
     @BeforeTest
     fun setup() {
-        coEvery { preferencesManager.isBankNotificationReadingEnabled() } returns true
+        coEvery { preferencesManager.getChannelsInUse() } returns setOf(ReadingChannel.APP)
         every { permissionsManager.hasNotificationListenerAccess() } returns true
         every { permissionsManager.areAppNotificationsEnabled() } returns true
         every { permissionsManager.isNotificationListenerConnected() } returns false
@@ -45,10 +46,17 @@ class IsNotificationReaderStoppedUseCaseTest {
     }
 
     @Test
-    fun `not stopped with the switch off`() = runTest {
-        coEvery { preferencesManager.isBankNotificationReadingEnabled() } returns false
+    fun `not stopped while no bank is read from an app or by email`() = runTest {
+        coEvery { preferencesManager.getChannelsInUse() } returns setOf(ReadingChannel.SMS)
 
         assertFalse(isNotificationReaderStopped())
+    }
+
+    @Test
+    fun `reading bank emails alone also needs the reader`() = runTest {
+        coEvery { preferencesManager.getChannelsInUse() } returns setOf(ReadingChannel.EMAIL)
+
+        assertTrue(isNotificationReaderStopped())
     }
 
     @Test

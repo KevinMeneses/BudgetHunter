@@ -8,6 +8,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `./gradlew build` - Build the entire project
 - `./gradlew :composeApp:assembleDebug` - Build Android APK
 - `./gradlew :composeApp:testDebugUnitTest` - Run unit tests (what CI runs; most live in `androidUnitTest`, shared ones in `commonTest`)
+- `./gradlew :composeApp:iosSimulatorArm64Test` - Run the iOS tests (Mac only, not in CI; `iosTest` checks the iOS Koin graph).
+  It also compiles `commonTest` for Kotlin/Native, so tests there cannot use MockK (JVM only: put them in
+  `androidUnitTest`) and their backtick names cannot contain `,` `(` `)` `.` `:` `/` `[` `]` `<` `>`
 - `./gradlew connectedAndroidTest` - Run instrumented tests on connected device/emulator
 - `./gradlew ktlintCheck` - Check Kotlin code style (CI also runs `./gradlew lint`)
 - `./gradlew ktlintFormat` - Auto-fix Kotlin code style issues
@@ -98,25 +101,48 @@ Type-safe navigation using Navigation Compose with serializable route objects. M
 - Automatic budget entry creation from SMS transactions (`RegisterSmsEntryUseCase`, shared by both platforms),
   always in the default budget of Settings. The description is the message's first sentence, opened with the bank
   name ("Bancolombia: Transferiste ...") unless it already names the bank (`BankSmsConfig.describe`); notifications too
-- Banks that notify in their app instead of by SMS (Nequi, Nu: `SupportedBanks.NOTIFICATION_BANKS`, matched by
-  package name) are read on Android by `BankNotificationListenerService`, only while selected: they share the one
-  bank selection of Settings (`SupportedBanks.SELECTABLE_BANKS`, `selectedBankIds`) with the SMS banks, and
-  `getBankConfigById` keeps returning SMS banks only. A bank is read from its app when its config has
-  `appPackages`: notification-only banks are listed apart from `ALL_BANKS`, while an SMS bank whose app also
-  notifies just gets its packages in its existing config. It needs notification access, granted in
-  a system screen (Settings explains it first and reopens it from a warning row), and the app's own notifications
-  on: while they are off Android drops the listener (Settings warns too). Some devices (seen on Samsung) then leave it
-  unbound for good, with everything granted: requestRebind, toggling the component, re-granting the access or the app
-  killing itself do not help, only a force stop from the system settings does. `IsNotificationReaderStoppedUseCase`
-  detects it (`BankNotificationListenerService.isConnected`, rechecked after a grace period): the budget list shows a
-  banner that leads to Settings, which asks the user for that force stop. Title and text are parsed together
-  (`BankNotification`) by the same parser, the entry is described by the text (with the bank name, "Nu: ..."), and
-  unreadable notifications are dropped silently (apps also post codes and news). The switch is kept on the device only, not on the account.
+- Automatic reading on Android is decided per bank: Settings lists the banks read ("Agregar banco" adds one), each
+  with chips for its channels (`ReadingChannel`: SMS, APP, EMAIL; `BankChannels`), several allowed since a bank may
+  send some alerts by one channel and others by another. There are no global switches: the channels are the one
+  source of truth, and each channel's permission is asked for when it is picked (SMS: runtime permission; APP and
+  EMAIL: notification access) and warned about in Settings while missing. A bank added gets its defaults (its SMS
+  and/or app, never email); one with nothing stored (e.g. brought by the account) is read by those defaults too; one
+  can be kept with no channel ("bankId:" stored), read from nothing. Channels live on the device only
+  (`PreferencesManager.getBankChannels`); the selection (`selectedBankIds`) is on the account, and so is
+  `smsReadingEnabled`, which now only follows the channels (SMS in use) and decides nothing. The first
+  `getBankChannels` after updating turns the old switches into channels (`BankChannels.migrate`), so nothing starts
+  or stops being read. A bank read from two channels shows, under it, that a movement reported by both is added
+  twice: there is no deduplication.
+- Banks that notify in their app instead of by SMS (BBVA, Nequi, Nu: `SupportedBanks.NOTIFICATION_BANKS`, matched by
+  package name) are read by `BankNotificationListenerService` while their APP channel is on. `getBankConfigById`
+  keeps returning SMS banks only. A bank is read from its app when its config has `appPackages`: notification-only
+  banks are listed apart from `ALL_BANKS`, while an SMS bank whose app also notifies just gets its packages in its
+  existing config. The listener needs notification access, granted in a system screen (Settings explains it first
+  and reopens it from a warning row), and the app's own notifications on: while they are off Android drops the
+  listener (Settings warns too). Some devices (seen on Samsung) then leave it unbound for good, with everything
+  granted: requestRebind, toggling the component, re-granting the access or the app killing itself do not help,
+  only a force stop from the system settings does. `IsNotificationReaderStoppedUseCase` detects it
+  (`BankNotificationListenerService.isConnected`, rechecked after a grace period) while some bank uses APP or EMAIL:
+  the budget list shows a banner that leads to Settings, which asks the user for that force stop. Title and text are
+  parsed together (`BankNotification`) by the same parser, the entry is described by the text (with the bank name,
+  "Nu: ..."), and unreadable notifications are dropped silently (apps also post codes and news).
+- Bank emails are read from the email app's notification (Gmail, Outlook, Samsung Email...:
+  `BankEmail.EMAIL_APP_PACKAGES`) by the same listener, only for banks with the EMAIL channel. The sender is checked
+  before anything else is read (`BankEmail.findSender`): the display name (the title) can be written by anyone, so
+  when the email app attaches the sender's address (`EXTRA_PEOPLE_LIST` / `EXTRA_PEOPLE`, "mailto:..."), the address
+  decides: an address under a bank's `emailDomains` is that bank's whatever its name, and a bank's name on any other
+  address is dropped as a fake. Only banks without known domains, or apps that attach no address, fall back to the
+  name (`BankSmsConfig.isSender`). The domains in `SupportedBanks` need checking against real emails: a wrong one
+  drops that bank's real emails. Then subject and the start of the body (the expanded text without its first line,
+  the subject) are read like a bank app notification (`BankEmail.toNotification`); anything but a movement or a
+  missing default budget is dropped silently.
 - iOS cannot read SMS: a Shortcuts automation (trigger "Mensaje") passes the text to the App Intent
   `RegisterExpenseFromMessageIntent` (iosApp/, also an App Shortcut), which calls
   `SmsShortcutEntryPoint` (iosMain) -> `RegisterSmsFromShortcutUseCase` and answers with a dialog.
-  It runs with the app closed, so Koin is started with `startKoinIfNeeded()` and the Swift managers with
-  `IOSBridgeSetup.configureIfNeeded()`. Settings shows the setup guide (`SmsShortcutTutorialScreen`) on iOS only.
+  It runs with the app closed, so `SmsShortcutEntryPoint` starts Koin itself (`startKoinIfNeeded`) with the Swift
+  managers (`IOSNativeDependencies`, implementing the Kotlin `NativeDependencies`, created only when Koin starts), like
+  `MainViewController` does.
+  Settings shows the setup guide (`SmsShortcutTutorialScreen`) on iOS only.
   The intent's texts are English in the Swift code and Spanish in `iosApp/iosApp/es.lproj` (`Localizable.strings`,
   `AppShortcuts.strings` for the Siri phrases). The guide's screenshots are iOS 26 captures in `drawable` (English) and
   `drawable-es`; the automation filters by the bank name in the message, not by sender.
@@ -125,13 +151,14 @@ Type-safe navigation using Navigation Compose with serializable route objects. M
   `ShortcutTutorialParts.kt`): the automation filters by the bank's sender address and passes the Shortcut Input's
   Content property (the trigger hands over an Email object; Content is its body). Checked on the iOS 26.2
   simulator, where Mail does not run, so the text a real email produces is still unverified.
-  A text longer than an SMS (> 320 chars), or one carrying a bank's email domain, is read as an email (`BankEmail`): only the first sentence that names a
+  A text longer than an SMS (> 320 chars), or one carrying a bank's email domain, is read as an email (`ShortcutEmail`, not to be confused with Android's `BankEmail`): only the first sentence that names a
   movement and carries a number is parsed, and the bank is told by its email domain first
   (`BankSmsConfig.emailDomains`), then by the name it mentions first outside that sentence, then inside it, because
   the movement may name the other party's bank ("desde el banco BBVA" in a Nequi email). An email with no such
   sentence is read whole as an SMS; one whose bank cannot be told is answered as not recognized rather than filed
   under a guessed bank.
-  Email-only banks (Lulo bank) are in `SupportedBanks.SHORTCUT_BANKS`, not in the Android selector.
+  Email-only banks (Lulo bank) are in `SupportedBanks.SHORTCUT_BANKS`, not yet in the Android selector (added
+  there, a bank with neither SMS nor app would start with no channel).
 
 ### Automatic categorization
 Entries carry a category; `UNCATEGORIZED` ("Sin categoría") is its own value, the default for a new entry, and is

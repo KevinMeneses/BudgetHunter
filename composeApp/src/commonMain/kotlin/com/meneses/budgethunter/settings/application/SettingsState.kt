@@ -1,15 +1,14 @@
 package com.meneses.budgethunter.settings.application
 
 import com.meneses.budgethunter.budgetList.domain.Budget
+import com.meneses.budgethunter.sms.domain.BankChannels
 import com.meneses.budgethunter.sms.domain.BankSmsConfig
+import com.meneses.budgethunter.sms.domain.ReadingChannel
 import org.jetbrains.compose.resources.StringResource
 
 data class SettingsState(
-    val isSmsReadingEnabled: Boolean = false,
     val defaultBudget: Budget? = null,
     val hasSmsPermission: Boolean = false,
-    /** Reading the notifications of bank apps that send no SMS (Nequi, Nu). Android only. */
-    val isBankNotificationReadingEnabled: Boolean = false,
     /** Whether the system lets the app read notifications; granted in the system settings. */
     val hasNotificationListenerAccess: Boolean = false,
     /** Android hands no notification to the listener while the app's own ones are switched off. */
@@ -19,7 +18,6 @@ data class SettingsState(
     /** Everything is granted but the system left the listener unbound: only a force stop brings it back. */
     val isNotificationReaderStopped: Boolean = false,
     val isNotificationReaderStoppedDialogVisible: Boolean = false,
-    val notificationBanks: List<BankSmsConfig> = emptyList(),
     /** Explains what is read before sending the user to the system's notification access screen. */
     val isNotificationAccessDialogVisible: Boolean = false,
     val isDefaultBudgetSelectorVisible: Boolean = false,
@@ -28,7 +26,11 @@ data class SettingsState(
     // this the screen would flash its empty defaults before that starts.
     val isLoading: Boolean = true,
     val availableBanks: List<BankSmsConfig> = emptyList(),
+    /** The banks read automatically (Android), each from the channels in [bankChannels]. */
     val selectedBanks: Set<BankSmsConfig> = emptySet(),
+    /** The channels picked per bank id; a bank missing here is read by its defaults ([BankChannels]). */
+    val bankChannels: Map<String, Set<ReadingChannel>> = emptyMap(),
+    /** The list of banks that can still be added. */
     val isBankSelectorVisible: Boolean = false,
     val isAiProcessingEnabled: Boolean = true,
     val isManualPermissionDialogVisible: Boolean = false,
@@ -47,4 +49,28 @@ data class SettingsState(
     val isSigningOut: Boolean = false,
     /** Why the last sign out failed; the user stays signed in and can try again. */
     val signOutError: StringResource? = null
-)
+) {
+    fun channelsOf(bank: BankSmsConfig): Set<ReadingChannel> = BankChannels.of(bank, bankChannels)
+
+    /** Every channel some selected bank is read from: each needs its permission. */
+    val channelsInUse: Set<ReadingChannel>
+        get() = BankChannels.inUse(selectedBanks, bankChannels)
+
+    val isAnyReadingEnabled: Boolean
+        get() = channelsInUse.isNotEmpty()
+
+    val isSmsPermissionMissing: Boolean
+        get() = ReadingChannel.SMS in channelsInUse && !hasSmsPermission
+
+    /** The bank apps and the bank emails are both read by the notification listener. */
+    val isNotificationReaderNeeded: Boolean
+        get() = ReadingChannel.APP in channelsInUse || ReadingChannel.EMAIL in channelsInUse
+
+    /** The selected banks in the order they are listed, by name. */
+    val sortedSelectedBanks: List<BankSmsConfig>
+        get() = selectedBanks.sortedBy { it.displayName }
+
+    /** The banks that can still be added. */
+    val unselectedBanks: List<BankSmsConfig>
+        get() = availableBanks.filter { it !in selectedBanks }
+}

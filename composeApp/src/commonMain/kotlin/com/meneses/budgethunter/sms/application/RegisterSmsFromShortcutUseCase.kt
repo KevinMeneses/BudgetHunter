@@ -12,8 +12,8 @@ import budgethunter.composeapp.generated.resources.sms_shortcut_unrecognized
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.commons.resources.StringResourceProvider
 import com.meneses.budgethunter.commons.util.toCurrency
-import com.meneses.budgethunter.sms.domain.BankEmail
 import com.meneses.budgethunter.sms.domain.BankSmsConfig
+import com.meneses.budgethunter.sms.domain.ShortcutEmail
 import com.meneses.budgethunter.sms.domain.SmsCounterpartExtractor
 import com.meneses.budgethunter.sms.domain.SmsParseResult
 import com.meneses.budgethunter.sms.domain.SupportedBanks
@@ -70,10 +70,10 @@ class RegisterSmsFromShortcutUseCase(
      */
     private fun whatToRead(messageBody: String): Reading? {
         val smsReading = Reading(messageBody, SupportedBanks.ALL_BANKS)
-        if (!BankEmail.looksLikeEmail(messageBody, SupportedBanks.SHORTCUT_BANKS)) return smsReading
+        if (!ShortcutEmail.looksLikeEmail(messageBody, SupportedBanks.SHORTCUT_BANKS)) return smsReading
 
-        val passage = BankEmail.movementPassage(messageBody) ?: return smsReading
-        val bank = BankEmail.bankOf(messageBody, SupportedBanks.SHORTCUT_BANKS, passage) ?: return null
+        val passage = ShortcutEmail.movementPassage(messageBody) ?: return smsReading
+        val bank = ShortcutEmail.bankOf(messageBody, SupportedBanks.SHORTCUT_BANKS, passage) ?: return null
         return Reading(passage, listOf(bank))
     }
 

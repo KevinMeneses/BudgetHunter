@@ -5,7 +5,7 @@ import ComposeApp
  * "Register expense from message" ("Registrar gasto desde mensaje"): receives the text of a bank SMS or alert
  * email from a Shortcuts automation (trigger "Mensaje" or "Correo") and registers it in the default budget,
  * the same way Android does when it reads the SMS itself. Telling an email from an SMS and reading only
- * its movement sentence happens in the shared code (BankEmail). It runs in the background, the app does not need to be open.
+ * its movement sentence happens in the shared code (ShortcutEmail). It runs in the background, the app does not need to be open.
  *
  * All the reading, the entry creation and the sync live in the shared Kotlin code
  * (SmsShortcutEntryPoint); this only passes the text and shows the answer.
@@ -37,8 +37,7 @@ struct RegisterExpenseFromMessageIntent: AppIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult & ProvidesDialog {
-        IOSBridgeSetup.configureIfNeeded()
-        let reply = try await SmsShortcutEntryPoint().register(messageBody: message)
+        let reply = try await SmsShortcutEntryPoint(createNative: { IOSNativeDependencies() }).register(messageBody: message)
         return .result(dialog: "\(reply.message)")
     }
 }

@@ -5,6 +5,8 @@ import android.content.Context
 import android.content.Intent
 import android.provider.Telephony
 import com.meneses.budgethunter.sms.domain.BankSmsConfig
+import com.meneses.budgethunter.sms.domain.BankChannels
+import com.meneses.budgethunter.sms.domain.ReadingChannel
 import com.meneses.budgethunter.sms.domain.SupportedBanks
 import com.meneses.budgethunter.commons.data.PreferencesManager
 import com.meneses.budgethunter.sms.domain.SmsService
@@ -23,14 +25,15 @@ class SmsBroadcastReceiver : BroadcastReceiver(), KoinComponent {
     override fun onReceive(context: Context, intent: Intent) {
         ioScope.launch {
             if (intent.action != Telephony.Sms.Intents.SMS_RECEIVED_ACTION) return@launch
-            if (!preferencesManager.isSmsReadingEnabled()) return@launch
-
             val selectedBankIds = preferencesManager.getSelectedBankIds()
             if (selectedBankIds.isEmpty()) return@launch
 
-            val selectedBankConfigs = selectedBankIds.mapNotNull { bankId ->
-                SupportedBanks.getBankConfigById(bankId)
-            }.toSet()
+            // Only the banks the user reads by SMS: another channel may already register their movements
+            val selectedBankConfigs = BankChannels.readBy(
+                ReadingChannel.SMS,
+                selectedBankIds.mapNotNull { bankId -> SupportedBanks.getBankConfigById(bankId) },
+                preferencesManager.getBankChannels()
+            ).toSet()
 
             if (selectedBankConfigs.isEmpty()) return@launch
 

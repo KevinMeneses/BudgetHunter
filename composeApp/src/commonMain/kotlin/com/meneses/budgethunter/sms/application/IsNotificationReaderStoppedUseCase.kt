@@ -2,6 +2,7 @@ package com.meneses.budgethunter.sms.application
 
 import com.meneses.budgethunter.commons.data.PreferencesManager
 import com.meneses.budgethunter.commons.platform.PermissionsManager
+import com.meneses.budgethunter.sms.domain.ReadingChannel
 import kotlinx.coroutines.delay
 
 /**
@@ -23,7 +24,8 @@ class IsNotificationReaderStoppedUseCase(
     }
 
     private suspend fun looksStopped(): Boolean =
-        preferencesManager.isBankNotificationReadingEnabled() &&
+        // The bank apps and the bank emails are both read by the one listener
+        preferencesManager.getChannelsInUse().any { it != ReadingChannel.SMS } &&
             permissionsManager.hasNotificationListenerAccess() &&
             permissionsManager.areAppNotificationsEnabled() &&
             !permissionsManager.isNotificationListenerConnected()

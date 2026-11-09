@@ -2,10 +2,20 @@ package com.meneses.budgethunter.settings.application
 
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.sms.domain.BankSmsConfig
+import com.meneses.budgethunter.sms.domain.ReadingChannel
 
 sealed interface SettingsIntent {
-    data class ToggleSmsReading(val enabled: Boolean) : SettingsIntent
-    data class ToggleBankNotificationReading(val enabled: Boolean) : SettingsIntent
+    /** Starts reading a bank automatically, from its default channels. */
+    data class AddBank(val bank: BankSmsConfig) : SettingsIntent
+
+    /** Stops reading a bank, from every channel. */
+    data class RemoveBank(val bank: BankSmsConfig) : SettingsIntent
+
+    /** Reads [bank] from [channel] or stops it; picking one asks for its permission when missing. */
+    data class SetBankChannel(val bank: BankSmsConfig, val channel: ReadingChannel, val enabled: Boolean) :
+        SettingsIntent
+
+    data object RequestSmsPermission : SettingsIntent
     data object OpenNotificationAccessSettings : SettingsIntent
     data object HideNotificationAccessDialog : SettingsIntent
     data object OpenAppNotificationSettings : SettingsIntent
@@ -23,7 +33,7 @@ sealed interface SettingsIntent {
     data object HideDefaultBudgetSelector : SettingsIntent
     data object ShowBankSelector : SettingsIntent
     data object HideBankSelector : SettingsIntent
-    data class SetSelectedBanks(val bankConfigs: Set<BankSmsConfig>) : SettingsIntent
+
     data class ToggleAiProcessing(val enabled: Boolean) : SettingsIntent
     data object ShowManualPermissionDialog : SettingsIntent
     data object HideManualPermissionDialog : SettingsIntent

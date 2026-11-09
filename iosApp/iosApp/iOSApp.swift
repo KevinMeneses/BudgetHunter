@@ -5,10 +5,6 @@ import ComposeApp
 @main
 struct iOSApp: App {
 
-    init() {
-        IOSBridgeSetup.configureIfNeeded()
-    }
-
     var body: some Scene {
         WindowGroup {
             ContentView()
