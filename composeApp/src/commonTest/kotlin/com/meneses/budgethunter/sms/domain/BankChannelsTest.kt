@@ -32,9 +32,45 @@ class BankChannelsTest {
 
     @Test
     fun `a channel the bank does not have is ignored`() {
-        val chosen = mapOf("bancolombia" to setOf(ReadingChannel.APP))
+        val chosen = mapOf("bancolombia" to setOf(ReadingChannel.APP, ReadingChannel.EMAIL))
 
-        assertEquals(setOf(ReadingChannel.SMS), BankChannels.of(SupportedBanks.BANCOLOMBIA, chosen))
+        assertEquals(setOf(ReadingChannel.EMAIL), BankChannels.of(SupportedBanks.BANCOLOMBIA, chosen))
+    }
+
+    @Test
+    fun `a bank can be kept with no channel, read from nothing`() {
+        val chosen = mapOf("bancolombia" to emptySet<ReadingChannel>())
+
+        assertEquals(emptySet(), BankChannels.of(SupportedBanks.BANCOLOMBIA, chosen))
+        assertEquals(chosen, BankChannels.decode(BankChannels.encode(chosen)))
+    }
+
+    @Test
+    fun `the switches of earlier versions become channels without changing what is read`() {
+        val selected = listOf(SupportedBanks.BANCOLOMBIA, SupportedBanks.NU, SupportedBanks.DAVIVIENDA)
+        val stored = mapOf("davivienda" to setOf(ReadingChannel.SMS, ReadingChannel.EMAIL))
+
+        val migrated = BankChannels.migrate(selected, stored, isSmsOn = true, isAppOn = false, isEmailOn = false)
+
+        assertEquals(
+            mapOf(
+                "bancolombia" to setOf(ReadingChannel.SMS),
+                // Its app was not read: it stays selected, read from nothing
+                "nu" to emptySet(),
+                "davivienda" to setOf(ReadingChannel.SMS)
+            ),
+            migrated
+        )
+    }
+
+    @Test
+    fun `the channels in use are those of any bank`() {
+        val chosen = mapOf("nu" to setOf(ReadingChannel.EMAIL))
+
+        assertEquals(
+            setOf(ReadingChannel.SMS, ReadingChannel.EMAIL),
+            BankChannels.inUse(listOf(SupportedBanks.BANCOLOMBIA, SupportedBanks.NU), chosen)
+        )
     }
 
     @Test

@@ -9,38 +9,22 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import com.meneses.budgethunter.sms.domain.BankChannels
 import com.meneses.budgethunter.sms.domain.ReadingChannel
+import com.meneses.budgethunter.sms.domain.SupportedBanks
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 
 class PreferencesManager(private val preferences: DataStore<Preferences>) {
 
+    /**
+     * Whether some bank is read by SMS. Nothing reads it to decide what to register any more (the
+     * channels do): it is kept in step with them because the account still stores it.
+     */
     suspend fun isSmsReadingEnabled() = preferences.data
         .map { it[KEY_SMS_READING_ENABLED] }
         .firstOrNull() == true
 
     suspend fun setSmsReadingEnabled(value: Boolean) {
         preferences.edit { it[KEY_SMS_READING_ENABLED] = value }
-    }
-
-    /** Reading the notifications of bank apps, Android only. Kept on this device, not on the account. */
-    suspend fun isBankNotificationReadingEnabled() = preferences.data
-        .map { it[KEY_BANK_NOTIFICATION_READING_ENABLED] }
-        .firstOrNull() == true
-
-    suspend fun setBankNotificationReadingEnabled(value: Boolean) {
-        preferences.edit { it[KEY_BANK_NOTIFICATION_READING_ENABLED] = value }
-    }
-
-    /**
-     * Reading the notifications of email apps for the emails of the selected banks, Android only.
-     * Kept on this device, not on the account.
-     */
-    suspend fun isBankEmailReadingEnabled() = preferences.data
-        .map { it[KEY_BANK_EMAIL_READING_ENABLED] }
-        .firstOrNull() == true
-
-    suspend fun setBankEmailReadingEnabled(value: Boolean) {
-        preferences.edit { it[KEY_BANK_EMAIL_READING_ENABLED] = value }
     }
 
     suspend fun getDefaultBudgetId() = preferences.data
@@ -60,14 +44,37 @@ class PreferencesManager(private val preferences: DataStore<Preferences>) {
     }
 
     /**
-     * The channels picked for each bank ([BankChannels]). Kept on this device, not on the account:
-     * the channels are read by this device's switches.
+     * The channels each bank is read from ([BankChannels]), the one source of truth for automatic
+     * reading. Kept on this device, not on the account: they depend on this device's permissions.
+     *
+     * The first read after updating turns the switches of earlier versions into channels, so a bank
+     * keeps being read exactly as before.
      */
-    suspend fun getBankChannels(): Map<String, Set<ReadingChannel>> = preferences.data
-        .map { it[KEY_BANK_CHANNELS] }
-        .firstOrNull()
-        ?.let { BankChannels.decode(it) }
-        ?: emptyMap()
+    suspend fun getBankChannels(): Map<String, Set<ReadingChannel>> {
+        val stored = preferences.data.firstOrNull() ?: return emptyMap()
+        val chosen = stored[KEY_BANK_CHANNELS]?.let { BankChannels.decode(it) } ?: emptyMap()
+        if (stored[KEY_BANK_CHANNELS_MIGRATED] == true) return chosen
+
+        val migrated = BankChannels.migrate(
+            selectedBanks = (stored[KEY_SELECTED_BANK_IDS] ?: emptySet())
+                .mapNotNull { SupportedBanks.getSelectableBankById(it) },
+            stored = chosen,
+            isSmsOn = stored[KEY_SMS_READING_ENABLED] == true,
+            isAppOn = stored[KEY_BANK_NOTIFICATION_READING_ENABLED] == true,
+            isEmailOn = stored[KEY_BANK_EMAIL_READING_ENABLED] == true
+        )
+        preferences.edit {
+            it[KEY_BANK_CHANNELS] = BankChannels.encode(migrated)
+            it[KEY_BANK_CHANNELS_MIGRATED] = true
+        }
+        return migrated
+    }
+
+    /** Every channel some selected bank is read from: what needs a permission or a reader running. */
+    suspend fun getChannelsInUse(): Set<ReadingChannel> = BankChannels.inUse(
+        getSelectedBankIds().mapNotNull { SupportedBanks.getSelectableBankById(it) },
+        getBankChannels()
+    )
 
     suspend fun setBankChannels(value: Map<String, Set<ReadingChannel>>) {
         preferences.edit { it[KEY_BANK_CHANNELS] = BankChannels.encode(value) }
@@ -132,11 +139,13 @@ class PreferencesManager(private val preferences: DataStore<Preferences>) {
 
     companion object {
         private val KEY_SMS_READING_ENABLED = booleanPreferencesKey("sms_reading_enabled")
+        // The switches of earlier versions, only read once to turn them into channels
         private val KEY_BANK_NOTIFICATION_READING_ENABLED = booleanPreferencesKey("bank_notification_reading_enabled")
         private val KEY_BANK_EMAIL_READING_ENABLED = booleanPreferencesKey("bank_email_reading_enabled")
         private val KEY_DEFAULT_BUDGET_ID = intPreferencesKey("default_budget_id")
         private val KEY_SELECTED_BANK_IDS = stringSetPreferencesKey("selected_bank_ids")
         private val KEY_BANK_CHANNELS = stringSetPreferencesKey("bank_reading_channels")
+        private val KEY_BANK_CHANNELS_MIGRATED = booleanPreferencesKey("bank_reading_channels_migrated")
         private val KEY_AI_PROCESSING_ENABLED = booleanPreferencesKey("ai_processing_enabled")
         private val KEY_OFFLINE_MODE_ENABLED = booleanPreferencesKey("offline_mode_enabled")
         private val KEY_LAST_SIGNED_IN_EMAIL = stringPreferencesKey("last_signed_in_email")

@@ -128,7 +128,6 @@
     
     <!-- SMS Processing -->
     <string name="sms_reading">SMS reading</string>
-    <string name="sms_reading_description">Read bank messages to create entries automatically</string>
     <string name="sms_permission_required">Permission to read SMS is required</string>
     <string name="sms_permission_explanation">This feature reads bank messages to create budget entries automatically</string>
     <string name="transaction_detected">Transaction detected</string>
@@ -153,12 +152,8 @@
     <string name="no_default_budget">No default budget set</string>
     <string name="save_default_budget">Save</string>
     <string name="select_default_budget_description">Select a default budget for automatic transactions:</string>
-    <string name="bank_for_sms_notifications">Banks</string>
-    <string name="select_a_bank">Select a bank</string>
     <string name="no_banks_configured">No banks configured</string>
-    <string name="select_banks">Select banks</string>
     <string name="select_banks_description">Select the banks to process automatic transactions:</string>
-    <string name="no_banks_selected">No bank selected</string>
     
     <!-- AI Processing -->
     <string name="ai_processing">AI processing</string>
@@ -438,11 +433,6 @@
     <string name="section_automatic_entries">Automatic entries</string>
     <string name="section_ai">Artificial intelligence</string>
     <string name="signed_in">Signed in</string>
-    <string name="read_bank_sms">Read bank SMS</string>
-    <plurals name="banks_selected_count">
-        <item quantity="one">%1$d bank selected</item>
-        <item quantity="other">%1$d banks selected</item>
-    </plurals>
 
     <!-- Redesign: collaborators -->
     <string name="collaborators_screen_title">Collaborators</string>
@@ -476,12 +466,6 @@
     <string name="sign_out_unsynced_warning">Some budgets or entries have not been synced yet. Signing out deletes them from this device. Sign out anyway?</string>
     <string name="error_email_already_registered">An account with this email already exists</string>
     <string name="shared_with_people">Shared by %1$d people</string>
-    <string name="read_bank_app_notifications">Read bank app notifications</string>
-    <string name="bank_notification_reading_description">Create entries from the movements that the apps of the selected banks notify</string>
-    <string name="read_bank_emails">Read bank emails</string>
-    <string name="bank_email_reading_description">Create entries from the movements in the emails of the selected banks</string>
-    <string name="reading_channels_duplicates_title">Possible repeated movements</string>
-    <string name="reading_channels_duplicates_note">Some banks are read from more than one channel that is on. If they tell you about the same movement by several of them, it will be added once per channel. Keep for each bank only the channels its alerts reach you by, or delete the repeated entries</string>
     <string name="notification_access_title">Notification access</string>
     <string name="notification_access_missing">Notification access is missing. Tap to grant it</string>
     <string name="app_notifications_off_explanation">Budget Hunter's notifications are off. While they stay off, Android does not hand it your banks' notifications, so no movement is registered.\n\nOn the next screen, turn on the notifications of Budget Hunter.</string>
@@ -491,18 +475,19 @@
     <string name="notification_reader_stopped_explanation">Android stopped handing Budget Hunter your banks' notifications, which can happen after its notifications are switched off and on. The app cannot resume it by itself.\n\nOn the next screen, tap “Force stop” and confirm. Then open Budget Hunter again.</string>
     <string name="app_notifications_off_title">Notifications are off</string>
     <string name="app_notifications_off_description">With this app's notifications off, Android does not let it read your banks' ones. Tap to turn them on</string>
-    <string name="notification_access_explanation">Budget Hunter will read only the notifications of the apps of the banks you select in Banks, to register the movements they show in your default budget. If you read bank emails, it looks only at the sender of your email app's notifications and reads just the ones from those banks. Notifications from every other app are discarded without being read.\n\nOn the next screen turn on Budget Hunter. Android shows a warning because this access could see every notification.\n\nIf the option is grayed out, open the app info, tap the ⋮ menu and choose “Allow restricted settings”.</string>
+    <string name="notification_access_explanation">Budget Hunter will read only the notifications of the apps of the banks you add with the App channel, to register the movements they show in your default budget. Of your email apps' notifications it looks only at who sent the email, and reads just those from the banks with the Email channel. Notifications from every other app are discarded without being read.\n\nOn the next screen turn on Budget Hunter. Android shows a warning because this access could see every notification.\n\nIf the option is grayed out, open the app info, tap the ⋮ menu and choose “Allow restricted settings”.</string>
     <string name="bank_source_sms">SMS</string>
     <string name="bank_source_notifications">App notifications</string>
     <string name="bank_source_sms_and_notifications">SMS and app notifications</string>
-    <string name="no_notification_bank_selected">None read from app notifications</string>
-    <string name="notification_bank_needs_reading">Some are read from app notifications: turn them on above</string>
-    <string name="sms_bank_needs_reading">Some are read by SMS: turn SMS reading on above</string>
     <string name="default_budget_needed_for_reading">Choose one: movements are not registered without it</string>
-    <string name="email_bank_needs_reading">Some are read by email: turn bank email reading on above</string>
-    <string name="no_email_bank_selected">None read by email: pick it for each bank</string>
     <string name="reading_channel_sms">SMS</string>
     <string name="reading_channel_app">App</string>
     <string name="reading_channel_email">Email</string>
-    <string name="bank_channels_hint">Read by:</string>
+    <string name="add_bank">Add bank</string>
+    <string name="add_bank_description">Automatically add the movements your bank tells you about by SMS, in its app or by email</string>
+    <string name="remove_bank">Stop reading %1$s</string>
+    <string name="bank_reads_nothing">Not read: pick at least one channel</string>
+    <string name="bank_may_repeat_movements">If it tells you about the same movement through several of these channels, it will be added once per channel</string>
+    <string name="sms_permission_missing_title">SMS permission</string>
+    <string name="sms_permission_missing_description">The permission to read your banks' SMS is missing. Tap to grant it</string>
 </resources>

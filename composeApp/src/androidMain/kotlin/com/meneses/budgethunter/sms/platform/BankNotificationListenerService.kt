@@ -1,6 +1,9 @@
 package com.meneses.budgethunter.sms.platform
 
 import android.app.Notification
+import android.app.Person
+import android.os.Build
+import android.os.Bundle
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import com.meneses.budgethunter.commons.data.PreferencesManager
@@ -65,9 +68,7 @@ class BankNotificationListenerService : NotificationListenerService(), KoinCompo
             // The shared IO scope has no exception handler: a failure here (reading the
             // preferences) must not take down the app, which runs this with no screen open
             try {
-                if (!preferencesManager.isBankNotificationReadingEnabled()) return@launch
-                // Like an SMS bank, an app is read only while the user has it among the selected banks,
-                // and only when its app is one of the channels picked for it
+                // An app is read only while its bank is selected with its app among its channels
                 if (bankConfig.id !in preferencesManager.getSelectedBankIds()) return@launch
                 val channels = BankChannels.of(bankConfig, preferencesManager.getBankChannels())
                 if (ReadingChannel.APP !in channels) return@launch
@@ -96,7 +97,6 @@ class BankNotificationListenerService : NotificationListenerService(), KoinCompo
 
         ioScope.launch {
             try {
-                if (!preferencesManager.isBankEmailReadingEnabled()) return@launch
                 val selectedBanks = preferencesManager.getSelectedBankIds()
                     .mapNotNull { SupportedBanks.getSelectableBankById(it) }
                 // Only the banks whose emails the user picked: their emails are read for nobody else
@@ -105,7 +105,8 @@ class BankNotificationListenerService : NotificationListenerService(), KoinCompo
                     selectedBanks,
                     preferencesManager.getBankChannels()
                 )
-                val bankConfig = BankEmail.findSender(sender, emailBanks) ?: return@launch
+                if (emailBanks.isEmpty()) return@launch
+                val bankConfig = BankEmail.findSender(sender, extras.senderAddresses(), emailBanks) ?: return@launch
 
                 val email = BankEmail.fromNotification(
                     title = sender,
@@ -127,6 +128,22 @@ class BankNotificationListenerService : NotificationListenerService(), KoinCompo
                 // Nothing to log: the email holds names and amounts
             }
         }
+    }
+
+    /**
+     * The addresses an email app attaches to the people of a notification ("mailto:..."), which
+     * tell who really sent an email when its display name could be anyone's. Not every app adds them.
+     */
+    private fun Bundle.senderAddresses(): List<String> {
+        val addresses = mutableListOf<String>()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            @Suppress("DEPRECATION")
+            getParcelableArrayList<Person>(Notification.EXTRA_PEOPLE_LIST)
+                ?.mapNotNullTo(addresses) { it.uri }
+        }
+        @Suppress("DEPRECATION")
+        getStringArray(Notification.EXTRA_PEOPLE)?.let { addresses += it }
+        return addresses
     }
 
     /** The summary of a group repeats its children, an ongoing one is a progress or a session. */

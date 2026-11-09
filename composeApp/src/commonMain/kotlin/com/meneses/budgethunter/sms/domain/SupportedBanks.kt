@@ -19,42 +19,48 @@ object SupportedBanks {
         id = "banco_av_villas",
         displayName = "Banco AV Villas",
         senderKeywords = listOf("AV Villas", "AVVILLAS", "85660"),
-        transactionAmountRegex = Regex("""(?:Compra|Pago|Transaccion)\s*(?:por|de)\s*\$?\s*([\d.,]+)""", RegexOption.IGNORE_CASE)
+        transactionAmountRegex = Regex("""(?:Compra|Pago|Transaccion)\s*(?:por|de)\s*\$?\s*([\d.,]+)""", RegexOption.IGNORE_CASE),
+        emailDomains = listOf("avvillas.com.co")
     )
 
     val BANCO_CAJA_SOCIAL = BankSmsConfig(
         id = "banco_caja_social",
         displayName = "Banco Caja Social",
         senderKeywords = listOf("Caja Social", "CAJA SOCIAL", "890303"),
-        transactionAmountRegex = Regex("""(?:valor|monto|por|de)\s*\$?\s*([\d.,]+)""", RegexOption.IGNORE_CASE)
+        transactionAmountRegex = Regex("""(?:valor|monto|por|de)\s*\$?\s*([\d.,]+)""", RegexOption.IGNORE_CASE),
+        emailDomains = listOf("bancocajasocial.com")
     )
 
     val BANCOLOMBIA = BankSmsConfig(
         id = "bancolombia",
         displayName = "Bancolombia",
         senderKeywords = listOf("Bancolombia", "BANCOLOMBIA", "85784", "87400"),
-        transactionAmountRegex = Regex("""(?:valor|monto|por|de)\s*\$?\s*([\d.,]+)""", RegexOption.IGNORE_CASE)
+        transactionAmountRegex = Regex("""(?:valor|monto|por|de)\s*\$?\s*([\d.,]+)""", RegexOption.IGNORE_CASE),
+        emailDomains = listOf("bancolombia.com.co", "bancolombia.com", "notificacionesbancolombia.com")
     )
 
     val BANCO_DE_BOGOTA = BankSmsConfig(
         id = "banco_de_bogota",
         displayName = "Banco de Bogotá",
         senderKeywords = listOf("Bco Bogota", "BANCO BOGOTA", "890031"),
-        transactionAmountRegex = Regex("""(?:valor|monto|por|de)\s*\$?\s*([\d.,]+)""", RegexOption.IGNORE_CASE)
+        transactionAmountRegex = Regex("""(?:valor|monto|por|de)\s*\$?\s*([\d.,]+)""", RegexOption.IGNORE_CASE),
+        emailDomains = listOf("bancodebogota.com.co", "bancodebogota.com")
     )
 
     val BANCO_DE_OCCIDENTE = BankSmsConfig(
         id = "banco_de_occidente",
         displayName = "Banco de Occidente",
         senderKeywords = listOf("Bco Occidente", "BANCO OCCIDENTE", "85999"),
-        transactionAmountRegex = Regex("""(?:por|de)\s*(?:valor|monto)\s*(?:de)?\s*\$?\s*([\d.,]+)""", RegexOption.IGNORE_CASE)
+        transactionAmountRegex = Regex("""(?:por|de)\s*(?:valor|monto)\s*(?:de)?\s*\$?\s*([\d.,]+)""", RegexOption.IGNORE_CASE),
+        emailDomains = listOf("bancodeoccidente.com.co")
     )
 
     val BANCO_FALABELLA = BankSmsConfig(
         id = "banco_falabella",
         displayName = "Banco Falabella",
         senderKeywords = listOf("Falabella", "BANCO FALABELLA", "890700"),
-        transactionAmountRegex = Regex("""(?:monto|valor|por|de)\s*\$?\s*([\d.,]+)""", RegexOption.IGNORE_CASE)
+        transactionAmountRegex = Regex("""(?:monto|valor|por|de)\s*\$?\s*([\d.,]+)""", RegexOption.IGNORE_CASE),
+        emailDomains = listOf("bancofalabella.com.co")
     )
 
     val BANCO_GNB_SUDAMERIS = BankSmsConfig(
@@ -75,14 +81,16 @@ object SupportedBanks {
         id = "banco_popular",
         displayName = "Banco Popular",
         senderKeywords = listOf("Bco Popular", "BANCO POPULAR", "890102", "Popular"),
-        transactionAmountRegex = Regex("""(?:por|de|valor|monto)\s*\$?\s*([\d.,]+)""", RegexOption.IGNORE_CASE)
+        transactionAmountRegex = Regex("""(?:por|de|valor|monto)\s*\$?\s*([\d.,]+)""", RegexOption.IGNORE_CASE),
+        emailDomains = listOf("bancopopular.com.co")
     )
 
     val BBVA_COLOMBIA = BankSmsConfig(
         id = "bbva_colombia",
         displayName = "BBVA Colombia",
         senderKeywords = listOf("BBVA", "BBVA COLOMBIA", "85330", "890001"),
-        transactionAmountRegex = Regex("""(?:compra|pago|transaccion)\s*(?:por|de)\s*\$?\s*([\d.,]+)""", RegexOption.IGNORE_CASE)
+        transactionAmountRegex = Regex("""(?:compra|pago|transaccion)\s*(?:por|de)\s*\$?\s*([\d.,]+)""", RegexOption.IGNORE_CASE),
+        emailDomains = listOf("bbva.com.co", "bbva.com")
     )
 
     val CITIBANK_COLOMBIA = BankSmsConfig(
@@ -96,21 +104,24 @@ object SupportedBanks {
         id = "davivienda",
         displayName = "Davivienda",
         senderKeywords = listOf("Davivienda", "DAVIVIENDA", "85888", "890002"),
-        transactionAmountRegex = Regex("""(?:compra|pago|transaccion)\s*(?:por|de)\s*\$?\s*([\d.,]+)""", RegexOption.IGNORE_CASE)
+        transactionAmountRegex = Regex("""(?:compra|pago|transaccion)\s*(?:por|de)\s*\$?\s*([\d.,]+)""", RegexOption.IGNORE_CASE),
+        emailDomains = listOf("davivienda.com")
     )
 
     val ITAU_COLOMBIA = BankSmsConfig(
         id = "itau_colombia",
         displayName = "Itaú Colombia",
         senderKeywords = listOf("Itau", "ITAU", "890007"),
-        transactionAmountRegex = Regex("""(?:compra|pago|transaccion)\s*(?:por|de)\s*\$?\s*([\d.,]+)""", RegexOption.IGNORE_CASE)
+        transactionAmountRegex = Regex("""(?:compra|pago|transaccion)\s*(?:por|de)\s*\$?\s*([\d.,]+)""", RegexOption.IGNORE_CASE),
+        emailDomains = listOf("itau.co")
     )
 
     val SCOTIABANK_COLPATRIA = BankSmsConfig(
         id = "scotiabank_colpatria",
         displayName = "Scotiabank Colpatria",
         senderKeywords = listOf("Scotiabank Colpatria", "COLPATRIA", "85777", "Scotiabank"),
-        transactionAmountRegex = Regex("""(?:valor|monto|por|de)\s*\$?\s*([\d.,]+)""", RegexOption.IGNORE_CASE)
+        transactionAmountRegex = Regex("""(?:valor|monto|por|de)\s*\$?\s*([\d.,]+)""", RegexOption.IGNORE_CASE),
+        emailDomains = listOf("scotiabankcolpatria.com")
     )
 
     val ALL_BANKS = listOf(
@@ -146,7 +157,8 @@ object SupportedBanks {
             """(?:envi[oó]|enviaste|recibiste|pagaste)\s+(?:por\s+)?\$?\s*([0-9][0-9.,]*)""",
             RegexOption.IGNORE_CASE
         ),
-        appPackages = listOf("com.nequi.MobileApp")
+        appPackages = listOf("com.nequi.MobileApp"),
+        emailDomains = listOf("nequi.com.co")
     )
 
     val NU = BankSmsConfig(
@@ -157,7 +169,8 @@ object SupportedBanks {
             """(?:recibiste|enviaste|pagaste|compraste|transferiste)\s+(?:por\s+)?\$?\s*([0-9][0-9.,]*)""",
             RegexOption.IGNORE_CASE
         ),
-        appPackages = listOf("com.nu.production")
+        appPackages = listOf("com.nu.production"),
+        emailDomains = listOf("nu.com.co")
     )
 
     private val NOTIFICATION_ONLY_BANKS = listOf(NEQUI, NU)

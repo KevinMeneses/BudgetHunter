@@ -63,21 +63,71 @@ class BankEmailTest {
     }
 
     @Test
-    fun `the sender is matched against the selected banks by name`() {
+    fun `without an address the sender is matched against the selected banks by name`() {
         val selected = listOf(SupportedBanks.BANCOLOMBIA, SupportedBanks.DAVIVIENDA, SupportedBanks.NU)
 
-        assertEquals(SupportedBanks.BANCOLOMBIA, BankEmail.findSender("Bancolombia", selected))
-        assertEquals(SupportedBanks.DAVIVIENDA, BankEmail.findSender("Notificaciones Davivienda", selected))
-        assertEquals(SupportedBanks.NU, BankEmail.findSender("Nu Colombia", selected))
+        assertEquals(SupportedBanks.BANCOLOMBIA, BankEmail.findSender("Bancolombia", emptyList(), selected))
+        assertEquals(SupportedBanks.DAVIVIENDA, BankEmail.findSender("Notificaciones Davivienda", emptyList(), selected))
+        assertEquals(SupportedBanks.NU, BankEmail.findSender("Nu Colombia", emptyList(), selected))
         // Case and accents do not matter
-        assertEquals(SupportedBanks.BANCOLOMBIA, BankEmail.findSender("ALERTAS BANCOLOMBIA", selected))
-        assertEquals(SupportedBanks.BANCAMIA, BankEmail.findSender("Bancamía", listOf(SupportedBanks.BANCAMIA)))
-        assertEquals(SupportedBanks.BANCAMIA, BankEmail.findSender("bancamia", listOf(SupportedBanks.BANCAMIA)))
+        assertEquals(SupportedBanks.BANCOLOMBIA, BankEmail.findSender("ALERTAS BANCOLOMBIA", emptyList(), selected))
+        assertEquals(
+            SupportedBanks.BANCAMIA,
+            BankEmail.findSender("Bancamía", emptyList(), listOf(SupportedBanks.BANCAMIA))
+        )
+        assertEquals(
+            SupportedBanks.BANCAMIA,
+            BankEmail.findSender("bancamia", emptyList(), listOf(SupportedBanks.BANCAMIA))
+        )
         // A bank that is not selected, a person or a store are not read
-        assertNull(BankEmail.findSender("BBVA", selected))
-        assertNull(BankEmail.findSender("Nubia Rodríguez", selected))
-        assertNull(BankEmail.findSender("Rappi", selected))
-        assertNull(BankEmail.findSender("", selected))
+        assertNull(BankEmail.findSender("BBVA", emptyList(), selected))
+        assertNull(BankEmail.findSender("Nubia Rodríguez", emptyList(), selected))
+        assertNull(BankEmail.findSender("Rappi", emptyList(), selected))
+        assertNull(BankEmail.findSender("", emptyList(), selected))
+    }
+
+    @Test
+    fun `an address from the bank's domain proves the sender whatever its name`() {
+        val selected = listOf(SupportedBanks.BANCOLOMBIA, SupportedBanks.DAVIVIENDA)
+
+        assertEquals(
+            SupportedBanks.BANCOLOMBIA,
+            BankEmail.findSender(
+                "Alertas y Notificaciones",
+                listOf("mailto:alertasynotificaciones@an.notificacionesbancolombia.com"),
+                selected
+            )
+        )
+        assertEquals(
+            SupportedBanks.DAVIVIENDA,
+            BankEmail.findSender("Davivienda", listOf("Davivienda <notificaciones@davivienda.com>"), selected)
+        )
+    }
+
+    @Test
+    fun `a bank's name on an address outside its domains is a fake`() {
+        val selected = listOf(SupportedBanks.BANCOLOMBIA)
+
+        assertNull(BankEmail.findSender("Bancolombia", listOf("mailto:alertas@bancolombia-seguro.co"), selected))
+        // A lookalike domain is not under the bank's
+        assertNull(BankEmail.findSender("Bancolombia", listOf("alertas@fakebancolombia.com.co"), selected))
+    }
+
+    @Test
+    fun `a bank with no known domain is still told by its name`() {
+        assertEquals(
+            SupportedBanks.BANCAMIA,
+            BankEmail.findSender("Bancamía", listOf("mailto:avisos@correo.example"), listOf(SupportedBanks.BANCAMIA))
+        )
+    }
+
+    @Test
+    fun `only email addresses give a domain`() {
+        assertEquals("bancolombia.com.co", BankEmail.addressDomain("mailto:a@Bancolombia.com.co"))
+        assertEquals("davivienda.com", BankEmail.addressDomain("Davivienda <x@davivienda.com>"))
+        assertNull(BankEmail.addressDomain("tel:+573001234567"))
+        assertNull(BankEmail.addressDomain("content://com.android.contacts/contacts/lookup/1"))
+        assertNull(BankEmail.addressDomain(""))
     }
 
     @Test

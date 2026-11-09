@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,14 +22,16 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.AccountBalanceWallet
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Sms
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -52,6 +56,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import budgethunter.composeapp.generated.resources.Res
 import budgethunter.composeapp.generated.resources.account
+import budgethunter.composeapp.generated.resources.add_bank
+import budgethunter.composeapp.generated.resources.add_bank_description
 import budgethunter.composeapp.generated.resources.ai_processing
 import budgethunter.composeapp.generated.resources.ai_processing_description
 import budgethunter.composeapp.generated.resources.app_description
@@ -59,32 +65,24 @@ import budgethunter.composeapp.generated.resources.app_notifications_off_descrip
 import budgethunter.composeapp.generated.resources.app_notifications_off_explanation
 import budgethunter.composeapp.generated.resources.app_notifications_off_title
 import budgethunter.composeapp.generated.resources.app_version
-import budgethunter.composeapp.generated.resources.bank_for_sms_notifications
-import budgethunter.composeapp.generated.resources.bank_email_reading_description
-import budgethunter.composeapp.generated.resources.bank_notification_reading_description
-import budgethunter.composeapp.generated.resources.banks_selected_count
+import budgethunter.composeapp.generated.resources.bank_may_repeat_movements
+import budgethunter.composeapp.generated.resources.bank_reads_nothing
 import budgethunter.composeapp.generated.resources.cancel
 import budgethunter.composeapp.generated.resources.change_password
 import budgethunter.composeapp.generated.resources.come_back
 import budgethunter.composeapp.generated.resources.default_budget
 import budgethunter.composeapp.generated.resources.default_budget_needed_for_reading
-import budgethunter.composeapp.generated.resources.email_bank_needs_reading
-import budgethunter.composeapp.generated.resources.no_banks_selected
 import budgethunter.composeapp.generated.resources.no_default_budget
-import budgethunter.composeapp.generated.resources.no_email_bank_selected
-import budgethunter.composeapp.generated.resources.no_notification_bank_selected
 import budgethunter.composeapp.generated.resources.notification_access_explanation
 import budgethunter.composeapp.generated.resources.notification_access_missing
 import budgethunter.composeapp.generated.resources.notification_access_title
-import budgethunter.composeapp.generated.resources.notification_bank_needs_reading
 import budgethunter.composeapp.generated.resources.notification_reader_stopped_description
 import budgethunter.composeapp.generated.resources.notification_reader_stopped_explanation
 import budgethunter.composeapp.generated.resources.notification_reader_stopped_title
-import budgethunter.composeapp.generated.resources.read_bank_app_notifications
-import budgethunter.composeapp.generated.resources.read_bank_emails
-import budgethunter.composeapp.generated.resources.read_bank_sms
-import budgethunter.composeapp.generated.resources.reading_channels_duplicates_note
-import budgethunter.composeapp.generated.resources.reading_channels_duplicates_title
+import budgethunter.composeapp.generated.resources.reading_channel_app
+import budgethunter.composeapp.generated.resources.reading_channel_email
+import budgethunter.composeapp.generated.resources.reading_channel_sms
+import budgethunter.composeapp.generated.resources.remove_bank
 import budgethunter.composeapp.generated.resources.section_ai
 import budgethunter.composeapp.generated.resources.section_automatic_entries
 import budgethunter.composeapp.generated.resources.set_password
@@ -94,8 +92,8 @@ import budgethunter.composeapp.generated.resources.sign_out
 import budgethunter.composeapp.generated.resources.sign_out_confirmation
 import budgethunter.composeapp.generated.resources.sign_out_unsynced_warning
 import budgethunter.composeapp.generated.resources.signed_in
-import budgethunter.composeapp.generated.resources.sms_bank_needs_reading
-import budgethunter.composeapp.generated.resources.sms_reading_description
+import budgethunter.composeapp.generated.resources.sms_permission_missing_description
+import budgethunter.composeapp.generated.resources.sms_permission_missing_title
 import budgethunter.composeapp.generated.resources.sms_shortcut_settings_description
 import budgethunter.composeapp.generated.resources.sms_shortcut_settings_row
 import com.meneses.budgethunter.commons.ui.AppBar
@@ -104,10 +102,12 @@ import com.meneses.budgethunter.commons.ui.LoadingOverlay
 import com.meneses.budgethunter.commons.util.Platform
 import com.meneses.budgethunter.settings.application.SettingsIntent
 import com.meneses.budgethunter.settings.application.SettingsState
+import com.meneses.budgethunter.sms.domain.BankChannels
+import com.meneses.budgethunter.sms.domain.BankSmsConfig
 import com.meneses.budgethunter.sms.domain.ReadingChannel
 import com.meneses.budgethunter.theme.AppColors
 import kotlinx.serialization.Serializable
-import org.jetbrains.compose.resources.pluralStringResource
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 /**
@@ -229,14 +229,10 @@ object SettingsScreen {
         }
 
         if (uiState.isBankSelectorVisible) {
-            BankSelectorModal(
-                availableBanks = uiState.availableBanks,
-                selectedBanks = uiState.selectedBanks,
-                bankChannels = uiState.bankChannels,
+            AddBankModal(
+                banks = uiState.unselectedBanks,
                 onDismiss = { onIntent(SettingsIntent.HideBankSelector) },
-                onBanksSelected = { banks, channels ->
-                    onIntent(SettingsIntent.SetSelectedBanks(banks, channels))
-                }
+                onBankSelected = { bank -> onIntent(SettingsIntent.AddBank(bank)) }
             )
         }
 
@@ -299,48 +295,53 @@ object SettingsScreen {
         )
     }
 
+    /**
+     * Automatic reading on Android: the banks read, each with the channels it is read from. The
+     * channels are the one place where reading is decided; the permissions they need are asked for
+     * when a channel is picked and warned about below while missing.
+     */
     @Composable
     private fun SmsReadingGroup(
         uiState: SettingsState,
         onIntent: (SettingsIntent) -> Unit
     ) {
         SettingsGroup {
-            SettingRow(
-                icon = Icons.Default.Sms,
-                title = stringResource(Res.string.read_bank_sms),
-                subtitle = stringResource(Res.string.sms_reading_description),
-                switchChecked = uiState.isSmsReadingEnabled,
-                onSwitchChange = { onIntent(SettingsIntent.ToggleSmsReading(it)) }
-            )
-            GroupDivider()
-            SettingRow(
-                icon = Icons.Default.Notifications,
-                title = stringResource(Res.string.read_bank_app_notifications),
-                subtitle = stringResource(Res.string.bank_notification_reading_description),
-                switchChecked = uiState.isBankNotificationReadingEnabled,
-                onSwitchChange = { onIntent(SettingsIntent.ToggleBankNotificationReading(it)) }
-            )
-            GroupDivider()
-            SettingRow(
-                icon = Icons.Default.Email,
-                title = stringResource(Res.string.read_bank_emails),
-                subtitle = stringResource(Res.string.bank_email_reading_description),
-                switchChecked = uiState.isBankEmailReadingEnabled,
-                onSwitchChange = { onIntent(SettingsIntent.ToggleBankEmailReading(it)) }
-            )
-            // Nothing tells apart the same movement read twice: a bank read from two channels that are
-            // on registers what it reports by both twice
-            if (uiState.mayRepeatMovements) {
+            uiState.sortedSelectedBanks.forEach { bank ->
+                BankReadingRow(
+                    bank = bank,
+                    channels = uiState.channelsOf(bank),
+                    onChannelChange = { channel, enabled ->
+                        onIntent(SettingsIntent.SetBankChannel(bank, channel, enabled))
+                    },
+                    onRemove = { onIntent(SettingsIntent.RemoveBank(bank)) }
+                )
                 GroupDivider()
-                // A row of its own: it is about the switches together, not about the last one
+            }
+            SettingRow(
+                icon = Icons.Default.Add,
+                title = stringResource(Res.string.add_bank),
+                subtitle = if (uiState.selectedBanks.isEmpty()) {
+                    stringResource(Res.string.add_bank_description)
+                } else {
+                    null
+                },
+                showChevron = false,
+                enabled = uiState.unselectedBanks.isNotEmpty(),
+                onClick = { onIntent(SettingsIntent.ShowBankSelector) }
+            )
+            // What the picked channels need and is still missing, most basic first
+            if (uiState.isSmsPermissionMissing) {
+                GroupDivider()
                 SettingRow(
                     icon = Icons.Default.Warning,
-                    title = stringResource(Res.string.reading_channels_duplicates_title),
-                    subtitle = stringResource(Res.string.reading_channels_duplicates_note),
-                    contentColor = AppColors.error
+                    title = stringResource(Res.string.sms_permission_missing_title),
+                    subtitle = stringResource(Res.string.sms_permission_missing_description),
+                    contentColor = AppColors.error,
+                    onClick = { onIntent(SettingsIntent.RequestSmsPermission) }
                 )
             }
-            // Both switches use the one notification reader: they read nothing until the system grants access
+            // The bank apps and the bank emails use the one notification reader: nothing is read
+            // from either until the system grants access
             if (uiState.isNotificationReaderNeeded && !uiState.hasNotificationListenerAccess) {
                 GroupDivider()
                 SettingRow(
@@ -372,51 +373,88 @@ object SettingsScreen {
                 )
             }
             GroupDivider()
-            SettingRow(
-                icon = Icons.Default.AccountBalance,
-                title = stringResource(Res.string.bank_for_sms_notifications),
-                subtitle = if (uiState.selectedBanks.isNotEmpty()) {
-                    pluralStringResource(
-                        Res.plurals.banks_selected_count,
-                        uiState.selectedBanks.size,
-                        uiState.selectedBanks.size
-                    )
-                } else {
-                    stringResource(Res.string.no_banks_selected)
-                },
-                // A channel picked for a bank reads nothing while its switch is off, and a switch on
-                // reads nothing while no bank is read from it: both are fixed here or just above
-                warning = when {
-                    uiState.isMissing(ReadingChannel.APP) -> stringResource(Res.string.notification_bank_needs_reading)
-                    uiState.isMissing(ReadingChannel.SMS) -> stringResource(Res.string.sms_bank_needs_reading)
-                    uiState.isMissing(ReadingChannel.EMAIL) -> stringResource(Res.string.email_bank_needs_reading)
-                    uiState.isBankNotificationReadingEnabled && !uiState.hasBankReadBy(ReadingChannel.APP) ->
-                        stringResource(Res.string.no_notification_bank_selected)
-                    uiState.isBankEmailReadingEnabled && !uiState.hasBankReadBy(ReadingChannel.EMAIL) ->
-                        stringResource(Res.string.no_email_bank_selected)
-                    else -> null
-                },
-                // One selection for every channel, with the channels picked per bank
-                enabled = uiState.isAnyReadingEnabled,
-                onClick = { onIntent(SettingsIntent.ShowBankSelector) }
-            )
-            GroupDivider()
-            // Every source stores the movements in this budget
-            val isReadingEnabled = uiState.isSmsReadingEnabled || uiState.isNotificationReaderNeeded
+            // Every channel stores the movements in this budget
             SettingRow(
                 icon = Icons.Default.AccountBalanceWallet,
                 title = stringResource(Res.string.default_budget),
                 subtitle = uiState.defaultBudget?.name ?: stringResource(Res.string.no_default_budget),
                 // Without it every movement read is dropped (only a notification says so, once it is lost)
-                warning = if (isReadingEnabled && uiState.defaultBudget == null) {
+                warning = if (uiState.isAnyReadingEnabled && uiState.defaultBudget == null) {
                     stringResource(Res.string.default_budget_needed_for_reading)
                 } else {
                     null
                 },
-                enabled = isReadingEnabled,
+                enabled = uiState.isAnyReadingEnabled,
                 onClick = { onIntent(SettingsIntent.ShowDefaultBudgetSelector) }
             )
         }
+    }
+
+    /**
+     * A bank read automatically: a chip per channel it can be read from, and what its choice means
+     * when it reads nothing or may register a movement twice.
+     */
+    @OptIn(ExperimentalLayoutApi::class)
+    @Composable
+    private fun BankReadingRow(
+        bank: BankSmsConfig,
+        channels: Set<ReadingChannel>,
+        onChannelChange: (ReadingChannel, Boolean) -> Unit,
+        onRemove: () -> Unit
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp, top = 10.dp, bottom = 10.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.AccountBalance,
+                contentDescription = null,
+                tint = AppColors.onSurfaceVariant,
+                modifier = Modifier.padding(top = 4.dp).size(24.dp)
+            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(text = bank.displayName, fontSize = 16.sp, color = AppColors.onSurface)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    BankChannels.available(bank).forEach { channel ->
+                        val picked = channel in channels
+                        FilterChip(
+                            selected = picked,
+                            onClick = { onChannelChange(channel, !picked) },
+                            label = { Text(stringResource(channel.label())) }
+                        )
+                    }
+                }
+                val warning = when {
+                    channels.isEmpty() -> stringResource(Res.string.bank_reads_nothing)
+                    // Nothing tells apart the same movement read twice
+                    channels.size > 1 -> stringResource(Res.string.bank_may_repeat_movements)
+                    else -> null
+                }
+                if (warning != null) {
+                    Text(
+                        text = warning,
+                        fontSize = 13.sp,
+                        lineHeight = 18.sp,
+                        color = AppColors.error
+                    )
+                }
+            }
+            IconButton(onClick = onRemove) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = stringResource(Res.string.remove_bank, bank.displayName),
+                    tint = AppColors.onSurfaceVariant
+                )
+            }
+        }
+    }
+
+    private fun ReadingChannel.label(): StringResource = when (this) {
+        ReadingChannel.SMS -> Res.string.reading_channel_sms
+        ReadingChannel.APP -> Res.string.reading_channel_app
+        ReadingChannel.EMAIL -> Res.string.reading_channel_email
     }
 
     /**

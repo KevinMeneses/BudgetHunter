@@ -195,14 +195,15 @@ class SettingsViewModelTest {
     }
 
     @Test
-    fun `turning on bank notifications without access explains it before the system settings`() = runTest {
+    fun `adding an app bank without notification access explains it before the system settings`() = runTest {
         every { permissionsManager.hasNotificationListenerAccess() } returns false
 
-        viewModel.sendIntent(SettingsIntent.ToggleBankNotificationReading(true))
+        viewModel.sendIntent(SettingsIntent.AddBank(SupportedBanks.NEQUI))
         testDispatcher.scheduler.advanceUntilIdle()
 
-        coVerify { preferencesManager.setBankNotificationReadingEnabled(true) }
-        assertTrue(viewModel.uiState.value.isBankNotificationReadingEnabled)
+        coVerify { preferencesManager.setSelectedBankIds(setOf("nequi")) }
+        coVerify { preferencesManager.setBankChannels(mapOf("nequi" to setOf(ReadingChannel.APP))) }
+        assertTrue(viewModel.uiState.value.isNotificationReaderNeeded)
         assertTrue(viewModel.uiState.value.isNotificationAccessDialogVisible)
 
         viewModel.sendIntent(SettingsIntent.OpenNotificationAccessSettings)
@@ -212,24 +213,72 @@ class SettingsViewModelTest {
     }
 
     @Test
-    fun `turning on bank emails without access explains it like the bank apps`() = runTest {
-        every { permissionsManager.hasNotificationListenerAccess() } returns false
+    fun `adding an SMS bank asks for the SMS permission and keeps the account's SMS flag in step`() = runTest {
+        every { permissionsManager.hasSmsPermission() } returns false
+        every { permissionsManager.shouldShowSMSPermissionRationale() } returns false
 
-        viewModel.sendIntent(SettingsIntent.ToggleBankEmailReading(true))
+        viewModel.sendIntent(SettingsIntent.AddBank(SupportedBanks.BANCOLOMBIA))
         testDispatcher.scheduler.advanceUntilIdle()
 
-        coVerify { preferencesManager.setBankEmailReadingEnabled(true) }
-        assertTrue(viewModel.uiState.value.isBankEmailReadingEnabled)
-        assertFalse(viewModel.uiState.value.isBankNotificationReadingEnabled)
-        assertTrue(viewModel.uiState.value.isNotificationReaderNeeded)
+        verify { permissionsManager.requestSmsPermissions(any()) }
+        coVerify { preferencesManager.setSmsReadingEnabled(true) }
+        assertFalse(viewModel.uiState.value.isNotificationAccessDialogVisible)
+        assertTrue(viewModel.uiState.value.isSmsPermissionMissing)
+    }
+
+    @Test
+    fun `picking the email channel asks for the notification access`() = runTest {
+        every { permissionsManager.hasSmsPermission() } returns true
+        every { permissionsManager.hasNotificationListenerAccess() } returns false
+        viewModel.sendIntent(SettingsIntent.AddBank(SupportedBanks.BANCOLOMBIA))
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertFalse(viewModel.uiState.value.isNotificationAccessDialogVisible)
+
+        viewModel.sendIntent(SettingsIntent.SetBankChannel(SupportedBanks.BANCOLOMBIA, ReadingChannel.EMAIL, true))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        coVerify {
+            preferencesManager.setBankChannels(mapOf("bancolombia" to setOf(ReadingChannel.SMS, ReadingChannel.EMAIL)))
+        }
         assertTrue(viewModel.uiState.value.isNotificationAccessDialogVisible)
     }
 
     @Test
-    fun `turning on bank notifications with access granted asks nothing`() = runTest {
+    fun `a bank left with no channel stays listed but is read from nothing`() = runTest {
+        every { permissionsManager.hasSmsPermission() } returns true
+        viewModel.sendIntent(SettingsIntent.AddBank(SupportedBanks.BANCOLOMBIA))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.sendIntent(SettingsIntent.SetBankChannel(SupportedBanks.BANCOLOMBIA, ReadingChannel.SMS, false))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals(setOf(SupportedBanks.BANCOLOMBIA), state.selectedBanks)
+        assertEquals(emptySet(), state.channelsOf(SupportedBanks.BANCOLOMBIA))
+        assertFalse(state.isAnyReadingEnabled)
+        coVerify { preferencesManager.setSmsReadingEnabled(false) }
+    }
+
+    @Test
+    fun `removing a bank forgets its channels`() = runTest {
+        every { permissionsManager.hasSmsPermission() } returns true
+        viewModel.sendIntent(SettingsIntent.AddBank(SupportedBanks.BANCOLOMBIA))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.sendIntent(SettingsIntent.RemoveBank(SupportedBanks.BANCOLOMBIA))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        coVerify { preferencesManager.setSelectedBankIds(emptySet()) }
+        coVerify { preferencesManager.setBankChannels(emptyMap()) }
+        assertTrue(viewModel.uiState.value.selectedBanks.isEmpty())
+        assertTrue(SupportedBanks.BANCOLOMBIA in viewModel.uiState.value.unselectedBanks)
+    }
+
+    @Test
+    fun `adding an app bank with access granted asks nothing`() = runTest {
         every { permissionsManager.hasNotificationListenerAccess() } returns true
 
-        viewModel.sendIntent(SettingsIntent.ToggleBankNotificationReading(true))
+        viewModel.sendIntent(SettingsIntent.AddBank(SupportedBanks.NU))
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertTrue(viewModel.uiState.value.hasNotificationListenerAccess)
@@ -246,11 +295,11 @@ class SettingsViewModelTest {
     }
 
     @Test
-    fun `turning on bank notifications with the app's notifications off explains it before their screen`() = runTest {
+    fun `adding an app bank with the app's notifications off explains it before their screen`() = runTest {
         every { permissionsManager.hasNotificationListenerAccess() } returns true
         every { permissionsManager.areAppNotificationsEnabled() } returns false
 
-        viewModel.sendIntent(SettingsIntent.ToggleBankNotificationReading(true))
+        viewModel.sendIntent(SettingsIntent.AddBank(SupportedBanks.NEQUI))
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertTrue(viewModel.uiState.value.isAppNotificationsDialogVisible)
@@ -264,12 +313,12 @@ class SettingsViewModelTest {
 
     @Test
     fun `a reader left unbound with everything granted asks for a force stop once`() = runTest {
-        coEvery { preferencesManager.isBankNotificationReadingEnabled() } returns true
+        coEvery { preferencesManager.getChannelsInUse() } returns setOf(ReadingChannel.APP)
         every { permissionsManager.hasNotificationListenerAccess() } returns true
         every { permissionsManager.areAppNotificationsEnabled() } returns true
         every { permissionsManager.isNotificationListenerConnected() } returns false
 
-        viewModel.sendIntent(SettingsIntent.ToggleBankNotificationReading(true))
+        viewModel.sendIntent(SettingsIntent.AddBank(SupportedBanks.NEQUI))
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertTrue(viewModel.uiState.value.isNotificationReaderStopped)
@@ -290,12 +339,12 @@ class SettingsViewModelTest {
 
     @Test
     fun `a reader that connects within the grace period is not reported`() = runTest {
-        coEvery { preferencesManager.isBankNotificationReadingEnabled() } returns true
+        coEvery { preferencesManager.getChannelsInUse() } returns setOf(ReadingChannel.APP)
         every { permissionsManager.hasNotificationListenerAccess() } returns true
         every { permissionsManager.areAppNotificationsEnabled() } returns true
         every { permissionsManager.isNotificationListenerConnected() } returnsMany listOf(false, true)
 
-        viewModel.sendIntent(SettingsIntent.ToggleBankNotificationReading(true))
+        viewModel.sendIntent(SettingsIntent.AddBank(SupportedBanks.NEQUI))
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertFalse(viewModel.uiState.value.isNotificationReaderStopped)
@@ -304,12 +353,12 @@ class SettingsViewModelTest {
 
     @Test
     fun `a connected reader is not reported`() = runTest {
-        coEvery { preferencesManager.isBankNotificationReadingEnabled() } returns true
+        coEvery { preferencesManager.getChannelsInUse() } returns setOf(ReadingChannel.APP)
         every { permissionsManager.hasNotificationListenerAccess() } returns true
         every { permissionsManager.areAppNotificationsEnabled() } returns true
         every { permissionsManager.isNotificationListenerConnected() } returns true
 
-        viewModel.sendIntent(SettingsIntent.ToggleBankNotificationReading(true))
+        viewModel.sendIntent(SettingsIntent.AddBank(SupportedBanks.NEQUI))
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertFalse(viewModel.uiState.value.isNotificationReaderStopped)
@@ -320,7 +369,7 @@ class SettingsViewModelTest {
         every { permissionsManager.hasNotificationListenerAccess() } returns false
         every { permissionsManager.areAppNotificationsEnabled() } returns false
 
-        viewModel.sendIntent(SettingsIntent.ToggleBankNotificationReading(true))
+        viewModel.sendIntent(SettingsIntent.AddBank(SupportedBanks.NEQUI))
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertTrue(viewModel.uiState.value.isNotificationAccessDialogVisible)
@@ -337,30 +386,19 @@ class SettingsViewModelTest {
     }
 
     @Test
-    fun `the bank selector offers the notification apps and keeps them selected`() = runTest {
+    fun `the stored banks are listed with their channels`() = runTest {
         coEvery { preferencesManager.getSelectedBankIds() } returns setOf("nequi", "bancolombia")
+        coEvery { preferencesManager.getBankChannels() } returns
+            mapOf("bancolombia" to setOf(ReadingChannel.SMS, ReadingChannel.EMAIL))
 
         val viewModel = createViewModel()
         testDispatcher.scheduler.advanceUntilIdle()
 
         val state = viewModel.uiState.value
-        assertTrue(SupportedBanks.NEQUI in state.availableBanks)
-        assertTrue(SupportedBanks.NU in state.availableBanks)
         assertEquals(setOf(SupportedBanks.NEQUI, SupportedBanks.BANCOLOMBIA), state.selectedBanks)
-    }
-
-    @Test
-    fun `the channels picked per bank are kept only for the banks still selected`() = runTest {
-        val channels = mapOf(
-            "bancolombia" to setOf(ReadingChannel.SMS, ReadingChannel.EMAIL),
-            "nu" to setOf(ReadingChannel.EMAIL)
-        )
-
-        viewModel.sendIntent(SettingsIntent.SetSelectedBanks(setOf(SupportedBanks.BANCOLOMBIA), channels))
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        val kept = mapOf("bancolombia" to setOf(ReadingChannel.SMS, ReadingChannel.EMAIL))
-        coVerify { preferencesManager.setBankChannels(kept) }
-        assertEquals(kept, viewModel.uiState.value.bankChannels)
+        assertEquals(setOf(ReadingChannel.SMS, ReadingChannel.EMAIL), state.channelsOf(SupportedBanks.BANCOLOMBIA))
+        // Never picked: read by its defaults
+        assertEquals(setOf(ReadingChannel.APP), state.channelsOf(SupportedBanks.NEQUI))
+        assertTrue(SupportedBanks.NU in state.unselectedBanks)
     }
 }

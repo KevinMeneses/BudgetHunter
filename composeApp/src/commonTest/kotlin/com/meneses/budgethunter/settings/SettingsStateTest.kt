@@ -4,45 +4,46 @@ import com.meneses.budgethunter.settings.application.SettingsState
 import com.meneses.budgethunter.sms.domain.ReadingChannel
 import com.meneses.budgethunter.sms.domain.SupportedBanks
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class SettingsStateTest {
 
-    private val allOn = SettingsState(
-        isSmsReadingEnabled = true,
-        isBankNotificationReadingEnabled = true,
-        isBankEmailReadingEnabled = true
-    )
-
     @Test
-    fun `switches on for different banks do not repeat movements`() {
-        val state = allOn.copy(selectedBanks = setOf(SupportedBanks.BANCOLOMBIA, SupportedBanks.NU))
-
-        assertFalse(state.mayRepeatMovements)
-    }
-
-    @Test
-    fun `a bank read from two channels that are on may repeat movements`() {
-        val state = allOn.copy(
-            selectedBanks = setOf(SupportedBanks.BANCOLOMBIA),
-            bankChannels = mapOf("bancolombia" to setOf(ReadingChannel.SMS, ReadingChannel.EMAIL))
-        )
-
-        assertTrue(state.mayRepeatMovements)
-        assertFalse(state.copy(isBankEmailReadingEnabled = false).mayRepeatMovements)
-    }
-
-    @Test
-    fun `a channel picked for a bank is missing while its switch is off`() {
+    fun `the channels in use decide which permissions are needed`() {
         val state = SettingsState(
-            isSmsReadingEnabled = true,
-            selectedBanks = setOf(SupportedBanks.BANCOLOMBIA),
-            bankChannels = mapOf("bancolombia" to setOf(ReadingChannel.SMS, ReadingChannel.EMAIL))
+            selectedBanks = setOf(SupportedBanks.BANCOLOMBIA, SupportedBanks.NU),
+            bankChannels = mapOf("nu" to setOf(ReadingChannel.EMAIL))
         )
 
-        assertTrue(state.isMissing(ReadingChannel.EMAIL))
-        assertFalse(state.isMissing(ReadingChannel.SMS))
-        assertFalse(state.isMissing(ReadingChannel.APP))
+        assertEquals(setOf(ReadingChannel.SMS, ReadingChannel.EMAIL), state.channelsInUse)
+        assertTrue(state.isSmsPermissionMissing)
+        assertFalse(state.copy(hasSmsPermission = true).isSmsPermissionMissing)
+        assertTrue(state.isNotificationReaderNeeded)
+    }
+
+    @Test
+    fun `banks read from no channel need nothing`() {
+        val state = SettingsState(
+            selectedBanks = setOf(SupportedBanks.BANCOLOMBIA),
+            bankChannels = mapOf("bancolombia" to emptySet())
+        )
+
+        assertFalse(state.isAnyReadingEnabled)
+        assertFalse(state.isSmsPermissionMissing)
+        assertFalse(state.isNotificationReaderNeeded)
+    }
+
+    @Test
+    fun `banks are listed by name and only the others can be added`() {
+        val state = SettingsState(
+            availableBanks = SupportedBanks.SELECTABLE_BANKS,
+            selectedBanks = setOf(SupportedBanks.NU, SupportedBanks.BANCOLOMBIA)
+        )
+
+        assertEquals(listOf(SupportedBanks.BANCOLOMBIA, SupportedBanks.NU), state.sortedSelectedBanks)
+        assertFalse(SupportedBanks.NU in state.unselectedBanks)
+        assertTrue(SupportedBanks.NEQUI in state.unselectedBanks)
     }
 }
