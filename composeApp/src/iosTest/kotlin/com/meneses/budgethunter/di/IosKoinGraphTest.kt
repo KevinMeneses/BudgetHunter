@@ -32,6 +32,9 @@ import kotlin.test.assertTrue
  *
  * Koin is started once for the whole run and never stopped: the DataStore it builds cannot be
  * created twice for the same file in one process.
+ *
+ * Listing the definitions needs Koin's internal API (`instanceRegistry`), which may change on a
+ * Koin upgrade: if this stops compiling then, adapt the listing, not the graph.
  */
 class IosKoinGraphTest {
 
