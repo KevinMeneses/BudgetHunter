@@ -13,10 +13,10 @@ import kotlin.coroutines.cancellation.CancellationException
  * a Shortcuts automation received. It works with the app closed: Koin is started here if no
  * screen did it first, with the Swift [NativeDependencies].
  */
-class SmsShortcutEntryPoint(native: NativeDependencies) : KoinComponent {
+class SmsShortcutEntryPoint(createNative: () -> NativeDependencies) : KoinComponent {
 
     init {
-        startKoinIfNeeded(native)
+        startKoinIfNeeded(createNative)
     }
 
     private val registerSmsFromShortcut: RegisterSmsFromShortcutUseCase by inject()

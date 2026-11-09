@@ -2,13 +2,13 @@ import Foundation
 import ComposeApp
 
 /**
- * The native managers the shared Kotlin code needs, handed to its entry points
- * (`MainViewController`, `SmsShortcutEntryPoint`), which start Koin with them.
+ * The native managers the shared Kotlin code needs. The entry points (`MainViewController`,
+ * `SmsShortcutEntryPoint`) take a closure that creates this object, called only when Koin starts,
+ * so it is created once per process.
  *
- * The managers are created right away, on the main thread where the entry points run, and not
- * when Koin first asks for them: some do work on creation (IOSNotificationManager asks for the
- * notification permission at launch). When Koin is already running (e.g. the SMS intent ran
- * first), this object is ignored.
+ * The managers are created with it, on the main thread where the entry points run, and not when
+ * Koin first asks for them: some do work on creation (IOSNotificationManager asks for the
+ * notification permission at launch).
  */
 final class IOSNativeDependencies: NativeDependencies {
     let cameraManager: CameraManager = IOSCameraManager()

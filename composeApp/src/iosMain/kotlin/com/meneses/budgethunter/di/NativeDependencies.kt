@@ -10,11 +10,10 @@ import com.meneses.budgethunter.commons.platform.ShareManager
 /**
  * What only the Swift side can provide, implemented in `IOSNativeDependencies.swift`.
  *
- * It is handed to the Kotlin entry points ([com.meneses.budgethunter.MainViewController],
- * [com.meneses.budgethunter.sms.platform.SmsShortcutEntryPoint]), which start Koin with it, so a
- * missing implementation is a Swift compile error instead of a crash at runtime.
- *
- * Koin reads each property once, from a `single`.
+ * The Kotlin entry points ([com.meneses.budgethunter.MainViewController],
+ * [com.meneses.budgethunter.sms.platform.SmsShortcutEntryPoint]) take a function that creates it,
+ * called only when Koin starts, so a missing implementation is a Swift compile error instead of a
+ * crash at runtime. The iOS platform module hands each property out as a `single`.
  */
 interface NativeDependencies {
     val cameraManager: CameraManager

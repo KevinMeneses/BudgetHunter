@@ -21,6 +21,7 @@ import org.koin.core.parameter.parametersOf
 import org.koin.mp.KoinPlatformTools
 import kotlin.reflect.KClass
 import kotlin.test.Test
+import kotlin.test.assertFalse
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
@@ -36,7 +37,7 @@ class IosKoinGraphTest {
 
     private val koin: Koin
         get() {
-            startKoinIfNeeded(fakeNativeDependencies)
+            startKoinIfNeeded { fakeNativeDependencies }
             return KoinPlatformTools.defaultContext().get()
         }
 
@@ -85,11 +86,16 @@ class IosKoinGraphTest {
     }
 
     @Test
-    fun startingKoinAgainKeepsTheFirstDependencies() {
+    fun startingKoinAgainDoesNotCreateNewDependencies() {
         val koin = koin
+        var created = false
 
-        startKoinIfNeeded(FakeNativeDependencies(FakeKeychainStore()))
+        startKoinIfNeeded {
+            created = true
+            FakeNativeDependencies(FakeKeychainStore())
+        }
 
+        assertFalse(created, "The dependencies were created although Koin was running")
         assertSame(fakeNativeDependencies.cameraManager, koin.get<CameraManager>())
         assertSame(koin, KoinPlatformTools.defaultContext().get())
     }

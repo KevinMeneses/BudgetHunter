@@ -138,7 +138,8 @@ Type-safe navigation using Navigation Compose with serializable route objects. M
   `RegisterExpenseFromMessageIntent` (iosApp/, also an App Shortcut), which calls
   `SmsShortcutEntryPoint` (iosMain) -> `RegisterSmsFromShortcutUseCase` and answers with a dialog.
   It runs with the app closed, so `SmsShortcutEntryPoint` starts Koin itself (`startKoinIfNeeded`) with the Swift
-  managers (`IOSNativeDependencies`, implementing the Kotlin `NativeDependencies`), like `MainViewController` does.
+  managers (`IOSNativeDependencies`, implementing the Kotlin `NativeDependencies`, created only when Koin starts), like
+  `MainViewController` does.
   Settings shows the setup guide (`SmsShortcutTutorialScreen`) on iOS only.
   The intent's texts are English in the Swift code and Spanish in `iosApp/iosApp/es.lproj` (`Localizable.strings`,
   `AppShortcuts.strings` for the Siri phrases). The guide's screenshots are iOS 26 captures in `drawable` (English) and

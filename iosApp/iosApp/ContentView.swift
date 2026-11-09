@@ -5,7 +5,7 @@ import UIKit
 struct ComposeView: UIViewControllerRepresentable {
 
     func makeUIViewController(context: Context) -> UIViewController {
-        let viewController = MainViewController_iosKt.MainViewController(native: IOSNativeDependencies())
+        let viewController = MainViewController_iosKt.MainViewController(createNative: { IOSNativeDependencies() })
         return viewController
     }
 
