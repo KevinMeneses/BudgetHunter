@@ -36,8 +36,7 @@ struct RegisterExpenseFromMessageIntent: AppIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult & ProvidesDialog {
-        IOSBridgeSetup.configureIfNeeded()
-        let reply = try await SmsShortcutEntryPoint().register(messageBody: message)
+        let reply = try await SmsShortcutEntryPoint(native: IOSNativeDependencies()).register(messageBody: message)
         return .result(dialog: "\(reply.message)")
     }
 }

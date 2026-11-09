@@ -34,7 +34,7 @@ import platform.Foundation.NSFileManager
 import platform.Foundation.NSURL
 import platform.Foundation.NSUserDomainMask
 
-val iosPlatformModule = module {
+fun iosPlatformModule(native: NativeDependencies) = module {
     single<HttpClientEngineFactory<*>>(named(API_HTTP_ENGINE)) { Darwin }
 
     // Provide the database using iOS-specific factory
@@ -42,9 +42,9 @@ val iosPlatformModule = module {
         DatabaseFactory().createDatabase()
     }
 
-    // Secure token storage backed by the iOS Keychain (native Swift impl via IOSBridge)
+    // Secure token storage backed by the iOS Keychain (native Swift impl, see IOSKeychainStore.swift)
     single<TokenStorage> {
-        IosSecureTokenStorage(IOSBridge.keychainStore)
+        IosSecureTokenStorage(native.keychainStore)
     }
 
     single<DataStore<Preferences>> {
@@ -69,16 +69,16 @@ val iosPlatformModule = module {
 
     // Platform-specific managers
     single<FileManager> { FileManager() }
-    single<CameraManager> { IOSBridge.cameraManager }
-    single<FilePickerManager> { IOSBridge.filePickerManager }
+    single<CameraManager> { native.cameraManager }
+    single<FilePickerManager> { native.filePickerManager }
     single<PermissionsManager> { PermissionsManager() }
     single<AppUpdateManager> { AppUpdateManager() }
-    single<NotificationManager> { IOSBridge.notificationManager }
-    single<ShareManager> { IOSBridge.shareManager }
+    single<NotificationManager> { native.notificationManager }
+    single<ShareManager> { native.shareManager }
     single<NetworkMonitor> {
         IosNetworkMonitor(logger = get()).apply { startMonitoring() }
     }
-    single<GoogleSignInManager> { IOSBridge.googleSignInManager }
+    single<GoogleSignInManager> { native.googleSignInManager }
 
     single<ImageProcessor> {
         ImageProcessor()

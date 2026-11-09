@@ -136,8 +136,9 @@ Type-safe navigation using Navigation Compose with serializable route objects. M
 - iOS cannot read SMS: a Shortcuts automation (trigger "Mensaje") passes the text to the App Intent
   `RegisterExpenseFromMessageIntent` (iosApp/, also an App Shortcut), which calls
   `SmsShortcutEntryPoint` (iosMain) -> `RegisterSmsFromShortcutUseCase` and answers with a dialog.
-  It runs with the app closed, so Koin is started with `startKoinIfNeeded()` and the Swift managers with
-  `IOSBridgeSetup.configureIfNeeded()`. Settings shows the setup guide (`SmsShortcutTutorialScreen`) on iOS only.
+  It runs with the app closed, so `SmsShortcutEntryPoint` starts Koin itself (`startKoinIfNeeded`) with the Swift
+  managers (`IOSNativeDependencies`, implementing the Kotlin `NativeDependencies`), like `MainViewController` does.
+  Settings shows the setup guide (`SmsShortcutTutorialScreen`) on iOS only.
   The intent's texts are English in the Swift code and Spanish in `iosApp/iosApp/es.lproj` (`Localizable.strings`,
   `AppShortcuts.strings` for the Siri phrases). The guide's screenshots are iOS 26 captures in `drawable` (English) and
   `drawable-es`; the automation filters by the bank name in the message, not by sender.
