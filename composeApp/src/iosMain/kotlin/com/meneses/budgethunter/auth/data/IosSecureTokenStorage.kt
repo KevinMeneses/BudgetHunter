@@ -6,7 +6,7 @@ import com.meneses.budgethunter.commons.platform.KeychainStore
  * iOS implementation of [TokenStorage] backed by the system Keychain.
  *
  * The actual Keychain access is implemented natively in Swift ([KeychainStore], see
- * `IOSKeychainStore.swift`) and injected via the IOSBridge. This avoids Kotlin/Native's
+ * `IOSKeychainStore.swift`) and handed to Koin through `NativeDependencies`. This avoids Kotlin/Native's
  * fragile ObjC↔CoreFoundation toll-free bridging casts against the Security framework,
  * which silently failed at runtime.
  *

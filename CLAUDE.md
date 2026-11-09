@@ -8,6 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `./gradlew build` - Build the entire project
 - `./gradlew :composeApp:assembleDebug` - Build Android APK
 - `./gradlew :composeApp:testDebugUnitTest` - Run unit tests (what CI runs; most live in `androidUnitTest`, shared ones in `commonTest`)
+- `./gradlew :composeApp:iosSimulatorArm64Test` - Run the iOS tests (Mac only, not in CI; `iosTest` checks the iOS Koin graph)
 - `./gradlew connectedAndroidTest` - Run instrumented tests on connected device/emulator
 - `./gradlew ktlintCheck` - Check Kotlin code style (CI also runs `./gradlew lint`)
 - `./gradlew ktlintFormat` - Auto-fix Kotlin code style issues
@@ -136,8 +137,10 @@ Type-safe navigation using Navigation Compose with serializable route objects. M
 - iOS cannot read SMS: a Shortcuts automation (trigger "Mensaje") passes the text to the App Intent
   `RegisterExpenseFromMessageIntent` (iosApp/, also an App Shortcut), which calls
   `SmsShortcutEntryPoint` (iosMain) -> `RegisterSmsFromShortcutUseCase` and answers with a dialog.
-  It runs with the app closed, so Koin is started with `startKoinIfNeeded()` and the Swift managers with
-  `IOSBridgeSetup.configureIfNeeded()`. Settings shows the setup guide (`SmsShortcutTutorialScreen`) on iOS only.
+  It runs with the app closed, so `SmsShortcutEntryPoint` starts Koin itself (`startKoinIfNeeded`) with the Swift
+  managers (`IOSNativeDependencies`, implementing the Kotlin `NativeDependencies`, created only when Koin starts), like
+  `MainViewController` does.
+  Settings shows the setup guide (`SmsShortcutTutorialScreen`) on iOS only.
   The intent's texts are English in the Swift code and Spanish in `iosApp/iosApp/es.lproj` (`Localizable.strings`,
   `AppShortcuts.strings` for the Siri phrases). The guide's screenshots are iOS 26 captures in `drawable` (English) and
   `drawable-es`; the automation filters by the bank name in the message, not by sender.
