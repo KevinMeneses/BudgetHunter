@@ -13,13 +13,13 @@ class BudgetEntryMapperTest {
     }
 
     @Test
-    fun `a value this build does not know is Other, not Sin categoria`() {
+    fun `a value this build does not know is Other - not Sin categoria`() {
         // Otherwise a category added later would make an entry look like it is waiting to be categorized.
         assertEquals(BudgetEntry.Category.OTHER, "SOMETHING_NEW".toBudgetEntryCategory())
     }
 
     @Test
-    fun `an entry with no category is sent as UNCATEGORIZED, which the server stores as is`() {
+    fun `an entry with no category is sent as UNCATEGORIZED - which the server stores as is`() {
         val entry = BudgetEntry(amount = "10.0", description = "coffee")
 
         assertEquals("UNCATEGORIZED", entry.toCreateRequest().category)
@@ -27,7 +27,7 @@ class BudgetEntryMapperTest {
     }
 
     @Test
-    fun `an entry with a category is sent with it, Other included`() {
+    fun `an entry with a category is sent with it - Other included`() {
         assertEquals("FOOD", BudgetEntry(category = BudgetEntry.Category.FOOD).toCreateRequest().category)
         assertEquals("OTHER", BudgetEntry(category = BudgetEntry.Category.OTHER).toCreateRequest().category)
     }

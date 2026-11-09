@@ -121,7 +121,7 @@ class BankNotificationTest {
     }
 
     @Test
-    fun `notification banks are the selectable banks with app packages, each listed once`() {
+    fun `notification banks are the selectable banks with app packages - each listed once`() {
         assertEquals(
             listOf(SupportedBanks.BBVA_COLOMBIA, SupportedBanks.NEQUI, SupportedBanks.NU),
             SupportedBanks.NOTIFICATION_BANKS
