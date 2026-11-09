@@ -163,4 +163,24 @@ class ShortcutEmailTest {
         assertFalse(ShortcutEmail.looksLikeEmail(shortEmail))
         assertTrue(ShortcutEmail.looksLikeEmail(shortEmail, SupportedBanks.SHORTCUT_BANKS))
     }
+
+    @Test
+    fun `a hard-wrapped body is read once its paragraph is joined`() {
+        val wrapped = """
+            Hola JUAN MENESES
+
+            Recibiste
+            525.000 de NUBIA ROCELY PALTA el 1 de noviembre de 2026 a las 11:11 a.m, desde el
+            banco BBVA. Revisa el detalle en los movimientos de tu app.
+
+            Escribenos al chat de www.nequi.com.co
+        """.trimIndent()
+
+        val passage = assertNotNull(ShortcutEmail.movementPassage(wrapped))
+        assertEquals(
+            "Recibiste 525.000 de NUBIA ROCELY PALTA el 1 de noviembre de 2026 a las 11:11 a.m, desde el banco BBVA.",
+            passage
+        )
+        assertEquals(SupportedBanks.NEQUI, ShortcutEmail.bankOf(wrapped, SupportedBanks.SHORTCUT_BANKS, passage))
+    }
 }

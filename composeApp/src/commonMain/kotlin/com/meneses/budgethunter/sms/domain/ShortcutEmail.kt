@@ -25,6 +25,20 @@ object ShortcutEmail {
      * greeting, the dates and the footer do not name one.
      */
     fun movementPassage(text: String): String? =
+        firstMovementSentence(text) ?: firstMovementSentence(unwrapParagraphs(text))
+
+    /**
+     * A plain-text body may come hard-wrapped (lines of about 78 characters), which can leave the
+     * verb and the amount on different lines. Joined within each paragraph (blank lines keep them
+     * apart), the sentence is whole again. Only tried when no line holds a movement as it is, so
+     * emails that keep one item per line (account, date, ID) are not run together.
+     */
+    private fun unwrapParagraphs(text: String): String =
+        text.split(PARAGRAPH_BREAK).joinToString("\n") { paragraph ->
+            paragraph.lines().joinToString(" ") { it.trim() }
+        }
+
+    private fun firstMovementSentence(text: String): String? =
         text.replace(SENTENCE_END, "$1\n")
             .lines()
             .map { it.trim() }
@@ -41,7 +55,8 @@ object ShortcutEmail {
     fun bankOf(text: String, banks: Collection<BankSmsConfig>, passage: String? = null): BankSmsConfig? {
         banks.firstMentioned { it.emailDomainIndex(text) }?.let { return it }
         if (passage != null) {
-            val rest = text.replace(passage, " ")
+            // The passage may come from joined lines, so both are compared with their spacing collapsed
+            val rest = text.collapseSpaces().replace(passage.collapseSpaces(), " ")
             banks.firstMentioned { it.mentionIndex(rest) }?.let { return it }
         }
         return banks.firstMentioned { it.mentionIndex(text) }
@@ -52,7 +67,15 @@ object ShortcutEmail {
             .minByOrNull { (_, index) -> index }
             ?.first
 
+    private fun String.collapseSpaces(): String = replace(WHITESPACE, " ")
+
+    /** Two SMS segments (160 characters each): a bank alert by SMS fits well under it. */
     private const val SMS_MAX_LENGTH = 320
+
+    private val WHITESPACE = Regex("""\s+""")
+
+    /** A blank line, maybe with spaces on it, between paragraphs. */
+    private val PARAGRAPH_BREAK = Regex("""\n[ \t]*\n""")
 
     /** A sentence ends at ".", "!" or "?" followed by a space, so "a.m," and "$110,000.00" stay whole. */
     private val SENTENCE_END = Regex("""([.!?])\s+""")
