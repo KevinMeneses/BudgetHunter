@@ -14,7 +14,7 @@ import com.meneses.budgethunter.commons.platform.ShareManager
  * [com.meneses.budgethunter.sms.platform.SmsShortcutEntryPoint]), which start Koin with it, so a
  * missing implementation is a Swift compile error instead of a crash at runtime.
  *
- * Koin reads each property once, from a `single`: an implementation can return a new instance.
+ * Koin reads each property once, from a `single`.
  */
 interface NativeDependencies {
     val cameraManager: CameraManager
