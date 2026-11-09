@@ -118,8 +118,15 @@ Type-safe navigation using Navigation Compose with serializable route objects. M
   the email is kept only when it names a selected bank (`BankSmsConfig.isSender`: its name or a sender keyword with
   letters); then subject and the start of the body (the expanded text without its first line, the subject) are read
   like a bank app notification (`BankEmail.toNotification`). Anything but a movement or a missing default budget is
-  dropped silently. There is no deduplication: a bank that also sends SMS or app notifications would register each
-  movement twice, which a note under the switches says while more than one channel is on. The sender is only its display
+  dropped silently.
+- Channels per bank (`ReadingChannel`: SMS, APP, EMAIL; `BankChannels`): each selected bank is read from the channels
+  picked for it in the bank selector (chips under the bank), several allowed since a bank may send some alerts by one
+  channel and others by another. A bank never picked is read by its defaults (its SMS and/or app, never email). Kept
+  on the device only (`PreferencesManager.getBankChannels`, "bankId:CHANNEL"); the switches stay global (permissions,
+  reader on). The SMS receiver, the app path and the email path each try only the banks read from their channel.
+  There is no deduplication: Settings warns ("Posibles movimientos repetidos", `SettingsState.mayRepeatMovements`) while
+  a selected bank is read from two channels that are on, and the bank row warns about a picked channel whose switch
+  is off (`isMissing`). The sender is only its display
   name (no address in the notification), so an email that fakes a selected bank's name and reads as a movement
   would be registered: inherent to reading notifications.
 - iOS cannot read SMS: a Shortcuts automation (trigger "Mensaje") passes the text to the App Intent

@@ -481,7 +481,7 @@
     <string name="read_bank_emails">Read bank emails</string>
     <string name="bank_email_reading_description">Create entries from the movements in the emails of the selected banks</string>
     <string name="reading_channels_duplicates_title">Possible repeated movements</string>
-    <string name="reading_channels_duplicates_note">Reading is on for more than one channel. If your bank tells you about the same movement by SMS, in its app and by email, it will be added once per channel. Turn on only the channels your bank uses, or delete the repeated entries</string>
+    <string name="reading_channels_duplicates_note">Some banks are read from more than one channel that is on. If they tell you about the same movement by several of them, it will be added once per channel. Keep for each bank only the channels its alerts reach you by, or delete the repeated entries</string>
     <string name="notification_access_title">Notification access</string>
     <string name="notification_access_missing">Notification access is missing. Tap to grant it</string>
     <string name="app_notifications_off_explanation">Budget Hunter's notifications are off. While they stay off, Android does not hand it your banks' notifications, so no movement is registered.\n\nOn the next screen, turn on the notifications of Budget Hunter.</string>
@@ -496,7 +496,13 @@
     <string name="bank_source_notifications">App notifications</string>
     <string name="bank_source_sms_and_notifications">SMS and app notifications</string>
     <string name="no_notification_bank_selected">None read from app notifications</string>
-    <string name="notification_bank_needs_reading">Some are read only from app notifications: turn them on above</string>
-    <string name="sms_bank_needs_reading">Some are read only by SMS: turn SMS reading on above</string>
+    <string name="notification_bank_needs_reading">Some are read from app notifications: turn them on above</string>
+    <string name="sms_bank_needs_reading">Some are read by SMS: turn SMS reading on above</string>
     <string name="default_budget_needed_for_reading">Choose one: movements are not registered without it</string>
+    <string name="email_bank_needs_reading">Some are read by email: turn bank email reading on above</string>
+    <string name="no_email_bank_selected">None read by email: pick it for each bank</string>
+    <string name="reading_channel_sms">SMS</string>
+    <string name="reading_channel_app">App</string>
+    <string name="reading_channel_email">Email</string>
+    <string name="bank_channels_hint">Read by:</string>
 </resources>

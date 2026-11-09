@@ -17,6 +17,7 @@ import com.meneses.budgethunter.settings.application.SettingsState
 import com.meneses.budgethunter.settings.application.SyncUserPreferencesUseCase
 import com.meneses.budgethunter.sms.application.IsNotificationReaderStoppedUseCase
 import com.meneses.budgethunter.sms.domain.BankSmsConfig
+import com.meneses.budgethunter.sms.domain.ReadingChannel
 import com.meneses.budgethunter.sms.domain.SupportedBanks
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -68,7 +69,7 @@ class SettingsViewModel(
             is SettingsIntent.HideDefaultBudgetSelector -> hideDefaultBudgetSelector()
             is SettingsIntent.ShowBankSelector -> showBankSelector()
             is SettingsIntent.HideBankSelector -> hideBankSelector()
-            is SettingsIntent.SetSelectedBanks -> setSelectedBanks(intent.bankConfigs)
+            is SettingsIntent.SetSelectedBanks -> setSelectedBanks(intent.bankConfigs, intent.channels)
             is SettingsIntent.ToggleAiProcessing -> toggleAiProcessing(intent.enabled)
             is SettingsIntent.ShowManualPermissionDialog -> showManualPermissionDialog()
             is SettingsIntent.HideManualPermissionDialog -> hideManualPermissionDialog()
@@ -126,10 +127,16 @@ class SettingsViewModel(
         }
     }
 
-    private fun setSelectedBanks(bankConfigs: Set<BankSmsConfig>) = viewModelScope.launch {
+    private fun setSelectedBanks(
+        bankConfigs: Set<BankSmsConfig>,
+        channels: Map<String, Set<ReadingChannel>>
+    ) = viewModelScope.launch {
         val selectedBankIds = bankConfigs.map { it.id }.toSet()
         preferencesManager.setSelectedBankIds(selectedBankIds)
-        _uiState.update { it.copy(selectedBanks = bankConfigs) }
+        // The channels of a bank no longer selected are forgotten: selected again, it starts from its defaults
+        val bankChannels = channels.filterKeys { it in selectedBankIds }
+        preferencesManager.setBankChannels(bankChannels)
+        _uiState.update { it.copy(selectedBanks = bankConfigs, bankChannels = bankChannels) }
         pushPreferences()
     }
 
@@ -168,6 +175,7 @@ class SettingsViewModel(
                         notificationBanks = SupportedBanks.NOTIFICATION_BANKS,
                         availableBanks = SupportedBanks.SELECTABLE_BANKS,
                         selectedBanks = preferences.selectedBanks,
+                        bankChannels = preferencesManager.getBankChannels(),
                         isAiProcessingEnabled = preferences.isAiProcessingEnabled,
                         isLoading = false
                     )

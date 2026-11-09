@@ -4,9 +4,11 @@ import android.app.Notification
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import com.meneses.budgethunter.commons.data.PreferencesManager
+import com.meneses.budgethunter.sms.domain.BankChannels
 import com.meneses.budgethunter.sms.domain.BankEmail
 import com.meneses.budgethunter.sms.domain.BankNotification
 import com.meneses.budgethunter.sms.domain.BankNotificationService
+import com.meneses.budgethunter.sms.domain.ReadingChannel
 import com.meneses.budgethunter.sms.domain.RecentNotifications
 import com.meneses.budgethunter.sms.domain.SupportedBanks
 import kotlinx.coroutines.CancellationException
@@ -64,8 +66,11 @@ class BankNotificationListenerService : NotificationListenerService(), KoinCompo
             // preferences) must not take down the app, which runs this with no screen open
             try {
                 if (!preferencesManager.isBankNotificationReadingEnabled()) return@launch
-                // Like an SMS bank, an app is read only while the user has it among the selected banks
+                // Like an SMS bank, an app is read only while the user has it among the selected banks,
+                // and only when its app is one of the channels picked for it
                 if (bankConfig.id !in preferencesManager.getSelectedBankIds()) return@launch
+                val channels = BankChannels.of(bankConfig, preferencesManager.getBankChannels())
+                if (ReadingChannel.APP !in channels) return@launch
                 bankNotificationService.processBankNotification(bankNotification, bankConfig)
             } catch (e: CancellationException) {
                 throw e
@@ -94,7 +99,13 @@ class BankNotificationListenerService : NotificationListenerService(), KoinCompo
                 if (!preferencesManager.isBankEmailReadingEnabled()) return@launch
                 val selectedBanks = preferencesManager.getSelectedBankIds()
                     .mapNotNull { SupportedBanks.getSelectableBankById(it) }
-                val bankConfig = BankEmail.findSender(sender, selectedBanks) ?: return@launch
+                // Only the banks whose emails the user picked: their emails are read for nobody else
+                val emailBanks = BankChannels.readBy(
+                    ReadingChannel.EMAIL,
+                    selectedBanks,
+                    preferencesManager.getBankChannels()
+                )
+                val bankConfig = BankEmail.findSender(sender, emailBanks) ?: return@launch
 
                 val email = BankEmail.fromNotification(
                     title = sender,

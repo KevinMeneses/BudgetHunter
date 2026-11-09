@@ -2,6 +2,7 @@ package com.meneses.budgethunter.settings.application
 
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.sms.domain.BankSmsConfig
+import com.meneses.budgethunter.sms.domain.ReadingChannel
 
 sealed interface SettingsIntent {
     data class ToggleSmsReading(val enabled: Boolean) : SettingsIntent
@@ -24,7 +25,11 @@ sealed interface SettingsIntent {
     data object HideDefaultBudgetSelector : SettingsIntent
     data object ShowBankSelector : SettingsIntent
     data object HideBankSelector : SettingsIntent
-    data class SetSelectedBanks(val bankConfigs: Set<BankSmsConfig>) : SettingsIntent
+    /** The banks picked in the selector and, for each, the channels it is read from. */
+    data class SetSelectedBanks(
+        val bankConfigs: Set<BankSmsConfig>,
+        val channels: Map<String, Set<ReadingChannel>> = emptyMap()
+    ) : SettingsIntent
     data class ToggleAiProcessing(val enabled: Boolean) : SettingsIntent
     data object ShowManualPermissionDialog : SettingsIntent
     data object HideManualPermissionDialog : SettingsIntent

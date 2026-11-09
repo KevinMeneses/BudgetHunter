@@ -1,7 +1,9 @@
 package com.meneses.budgethunter.settings.application
 
 import com.meneses.budgethunter.budgetList.domain.Budget
+import com.meneses.budgethunter.sms.domain.BankChannels
 import com.meneses.budgethunter.sms.domain.BankSmsConfig
+import com.meneses.budgethunter.sms.domain.ReadingChannel
 import org.jetbrains.compose.resources.StringResource
 
 data class SettingsState(
@@ -31,6 +33,8 @@ data class SettingsState(
     val isLoading: Boolean = true,
     val availableBanks: List<BankSmsConfig> = emptyList(),
     val selectedBanks: Set<BankSmsConfig> = emptySet(),
+    /** The channels picked per bank id; a bank missing here is read by its defaults ([BankChannels]). */
+    val bankChannels: Map<String, Set<ReadingChannel>> = emptyMap(),
     val isBankSelectorVisible: Boolean = false,
     val isAiProcessingEnabled: Boolean = true,
     val isManualPermissionDialogVisible: Boolean = false,
@@ -53,4 +57,28 @@ data class SettingsState(
     /** The bank apps and the bank emails are both read by the notification listener. */
     val isNotificationReaderNeeded: Boolean
         get() = isBankNotificationReadingEnabled || isBankEmailReadingEnabled
+
+    val isAnyReadingEnabled: Boolean
+        get() = isSmsReadingEnabled || isNotificationReaderNeeded
+
+    fun channelsOf(bank: BankSmsConfig): Set<ReadingChannel> = BankChannels.of(bank, bankChannels)
+
+    fun isReading(channel: ReadingChannel): Boolean = when (channel) {
+        ReadingChannel.SMS -> isSmsReadingEnabled
+        ReadingChannel.APP -> isBankNotificationReadingEnabled
+        ReadingChannel.EMAIL -> isBankEmailReadingEnabled
+    }
+
+    /** Some selected bank is read from [channel]. */
+    fun hasBankReadBy(channel: ReadingChannel): Boolean = selectedBanks.any { channel in channelsOf(it) }
+
+    /** Some selected bank is read from [channel] while its switch is off, so those alerts are missed. */
+    fun isMissing(channel: ReadingChannel): Boolean = !isReading(channel) && hasBankReadBy(channel)
+
+    /**
+     * Some selected bank is read from more than one channel that is on: a movement it reports
+     * by both is registered once per channel.
+     */
+    val mayRepeatMovements: Boolean
+        get() = selectedBanks.any { bank -> channelsOf(bank).count { isReading(it) } > 1 }
 }

@@ -481,7 +481,7 @@
     <string name="read_bank_emails">Leer correos de los bancos</string>
     <string name="bank_email_reading_description">Crea entradas con los movimientos de los correos de los bancos seleccionados</string>
     <string name="reading_channels_duplicates_title">Posibles movimientos repetidos</string>
-    <string name="reading_channels_duplicates_note">Tienes activada la lectura por más de un canal. Si tu banco te avisa un mismo movimiento por SMS, en su app y por correo, se registrará una vez por cada canal. Activa solo los canales por los que te avisa tu banco, o borra las entradas repetidas</string>
+    <string name="reading_channels_duplicates_note">Algunos bancos se leen por más de un canal activado. Si te avisan un mismo movimiento por varios de ellos, se registrará una vez por cada uno. Deja en cada banco solo los canales por los que te llegan sus alertas, o borra las entradas repetidas</string>
     <string name="notification_access_title">Acceso a las notificaciones</string>
     <string name="notification_access_missing">Falta el acceso a las notificaciones. Toca para darlo</string>
     <string name="app_notifications_off_explanation">Las notificaciones de Budget Hunter están apagadas. Mientras sigan así, Android no le entrega las notificaciones de tus bancos y no se registra ningún movimiento.\n\nEn la siguiente pantalla activa las notificaciones de Budget Hunter.</string>
@@ -496,7 +496,13 @@
     <string name="bank_source_notifications">Notificaciones de la app</string>
     <string name="bank_source_sms_and_notifications">SMS y notificaciones de la app</string>
     <string name="no_notification_bank_selected">Ninguno con notificaciones de la app</string>
-    <string name="notification_bank_needs_reading">Algunos solo se leen por notificaciones de la app: actívalas arriba</string>
-    <string name="sms_bank_needs_reading">Algunos solo se leen por SMS: activa la lectura de SMS arriba</string>
+    <string name="notification_bank_needs_reading">Algunos se leen por notificaciones de la app: actívalas arriba</string>
+    <string name="sms_bank_needs_reading">Algunos se leen por SMS: activa la lectura de SMS arriba</string>
     <string name="default_budget_needed_for_reading">Elige uno: sin él los movimientos no se registran</string>
+    <string name="email_bank_needs_reading">Algunos se leen por correo: activa la lectura de correos arriba</string>
+    <string name="no_email_bank_selected">Ninguno se lee por correo: elígelo en cada banco</string>
+    <string name="reading_channel_sms">SMS</string>
+    <string name="reading_channel_app">App</string>
+    <string name="reading_channel_email">Correo</string>
+    <string name="bank_channels_hint">Leer por:</string>
 </resources>

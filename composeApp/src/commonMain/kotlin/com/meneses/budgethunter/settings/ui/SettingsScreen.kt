@@ -68,8 +68,10 @@ import budgethunter.composeapp.generated.resources.change_password
 import budgethunter.composeapp.generated.resources.come_back
 import budgethunter.composeapp.generated.resources.default_budget
 import budgethunter.composeapp.generated.resources.default_budget_needed_for_reading
+import budgethunter.composeapp.generated.resources.email_bank_needs_reading
 import budgethunter.composeapp.generated.resources.no_banks_selected
 import budgethunter.composeapp.generated.resources.no_default_budget
+import budgethunter.composeapp.generated.resources.no_email_bank_selected
 import budgethunter.composeapp.generated.resources.no_notification_bank_selected
 import budgethunter.composeapp.generated.resources.notification_access_explanation
 import budgethunter.composeapp.generated.resources.notification_access_missing
@@ -102,6 +104,7 @@ import com.meneses.budgethunter.commons.ui.LoadingOverlay
 import com.meneses.budgethunter.commons.util.Platform
 import com.meneses.budgethunter.settings.application.SettingsIntent
 import com.meneses.budgethunter.settings.application.SettingsState
+import com.meneses.budgethunter.sms.domain.ReadingChannel
 import com.meneses.budgethunter.theme.AppColors
 import kotlinx.serialization.Serializable
 import org.jetbrains.compose.resources.pluralStringResource
@@ -229,9 +232,10 @@ object SettingsScreen {
             BankSelectorModal(
                 availableBanks = uiState.availableBanks,
                 selectedBanks = uiState.selectedBanks,
+                bankChannels = uiState.bankChannels,
                 onDismiss = { onIntent(SettingsIntent.HideBankSelector) },
-                onBanksSelected = { banks ->
-                    onIntent(SettingsIntent.SetSelectedBanks(banks))
+                onBanksSelected = { banks, channels ->
+                    onIntent(SettingsIntent.SetSelectedBanks(banks, channels))
                 }
             )
         }
@@ -324,13 +328,9 @@ object SettingsScreen {
                 switchChecked = uiState.isBankEmailReadingEnabled,
                 onSwitchChange = { onIntent(SettingsIntent.ToggleBankEmailReading(it)) }
             )
-            // Nothing tells apart the same movement read twice, so with several channels on it is said once
-            val readingChannels = listOf(
-                uiState.isSmsReadingEnabled,
-                uiState.isBankNotificationReadingEnabled,
-                uiState.isBankEmailReadingEnabled
-            ).count { it }
-            if (readingChannels > 1) {
+            // Nothing tells apart the same movement read twice: a bank read from two channels that are
+            // on registers what it reports by both twice
+            if (uiState.mayRepeatMovements) {
                 GroupDivider()
                 // A row of its own: it is about the switches together, not about the last one
                 SettingRow(
@@ -372,13 +372,6 @@ object SettingsScreen {
                 )
             }
             GroupDivider()
-            val hasNotificationBankSelected = uiState.selectedBanks.any { it in uiState.notificationBanks }
-            // A selected bank that only one source reads is not read while that source is off. The
-            // emails do not make up for it: a bank's emails rarely carry every movement it notifies
-            val hasUnreadNotificationBank = !uiState.isBankNotificationReadingEnabled &&
-                uiState.selectedBanks.any { it.readsNotifications && !it.readsSms }
-            val hasUnreadSmsBank = !uiState.isSmsReadingEnabled &&
-                uiState.selectedBanks.any { it.readsSms && !it.readsNotifications }
             SettingRow(
                 icon = Icons.Default.AccountBalance,
                 title = stringResource(Res.string.bank_for_sms_notifications),
@@ -391,18 +384,20 @@ object SettingsScreen {
                 } else {
                     stringResource(Res.string.no_banks_selected)
                 },
-                // Only the selected apps are read: with none of them selected the switch reads
-                // nothing, said here since this row is also where it is fixed
+                // A channel picked for a bank reads nothing while its switch is off, and a switch on
+                // reads nothing while no bank is read from it: both are fixed here or just above
                 warning = when {
-                    hasUnreadNotificationBank -> stringResource(Res.string.notification_bank_needs_reading)
-                    hasUnreadSmsBank -> stringResource(Res.string.sms_bank_needs_reading)
-                    uiState.isBankNotificationReadingEnabled && !hasNotificationBankSelected ->
+                    uiState.isMissing(ReadingChannel.APP) -> stringResource(Res.string.notification_bank_needs_reading)
+                    uiState.isMissing(ReadingChannel.SMS) -> stringResource(Res.string.sms_bank_needs_reading)
+                    uiState.isMissing(ReadingChannel.EMAIL) -> stringResource(Res.string.email_bank_needs_reading)
+                    uiState.isBankNotificationReadingEnabled && !uiState.hasBankReadBy(ReadingChannel.APP) ->
                         stringResource(Res.string.no_notification_bank_selected)
+                    uiState.isBankEmailReadingEnabled && !uiState.hasBankReadBy(ReadingChannel.EMAIL) ->
+                        stringResource(Res.string.no_email_bank_selected)
                     else -> null
                 },
-                // One selection for every source: SMS banks, the apps read from their notifications
-                // and the banks whose emails are read
-                enabled = uiState.isSmsReadingEnabled || uiState.isNotificationReaderNeeded,
+                // One selection for every channel, with the channels picked per bank
+                enabled = uiState.isAnyReadingEnabled,
                 onClick = { onIntent(SettingsIntent.ShowBankSelector) }
             )
             GroupDivider()

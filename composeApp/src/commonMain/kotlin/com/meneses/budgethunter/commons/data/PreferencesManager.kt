@@ -7,6 +7,8 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
+import com.meneses.budgethunter.sms.domain.BankChannels
+import com.meneses.budgethunter.sms.domain.ReadingChannel
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 
@@ -55,6 +57,20 @@ class PreferencesManager(private val preferences: DataStore<Preferences>) {
 
     suspend fun setSelectedBankIds(value: Set<String>) {
         preferences.edit { it[KEY_SELECTED_BANK_IDS] = value }
+    }
+
+    /**
+     * The channels picked for each bank ([BankChannels]). Kept on this device, not on the account:
+     * the channels are read by this device's switches.
+     */
+    suspend fun getBankChannels(): Map<String, Set<ReadingChannel>> = preferences.data
+        .map { it[KEY_BANK_CHANNELS] }
+        .firstOrNull()
+        ?.let { BankChannels.decode(it) }
+        ?: emptyMap()
+
+    suspend fun setBankChannels(value: Map<String, Set<ReadingChannel>>) {
+        preferences.edit { it[KEY_BANK_CHANNELS] = BankChannels.encode(value) }
     }
 
     suspend fun isAiProcessingEnabled() = preferences.data
@@ -109,6 +125,7 @@ class PreferencesManager(private val preferences: DataStore<Preferences>) {
             it.remove(KEY_BANK_EMAIL_READING_ENABLED)
             it.remove(KEY_DEFAULT_BUDGET_ID)
             it.remove(KEY_SELECTED_BANK_IDS)
+            it.remove(KEY_BANK_CHANNELS)
             it.remove(KEY_AI_PROCESSING_ENABLED)
         }
     }
@@ -119,6 +136,7 @@ class PreferencesManager(private val preferences: DataStore<Preferences>) {
         private val KEY_BANK_EMAIL_READING_ENABLED = booleanPreferencesKey("bank_email_reading_enabled")
         private val KEY_DEFAULT_BUDGET_ID = intPreferencesKey("default_budget_id")
         private val KEY_SELECTED_BANK_IDS = stringSetPreferencesKey("selected_bank_ids")
+        private val KEY_BANK_CHANNELS = stringSetPreferencesKey("bank_reading_channels")
         private val KEY_AI_PROCESSING_ENABLED = booleanPreferencesKey("ai_processing_enabled")
         private val KEY_OFFLINE_MODE_ENABLED = booleanPreferencesKey("offline_mode_enabled")
         private val KEY_LAST_SIGNED_IN_EMAIL = stringPreferencesKey("last_signed_in_email")
