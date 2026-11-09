@@ -139,9 +139,11 @@ class PreferencesManager(private val preferences: DataStore<Preferences>) {
 
     companion object {
         private val KEY_SMS_READING_ENABLED = booleanPreferencesKey("sms_reading_enabled")
+
         // The switches of earlier versions, only read once to turn them into channels
         private val KEY_BANK_NOTIFICATION_READING_ENABLED = booleanPreferencesKey("bank_notification_reading_enabled")
         private val KEY_BANK_EMAIL_READING_ENABLED = booleanPreferencesKey("bank_email_reading_enabled")
+
         private val KEY_DEFAULT_BUDGET_ID = intPreferencesKey("default_budget_id")
         private val KEY_SELECTED_BANK_IDS = stringSetPreferencesKey("selected_bank_ids")
         private val KEY_BANK_CHANNELS = stringSetPreferencesKey("bank_reading_channels")
