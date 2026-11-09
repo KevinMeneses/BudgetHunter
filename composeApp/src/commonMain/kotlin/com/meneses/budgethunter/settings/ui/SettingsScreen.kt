@@ -370,13 +370,11 @@ object SettingsScreen {
             }
             GroupDivider()
             val hasNotificationBankSelected = uiState.selectedBanks.any { it in uiState.notificationBanks }
-            // A selected bank that only one source reads is not read while that source is off. With
-            // the emails on, every selected bank is read from its emails too
+            // A selected bank that only one source reads is not read while that source is off. The
+            // emails do not make up for it: a bank's emails rarely carry every movement it notifies
             val hasUnreadNotificationBank = !uiState.isBankNotificationReadingEnabled &&
-                !uiState.isBankEmailReadingEnabled &&
                 uiState.selectedBanks.any { it.readsNotifications && !it.readsSms }
             val hasUnreadSmsBank = !uiState.isSmsReadingEnabled &&
-                !uiState.isBankEmailReadingEnabled &&
                 uiState.selectedBanks.any { it.readsSms && !it.readsNotifications }
             SettingRow(
                 icon = Icons.Default.AccountBalance,
@@ -395,8 +393,7 @@ object SettingsScreen {
                 warning = when {
                     hasUnreadNotificationBank -> stringResource(Res.string.notification_bank_needs_reading)
                     hasUnreadSmsBank -> stringResource(Res.string.sms_bank_needs_reading)
-                    uiState.isBankNotificationReadingEnabled && !uiState.isBankEmailReadingEnabled &&
-                        !hasNotificationBankSelected ->
+                    uiState.isBankNotificationReadingEnabled && !hasNotificationBankSelected ->
                         stringResource(Res.string.no_notification_bank_selected)
                     else -> null
                 },
