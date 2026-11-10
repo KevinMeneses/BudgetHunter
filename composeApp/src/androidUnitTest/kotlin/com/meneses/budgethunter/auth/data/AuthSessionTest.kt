@@ -28,4 +28,27 @@ class AuthSessionTest {
 
         assertFalse(session.isSignInRedirectPending.value)
     }
+
+    @Test
+    fun `onSessionExpired asks for the redirect and the notice`() {
+        session.onSessionExpired()
+
+        assertTrue(session.isSignInRedirectPending.value)
+        assertTrue(session.consumeSessionExpiredNotice())
+    }
+
+    @Test
+    fun `the session expired notice is consumed once`() {
+        session.onSessionExpired()
+        session.consumeSessionExpiredNotice()
+
+        assertFalse(session.consumeSessionExpiredNotice())
+    }
+
+    @Test
+    fun `a sign out does not show the session expired notice`() {
+        session.onSignedOut()
+
+        assertFalse(session.consumeSessionExpiredNotice())
+    }
 }

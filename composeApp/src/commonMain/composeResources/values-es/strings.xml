@@ -227,6 +227,7 @@
     <string name="error_password_required">La contraseña es obligatoria</string>
     <string name="error_password_too_short">La contraseña debe tener al menos 6 caracteres</string>
     <string name="error_sign_in_failed">Error al iniciar sesión. Por favor verifica tus credenciales e intenta nuevamente.</string>
+    <string name="session_expired">Tu sesión expiró. Inicia sesión de nuevo con la misma cuenta: tus entradas se conservan y se sincronizan después.</string>
     <string name="error_sign_up_failed">Error al registrarse. Por favor intenta más tarde.</string>
     <string name="error_google_sign_in_failed">No se pudo iniciar sesión con Google. Por favor intenta nuevamente.</string>
     <string name="error_google_no_account">No hay cuentas de Google en este dispositivo. Agrega una e intenta nuevamente.</string>
