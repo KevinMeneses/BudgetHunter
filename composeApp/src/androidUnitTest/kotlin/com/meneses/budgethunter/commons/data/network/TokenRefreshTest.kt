@@ -46,6 +46,39 @@ class TokenRefreshTest {
     }
 
     @Test
+    fun `a refresh token refused as a bad request clears the session`() = runTest {
+        val client = clientAnswering { respondError(HttpStatusCode.BadRequest) }
+
+        client.get(ApiEndpoints.BUDGETS)
+
+        assertNull(tokenStorage.refresh)
+        assertEquals(1, sessionExpiredCalls)
+    }
+
+    @Test
+    fun `a forbidden refresh clears the session`() = runTest {
+        val client = clientAnswering { respondError(HttpStatusCode.Forbidden) }
+
+        client.get(ApiEndpoints.BUDGETS)
+
+        assertNull(tokenStorage.refresh)
+        assertEquals(1, sessionExpiredCalls)
+    }
+
+    @Test
+    fun `an unreadable successful answer keeps the session`() = runTest {
+        val client = clientAnswering {
+            respond("<html>proxy page</html>", headers = headersOf(HttpHeaders.ContentType, "text/html"))
+        }
+
+        client.get(ApiEndpoints.BUDGETS)
+
+        assertEquals("old-auth", tokenStorage.auth)
+        assertEquals("old-refresh", tokenStorage.refresh)
+        assertEquals(0, sessionExpiredCalls)
+    }
+
+    @Test
     fun `a server error while refreshing keeps the session`() = runTest {
         val client = clientAnswering { respondError(HttpStatusCode.BadGateway) }
 

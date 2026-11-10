@@ -159,6 +159,8 @@ fun createHttpClient(
                         // No connection, a timeout or an unreadable answer. Dropping the tokens here
                         // signed the user out on any network hiccup, silently, and every change
                         // after that stayed on the device.
+                        // One case still ends the session: the server rotated the token but its
+                        // answer was lost, so the next refresh sends a token it no longer knows.
                         appLogger.warn(TAG, "Token refresh failed, keeping the session", e)
                         null
                     } finally {

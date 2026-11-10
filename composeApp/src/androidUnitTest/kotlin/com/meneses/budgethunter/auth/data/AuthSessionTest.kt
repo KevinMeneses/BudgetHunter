@@ -51,4 +51,14 @@ class AuthSessionTest {
 
         assertFalse(session.consumeSessionExpiredNotice())
     }
+
+    @Test
+    fun `a sign out drops a session expired notice that was never shown`() {
+        session.onSessionExpired()
+        session.consumeSignInRedirect()
+
+        session.onSignedOut()
+
+        assertFalse(session.consumeSessionExpiredNotice())
+    }
 }

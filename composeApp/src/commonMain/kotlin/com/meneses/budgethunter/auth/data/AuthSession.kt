@@ -20,6 +20,8 @@ class AuthSession {
     private val _isSessionExpiredNoticePending = MutableStateFlow(false)
 
     fun onSignedOut() {
+        // A notice left over from an expiry that never reached sign in must not explain this one
+        _isSessionExpiredNoticePending.value = false
         _isSignInRedirectPending.value = true
     }
 

@@ -312,6 +312,20 @@ class SignInViewModelTest {
     }
 
     @Test
+    fun `a sign out after an unshown expiry does not say the session expired`() = runTest {
+        // Given - the session expired but sign in never opened, then the user signed out
+        authSession.onSessionExpired()
+        authSession.onSignedOut()
+
+        // When
+        val viewModel = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then
+        assertNull(viewModel.uiState.value.error)
+    }
+
+    @Test
     fun `a normal sign in shows no session expired notice`() = runTest {
         // Given - the setup view model, opened without the session expiring
         testDispatcher.scheduler.advanceUntilIdle()
