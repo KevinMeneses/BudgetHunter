@@ -26,13 +26,15 @@ const val API_HTTP_ENGINE = "ApiHttpEngine"
 val authModule = module {
 
     single<HttpClient>(named("AuthHttpClient")) {
+        val authSession = get<AuthSession>()
         createHttpClient(
             engine = get<HttpClientEngineFactory<*>>(named(API_HTTP_ENGINE)),
             baseUrl = getBaseUrl(),
             tokenStorage = get<TokenStorage>(),
             json = get<Json>(),
             appLogger = get(),
-            logLevel = if (BuildKonfig.DEBUG) LogLevel.ALL else LogLevel.NONE
+            logLevel = if (BuildKonfig.DEBUG) LogLevel.ALL else LogLevel.NONE,
+            onSessionExpired = authSession::onSessionExpired
         )
     }
 
@@ -88,7 +90,8 @@ val authModule = module {
             budgetEntrySyncManager = get(),
             signInWithGoogleUseCase = get(),
             syncUserPreferences = get(),
-            prepareDataForAccount = get()
+            prepareDataForAccount = get(),
+            authSession = get()
         )
     }
 

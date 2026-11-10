@@ -227,6 +227,7 @@
     <string name="error_password_required">Password is required</string>
     <string name="error_password_too_short">Password must be at least 6 characters long</string>
     <string name="error_sign_in_failed">Sign in failed. Please check your credentials and try again.</string>
+    <string name="session_expired">Your session expired. Sign in again with the same account: your entries are kept and synced afterwards.</string>
     <string name="error_sign_up_failed">Sign up failed. Please try again later.</string>
     <string name="error_google_sign_in_failed">Could not sign in with Google. Please try again.</string>
     <string name="error_google_no_account">There are no Google accounts on this device. Add one and try again.</string>

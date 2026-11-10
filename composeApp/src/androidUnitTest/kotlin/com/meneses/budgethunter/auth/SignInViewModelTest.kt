@@ -3,12 +3,14 @@ package com.meneses.budgethunter.auth
 import budgethunter.composeapp.generated.resources.Res
 import budgethunter.composeapp.generated.resources.error_google_no_account
 import budgethunter.composeapp.generated.resources.error_google_sign_in_failed
+import budgethunter.composeapp.generated.resources.session_expired
 import com.meneses.budgethunter.auth.application.GoogleAuthOutcome
 import com.meneses.budgethunter.auth.application.PrepareDataForAccountUseCase
 import com.meneses.budgethunter.auth.application.SignInEvent
 import com.meneses.budgethunter.auth.application.SignInIntent
 import com.meneses.budgethunter.auth.application.SignInWithGoogleUseCase
 import com.meneses.budgethunter.auth.data.AuthRepository
+import com.meneses.budgethunter.auth.data.AuthSession
 import com.meneses.budgethunter.budgetEntry.data.BudgetEntrySyncManager
 import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.commons.data.PreferencesManager
@@ -32,6 +34,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -53,6 +56,7 @@ class SignInViewModelTest {
     private val signInWithGoogleUseCase = mockk<SignInWithGoogleUseCase>(relaxed = true)
     private val syncUserPreferences = mockk<SyncUserPreferencesUseCase>(relaxed = true)
     private val prepareDataForAccount = mockk<PrepareDataForAccountUseCase>(relaxed = true)
+    private val authSession = AuthSession()
 
     // System under test
     private lateinit var viewModel: SignInViewModel
@@ -68,7 +72,8 @@ class SignInViewModelTest {
             budgetEntrySyncManager = budgetEntrySyncManager,
             signInWithGoogleUseCase = signInWithGoogleUseCase,
             syncUserPreferences = syncUserPreferences,
-            prepareDataForAccount = prepareDataForAccount
+            prepareDataForAccount = prepareDataForAccount,
+            authSession = authSession
         )
     }
 
@@ -242,7 +247,8 @@ class SignInViewModelTest {
             budgetEntrySyncManager = budgetEntrySyncManager,
             signInWithGoogleUseCase = signInWithGoogleUseCase,
             syncUserPreferences = syncUserPreferences,
-            prepareDataForAccount = prepareDataForAccount
+            prepareDataForAccount = prepareDataForAccount,
+            authSession = authSession
         )
 
         // Then
@@ -261,5 +267,71 @@ class SignInViewModelTest {
 
         // Then - only one flow reaches the platform; a second one would orphan the first
         coVerify(exactly = 1) { signInWithGoogleUseCase.execute() }
+    }
+
+    // ========== Session expired Tests ==========
+
+    private fun createViewModel() = SignInViewModel(
+        authRepository = authRepository,
+        preferencesManager = preferencesManager,
+        budgetRepository = budgetRepository,
+        budgetEntrySyncManager = budgetEntrySyncManager,
+        signInWithGoogleUseCase = signInWithGoogleUseCase,
+        syncUserPreferences = syncUserPreferences,
+        prepareDataForAccount = prepareDataForAccount,
+        authSession = authSession
+    )
+
+    @Test
+    fun `after the server ended the session sign in says so and fills in the last account`() = runTest {
+        // Given - the server rejected the session while the app was open
+        coEvery { preferencesManager.getLastSignedInEmail() } returns "user@example.com"
+        authSession.onSessionExpired()
+
+        // When
+        val viewModel = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then
+        assertEquals(Res.string.session_expired, viewModel.uiState.value.error)
+        assertEquals("user@example.com", viewModel.uiState.value.email)
+    }
+
+    @Test
+    fun `the session expired notice is shown only once`() = runTest {
+        // Given - the notice was already shown
+        authSession.onSessionExpired()
+        createViewModel()
+
+        // When - sign in opens again later
+        val viewModel = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then
+        assertNull(viewModel.uiState.value.error)
+    }
+
+    @Test
+    fun `a sign out after an unshown expiry does not say the session expired`() = runTest {
+        // Given - the session expired but sign in never opened, then the user signed out
+        authSession.onSessionExpired()
+        authSession.onSignedOut()
+
+        // When
+        val viewModel = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then
+        assertNull(viewModel.uiState.value.error)
+    }
+
+    @Test
+    fun `a normal sign in shows no session expired notice`() = runTest {
+        // Given - the setup view model, opened without the session expiring
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then
+        assertNull(viewModel.uiState.value.error)
+        assertEquals("", viewModel.uiState.value.email)
     }
 }

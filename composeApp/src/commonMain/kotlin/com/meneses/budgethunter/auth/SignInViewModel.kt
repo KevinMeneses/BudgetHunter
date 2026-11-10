@@ -6,6 +6,7 @@ import budgethunter.composeapp.generated.resources.Res
 import budgethunter.composeapp.generated.resources.error_google_no_account
 import budgethunter.composeapp.generated.resources.error_google_sign_in_failed
 import budgethunter.composeapp.generated.resources.error_sign_in_failed
+import budgethunter.composeapp.generated.resources.session_expired
 import com.meneses.budgethunter.auth.application.GoogleAuthOutcome
 import com.meneses.budgethunter.auth.application.PrepareDataForAccountUseCase
 import com.meneses.budgethunter.auth.application.SignInEvent
@@ -13,6 +14,7 @@ import com.meneses.budgethunter.auth.application.SignInIntent
 import com.meneses.budgethunter.auth.application.SignInState
 import com.meneses.budgethunter.auth.application.SignInWithGoogleUseCase
 import com.meneses.budgethunter.auth.data.AuthRepository
+import com.meneses.budgethunter.auth.data.AuthSession
 import com.meneses.budgethunter.budgetEntry.data.BudgetEntrySyncManager
 import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.commons.data.PreferencesManager
@@ -32,7 +34,8 @@ class SignInViewModel(
     private val budgetEntrySyncManager: BudgetEntrySyncManager,
     private val signInWithGoogleUseCase: SignInWithGoogleUseCase,
     private val syncUserPreferences: SyncUserPreferencesUseCase,
-    private val prepareDataForAccount: PrepareDataForAccountUseCase
+    private val prepareDataForAccount: PrepareDataForAccountUseCase,
+    private val authSession: AuthSession
 ) : ViewModel() {
 
     val uiState get() = _uiState.asStateFlow()
@@ -42,6 +45,22 @@ class SignInViewModel(
 
     private val _events = Channel<SignInEvent>(Channel.BUFFERED)
     val events = _events.receiveAsFlow()
+
+    init {
+        if (authSession.consumeSessionExpiredNotice()) showSessionExpired()
+    }
+
+    /**
+     * The user was sent here because the server ended the session. Says why, and fills in the
+     * last account: signing in with that one keeps the entries that are waiting to be pushed.
+     */
+    private fun showSessionExpired() {
+        _uiState.update { it.copy(error = Res.string.session_expired) }
+        viewModelScope.launch {
+            val lastEmail = preferencesManager.getLastSignedInEmail() ?: return@launch
+            _uiState.update { if (it.email.isEmpty()) it.copy(email = lastEmail) else it }
+        }
+    }
 
     fun sendIntent(intent: SignInIntent) {
         when (intent) {
