@@ -46,23 +46,37 @@ class TokenRefreshTest {
     }
 
     @Test
-    fun `a refresh token refused as a bad request clears the session`() = runTest {
-        val client = clientAnswering { respondError(HttpStatusCode.BadRequest) }
+    fun `a bad request or forbidden while refreshing keeps the session`() = runTest {
+        for (status in listOf(HttpStatusCode.BadRequest, HttpStatusCode.Forbidden)) {
+            val client = clientAnswering { respondError(status) }
+
+            client.get(ApiEndpoints.BUDGETS)
+
+            assertEquals("old-refresh", tokenStorage.refresh, "after $status")
+        }
+        assertEquals(0, sessionExpiredCalls)
+    }
+
+    @Test
+    fun `a session without its refresh token is reported expired`() = runTest {
+        tokenStorage.refresh = null
+        val client = clientAnswering { error("the refresh endpoint must not be called") }
 
         client.get(ApiEndpoints.BUDGETS)
 
-        assertNull(tokenStorage.refresh)
+        assertNull(tokenStorage.auth)
         assertEquals(1, sessionExpiredCalls)
     }
 
     @Test
-    fun `a forbidden refresh clears the session`() = runTest {
-        val client = clientAnswering { respondError(HttpStatusCode.Forbidden) }
+    fun `no tokens at all is not a session expiring`() = runTest {
+        tokenStorage.auth = null
+        tokenStorage.refresh = null
+        val client = clientAnswering { error("the refresh endpoint must not be called") }
 
         client.get(ApiEndpoints.BUDGETS)
 
-        assertNull(tokenStorage.refresh)
-        assertEquals(1, sessionExpiredCalls)
+        assertEquals(0, sessionExpiredCalls)
     }
 
     @Test
@@ -130,13 +144,12 @@ class TokenRefreshTest {
     }
 
     @Test
-    fun `only a refusal of the token itself counts as rejected`() {
+    fun `only a 401 counts as the token being refused`() {
         assertTrue(isRefreshRejected(HttpStatusCode.Unauthorized))
-        assertTrue(isRefreshRejected(HttpStatusCode.BadRequest))
-        assertTrue(isRefreshRejected(HttpStatusCode.Forbidden))
+        assertFalse(isRefreshRejected(HttpStatusCode.BadRequest))
+        assertFalse(isRefreshRejected(HttpStatusCode.Forbidden))
         assertFalse(isRefreshRejected(HttpStatusCode.InternalServerError))
         assertFalse(isRefreshRejected(HttpStatusCode.BadGateway))
-        assertFalse(isRefreshRejected(HttpStatusCode.TooManyRequests))
     }
 
     /** The API answers 401 to everything; [refreshAnswer] answers the refresh call. */

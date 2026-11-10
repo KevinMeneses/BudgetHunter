@@ -101,8 +101,12 @@ fun createHttpClient(
                     val currentRefreshToken = tokenStorage.getRefreshToken()
                     if (currentRefreshToken == null) {
                         appLogger.warn(TAG, "No refresh token available, cannot refresh")
-                        // Clear tokens and force re-login
+                        // A session without its refresh token cannot be renewed: send the user to
+                        // sign in instead of leaving them inside the app with nothing syncing.
+                        // With no tokens at all there was no session (offline mode): nothing to say.
+                        val hadSession = tokenStorage.getAuthToken() != null
                         tokenStorage.clearTokens()
+                        if (hadSession) onSessionExpired()
                         return@refreshTokens null
                     }
 
@@ -190,10 +194,9 @@ fun createHttpClient(
 }
 
 /**
- * Whether the refresh endpoint refused the token itself (expired, replaced or malformed), as
- * opposed to failing for a reason that says nothing about the session.
+ * Whether the refresh endpoint refused the token itself, as opposed to failing for a reason that
+ * says nothing about the session. Only 401: the backend answers it for an unknown, replaced or
+ * expired refresh token, while a 400 or 403 may come from a proxy or a captive portal.
  */
 internal fun isRefreshRejected(status: HttpStatusCode): Boolean =
-    status == HttpStatusCode.BadRequest ||
-        status == HttpStatusCode.Unauthorized ||
-        status == HttpStatusCode.Forbidden
+    status == HttpStatusCode.Unauthorized

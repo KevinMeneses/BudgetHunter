@@ -82,10 +82,12 @@ BudgetHunter/
 
 ### Session
 - A failed token refresh (`HttpClientFactory`) drops the tokens only when the server refuses the refresh token
-  (400/401/403); no connection, timeouts and 5xx keep the session. The backend keeps one refresh token per user,
-  so signing in on another device ends the session here. A refusal calls `AuthSession.onSessionExpired`: the app goes
-  to sign in with a notice and the last email filled in, clearing nothing, so the same account gets its pending
-  entries pushed. Signing out (`SignOutUseCase`) is different: it deletes every local budget and entry.
+  (401) or there is none left; no connection, timeouts, other statuses and unreadable answers keep the session.
+  The backend keeps one refresh token per user, so signing in on another device ends the session here. A refusal
+  calls `AuthSession.onSessionExpired`: the app goes to sign in with a notice and the last email filled in,
+  clearing nothing, so the same account gets its pending entries pushed. Known trade-off: if the server rotated the token but its answer was lost, the next refresh is
+  refused and the user signs in again. Signing out (`SignOutUseCase`) is different: it deletes every local budget
+  and entry.
 
 ### Navigation
 Type-safe navigation using Navigation Compose with serializable route objects. Main navigation flow:
