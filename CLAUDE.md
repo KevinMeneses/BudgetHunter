@@ -61,6 +61,11 @@ BudgetHunter/
 └── iosApp/                      # Xcode wrapper
 ```
 
+The Xcode target is still called `iosApp`, but its product is `BudgetHunter` (`PRODUCT_NAME` in
+`iosApp/Configuration/Config.xcconfig`; the target must not override it with `$(TARGET_NAME)`). That name is the
+bundle's `CFBundleName`, which iOS shows in Shortcuts, Siri and some system screens; the home screen uses
+`CFBundleDisplayName` ("Budget Hunter").
+
 ### Key Architectural Patterns
 
 **Feature Module Structure:**
