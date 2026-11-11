@@ -28,6 +28,10 @@ object ApiEndpoints {
     const val RECEIPTS_EXTRACT = "/api/receipts/extract"
     const val RECEIPTS_USAGE = "/api/receipts/usage"
 
+    // Billing endpoints (the plan and the account's RevenueCat id)
+    const val BILLING_STATUS = "/api/billing/status"
+    const val BILLING_SYNC = "/api/billing/sync"
+
     // Collaborator endpoints
     fun budgetCollaborators(budgetId: Long) = "/api/budgets/$budgetId/collaborators"
     fun budgetCollaborator(budgetId: Long, encodedEmail: String) = "/api/budgets/$budgetId/collaborators/$encodedEmail"

@@ -26,10 +26,12 @@ Companion changes in the backend repo: `receipts/` package, `users.plan`, `ai_us
    App: `ReceiptApiService` replaces `GeminiApiClient`; `GEMINI_API_KEY` removed from Gradle, Info.plist and CI;
    new failure reasons `QUOTA_EXCEEDED` and `SIGN_IN_REQUIRED`.
    A scan that comes back "not a receipt" counts; a failure on the AI's side is given back.
-2. **Purchases.** Backend: `POST /api/webhooks/revenuecat` (shared-secret header) sets `users.plan` from
-   `INITIAL_PURCHASE` / `RENEWAL` / `UNCANCELLATION` / `PRODUCT_CHANGE` (premium) and `EXPIRATION` (free);
-   RevenueCat's app user id = the account email (or a stable id). App: `purchases-kmp`, log in to RevenueCat
-   with the same id after sign-in, offerings, restore purchases.
+2. **Purchases.** Backend (done): `users.billing_id` (random) is the RevenueCat app user id;
+   `POST /api/webhooks/revenuecat` (shared-secret header) only names the accounts, and the server reads each one's
+   entitlement from RevenueCat's API into `users.plan` / `plan_expires_at`; `GET /api/billing/status`,
+   `POST /api/billing/sync`. App: RevenueCat's Android SDK behind `StoreBilling` (not `purchases-kmp`: on iOS it
+   needs RevenueCat's framework linked in Xcode, and iOS launches later), `PremiumRepository` (log in with the
+   backend's id before each store call, sync after buying or restoring), store log out on sign out.
 3. **Paywall.** A screen opened from the 402 message and from settings, showing what premium includes, the
    prices from RevenueCat and the scans left (`GET /api/receipts/usage`). Show "N scans left" when few remain.
 4. **Categorization behind the plan.** Count categorized entries per month like receipts (free: a small number),
@@ -42,6 +44,19 @@ Companion changes in the backend repo: `receipts/` package, `users.plan`, `ai_us
    (DigitalOcean Spaces / S3), served with short-lived signed URLs. Compress photos on the phone (~200-400 KB);
    PDFs as-is up to 12 MB. Delete with the entry and the account. Collaborators of a shared budget see it.
    After a reinstall, download on demand when an entry is opened. Free accounts keep receipts on the phone only.
+
+## Store setup (Android)
+
+1. RevenueCat: project, Android app (package name + Google service account JSON), entitlement `premium`.
+2. Upload a build that contains this SDK (it brings Google Play Billing) to the Play Console's internal testing
+   track: Google does not allow creating subscriptions before that.
+3. Play Console: subscription `premium` with monthly and yearly base plans and the 7-day trial; license testers.
+4. RevenueCat: import the products, attach them to `premium`, offering `default` with the monthly and annual
+   packages. Put the public `goog_` key in `local.properties` / the `REVENUECAT_ANDROID_API_KEY` secret.
+5. Backend: `REVENUECAT_SECRET_API_KEY`, `REVENUECAT_WEBHOOK_AUTHORIZATION`, the webhook URL (see its DEPLOYMENT.md).
+
+Changing the package name later means a new app in Play Console and in RevenueCat (the products are per app),
+a new Android OAuth client for Google sign-in, and a new `goog_` key; no code here depends on it.
 
 ## Before release
 

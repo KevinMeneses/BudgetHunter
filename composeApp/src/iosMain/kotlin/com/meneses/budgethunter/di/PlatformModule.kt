@@ -5,6 +5,8 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import com.meneses.budgethunter.auth.data.IosSecureTokenStorage
 import com.meneses.budgethunter.auth.data.TokenStorage
+import com.meneses.budgethunter.billing.UnavailableStoreBilling
+import com.meneses.budgethunter.billing.domain.StoreBilling
 import com.meneses.budgethunter.budgetEntry.data.ImageProcessor
 import com.meneses.budgethunter.budgetEntry.data.network.ReceiptApiService
 import com.meneses.budgethunter.budgetEntry.domain.AIImageProcessor
@@ -36,6 +38,9 @@ import platform.Foundation.NSUserDomainMask
 
 fun iosPlatformModule(native: NativeDependencies) = module {
     single<HttpClientEngineFactory<*>>(named(API_HTTP_ENGINE)) { Darwin }
+
+    // Android launches first; see UnavailableStoreBilling
+    single<StoreBilling> { UnavailableStoreBilling() }
 
     // Provide the database using iOS-specific factory
     single<Database> {

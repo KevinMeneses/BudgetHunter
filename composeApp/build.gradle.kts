@@ -106,6 +106,9 @@ kotlin {
             // Google Play services
             implementation(libs.bundles.play.update)
 
+            // Store purchases (Google Play Billing through RevenueCat)
+            implementation(libs.revenuecat.purchases)
+
             // Ktor Android engine for HTTP calls
             implementation(libs.ktor.client.android)
             implementation(libs.ktor.client.okhttp)
@@ -237,6 +240,10 @@ buildkonfig {
         // than failing the build: a checkout without it still builds, and the app just hides the
         // Google button (see GoogleSignInManager.isAvailable).
         buildConfigField(STRING, "GOOGLE_SERVER_CLIENT_ID", props.getProperty("GOOGLE_SERVER_CLIENT_ID") ?: "")
+
+        // RevenueCat's public Android key (goog_...). Not a secret either: it can only read offerings and start
+        // purchases. Empty keeps the build working with purchases unavailable (see StoreBilling.isAvailable).
+        buildConfigField(STRING, "REVENUECAT_ANDROID_API_KEY", props.getProperty("REVENUECAT_ANDROID_API_KEY") ?: "")
 
         // Debug flag - defaults to true for safety
         buildConfigField(BOOLEAN, "DEBUG", "true")
