@@ -57,6 +57,8 @@ class AndroidStoreBilling(
     override suspend fun logIn(appUserId: String) {
         val purchases = purchases()
         if (purchases.appUserID == appUserId) return
+        // Offers loaded for another account are not reused for this one
+        packages.clear()
         storeCall("log in") { purchases.awaitLogIn(appUserId) }
     }
 
