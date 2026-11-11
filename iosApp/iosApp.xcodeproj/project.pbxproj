@@ -7,8 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		9381EC3829C532F09CE002BB /* IOSGoogleSignInManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 823D41FA54B1C410DE3CE9F5 /* IOSGoogleSignInManager.swift */; };
-		76B6A0419AB69B813D1F27FA /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = AAE2DBCCA4B33C5814C09A70 /* GoogleSignIn */; };
 		058557BB273AAA24004C7B11 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 058557BA273AAA24004C7B11 /* Assets.xcassets */; };
 		058557D9273AAEEB004C7B11 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */; };
 		2152FB042600AC8F00CF470E /* iOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* iOSApp.swift */; };
@@ -17,15 +15,17 @@
 		24BAC3FA2E860B20009584F1 /* IOSKeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24BAC3FB2E860B20009584F1 /* IOSKeychainStore.swift */; };
 		3CC2ECF63D184BD7B9459B8F /* IOSCameraManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56C2619B9E644D8F950C014E /* IOSCameraManager.swift */; };
 		4AA3ECF63D184BD7B9459C8F /* IOSFilePickerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67C2619B9E644D8F950C015E /* IOSFilePickerManager.swift */; };
-		7555FF83242A565900829871 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7555FF82242A565900829871 /* ContentView.swift */; };
-		7555FFB5242A651A00829871 /* ComposeApp.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7555FFB4242A651A00829871 /* ComposeApp.framework */; };
-		7555FFB6242A651A00829871 /* ComposeApp.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 7555FFB4242A651A00829871 /* ComposeApp.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		B1A7B2B82C82D1F200B2E6F8 /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = B1A7B2B72C82D1F200B2E6F8 /* libsqlite3.tbd */; };
 		5B1E0A012F10C0DE00A1B201 /* IOSNativeDependencies.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B1E0A022F10C0DE00A1B201 /* IOSNativeDependencies.swift */; };
 		5B1E0A032F10C0DE00A1B201 /* RegisterExpenseFromMessageIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B1E0A042F10C0DE00A1B201 /* RegisterExpenseFromMessageIntent.swift */; };
 		5B1E0A052F10C0DE00A1B201 /* BudgetHunterShortcuts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B1E0A062F10C0DE00A1B201 /* BudgetHunterShortcuts.swift */; };
 		5B1E0A072F10C0DE00A1B201 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 5B1E0A082F10C0DE00A1B201 /* Localizable.strings */; };
 		5B1E0A0A2F10C0DE00A1B201 /* AppShortcuts.strings in Resources */ = {isa = PBXBuildFile; fileRef = 5B1E0A0B2F10C0DE00A1B201 /* AppShortcuts.strings */; };
+		7555FF83242A565900829871 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7555FF82242A565900829871 /* ContentView.swift */; };
+		7555FFB5242A651A00829871 /* ComposeApp.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7555FFB4242A651A00829871 /* ComposeApp.framework */; };
+		7555FFB6242A651A00829871 /* ComposeApp.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 7555FFB4242A651A00829871 /* ComposeApp.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		76B6A0419AB69B813D1F27FA /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = AAE2DBCCA4B33C5814C09A70 /* GoogleSignIn */; };
+		9381EC3829C532F09CE002BB /* IOSGoogleSignInManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 823D41FA54B1C410DE3CE9F5 /* IOSGoogleSignInManager.swift */; };
+		B1A7B2B82C82D1F200B2E6F8 /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = B1A7B2B72C82D1F200B2E6F8 /* libsqlite3.tbd */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -43,27 +43,27 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		823D41FA54B1C410DE3CE9F5 /* IOSGoogleSignInManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSGoogleSignInManager.swift; sourceTree = "<group>"; };
 		058557BA273AAA24004C7B11 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		2152FB032600AC8F00CF470E /* iOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSApp.swift; sourceTree = "<group>"; };
 		24BAC3E62E85FDE7009584F1 /* IOSShareManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSShareManager.swift; sourceTree = "<group>"; };
 		24BAC3E82E860B20009584F1 /* IOSNotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSNotificationManager.swift; sourceTree = "<group>"; };
-		24BAC3FB2E860B20009584F1 /* IOSKeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSKeychainStore.swift; sourceTree = "<group>"; };
 		24BAC3EA2E8CDAA9009584F1 /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
+		24BAC3FB2E860B20009584F1 /* IOSKeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSKeychainStore.swift; sourceTree = "<group>"; };
 		56C2619B9E644D8F950C014E /* IOSCameraManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSCameraManager.swift; sourceTree = "<group>"; };
-		67C2619B9E644D8F950C015E /* IOSFilePickerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSFilePickerManager.swift; sourceTree = "<group>"; };
-		7555FF7B242A565900829871 /* iosApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iosApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		7555FF82242A565900829871 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		7555FF8C242A565B00829871 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		7555FFB4242A651A00829871 /* ComposeApp.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = ComposeApp.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		AB3632DC29227652001CCB65 /* Config.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
-		B1A7B2B72C82D1F200B2E6F8 /* libsqlite3.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libsqlite3.tbd; path = usr/lib/libsqlite3.tbd; sourceTree = SDKROOT; };
 		5B1E0A022F10C0DE00A1B201 /* IOSNativeDependencies.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSNativeDependencies.swift; sourceTree = "<group>"; };
 		5B1E0A042F10C0DE00A1B201 /* RegisterExpenseFromMessageIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegisterExpenseFromMessageIntent.swift; sourceTree = "<group>"; };
 		5B1E0A062F10C0DE00A1B201 /* BudgetHunterShortcuts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BudgetHunterShortcuts.swift; sourceTree = "<group>"; };
 		5B1E0A092F10C0DE00A1B201 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
 		5B1E0A0C2F10C0DE00A1B201 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
+		67C2619B9E644D8F950C015E /* IOSFilePickerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSFilePickerManager.swift; sourceTree = "<group>"; };
+		7555FF7B242A565900829871 /* iosApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iosApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		7555FF82242A565900829871 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		7555FF8C242A565B00829871 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		7555FFB4242A651A00829871 /* ComposeApp.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = ComposeApp.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		823D41FA54B1C410DE3CE9F5 /* IOSGoogleSignInManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSGoogleSignInManager.swift; sourceTree = "<group>"; };
+		AB3632DC29227652001CCB65 /* Config.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
+		B1A7B2B72C82D1F200B2E6F8 /* libsqlite3.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libsqlite3.tbd; path = usr/lib/libsqlite3.tbd; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
