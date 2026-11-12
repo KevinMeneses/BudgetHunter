@@ -3,14 +3,29 @@
 -- every lookup by server id fail) and the copy never reached the server. The original is always the
 -- oldest row; the copies become local-only budgets and entries, pending to be pushed.
 
--- The same server entry twice in the same budget is one movement stored twice: keep the oldest.
+-- Copies are detached through their budget before any entry is compared by id (the third
+-- statement runs before the fourth), so an original entry that a pull re-inserted with a newer id
+-- than its copy still keeps its server id.
+
+-- The same server entry twice in the same budget is one movement stored twice. Keep the row that
+-- holds what only this device has: a change not pushed yet, then an invoice (never sent to the
+-- server), then the oldest. Ranked as 2 * pending + has invoice.
 DELETE FROM budget_entry
 WHERE server_id IS NOT NULL
   AND EXISTS (
     SELECT 1 FROM budget_entry AS other
     WHERE other.server_id = budget_entry.server_id
       AND other.budget_id = budget_entry.budget_id
-      AND other.id < budget_entry.id
+      AND other.id != budget_entry.id
+      AND (
+        2 * (other.is_synced = 0) + (other.invoice IS NOT NULL)
+          > 2 * (budget_entry.is_synced = 0) + (budget_entry.invoice IS NOT NULL)
+        OR (
+          2 * (other.is_synced = 0) + (other.invoice IS NOT NULL)
+            = 2 * (budget_entry.is_synced = 0) + (budget_entry.invoice IS NOT NULL)
+          AND other.id < budget_entry.id
+        )
+      )
   );
 
 UPDATE budget

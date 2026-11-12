@@ -323,9 +323,10 @@ class BudgetEntrySyncManager(
             // copy: a pull that is not preceded by a push (an SSE event) or a push that failed
             // would otherwise overwrite it and mark it synced, losing it. Keep it pending so the
             // next push sends it, only learning its server id if it did not have it, so that
-            // push updates the server's entry instead of creating a second one.
+            // push updates the server's entry instead of creating a second one. Only that column is
+            // written: a whole-row update from the copy read above would undo an edit saved since.
             if (existingEntry.serverId != serverEntry.id) {
-                localDataSource.update(existingEntry.copy(serverId = serverEntry.id))
+                localDataSource.setServerId(id = existingEntry.id, serverId = serverEntry.id)
             }
         } else if (existingEntry != null) {
             // The server wins, falling back to the local date for entries the server stored before

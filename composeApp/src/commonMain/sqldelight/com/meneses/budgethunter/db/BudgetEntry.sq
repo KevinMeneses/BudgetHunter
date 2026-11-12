@@ -43,7 +43,9 @@ WHERE id = :id;
 
 -- Stores the server's answer to a push only while the row still holds what was pushed: if it was
 -- edited meanwhile it stays pending, so that edit is pushed next instead of being marked synced.
--- The invoice is not sent to the server, so it is neither compared nor written.
+-- The invoice is not sent to the server, so it is neither compared nor written. The pushed amount
+-- comes from the same String -> REAL conversion the row was written with, so equal values compare
+-- equal; were the two ever converted differently, the row would only stay pending (one more push).
 markPushedIfUnchanged:
 UPDATE budget_entry
 SET amount = :amount, description = :description, type = :type, date = :date, category = :category,

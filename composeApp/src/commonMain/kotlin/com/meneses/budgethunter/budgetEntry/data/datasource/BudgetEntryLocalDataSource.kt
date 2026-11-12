@@ -67,6 +67,9 @@ class BudgetEntryLocalDataSource(
         modification_date = budgetEntry.modificationDate
     )
 
+    fun setServerId(id: Int, serverId: Long) =
+        queries.setServerId(server_id = serverId, id = id.toLong())
+
     /**
      * Stores the server's answer to pushing [pushed]. The entry always gets its server id (so the
      * next push updates it instead of creating it again), but takes the server's values and is

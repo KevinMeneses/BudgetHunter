@@ -817,12 +817,13 @@ class BudgetSyncManagerTest {
         )
         every { localDataSource.getByServerId(101) } returns existingBudget
         every { localDataSource.update(any()) } returns Unit
+        coEvery { localDataSource.updateCollaboratorCount(any(), any()) } returns Unit
 
         syncManager.pullBudgetsFromServer()
 
-        verify(exactly = 1) {
-            localDataSource.update(existingBudget.copy(collaboratorCount = 3))
-        }
+        // Only that column: a whole-row update from the copy read by the pull could undo an edit saved since
+        coVerify(exactly = 1) { localDataSource.updateCollaboratorCount(101, 3) }
+        verify(exactly = 0) { localDataSource.update(any()) }
     }
 
     @Test

@@ -190,7 +190,7 @@ class BudgetSyncManager(
     /**
      * Merges a single server budget into local database.
      */
-    private fun mergeServerBudget(serverBudget: BudgetResponse): Result<Unit> {
+    private suspend fun mergeServerBudget(serverBudget: BudgetResponse): Result<Unit> {
         // Check if budget already exists locally by server_id
         val existingBudget = localDataSource.getByServerId(serverBudget.id)
 
@@ -198,11 +198,9 @@ class BudgetSyncManager(
             // A change made here that has not reached the server yet (its push failed, or is still
             // to come) is newer than the server's copy: keep it and leave it pending, so the next
             // push sends it. Only the collaborator count, which nobody edits here, comes from the
-            // server.
-            val collaboratorCount = serverBudget.collaboratorCount ?: existingBudget.collaboratorCount
-            if (collaboratorCount != existingBudget.collaboratorCount) {
-                localDataSource.update(existingBudget.copy(collaboratorCount = collaboratorCount))
-            }
+            // server, written on its own: a whole-row update from the copy read above would undo
+            // an edit saved since.
+            serverBudget.collaboratorCount?.let { localDataSource.updateCollaboratorCount(serverBudget.id, it) }
         } else if (existingBudget != null) {
             // The server wins, falling back to the local date for budgets the server stored before
             // it kept a date of its own.

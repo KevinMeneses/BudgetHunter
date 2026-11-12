@@ -878,21 +878,16 @@ class BudgetEntrySyncManagerTest {
         coEvery {
             entryLocalDataSource.selectByUniqueFields(1L, 50.0, "Entry", "2024-01-01")
         } returns pendingDbEntry
-        every { entryLocalDataSource.update(any()) } returns Unit
+        every { entryLocalDataSource.setServerId(any(), any()) } returns Unit
 
         val result = syncManager.pullEntriesFromServer(budgetServerId = 101, localBudgetId = 1)
 
         // Then - Still pending with its own values, but the next push updates entry 201 instead
-        // of creating a second one
+        // of creating a second one. Only the server id is written: a whole-row update from the copy
+        // read by the pull could undo an edit saved since.
         assertIs<SyncResult.Success<SyncStats>>(result)
-        verify(exactly = 1) {
-            entryLocalDataSource.update(
-                match {
-                    it.serverId == 201L && !it.isSynced &&
-                        it.category == BudgetEntry.Category.OTHER && it.date == "2024-01-01"
-                }
-            )
-        }
+        verify(exactly = 1) { entryLocalDataSource.setServerId(id = 1, serverId = 201L) }
+        verify(exactly = 0) { entryLocalDataSource.update(any()) }
     }
 
     @Test

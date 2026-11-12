@@ -46,14 +46,21 @@ class DuplicatedServerIdsMigrationTest {
         return database.budgetQueries.selectLastId().executeAsOne()
     }
 
-    private fun insertEntry(budgetId: Long, description: String, serverId: Long?, synced: Boolean) {
+    private fun insertEntry(
+        budgetId: Long,
+        description: String,
+        serverId: Long?,
+        synced: Boolean,
+        invoice: String? = null
+    ): Long {
         database.budgetEntryQueries.insert(
             id = null, budgetId = budgetId, amount = 10.0, description = description,
-            type = BudgetEntry.Type.OUTCOME, date = "2026-01-01", invoice = null,
+            type = BudgetEntry.Type.OUTCOME, date = "2026-01-01", invoice = invoice,
             category = BudgetEntry.Category.FOOD, server_id = serverId, is_synced = if (synced) 1L else 0L,
             created_by_email = if (synced) "a@test.com" else null, updated_by_email = null,
             creation_date = if (synced) "2026-01-01T10:00:00" else null, modification_date = null
         )
+        return database.budgetQueries.selectLastId().executeAsOne()
     }
 
     private fun migrate() {
@@ -148,5 +155,62 @@ class DuplicatedServerIdsMigrationTest {
 
         assertEquals(budgetsBefore, database.budgetQueries.selectAll().executeAsList())
         assertEquals(entriesBefore, entries(synced) + entries(local))
+    }
+
+    @Test
+    fun `a duplicated entry keeps the row with a change not pushed yet`() {
+        val budget = insertBudget("Mine", serverId = 101, synced = true)
+        insertEntry(budget, "Lunch", serverId = 201, synced = true)
+        val pending = insertEntry(budget, "Lunch edited", serverId = 201, synced = false)
+
+        migrate()
+
+        assertEquals(listOf(pending), entries(budget).map { it.id })
+    }
+
+    @Test
+    fun `a duplicated entry keeps the row with an invoice`() {
+        val budget = insertBudget("Mine", serverId = 101, synced = true)
+        insertEntry(budget, "Lunch", serverId = 201, synced = true)
+        val withInvoice = insertEntry(budget, "Lunch", serverId = 201, synced = true, invoice = "receipt.jpg")
+
+        migrate()
+
+        with(entries(budget).single()) {
+            assertEquals(withInvoice, id)
+            assertEquals("receipt.jpg", invoice)
+        }
+    }
+
+    @Test
+    fun `three budgets sharing one server id leave only the original linked`() {
+        val original = insertBudget("Shared", serverId = 101, synced = true)
+        val copy = insertBudget("Shared (copy)", serverId = 101, synced = true)
+        val copyOfCopy = insertBudget("Shared (copy) (copy)", serverId = 101, synced = true)
+        listOf(original, copy, copyOfCopy).forEach { insertEntry(it, "Lunch", serverId = 201, synced = true) }
+
+        migrate()
+
+        assertEquals(101L, budget(original).server_id)
+        assertNull(budget(copy).server_id)
+        assertNull(budget(copyOfCopy).server_id)
+        assertEquals(201L, entries(original).single().server_id)
+        assertNull(entries(copy).single().server_id)
+        assertNull(entries(copyOfCopy).single().server_id)
+    }
+
+    @Test
+    fun `an original entry re-inserted after its copy keeps its server id`() {
+        // The original entry was deleted here but not on the server, and a pull brought it back
+        // with an id newer than the copy's
+        val original = insertBudget("Shared", serverId = 101, synced = true)
+        val copy = insertBudget("Shared (copy)", serverId = 101, synced = true)
+        insertEntry(copy, "Lunch", serverId = 201, synced = true)
+        insertEntry(original, "Lunch", serverId = 201, synced = true)
+
+        migrate()
+
+        assertEquals(201L, entries(original).single().server_id)
+        assertNull(entries(copy).single().server_id)
     }
 }
