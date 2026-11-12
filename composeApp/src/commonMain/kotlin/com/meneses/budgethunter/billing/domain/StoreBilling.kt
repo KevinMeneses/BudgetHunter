@@ -36,7 +36,10 @@ data class PremiumOffer(
     val id: String,
     val period: PremiumPeriod,
     val price: String,
-    /** Length of the free trial, or null without one (or when the user already used it). */
+    /**
+     * Length of the free trial in days (a month counts as 30, a year as 365), or null without one (or when the
+     * user already used it).
+     */
     val freeTrialDays: Int? = null
 )
 

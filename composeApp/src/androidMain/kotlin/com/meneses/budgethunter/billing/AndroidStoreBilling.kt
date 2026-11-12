@@ -23,7 +23,6 @@ import com.revenuecat.purchases.awaitOfferings
 import com.revenuecat.purchases.awaitPurchase
 import com.revenuecat.purchases.awaitRestore
 import com.revenuecat.purchases.models.Period
-import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.cancellation.CancellationException
 
 /** Supplies the [Activity] Google Play's purchase sheet needs (Koin only holds the application context). */
@@ -44,8 +43,10 @@ class AndroidStoreBilling(
 
     private var activityDelegate: StoreActivityDelegate? = null
 
-    // The packages of the last offers() call, by id, so purchase() can hand the store the real object
-    private val packages = ConcurrentHashMap<String, Package>()
+    // The packages of the last offers() call, by id, so purchase() can hand the store the real object.
+    // Replaced whole, never emptied in place, so a purchase during a reload still finds its package.
+    @Volatile
+    private var packages: Map<String, Package> = emptyMap()
 
     /** Pass null from `onDestroy`: this is a singleton, and a delegate left behind would leak the Activity. */
     fun setActivityDelegate(delegate: StoreActivityDelegate?) {
@@ -58,7 +59,7 @@ class AndroidStoreBilling(
         val purchases = purchases()
         if (purchases.appUserID == appUserId) return
         // Offers loaded for another account are not reused for this one
-        packages.clear()
+        packages = emptyMap()
         storeCall("log in") { purchases.awaitLogIn(appUserId) }
     }
 
@@ -74,15 +75,14 @@ class AndroidStoreBilling(
         } catch (e: PurchasesException) {
             logger.warn(TAG, "Could not log out of RevenueCat", e)
         }
-        packages.clear()
+        packages = emptyMap()
     }
 
     override suspend fun offers(): List<PremiumOffer> {
         val purchases = purchases()
         val offering = storeCall("load offerings") { purchases.awaitOfferings() }.current ?: return emptyList()
-        packages.clear()
+        packages = offering.availablePackages.associateBy { it.identifier }
         return offering.availablePackages.map { pkg ->
-            packages[pkg.identifier] = pkg
             PremiumOffer(
                 id = pkg.identifier,
                 period = when (pkg.packageType) {

@@ -5,6 +5,7 @@ import com.meneses.budgethunter.billing.domain.PremiumOffer
 import com.meneses.budgethunter.billing.domain.PremiumPeriod
 import com.meneses.budgethunter.billing.domain.PurchaseOutcome
 import com.meneses.budgethunter.billing.domain.StoreBilling
+import com.meneses.budgethunter.billing.domain.StoreBillingException
 import com.meneses.budgethunter.billing.domain.StorePurchaseResult
 import com.meneses.budgethunter.commons.data.network.models.BillingStatusResponse
 import com.meneses.budgethunter.commons.data.sync.NoOpLogger
@@ -16,6 +17,7 @@ import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 
 class PremiumRepositoryTest {
@@ -88,6 +90,14 @@ class PremiumRepositoryTest {
 
         coEvery { api.sync() } throws BillingApiException(429, "HTTP 429")
         assertEquals(BillingStatus(false, null), repository.restore())
+    }
+
+    @Test
+    fun `nothing is bought when the store cannot log in with the account's id`() = runTest {
+        coEvery { store.logIn("abc-123") } throws StoreBillingException("Could not log in")
+
+        assertFailsWith<StoreBillingException> { repository.purchase("annual") }
+        coVerify(exactly = 0) { store.purchase(any()) }
     }
 
     @Test
