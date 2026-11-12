@@ -12,14 +12,18 @@ import com.meneses.budgethunter.commons.data.network.models.SignUpResponse
 import com.meneses.budgethunter.commons.data.sync.Logger
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.plugins.auth.AuthCircuitBreaker
 import io.ktor.client.plugins.auth.authProvider
 import io.ktor.client.plugins.auth.providers.BearerAuthProvider
+import io.ktor.client.request.bearerAuth
+import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.isSuccess
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 
@@ -156,6 +160,42 @@ class AuthRepository(
         } catch (e: Exception) {
             logger.warn(TAG, "Could not set the password", e)
             Result.failure(e)
+        }
+    }
+
+    /**
+     * Deletes the account on the server. The local session is left alone: the caller decides
+     * what to clear from the answer.
+     *
+     * A 401 is not retried through a token refresh: the caller treats it as an ended session,
+     * like the rest of the app does with a refused one. [AuthCircuitBreaker] turns the refresh off
+     * but also stops the Auth plugin from adding the token, so it is sent here from the storage,
+     * which every refresh writes to.
+     */
+    suspend fun deleteAccount(): DeleteAccountResult = withContext(ioDispatcher) {
+        try {
+            val accessToken = tokenStorage.getAuthToken()
+                ?: return@withContext DeleteAccountResult.UNAUTHORIZED
+            val response = httpClient.delete(ApiEndpoints.ME) {
+                attributes.put(AuthCircuitBreaker, Unit)
+                bearerAuth(accessToken)
+            }
+            when {
+                response.status.isSuccess() -> DeleteAccountResult.DELETED
+                response.status == HttpStatusCode.Unauthorized -> {
+                    logger.warn(TAG, "Account deletion refused: the session is no longer valid")
+                    DeleteAccountResult.UNAUTHORIZED
+                }
+                else -> {
+                    logger.warn(TAG, "Account deletion failed: ${response.status}")
+                    DeleteAccountResult.FAILED
+                }
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            logger.warn(TAG, "Account deletion failed", e)
+            DeleteAccountResult.FAILED
         }
     }
 

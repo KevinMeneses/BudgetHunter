@@ -29,7 +29,9 @@ Companion changes in the backend repo: `receipts/` package, `users.plan`, `ai_us
 2. **Purchases.** Backend: `POST /api/webhooks/revenuecat` (shared-secret header) sets `users.plan` from
    `INITIAL_PURCHASE` / `RENEWAL` / `UNCANCELLATION` / `PRODUCT_CHANGE` (premium) and `EXPIRATION` (free);
    RevenueCat's app user id = the account email (or a stable id). App: `purchases-kmp`, log in to RevenueCat
-   with the same id after sign-in, offerings, restore purchases.
+   with the same id after sign-in, offerings, restore purchases. Log out of RevenueCat in `SignOutUseCase`,
+   which deleting the account also runs (deleting it never cancels the store subscription: the confirmation
+   says so to premium accounts and links to the store's subscriptions page).
 3. **Paywall.** A screen opened from the 402 message and from settings, showing what premium includes, the
    prices from RevenueCat and the scans left (`GET /api/receipts/usage`). Show "N scans left" when few remain.
 4. **Categorization behind the plan.** Count categorized entries per month like receipts (free: a small number),

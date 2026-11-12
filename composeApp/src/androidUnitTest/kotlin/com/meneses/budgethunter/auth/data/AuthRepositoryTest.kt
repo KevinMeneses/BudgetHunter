@@ -688,4 +688,99 @@ class AuthRepositoryTest {
         assertTrue(result.isSuccess)
         assertTrue(sentBody!!.contains("newPassword"))
     }
+
+    // region deleteAccount
+
+    private var refreshAttempts = 0
+
+    /** A client like the app's (createHttpClient): bearer tokens from storage and a refresh on every 401. */
+    private fun deleteAccountRepository(
+        status: HttpStatusCode = HttpStatusCode.NoContent,
+        failWith: Exception? = null,
+        sentRequests: MutableList<io.ktor.client.request.HttpRequestData> = mutableListOf()
+    ): AuthRepository {
+        val tokenStorage = createTestTokenStorage()
+        kotlinx.coroutines.runBlocking {
+            tokenStorage.saveAuthToken("access")
+            tokenStorage.saveRefreshToken("refresh")
+        }
+        val engine = MockEngine { request ->
+            sentRequests += request
+            failWith?.let { throw it }
+            respond(content = "", status = status)
+        }
+        val client = HttpClient(engine) {
+            install(ContentNegotiation) { json(this@AuthRepositoryTest.json) }
+            install(Auth) {
+                bearer {
+                    loadTokens { BearerTokens(tokenStorage.getAuthToken()!!, tokenStorage.getRefreshToken()!!) }
+                    refreshTokens {
+                        refreshAttempts++
+                        BearerTokens("new-access", "new-refresh")
+                    }
+                    // The app's client skips requests that opt out of the auth handling
+                    sendWithoutRequest { !it.attributes.contains(io.ktor.client.plugins.auth.AuthCircuitBreaker) }
+                }
+            }
+            defaultRequest {
+                url("http://localhost:8080")
+                contentType(ContentType.Application.Json)
+            }
+        }
+        return AuthRepository(client, tokenStorage, Dispatchers.Unconfined, NoOpLogger())
+    }
+
+    @Test
+    fun `deleteAccount sends an authenticated DELETE to the account and reads 204 as deleted`() = runTest {
+        val sent = mutableListOf<io.ktor.client.request.HttpRequestData>()
+
+        val result = deleteAccountRepository(sentRequests = sent).deleteAccount()
+
+        assertEquals(DeleteAccountResult.DELETED, result)
+        val request = sent.single()
+        assertEquals(io.ktor.http.HttpMethod.Delete, request.method)
+        assertEquals(ApiEndpoints.ME, request.url.encodedPath)
+        assertEquals("Bearer access", request.headers[HttpHeaders.Authorization])
+    }
+
+    @Test
+    fun `deleteAccount reads 401 as unauthorized without refreshing the token or retrying`() = runTest {
+        val sent = mutableListOf<io.ktor.client.request.HttpRequestData>()
+
+        val result = deleteAccountRepository(HttpStatusCode.Unauthorized, sentRequests = sent).deleteAccount()
+
+        assertEquals(DeleteAccountResult.UNAUTHORIZED, result)
+        assertEquals(0, refreshAttempts)
+        assertEquals(1, sent.size)
+    }
+
+    @Test
+    fun `deleteAccount reads a server error as failed`() = runTest {
+        val result = deleteAccountRepository(HttpStatusCode.InternalServerError).deleteAccount()
+
+        assertEquals(DeleteAccountResult.FAILED, result)
+    }
+
+    @Test
+    fun `deleteAccount reads a network error as failed`() = runTest {
+        val result = deleteAccountRepository(failWith = java.io.IOException("offline")).deleteAccount()
+
+        assertEquals(DeleteAccountResult.FAILED, result)
+    }
+
+    @Test
+    fun `deleteAccount without a stored session is unauthorized and sends nothing`() = runTest {
+        val sent = mutableListOf<io.ktor.client.request.HttpRequestData>()
+        val repository = AuthRepository(
+            simpleClient(MockEngine { request -> sent += request; respond("", HttpStatusCode.NoContent) }),
+            createTestTokenStorage(),
+            Dispatchers.Unconfined,
+            NoOpLogger()
+        )
+
+        assertEquals(DeleteAccountResult.UNAUTHORIZED, repository.deleteAccount())
+        assertTrue(sent.isEmpty())
+    }
+
+    // endregion
 }

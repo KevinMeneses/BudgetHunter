@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Sms
 import androidx.compose.material.icons.filled.Warning
@@ -88,6 +89,8 @@ import budgethunter.composeapp.generated.resources.section_automatic_entries
 import budgethunter.composeapp.generated.resources.set_password
 import budgethunter.composeapp.generated.resources.set_password_description
 import budgethunter.composeapp.generated.resources.settings
+import budgethunter.composeapp.generated.resources.delete_account
+import budgethunter.composeapp.generated.resources.delete_account_description
 import budgethunter.composeapp.generated.resources.sign_out
 import budgethunter.composeapp.generated.resources.sign_out_confirmation
 import budgethunter.composeapp.generated.resources.sign_out_unsynced_warning
@@ -134,6 +137,13 @@ object SettingsScreen {
             LaunchedEffect(error) {
                 snackbarHostState.showSnackbar(message)
                 onIntent(SettingsIntent.DismissSignOutError)
+            }
+        }
+        uiState.deleteAccountError?.let { error ->
+            val message = stringResource(error)
+            LaunchedEffect(error) {
+                snackbarHostState.showSnackbar(message)
+                onIntent(SettingsIntent.DismissDeleteAccountError)
             }
         }
 
@@ -203,6 +213,17 @@ object SettingsScreen {
                                 showChevron = false,
                                 onClick = { onIntent(SettingsIntent.ToggleSignOutConfirmation(true)) }
                             )
+                            GroupDivider()
+                            // Last in the list and in red, apart from the options that can be undone
+                            SettingRow(
+                                icon = Icons.Default.DeleteForever,
+                                title = stringResource(Res.string.delete_account),
+                                subtitle = stringResource(Res.string.delete_account_description),
+                                contentColor = AppColors.error,
+                                showChevron = false,
+                                enabled = !uiState.isDeletingAccount,
+                                onClick = { onIntent(SettingsIntent.ToggleDeleteAccountConfirmation(true)) }
+                            )
                         }
                     }
 
@@ -212,7 +233,9 @@ object SettingsScreen {
 
             // Covers the first frames, until the device's values are read, so the screen never
             // flashes its empty defaults. The account refresh is not waited on.
-            if (uiState.isLoading || uiState.isSigningOut) {
+            if (uiState.isLoading || uiState.isSigningOut || uiState.isCheckingPlanForDeletion ||
+                uiState.isDeletingAccount
+            ) {
                 LoadingOverlay()
             }
         }
@@ -293,6 +316,14 @@ object SettingsScreen {
             onDismiss = { onIntent(SettingsIntent.ToggleSignOutConfirmation(false)) },
             onConfirm = { onIntent(SettingsIntent.SignOut) }
         )
+
+        if (uiState.isDeleteAccountConfirmationVisible) {
+            DeleteAccountDialog(
+                subscriptionNotice = uiState.deleteAccountSubscriptionNotice,
+                onDismiss = { onIntent(SettingsIntent.ToggleDeleteAccountConfirmation(false)) },
+                onConfirm = { onIntent(SettingsIntent.DeleteAccount) }
+            )
+        }
     }
 
     /**

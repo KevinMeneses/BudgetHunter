@@ -9,6 +9,7 @@ import io.ktor.client.call.body
 import io.ktor.client.engine.HttpClientEngineFactory
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.auth.Auth
+import io.ktor.client.plugins.auth.AuthCircuitBreaker
 import io.ktor.client.plugins.auth.providers.BearerTokens
 import io.ktor.client.plugins.auth.providers.bearer
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -177,8 +178,12 @@ fun createHttpClient(
                     // SIGN_IN_WITH_GOOGLE is listed on its own even though the SIGN_IN check
                     // already matches it as a substring today: that coupling is invisible and
                     // would break the moment either constant is reworded.
+                    // A request carrying AuthCircuitBreaker opts out of the refresh and sends its
+                    // own token (AuthRepository.deleteAccount): left to the provider, it would strip
+                    // that header and send none.
                     val path = request.url.toString()
-                    !path.contains(ApiEndpoints.SIGN_IN) &&
+                    !request.attributes.contains(AuthCircuitBreaker) &&
+                        !path.contains(ApiEndpoints.SIGN_IN) &&
                         !path.contains(ApiEndpoints.SIGN_IN_WITH_GOOGLE) &&
                         !path.contains(ApiEndpoints.SIGN_UP) &&
                         !path.contains(ApiEndpoints.REFRESH_TOKEN)

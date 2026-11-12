@@ -10,6 +10,8 @@ object ApiEndpoints {
     const val SIGN_IN = "/api/users/sign_in"
     const val REFRESH_TOKEN = "/api/users/refresh_token"
     const val SIGN_IN_WITH_GOOGLE = "/api/users/sign_in_with_google"
+
+    /** GET: the signed-in account. DELETE: deletes it for good (204). */
     const val ME = "/api/users/me"
     const val PASSWORD = "/api/users/password"
     const val PREFERENCES = "/api/users/me/preferences"

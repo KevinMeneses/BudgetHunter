@@ -93,6 +93,10 @@ bundle's `CFBundleName`, which iOS shows in Shortcuts, Siri and some system scre
   clearing nothing, so the same account gets its pending entries pushed. Known trade-off: if the server rotated the token but its answer was lost, the next refresh is
   refused and the user signs in again. Signing out (`SignOutUseCase`) is different: it deletes every local budget
   and entry.
+- Deleting the account (Settings, `DeleteAccountUseCase`): `DELETE /api/users/me`, right after a `GET` of the same
+  path that renews an expired access token; a 204 runs `SignOutUseCase`, a 401 is not refreshed (`AuthCircuitBreaker`, which also makes the request send its own token, see
+  `createHttpClient`'s `sendWithoutRequest`) and ends the session like an expired one, anything else keeps it. The
+  confirmation reads the plan (`GET /api/receipts/usage`) to warn that a store subscription is not cancelled.
 
 ### Navigation
 Type-safe navigation using Navigation Compose with serializable route objects. Main navigation flow:

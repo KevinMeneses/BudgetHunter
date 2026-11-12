@@ -44,4 +44,9 @@ sealed interface SettingsIntent {
     data class ToggleSignOutConfirmation(val show: Boolean) : SettingsIntent
     data object SignOut : SettingsIntent
     data object DismissSignOutError : SettingsIntent
+
+    /** Asks for the account's plan, then shows the confirmation (with the subscription notice if needed). */
+    data class ToggleDeleteAccountConfirmation(val show: Boolean) : SettingsIntent
+    data object DeleteAccount : SettingsIntent
+    data object DismissDeleteAccountError : SettingsIntent
 }

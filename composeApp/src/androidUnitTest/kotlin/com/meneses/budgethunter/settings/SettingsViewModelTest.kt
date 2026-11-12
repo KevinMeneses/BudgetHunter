@@ -1,7 +1,9 @@
 package com.meneses.budgethunter.settings
 
 import budgethunter.composeapp.generated.resources.Res
+import budgethunter.composeapp.generated.resources.delete_account_failed
 import budgethunter.composeapp.generated.resources.sign_out_failed
+import com.meneses.budgethunter.auth.application.DeleteAccountUseCase
 import com.meneses.budgethunter.auth.application.SignOutUseCase
 import com.meneses.budgethunter.auth.data.AuthRepository
 import com.meneses.budgethunter.budgetList.data.BudgetRepository
@@ -9,6 +11,7 @@ import com.meneses.budgethunter.commons.data.PreferencesManager
 import com.meneses.budgethunter.commons.data.network.models.CurrentUser
 import com.meneses.budgethunter.commons.platform.PermissionsManager
 import com.meneses.budgethunter.settings.application.SettingsIntent
+import com.meneses.budgethunter.settings.application.SettingsState.SubscriptionNotice
 import com.meneses.budgethunter.settings.application.SyncUserPreferencesUseCase
 import com.meneses.budgethunter.sms.application.IsNotificationReaderStoppedUseCase
 import com.meneses.budgethunter.sms.domain.ReadingChannel
@@ -27,6 +30,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -34,7 +38,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 
 /**
- * Unit tests for SettingsViewModel: the sign out flow and the account section.
+ * Unit tests for SettingsViewModel: the sign out and account deletion flows and the account section.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class SettingsViewModelTest {
@@ -47,6 +51,7 @@ class SettingsViewModelTest {
     private val authRepository = mockk<AuthRepository>(relaxed = true)
     private val syncUserPreferences = mockk<SyncUserPreferencesUseCase>(relaxed = true)
     private val signOutUseCase = mockk<SignOutUseCase>(relaxed = true)
+    private val deleteAccountUseCase = mockk<DeleteAccountUseCase>(relaxed = true)
 
     private lateinit var viewModel: SettingsViewModel
 
@@ -73,6 +78,7 @@ class SettingsViewModelTest {
         authRepository = authRepository,
         syncUserPreferences = syncUserPreferences,
         signOutUseCase = signOutUseCase,
+        deleteAccountUseCase = deleteAccountUseCase,
         isNotificationReaderStopped = IsNotificationReaderStoppedUseCase(preferencesManager, permissionsManager),
         applicationScope = CoroutineScope(testDispatcher)
     )
@@ -401,4 +407,171 @@ class SettingsViewModelTest {
         assertEquals(setOf(ReadingChannel.APP), state.channelsOf(SupportedBanks.NEQUI))
         assertTrue(SupportedBanks.NU in state.unselectedBanks)
     }
+
+    // region Delete account
+
+    private fun showDeleteConfirmation(isPremium: Boolean?) {
+        coEvery { deleteAccountUseCase.isPremium() } returns isPremium
+        viewModel.sendIntent(SettingsIntent.ToggleDeleteAccountConfirmation(true))
+        testDispatcher.scheduler.advanceUntilIdle()
+    }
+
+    @Test
+    fun `the delete confirmation of a premium account warns about the store subscription`() = runTest {
+        showDeleteConfirmation(isPremium = true)
+
+        val state = viewModel.uiState.value
+        assertTrue(state.isDeleteAccountConfirmationVisible)
+        assertFalse(state.isCheckingPlanForDeletion)
+        assertEquals(SubscriptionNotice.PREMIUM, state.deleteAccountSubscriptionNotice)
+    }
+
+    @Test
+    fun `the delete confirmation of a free account says nothing about subscriptions`() = runTest {
+        showDeleteConfirmation(isPremium = false)
+
+        assertTrue(viewModel.uiState.value.isDeleteAccountConfirmationVisible)
+        assertEquals(SubscriptionNotice.NONE, viewModel.uiState.value.deleteAccountSubscriptionNotice)
+    }
+
+    @Test
+    fun `the delete confirmation warns about a possible subscription when the plan cannot be read`() = runTest {
+        showDeleteConfirmation(isPremium = null)
+
+        assertTrue(viewModel.uiState.value.isDeleteAccountConfirmationVisible)
+        assertEquals(SubscriptionNotice.UNKNOWN, viewModel.uiState.value.deleteAccountSubscriptionNotice)
+    }
+
+    @Test
+    fun `the screen shows it is busy while the plan is read`() = runTest {
+        val plan = CompletableDeferred<Boolean?>()
+        coEvery { deleteAccountUseCase.isPremium() } coAnswers { plan.await() }
+
+        viewModel.sendIntent(SettingsIntent.ToggleDeleteAccountConfirmation(true))
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertTrue(viewModel.uiState.value.isCheckingPlanForDeletion)
+        assertFalse(viewModel.uiState.value.isDeleteAccountConfirmationVisible)
+
+        plan.complete(false)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertFalse(viewModel.uiState.value.isCheckingPlanForDeletion)
+        assertTrue(viewModel.uiState.value.isDeleteAccountConfirmationVisible)
+    }
+
+    @Test
+    fun `cancelling before the plan is read keeps the delete confirmation closed`() = runTest {
+        coEvery { deleteAccountUseCase.isPremium() } returns true
+
+        viewModel.sendIntent(SettingsIntent.ToggleDeleteAccountConfirmation(true))
+        viewModel.sendIntent(SettingsIntent.ToggleDeleteAccountConfirmation(false))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertFalse(viewModel.uiState.value.isDeleteAccountConfirmationVisible)
+        assertFalse(viewModel.uiState.value.isCheckingPlanForDeletion)
+    }
+
+    @Test
+    fun `DeleteAccount success deletes the account and closes the confirmation without an error`() = runTest {
+        showDeleteConfirmation(isPremium = false)
+        coEvery { deleteAccountUseCase.execute() } returns DeleteAccountUseCase.Result.DELETED
+
+        viewModel.sendIntent(SettingsIntent.DeleteAccount)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        coVerify(exactly = 1) { deleteAccountUseCase.execute() }
+        val state = viewModel.uiState.value
+        assertFalse(state.isDeleteAccountConfirmationVisible)
+        assertFalse(state.isDeletingAccount)
+        assertNull(state.deleteAccountError)
+    }
+
+    @Test
+    fun `DeleteAccount shows the loading state while the request is under way`() = runTest {
+        val answer = CompletableDeferred<DeleteAccountUseCase.Result>()
+        coEvery { deleteAccountUseCase.execute() } coAnswers { answer.await() }
+
+        viewModel.sendIntent(SettingsIntent.DeleteAccount)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertTrue(viewModel.uiState.value.isDeletingAccount)
+
+        answer.complete(DeleteAccountUseCase.Result.DELETED)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertFalse(viewModel.uiState.value.isDeletingAccount)
+    }
+
+    @Test
+    fun `DeleteAccount sent twice while the first is under way deletes once`() = runTest {
+        val answer = CompletableDeferred<DeleteAccountUseCase.Result>()
+        coEvery { deleteAccountUseCase.execute() } coAnswers { answer.await() }
+
+        viewModel.sendIntent(SettingsIntent.DeleteAccount)
+        testDispatcher.scheduler.advanceUntilIdle()
+        viewModel.sendIntent(SettingsIntent.DeleteAccount)
+        answer.complete(DeleteAccountUseCase.Result.DELETED)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        coVerify(exactly = 1) { deleteAccountUseCase.execute() }
+    }
+
+    @Test
+    fun `the delete confirmation does not reopen while the account is being deleted`() = runTest {
+        val answer = CompletableDeferred<DeleteAccountUseCase.Result>()
+        coEvery { deleteAccountUseCase.execute() } coAnswers { answer.await() }
+        viewModel.sendIntent(SettingsIntent.DeleteAccount)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        showDeleteConfirmation(isPremium = false)
+
+        assertFalse(viewModel.uiState.value.isDeleteAccountConfirmationVisible)
+        assertFalse(viewModel.uiState.value.isCheckingPlanForDeletion)
+        answer.complete(DeleteAccountUseCase.Result.DELETED)
+    }
+
+    @Test
+    fun `DeleteAccount failure shows an error and keeps the session`() = runTest {
+        coEvery { deleteAccountUseCase.execute() } returns DeleteAccountUseCase.Result.FAILED
+
+        viewModel.sendIntent(SettingsIntent.DeleteAccount)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(Res.string.delete_account_failed, viewModel.uiState.value.deleteAccountError)
+        assertFalse(viewModel.uiState.value.isDeletingAccount)
+        coVerify(exactly = 0) { signOutUseCase.execute() }
+    }
+
+    @Test
+    fun `DeleteAccount that throws shows the same error`() = runTest {
+        coEvery { deleteAccountUseCase.execute() } throws RuntimeException("boom")
+
+        viewModel.sendIntent(SettingsIntent.DeleteAccount)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(Res.string.delete_account_failed, viewModel.uiState.value.deleteAccountError)
+        assertFalse(viewModel.uiState.value.isDeletingAccount)
+    }
+
+    @Test
+    fun `DeleteAccount with an expired session shows no error`() = runTest {
+        // The use case already sent the user to sign in with the session expired notice
+        coEvery { deleteAccountUseCase.execute() } returns DeleteAccountUseCase.Result.SESSION_EXPIRED
+
+        viewModel.sendIntent(SettingsIntent.DeleteAccount)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.deleteAccountError)
+        assertFalse(viewModel.uiState.value.isDeletingAccount)
+    }
+
+    @Test
+    fun `DismissDeleteAccountError clears the error`() = runTest {
+        coEvery { deleteAccountUseCase.execute() } returns DeleteAccountUseCase.Result.FAILED
+        viewModel.sendIntent(SettingsIntent.DeleteAccount)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.sendIntent(SettingsIntent.DismissDeleteAccountError)
+
+        assertNull(viewModel.uiState.value.deleteAccountError)
+    }
+
+    // endregion
 }
