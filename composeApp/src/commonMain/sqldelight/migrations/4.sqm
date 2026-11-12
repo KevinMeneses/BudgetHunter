@@ -1,0 +1,42 @@
+-- Repairs what duplicating a synced budget used to leave behind: the copy and its entries kept the
+-- original's server ids and were marked synced, so two local rows shared one server id (which made
+-- every lookup by server id fail) and the copy never reached the server. The original is always the
+-- oldest row; the copies become local-only budgets and entries, pending to be pushed.
+
+-- The same server entry twice in the same budget is one movement stored twice: keep the oldest.
+DELETE FROM budget_entry
+WHERE server_id IS NOT NULL
+  AND EXISTS (
+    SELECT 1 FROM budget_entry AS other
+    WHERE other.server_id = budget_entry.server_id
+      AND other.budget_id = budget_entry.budget_id
+      AND other.id < budget_entry.id
+  );
+
+UPDATE budget
+SET server_id = NULL, is_synced = 0, last_synced_at = NULL, collaborator_count = 1
+WHERE server_id IS NOT NULL
+  AND EXISTS (
+    SELECT 1 FROM budget AS other
+    WHERE other.server_id = budget.server_id
+      AND other.id < budget.id
+  );
+
+-- An entry of a budget the server does not have cannot be on the server: it is a copy whose
+-- budget was just detached above (or whose original entry is gone). Pushed with its budget.
+UPDATE budget_entry
+SET server_id = NULL, is_synced = 0, created_by_email = NULL, updated_by_email = NULL,
+    creation_date = NULL, modification_date = NULL
+WHERE server_id IS NOT NULL
+  AND budget_id IN (SELECT id FROM budget WHERE server_id IS NULL);
+
+-- Any other server entry found in two budgets: the newer row is the copy.
+UPDATE budget_entry
+SET server_id = NULL, is_synced = 0, created_by_email = NULL, updated_by_email = NULL,
+    creation_date = NULL, modification_date = NULL
+WHERE server_id IS NOT NULL
+  AND EXISTS (
+    SELECT 1 FROM budget_entry AS other
+    WHERE other.server_id = budget_entry.server_id
+      AND other.id < budget_entry.id
+  );

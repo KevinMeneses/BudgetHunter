@@ -805,8 +805,9 @@ class BudgetEntrySyncManagerTest {
     }
 
     @Test
-    fun `pullEntriesFromServer keeps local date for an unsynced existing entry even when server sends a different date`() = runTest {
-        // Given - Local entry hasn't been pushed yet, so it's considered newer than the server's copy
+    fun `pullEntriesFromServer does not overwrite an entry with a change still to be pushed`() = runTest {
+        // Given - Local entry was edited and not pushed yet (e.g. an SSE pull, or a failed push), so
+        // it is newer than the server's copy
         coEvery { authRepository.isAuthenticated() } returns true
 
         val serverEntry = BudgetEntryResponse(
@@ -839,10 +840,58 @@ class BudgetEntrySyncManagerTest {
         // When
         val result = syncManager.pullEntriesFromServer(budgetServerId = 101, localBudgetId = 1)
 
-        // Then
+        // Then - Nothing written: amount, description and date stay, pending for the next push
         assertIs<SyncResult.Success<SyncStats>>(result)
-        verify {
-            entryLocalDataSource.update(match { it.date == "2024-01-01" })
+        verify(exactly = 0) { entryLocalDataSource.update(any()) }
+        verify(exactly = 0) { entryLocalDataSource.create(any()) }
+    }
+
+    @Test
+    fun `pullEntriesFromServer only gives its server id to a pending entry found by its unique fields`() = runTest {
+        coEvery { authRepository.isAuthenticated() } returns true
+
+        val serverEntry = BudgetEntryResponse(
+            id = 201, budgetId = 101, amount = 50.0, description = "Entry",
+            category = "FOOD", type = "OUTCOME", date = "2026-05-01",
+            createdByEmail = "user@test.com", updatedByEmail = "other@test.com",
+            creationDate = "2024-01-01", modificationDate = "2024-01-02"
+        )
+        coEvery { apiService.getEntries(101) } returns Result.success(listOf(serverEntry))
+
+        val pendingDbEntry = mockk<Budget_entry> {
+            every { id } returns 1
+            every { budget_id } returns 1
+            every { amount } returns 50.0
+            every { description } returns "Entry"
+            every { type } returns BudgetEntry.Type.OUTCOME
+            every { category } returns BudgetEntry.Category.OTHER
+            every { date } returns "2024-01-01"
+            every { invoice } returns null
+            every { server_id } returns null
+            every { is_synced } returns 0L
+            every { created_by_email } returns null
+            every { updated_by_email } returns null
+            every { creation_date } returns "2024-01-01"
+            every { modification_date } returns null
+        }
+        coEvery { entryLocalDataSource.selectByServerId(201) } returns null
+        coEvery {
+            entryLocalDataSource.selectByUniqueFields(1L, 50.0, "Entry", "2024-01-01")
+        } returns pendingDbEntry
+        every { entryLocalDataSource.update(any()) } returns Unit
+
+        val result = syncManager.pullEntriesFromServer(budgetServerId = 101, localBudgetId = 1)
+
+        // Then - Still pending with its own values, but the next push updates entry 201 instead
+        // of creating a second one
+        assertIs<SyncResult.Success<SyncStats>>(result)
+        verify(exactly = 1) {
+            entryLocalDataSource.update(
+                match {
+                    it.serverId == 201L && !it.isSynced &&
+                        it.category == BudgetEntry.Category.OTHER && it.date == "2024-01-01"
+                }
+            )
         }
     }
 

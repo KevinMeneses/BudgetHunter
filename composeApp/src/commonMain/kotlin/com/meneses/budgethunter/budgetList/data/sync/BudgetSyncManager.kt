@@ -193,20 +193,23 @@ class BudgetSyncManager(
         // Check if budget already exists locally by server_id
         val existingBudget = localDataSource.getByServerId(serverBudget.id)
 
-        if (existingBudget != null) {
-            // A budget still waiting to be pushed keeps its own date, since the local copy is the
-            // newer one. Otherwise the server wins, falling back to the local date for budgets the
-            // server stored before it kept a date of its own.
-            val date =
-                if (!existingBudget.isSynced) existingBudget.date
-                else serverBudget.date ?: existingBudget.date
-
-            // Update existing budget
+        if (existingBudget != null && !existingBudget.isSynced) {
+            // A change made here that has not reached the server yet (its push failed, or is still
+            // to come) is newer than the server's copy: keep it and leave it pending, so the next
+            // push sends it. Only the collaborator count, which nobody edits here, comes from the
+            // server.
+            val collaboratorCount = serverBudget.collaboratorCount ?: existingBudget.collaboratorCount
+            if (collaboratorCount != existingBudget.collaboratorCount) {
+                localDataSource.update(existingBudget.copy(collaboratorCount = collaboratorCount))
+            }
+        } else if (existingBudget != null) {
+            // The server wins, falling back to the local date for budgets the server stored before
+            // it kept a date of its own.
             localDataSource.update(
                 existingBudget.copy(
                     amount = serverBudget.amount,
                     name = serverBudget.name,
-                    date = date,
+                    date = serverBudget.date ?: existingBudget.date,
                     collaboratorCount = serverBudget.collaboratorCount ?: existingBudget.collaboratorCount,
                     isSynced = true,
                     lastSyncedAt = Clock.System.now().toString()

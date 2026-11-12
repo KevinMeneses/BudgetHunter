@@ -769,16 +769,16 @@ class BudgetSyncManagerTest {
     }
 
     @Test
-    fun `pullBudgetsFromServer keeps local date for an unsynced existing budget even when server sends a different date`() = runTest {
-        // Given - Local budget hasn't been pushed yet, so it's considered newer than the server's copy
+    fun `pullBudgetsFromServer does not overwrite a budget with a change still to be pushed`() = runTest {
+        // Given - The local change has not reached the server (its push failed), so it is newer
         coEvery { authRepository.isAuthenticated() } returns true
 
-        val serverBudget = BudgetResponse(id = 101, name = "Updated Name", amount = 1500.0, date = "2026-05-01")
+        val serverBudget = BudgetResponse(id = 101, name = "Server Name", amount = 1500.0, date = "2026-05-01")
         coEvery { apiService.getBudgets() } returns Result.success(listOf(serverBudget))
 
         val existingBudget = Budget(
             id = 1,
-            name = "Old Name",
+            name = "Edited Here",
             amount = 1000.0,
             date = "2026-01-01",
             serverId = 101,
@@ -790,10 +790,38 @@ class BudgetSyncManagerTest {
         // When
         val result = syncManager.pullBudgetsFromServer()
 
-        // Then
+        // Then - Nothing written: the change stays as it is, pending for the next push
         assertIs<SyncResult.Success<SyncStats>>(result)
-        verify {
-            localDataSource.update(match { it.date == "2026-01-01" })
+        verify(exactly = 0) { localDataSource.update(any()) }
+    }
+
+    @Test
+    fun `pullBudgetsFromServer only takes the collaborator count for a budget with a change still to be pushed`() = runTest {
+        coEvery { authRepository.isAuthenticated() } returns true
+        val serverBudget = BudgetResponse(
+            id = 101,
+            name = "Server Name",
+            amount = 1500.0,
+            date = "2026-05-01",
+            collaboratorCount = 3
+        )
+        coEvery { apiService.getBudgets() } returns Result.success(listOf(serverBudget))
+        val existingBudget = Budget(
+            id = 1,
+            name = "Edited Here",
+            amount = 1000.0,
+            date = "2026-01-01",
+            serverId = 101,
+            isSynced = false,
+            collaboratorCount = 1
+        )
+        every { localDataSource.getByServerId(101) } returns existingBudget
+        every { localDataSource.update(any()) } returns Unit
+
+        syncManager.pullBudgetsFromServer()
+
+        verify(exactly = 1) {
+            localDataSource.update(existingBudget.copy(collaboratorCount = 3))
         }
     }
 
