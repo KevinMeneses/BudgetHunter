@@ -385,6 +385,7 @@ class BudgetEntrySyncManager(
             creationDate = response.creationDate,
             modificationDate = response.modificationDate
         )
-        localDataSource.update(updatedEntry)
+        // Not a plain update: the user may have edited the entry while the request was in flight
+        localDataSource.savePushResponse(pushed = localEntry, synced = updatedEntry)
     }
 }

@@ -13,6 +13,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -261,6 +262,79 @@ class BudgetEntryLocalDataSourceTest {
         assertTrue(result[0].isSynced)
         assertEquals("editor@example.com", result[0].updatedByEmail)
         assertEquals("2025-03-01", result[0].modificationDate)
+    }
+
+    @Test
+    fun `update with a copy read before the push keeps the server id the push stored`() = runTest {
+        // Given - The entry screen holds a copy read before the entry reached the server
+        insertEntry(budgetId = 1, description = "Lunch", amount = 20.0)
+        val staleCopy = dataSource.selectAllByBudgetId(1L).first().single()
+        dataSource.savePushResponse(pushed = staleCopy, synced = staleCopy.copy(serverId = 42L, isSynced = true))
+
+        // When - The user saves an edit made on that copy
+        dataSource.update(staleCopy.copy(amount = "25", isSynced = false))
+
+        // Then - Still the server's entry 42, so the next push updates it instead of creating another
+        val entry = dataSource.selectAllByBudgetId(1L).first().single()
+        assertEquals("25", entry.amount)
+        assertEquals(42L, entry.serverId)
+        assertFalse(entry.isSynced)
+    }
+
+    // ── savePushResponse tests ────────────────────────────────────────────────
+
+    @Test
+    fun `savePushResponse stores the server values of an entry unchanged since the push`() = runTest {
+        insertEntry(budgetId = 1, description = "Lunch", amount = 20.0, category = BudgetEntry.Category.FOOD)
+        val pushed = dataSource.selectAllByBudgetId(1L).first().single()
+
+        dataSource.savePushResponse(
+            pushed = pushed,
+            synced = pushed.copy(
+                serverId = 42L,
+                isSynced = true,
+                createdByEmail = "me@example.com",
+                creationDate = "2025-01-01T10:00:00"
+            )
+        )
+
+        val entry = dataSource.selectAllByBudgetId(1L).first().single()
+        assertEquals(42L, entry.serverId)
+        assertTrue(entry.isSynced)
+        assertEquals("me@example.com", entry.createdByEmail)
+        assertEquals("2025-01-01T10:00:00", entry.creationDate)
+    }
+
+    @Test
+    fun `savePushResponse keeps pending an entry edited while its push was in flight`() = runTest {
+        // Given - The push read the entry, then the user changed the amount before the answer came back
+        insertEntry(budgetId = 1, description = "Lunch", amount = 20.0)
+        val pushed = dataSource.selectAllByBudgetId(1L).first().single()
+        dataSource.update(pushed.copy(amount = "25", isSynced = false))
+
+        // When
+        dataSource.savePushResponse(pushed = pushed, synced = pushed.copy(serverId = 42L, isSynced = true))
+
+        // Then - It has its server id (the next push updates it) but the edit is kept and still pending
+        val entry = dataSource.selectAllByBudgetId(1L).first().single()
+        assertEquals("25", entry.amount)
+        assertEquals(42L, entry.serverId)
+        assertFalse(entry.isSynced)
+        assertEquals(1L, dataSource.countUnsynced())
+    }
+
+    @Test
+    fun `savePushResponse marks synced an entry whose only change meanwhile was its invoice`() = runTest {
+        // The invoice is not sent to the server: changing it does not need another push
+        insertEntry(budgetId = 1, description = "Lunch", amount = 20.0)
+        val pushed = dataSource.selectAllByBudgetId(1L).first().single()
+        dataSource.update(pushed.copy(invoice = "receipt.jpg", isSynced = false))
+
+        dataSource.savePushResponse(pushed = pushed, synced = pushed.copy(serverId = 42L, isSynced = true))
+
+        val entry = dataSource.selectAllByBudgetId(1L).first().single()
+        assertEquals("receipt.jpg", entry.invoice)
+        assertTrue(entry.isSynced)
     }
 
     // ── deleteByIds tests ─────────────────────────────────────────────────────

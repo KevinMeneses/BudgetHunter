@@ -29,7 +29,10 @@ SELECT last_insert_rowid();
 
 update:
 UPDATE budget
-SET amount = :amount, name = :name, date = :date, server_id = :server_id, is_synced = :is_synced, last_synced_at = :last_synced_at,
+SET amount = :amount, name = :name, date = :date,
+    -- An edit made on a copy read before the budget reached the server must not take its server
+    -- id away, or the next push would create it on the server a second time.
+    server_id = COALESCE(:server_id, server_id), is_synced = :is_synced, last_synced_at = :last_synced_at,
     collaborator_count = :collaborator_count
 WHERE id = :id;
 
@@ -51,10 +54,20 @@ WHERE b.is_synced = 0
 GROUP BY b.id, b.amount, b.name, b.date, b.server_id, b.is_synced, b.last_synced_at, b.collaborator_count
 ORDER BY b.date DESC, b.id DESC;
 
-markAsSynced:
+setServerId:
 UPDATE budget
-SET is_synced = 1, server_id = ?, last_synced_at = ?
-WHERE id = ?;
+SET server_id = :server_id
+WHERE id = :id;
+
+-- Marks a pushed budget synced only while it still holds what was pushed: if it was edited
+-- meanwhile it stays pending, so that edit is pushed next.
+markSyncedIfUnchanged:
+UPDATE budget
+SET is_synced = 1, last_synced_at = :last_synced_at
+WHERE id = :id
+  AND name = :pushedName
+  AND amount = :pushedAmount
+  AND date = :pushedDate;
 
 selectByServerId:
 SELECT

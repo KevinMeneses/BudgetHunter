@@ -81,11 +81,12 @@ class BudgetSyncManager(
         return apiCall.fold(
             onSuccess = { response ->
                 logger.debug(logTag, "Successfully synced budget ${budget.id}, serverId: ${response.id}")
-                // Mark budget as synced with server ID
+                // Synced only if not edited while the request was in flight
                 localDataSource.markAsSynced(
                     id = budget.id,
                     serverId = response.id,
-                    lastSyncedAt = Clock.System.now().toString()
+                    lastSyncedAt = Clock.System.now().toString(),
+                    pushed = budget
                 )
                 if (budget.serverId == null) pushEntriesOfNewBudget(budget.id)
                 Result.success(Unit)
