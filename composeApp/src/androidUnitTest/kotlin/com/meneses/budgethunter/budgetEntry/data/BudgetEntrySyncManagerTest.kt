@@ -165,7 +165,7 @@ class BudgetEntrySyncManagerTest {
             apiService.createEntry(101, CreateBudgetEntryRequest(75.0, "Entry 2", "UNCATEGORIZED", "OUTCOME", date = entry2.date))
         } returns Result.success(response2)
 
-        every { entryLocalDataSource.update(any()) } returns Unit
+        every { entryLocalDataSource.savePushResponse(any(), any()) } returns Unit
 
         // When
         val result = syncManager.syncPendingEntries(budgetId = 1)
@@ -177,7 +177,7 @@ class BudgetEntrySyncManagerTest {
         assertEquals(0, result.data.failedItems)
 
         // Verify entries were updated with server IDs
-        verify(exactly = 2) { entryLocalDataSource.update(any()) }
+        verify(exactly = 2) { entryLocalDataSource.savePushResponse(any(), any()) }
     }
 
     @Test
@@ -213,7 +213,7 @@ class BudgetEntrySyncManagerTest {
             apiService.updateEntry(101, 201, UpdateBudgetEntryRequest(60.0, "Updated Entry", "UNCATEGORIZED", "OUTCOME", date = entry.date))
         } returns Result.success(response)
 
-        every { entryLocalDataSource.update(any()) } returns Unit
+        every { entryLocalDataSource.savePushResponse(any(), any()) } returns Unit
 
         // When
         val result = syncManager.syncPendingEntries(budgetId = 1)
@@ -222,7 +222,7 @@ class BudgetEntrySyncManagerTest {
         assertIs<SyncResult.Success<SyncStats>>(result)
         assertEquals(1, result.data.totalItems)
         assertEquals(1, result.data.syncedItems)
-        verify { entryLocalDataSource.update(any()) }
+        verify { entryLocalDataSource.savePushResponse(any(), any()) }
     }
 
     @Test
@@ -245,7 +245,7 @@ class BudgetEntrySyncManagerTest {
         coEvery {
             apiService.createEntry(101, CreateBudgetEntryRequest(50.0, "Entry 1", "UNCATEGORIZED", "OUTCOME", date = entry1.date))
         } returns Result.success(response1)
-        every { entryLocalDataSource.update(match { it.id == 1 }) } returns Unit
+        every { entryLocalDataSource.savePushResponse(match { it.id == 1 }, any()) } returns Unit
 
         // Second entry fails
         val networkError = Exception("Network error")
@@ -285,7 +285,7 @@ class BudgetEntrySyncManagerTest {
         // Then
         assertIs<SyncResult.Failure>(result)
         assertTrue(result.error.message?.contains("Failed to sync all items") == true)
-        verify(exactly = 0) { entryLocalDataSource.update(any()) }
+        verify(exactly = 0) { entryLocalDataSource.savePushResponse(any(), any()) }
     }
 
     // ========== pullEntriesFromServer() Tests ==========
@@ -456,7 +456,7 @@ class BudgetEntrySyncManagerTest {
         coEvery {
             apiService.createEntry(101, CreateBudgetEntryRequest(50.0, "Local Entry", "UNCATEGORIZED", "OUTCOME", date = localEntry.date))
         } returns Result.success(createResponse)
-        every { entryLocalDataSource.update(any()) } returns Unit
+        every { entryLocalDataSource.savePushResponse(any(), any()) } returns Unit
 
         // Setup pull phase
         val serverEntry = BudgetEntryResponse(
@@ -479,7 +479,7 @@ class BudgetEntrySyncManagerTest {
         assertEquals(0, result.data.failedItems)
 
         // Verify both operations occurred
-        verify { entryLocalDataSource.update(any()) } // Push
+        verify { entryLocalDataSource.savePushResponse(any(), any()) } // Push
         verify { entryLocalDataSource.create(any()) } // Pull
     }
 
@@ -618,7 +618,7 @@ class BudgetEntrySyncManagerTest {
         coEvery {
             apiService.createEntry(101, CreateBudgetEntryRequest(50.0, "Entry 1", "UNCATEGORIZED", "OUTCOME", date = "2026-01-15"))
         } returns Result.success(response)
-        every { entryLocalDataSource.update(any()) } returns Unit
+        every { entryLocalDataSource.savePushResponse(any(), any()) } returns Unit
 
         // When
         val result = syncManager.syncPendingEntries(budgetId = 1)
@@ -656,7 +656,7 @@ class BudgetEntrySyncManagerTest {
         coEvery {
             apiService.updateEntry(101, 201, UpdateBudgetEntryRequest(60.0, "Updated Entry", "UNCATEGORIZED", "OUTCOME", date = "2026-02-20"))
         } returns Result.success(response)
-        every { entryLocalDataSource.update(any()) } returns Unit
+        every { entryLocalDataSource.savePushResponse(any(), any()) } returns Unit
 
         // When
         val result = syncManager.syncPendingEntries(budgetId = 1)
@@ -805,8 +805,9 @@ class BudgetEntrySyncManagerTest {
     }
 
     @Test
-    fun `pullEntriesFromServer keeps local date for an unsynced existing entry even when server sends a different date`() = runTest {
-        // Given - Local entry hasn't been pushed yet, so it's considered newer than the server's copy
+    fun `pullEntriesFromServer does not overwrite an entry with a change still to be pushed`() = runTest {
+        // Given - Local entry was edited and not pushed yet (e.g. an SSE pull, or a failed push), so
+        // it is newer than the server's copy
         coEvery { authRepository.isAuthenticated() } returns true
 
         val serverEntry = BudgetEntryResponse(
@@ -839,11 +840,54 @@ class BudgetEntrySyncManagerTest {
         // When
         val result = syncManager.pullEntriesFromServer(budgetServerId = 101, localBudgetId = 1)
 
-        // Then
+        // Then - Nothing written: amount, description and date stay, pending for the next push
         assertIs<SyncResult.Success<SyncStats>>(result)
-        verify {
-            entryLocalDataSource.update(match { it.date == "2024-01-01" })
+        verify(exactly = 0) { entryLocalDataSource.update(any()) }
+        verify(exactly = 0) { entryLocalDataSource.create(any()) }
+    }
+
+    @Test
+    fun `pullEntriesFromServer only gives its server id to a pending entry found by its unique fields`() = runTest {
+        coEvery { authRepository.isAuthenticated() } returns true
+
+        val serverEntry = BudgetEntryResponse(
+            id = 201, budgetId = 101, amount = 50.0, description = "Entry",
+            category = "FOOD", type = "OUTCOME", date = "2026-05-01",
+            createdByEmail = "user@test.com", updatedByEmail = "other@test.com",
+            creationDate = "2024-01-01", modificationDate = "2024-01-02"
+        )
+        coEvery { apiService.getEntries(101) } returns Result.success(listOf(serverEntry))
+
+        val pendingDbEntry = mockk<Budget_entry> {
+            every { id } returns 1
+            every { budget_id } returns 1
+            every { amount } returns 50.0
+            every { description } returns "Entry"
+            every { type } returns BudgetEntry.Type.OUTCOME
+            every { category } returns BudgetEntry.Category.OTHER
+            every { date } returns "2024-01-01"
+            every { invoice } returns null
+            every { server_id } returns null
+            every { is_synced } returns 0L
+            every { created_by_email } returns null
+            every { updated_by_email } returns null
+            every { creation_date } returns "2024-01-01"
+            every { modification_date } returns null
         }
+        coEvery { entryLocalDataSource.selectByServerId(201) } returns null
+        coEvery {
+            entryLocalDataSource.selectByUniqueFields(1L, 50.0, "Entry", "2024-01-01")
+        } returns pendingDbEntry
+        every { entryLocalDataSource.setServerId(any(), any()) } returns Unit
+
+        val result = syncManager.pullEntriesFromServer(budgetServerId = 101, localBudgetId = 1)
+
+        // Then - Still pending with its own values, but the next push updates entry 201 instead
+        // of creating a second one. Only the server id is written: a whole-row update from the copy
+        // read by the pull could undo an edit saved since.
+        assertIs<SyncResult.Success<SyncStats>>(result)
+        verify(exactly = 1) { entryLocalDataSource.setServerId(id = 1, serverId = 201L) }
+        verify(exactly = 0) { entryLocalDataSource.update(any()) }
     }
 
     @Test
@@ -910,7 +954,7 @@ class BudgetEntrySyncManagerTest {
         every { entryLocalDataSource.getUnsynced(budgetId) } returns listOf(entry)
         coEvery { apiService.createEntry(any(), any()) } returns
             Result.success(serverResponse(201, 50.0, "Entry 1"))
-        every { entryLocalDataSource.update(any()) } returns Unit
+        every { entryLocalDataSource.savePushResponse(any(), any()) } returns Unit
     }
 
     @Test
@@ -953,7 +997,7 @@ class BudgetEntrySyncManagerTest {
         coEvery {
             apiService.createEntry(101, CreateBudgetEntryRequest(75.0, "Entry 2", "UNCATEGORIZED", "OUTCOME", date = entry2.date))
         } returns Result.failure(Exception("Network error"))
-        every { entryLocalDataSource.update(any()) } returns Unit
+        every { entryLocalDataSource.savePushResponse(any(), any()) } returns Unit
 
         val result = syncManager.syncPendingEntries(budgetId = 1)
 
@@ -1073,12 +1117,12 @@ class BudgetEntrySyncManagerTest {
             Budget(id = 1, name = "Budget", amount = 1000.0, serverId = 101)
         val entry = BudgetEntry(id = 1, budgetId = 1, amount = "50.0", description = "Entry 1", serverId = null)
 
-        // Stateful local store: the entry stays unsynced until update() marks it synced
+        // Stateful local store: the entry stays unsynced until the push response marks it synced
         var isEntrySynced = false
         every { entryLocalDataSource.getUnsynced(1) } answers {
             if (isEntrySynced) emptyList() else listOf(entry)
         }
-        every { entryLocalDataSource.update(any()) } answers {
+        every { entryLocalDataSource.savePushResponse(any(), any()) } answers {
             isEntrySynced = true
         }
 
@@ -1124,7 +1168,7 @@ class BudgetEntrySyncManagerTest {
         every { entryLocalDataSource.getUnsynced(1) } answers {
             if (pushCommitted) emptyList() else listOf(entry)
         }
-        every { entryLocalDataSource.update(any()) } answers {
+        every { entryLocalDataSource.savePushResponse(any(), any()) } answers {
             pushCommitted = true
         }
         val dbEntry = mockk<Budget_entry> {
@@ -1165,5 +1209,26 @@ class BudgetEntrySyncManagerTest {
 
         // Then - the pull ran after the push committed, so it updates instead of inserting a duplicate
         verify(exactly = 0) { entryLocalDataSource.create(any()) }
+    }
+
+    @Test
+    fun `syncPendingEntries stores the response against the entry as it was pushed`() = runTest {
+        // Given - What the push sent is what decides whether the row may be marked synced
+        givenSyncedBudget()
+        val entry = BudgetEntry(id = 1, budgetId = 1, amount = "50.0", description = "Entry 1", serverId = null)
+        every { entryLocalDataSource.getUnsynced(1) } returns listOf(entry)
+        coEvery { apiService.createEntry(any(), any()) } returns
+            Result.success(serverResponse(201, 50.0, "Entry 1"))
+        every { entryLocalDataSource.savePushResponse(any(), any()) } returns Unit
+
+        syncManager.syncPendingEntries(budgetId = 1)
+
+        verify(exactly = 1) {
+            entryLocalDataSource.savePushResponse(
+                pushed = entry,
+                synced = match { it.id == 1 && it.serverId == 201L && it.isSynced }
+            )
+        }
+        verify(exactly = 0) { entryLocalDataSource.update(any()) }
     }
 }

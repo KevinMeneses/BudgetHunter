@@ -15,6 +15,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
@@ -66,7 +67,7 @@ class BudgetLocalDataSourceTest {
         dataSource.budgets.first()
 
         // When
-        dataSource.markAsSynced(id = created.id, serverId = 18L, lastSyncedAt = "2026-10-03T12:00:00Z")
+        dataSource.markAsSynced(id = created.id, serverId = 18L, lastSyncedAt = "2026-10-03T12:00:00Z", pushed = created)
         val result = dataSource.getById(created.id)
 
         // Then
@@ -526,8 +527,10 @@ class BudgetLocalDataSourceTest {
         // Given
         val budgetId = insertBudget(name = "Budget", amount = 1000.0, isSynced = false)
 
+        val pushed = dataSource.getById(budgetId)!!
+
         // When
-        dataSource.markAsSynced(id = budgetId, serverId = 42L, lastSyncedAt = "2025-01-15T10:00:00")
+        dataSource.markAsSynced(id = budgetId, serverId = 42L, lastSyncedAt = "2025-01-15T10:00:00", pushed = pushed)
 
         // Then
         val allBudgets = dataSource.budgets.first()
@@ -535,6 +538,41 @@ class BudgetLocalDataSourceTest {
         assertEquals(42L, allBudgets[0].serverId)
         assertTrue(allBudgets[0].isSynced)
         assertEquals("2025-01-15T10:00:00", allBudgets[0].lastSyncedAt)
+    }
+
+    @Test
+    fun `markAsSynced keeps pending a budget edited while its push was in flight`() = runTest {
+        // Given - The push read the budget, then the user renamed it before the answer came back
+        val budgetId = insertBudget(name = "Budget", amount = 1000.0, isSynced = false)
+        val pushed = dataSource.getById(budgetId)!!
+        dataSource.update(pushed.copy(name = "Renamed", isSynced = false))
+
+        // When
+        dataSource.markAsSynced(id = budgetId, serverId = 42L, lastSyncedAt = "2025-01-15T10:00:00", pushed = pushed)
+
+        // Then - It has its server id (the next push updates it) but the rename is still pending
+        val budget = dataSource.getById(budgetId)!!
+        assertEquals("Renamed", budget.name)
+        assertEquals(42L, budget.serverId)
+        assertFalse(budget.isSynced)
+        assertEquals(1L, database.budgetQueries.countUnsynced().executeAsOne())
+    }
+
+    @Test
+    fun `update with a copy read before the push keeps the server id the push stored`() = runTest {
+        // Given - The screen holds a copy read before the budget reached the server
+        val budgetId = insertBudget(name = "Budget", amount = 1000.0, isSynced = false)
+        val staleCopy = dataSource.getById(budgetId)!!
+        dataSource.markAsSynced(id = budgetId, serverId = 42L, lastSyncedAt = "2025-01-15T10:00:00", pushed = staleCopy)
+
+        // When - The user saves an edit made on that copy
+        dataSource.update(staleCopy.copy(amount = 2000.0, isSynced = false))
+
+        // Then - Still the server's budget 42, so the next push updates it instead of creating another
+        val budget = dataSource.getById(budgetId)!!
+        assertEquals(2000.0, budget.amount)
+        assertEquals(42L, budget.serverId)
+        assertFalse(budget.isSynced)
     }
 
     // ── clearAllData tests ────────────────────────────────────────────────────

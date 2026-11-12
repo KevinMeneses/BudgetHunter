@@ -67,6 +67,37 @@ class BudgetEntryLocalDataSource(
         modification_date = budgetEntry.modificationDate
     )
 
+    fun setServerId(id: Int, serverId: Long) =
+        queries.setServerId(server_id = serverId, id = id.toLong())
+
+    /**
+     * Stores the server's answer to pushing [pushed]. The entry always gets its server id (so the
+     * next push updates it instead of creating it again), but takes the server's values and is
+     * marked synced only if it still holds what was pushed. An edit made while the request was in
+     * flight stays pending and is pushed next, instead of being overwritten and marked synced.
+     */
+    fun savePushResponse(pushed: BudgetEntry, synced: BudgetEntry) = queries.transaction {
+        val id = pushed.id.toLong()
+        queries.setServerId(server_id = synced.serverId, id = id)
+        queries.markPushedIfUnchanged(
+            amount = synced.amount.toDoubleOrNull() ?: 0.0,
+            description = synced.description,
+            type = synced.type,
+            date = synced.date,
+            category = synced.category,
+            created_by_email = synced.createdByEmail,
+            updated_by_email = synced.updatedByEmail,
+            creation_date = synced.creationDate,
+            modification_date = synced.modificationDate,
+            id = id,
+            pushedAmount = pushed.amount.toDoubleOrNull() ?: 0.0,
+            pushedDescription = pushed.description,
+            pushedType = pushed.type,
+            pushedDate = pushed.date,
+            pushedCategory = pushed.category
+        )
+    }
+
     fun deleteByIds(list: List<Long>) =
         queries.deleteByIds(list)
 

@@ -100,11 +100,23 @@ class BudgetLocalDataSource(
         }
     }
 
-    fun markAsSynced(id: Int, serverId: Long, lastSyncedAt: String) = queries.markAsSynced(
-        server_id = serverId,
-        last_synced_at = lastSyncedAt,
-        id = id.toLong() // Domain Int → SQLite Long for query parameter
-    )
+    /**
+     * Stores the result of pushing [pushed]: the budget always gets its server id (so the next
+     * push updates it instead of creating it again), but is only marked synced if it still holds
+     * the pushed name, amount and date. An edit made while the request was in flight stays
+     * pending and is pushed next, instead of being marked synced and never sent.
+     */
+    fun markAsSynced(id: Int, serverId: Long, lastSyncedAt: String, pushed: Budget) = queries.transaction {
+        // Domain Int → SQLite Long for query parameters
+        queries.setServerId(server_id = serverId, id = id.toLong())
+        queries.markSyncedIfUnchanged(
+            last_synced_at = lastSyncedAt,
+            id = id.toLong(),
+            pushedName = pushed.name,
+            pushedAmount = pushed.amount,
+            pushedDate = pushed.date
+        )
+    }
 
     fun delete(id: Long) = queries.delete(id)
 

@@ -73,7 +73,7 @@ class BudgetSyncManagerPerformanceTest {
         coEvery { apiService.createBudget(any()) } returns Result.success(
             BudgetResponse(id = 101L, name = "Budget", amount = 1000.0)
         )
-        every { localDataSource.markAsSynced(any(), any(), any()) } returns Unit
+        every { localDataSource.markAsSynced(any(), any(), any(), any()) } returns Unit
 
         // When
         var result: SyncResult<SyncStats>
@@ -91,7 +91,7 @@ class BudgetSyncManagerPerformanceTest {
         assertTrue(elapsed < 3000, "Expected completion in <3000ms but took ${elapsed}ms")
 
         // Then - every budget was marked as synced
-        verify(exactly = 100) { localDataSource.markAsSynced(any(), any(), any()) }
+        verify(exactly = 100) { localDataSource.markAsSynced(any(), any(), any(), any()) }
     }
 
     // ========== pullBudgetsFromServer() Performance Tests ==========
@@ -141,7 +141,7 @@ class BudgetSyncManagerPerformanceTest {
         coEvery { apiService.createBudget(any()) } returns Result.success(
             BudgetResponse(id = 101L, name = "Budget", amount = 1000.0)
         )
-        every { localDataSource.markAsSynced(any(), any(), any()) } returns Unit
+        every { localDataSource.markAsSynced(any(), any(), any(), any()) } returns Unit
 
         // Pull side: 50 new server budgets
         val serverBudgets = TestDataFactory.budgetResponses(count = 50)

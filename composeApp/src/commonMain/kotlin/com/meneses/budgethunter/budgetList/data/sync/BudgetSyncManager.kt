@@ -81,11 +81,12 @@ class BudgetSyncManager(
         return apiCall.fold(
             onSuccess = { response ->
                 logger.debug(logTag, "Successfully synced budget ${budget.id}, serverId: ${response.id}")
-                // Mark budget as synced with server ID
+                // Synced only if not edited while the request was in flight
                 localDataSource.markAsSynced(
                     id = budget.id,
                     serverId = response.id,
-                    lastSyncedAt = Clock.System.now().toString()
+                    lastSyncedAt = Clock.System.now().toString(),
+                    pushed = budget
                 )
                 if (budget.serverId == null) pushEntriesOfNewBudget(budget.id)
                 Result.success(Unit)
@@ -189,24 +190,25 @@ class BudgetSyncManager(
     /**
      * Merges a single server budget into local database.
      */
-    private fun mergeServerBudget(serverBudget: BudgetResponse): Result<Unit> {
+    private suspend fun mergeServerBudget(serverBudget: BudgetResponse): Result<Unit> {
         // Check if budget already exists locally by server_id
         val existingBudget = localDataSource.getByServerId(serverBudget.id)
 
-        if (existingBudget != null) {
-            // A budget still waiting to be pushed keeps its own date, since the local copy is the
-            // newer one. Otherwise the server wins, falling back to the local date for budgets the
-            // server stored before it kept a date of its own.
-            val date =
-                if (!existingBudget.isSynced) existingBudget.date
-                else serverBudget.date ?: existingBudget.date
-
-            // Update existing budget
+        if (existingBudget != null && !existingBudget.isSynced) {
+            // A change made here that has not reached the server yet (its push failed, or is still
+            // to come) is newer than the server's copy: keep it and leave it pending, so the next
+            // push sends it. Only the collaborator count, which nobody edits here, comes from the
+            // server, written on its own: a whole-row update from the copy read above would undo
+            // an edit saved since.
+            serverBudget.collaboratorCount?.let { localDataSource.updateCollaboratorCount(serverBudget.id, it) }
+        } else if (existingBudget != null) {
+            // The server wins, falling back to the local date for budgets the server stored before
+            // it kept a date of its own.
             localDataSource.update(
                 existingBudget.copy(
                     amount = serverBudget.amount,
                     name = serverBudget.name,
-                    date = date,
+                    date = serverBudget.date ?: existingBudget.date,
                     collaboratorCount = serverBudget.collaboratorCount ?: existingBudget.collaboratorCount,
                     isSynced = true,
                     lastSyncedAt = Clock.System.now().toString()

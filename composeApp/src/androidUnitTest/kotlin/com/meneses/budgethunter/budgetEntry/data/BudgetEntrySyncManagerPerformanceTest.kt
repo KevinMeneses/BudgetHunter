@@ -82,7 +82,7 @@ class BudgetEntrySyncManagerPerformanceTest {
             modificationDate = "2024-01-01"
         )
         coEvery { apiService.createEntry(any(), any()) } returns Result.success(anyResponse)
-        every { entryLocalDataSource.update(any()) } returns Unit
+        every { entryLocalDataSource.savePushResponse(any(), any()) } returns Unit
 
         // When
         var result: SyncResult<SyncStats>
@@ -100,7 +100,7 @@ class BudgetEntrySyncManagerPerformanceTest {
         assertTrue(elapsed < 5000, "Expected completion in <5000ms but took ${elapsed}ms")
 
         // Then - verify update was called for every entry
-        coVerify(exactly = 1000) { entryLocalDataSource.update(any()) }
+        coVerify(exactly = 1000) { entryLocalDataSource.savePushResponse(any(), any()) }
     }
 
     // ========== pullEntriesFromServer() Performance Tests ==========
@@ -164,6 +164,7 @@ class BudgetEntrySyncManagerPerformanceTest {
         )
         coEvery { apiService.createEntry(any(), any()) } returns Result.success(anyResponse)
         every { entryLocalDataSource.update(any()) } returns Unit
+        every { entryLocalDataSource.savePushResponse(any(), any()) } returns Unit
 
         // Pull side: 500 new server entries
         val serverEntries = TestDataFactory.budgetEntryResponses(count = 500, budgetServerId = 101L)
@@ -228,6 +229,7 @@ class BudgetEntrySyncManagerPerformanceTest {
         }
 
         every { entryLocalDataSource.update(any()) } returns Unit
+        every { entryLocalDataSource.savePushResponse(any(), any()) } returns Unit
 
         // When
         var result: SyncResult<SyncStats>

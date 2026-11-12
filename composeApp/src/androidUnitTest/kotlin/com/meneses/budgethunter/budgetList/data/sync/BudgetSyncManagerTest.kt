@@ -110,8 +110,8 @@ class BudgetSyncManagerTest {
         } returns Result.success(BudgetResponse(id = 102, name = "Budget 2", amount = 2000.0))
 
         // Local updates succeed
-        every { localDataSource.markAsSynced(1, 101, any()) } returns Unit
-        every { localDataSource.markAsSynced(2, 102, any()) } returns Unit
+        every { localDataSource.markAsSynced(1, 101, any(), any()) } returns Unit
+        every { localDataSource.markAsSynced(2, 102, any(), any()) } returns Unit
 
         // When
         val result = syncManager.syncPendingBudgets()
@@ -124,8 +124,8 @@ class BudgetSyncManagerTest {
         assertTrue(result.data.errors.isEmpty())
 
         // Verify both budgets were marked as synced
-        verify { localDataSource.markAsSynced(1, 101, any()) }
-        verify { localDataSource.markAsSynced(2, 102, any()) }
+        verify { localDataSource.markAsSynced(1, 101, any(), any()) }
+        verify { localDataSource.markAsSynced(2, 102, any(), any()) }
     }
 
     @Test
@@ -142,7 +142,7 @@ class BudgetSyncManagerTest {
         coEvery {
             apiService.createBudget(CreateBudgetRequest("Budget 1", 1000.0, date = budget1.date))
         } returns Result.success(BudgetResponse(id = 101, name = "Budget 1", amount = 1000.0))
-        every { localDataSource.markAsSynced(1, 101, any()) } returns Unit
+        every { localDataSource.markAsSynced(1, 101, any(), any()) } returns Unit
 
         // Second budget fails
         val networkError = Exception("Network error")
@@ -154,7 +154,7 @@ class BudgetSyncManagerTest {
         coEvery {
             apiService.createBudget(CreateBudgetRequest("Budget 3", 3000.0, date = budget3.date))
         } returns Result.success(BudgetResponse(id = 103, name = "Budget 3", amount = 3000.0))
-        every { localDataSource.markAsSynced(3, 103, any()) } returns Unit
+        every { localDataSource.markAsSynced(3, 103, any(), any()) } returns Unit
 
         // When
         val result = syncManager.syncPendingBudgets()
@@ -193,7 +193,7 @@ class BudgetSyncManagerTest {
         assertTrue(result.error.message?.contains("Failed to sync all items") == true)
 
         // Verify no budgets were marked as synced
-        verify(exactly = 0) { localDataSource.markAsSynced(any(), any(), any()) }
+        verify(exactly = 0) { localDataSource.markAsSynced(any(), any(), any(), any()) }
     }
 
     // ========== pullBudgetsFromServer() Tests ==========
@@ -467,7 +467,7 @@ class BudgetSyncManagerTest {
         coEvery {
             apiService.createBudget(CreateBudgetRequest("Local Budget", 1000.0, date = localBudget.date))
         } returns Result.success(BudgetResponse(id = 101, name = "Local Budget", amount = 1000.0))
-        every { localDataSource.markAsSynced(1, 101, any()) } returns Unit
+        every { localDataSource.markAsSynced(1, 101, any(), any()) } returns Unit
 
         // Setup pull phase
         val serverBudget = BudgetResponse(id = 102, name = "Server Budget", amount = 2000.0)
@@ -485,7 +485,7 @@ class BudgetSyncManagerTest {
         assertEquals(0, result.data.failedItems)
 
         // Verify both operations occurred
-        verify { localDataSource.markAsSynced(1, 101, any()) }
+        verify { localDataSource.markAsSynced(1, 101, any(), any()) }
         verify { localDataSource.create(any()) }
     }
 
@@ -538,7 +538,7 @@ class BudgetSyncManagerTest {
         coEvery {
             apiService.createBudget(CreateBudgetRequest("Budget 1", 1000.0, date = budget1.date))
         } returns Result.success(BudgetResponse(id = 101, name = "Budget 1", amount = 1000.0))
-        every { localDataSource.markAsSynced(1, 101, any()) } returns Unit
+        every { localDataSource.markAsSynced(1, 101, any(), any()) } returns Unit
 
         val networkError = Exception("Network error")
         coEvery {
@@ -575,7 +575,7 @@ class BudgetSyncManagerTest {
         coEvery {
             apiService.createBudget(CreateBudgetRequest("Budget 1", 1000.0, date = "2026-01-15"))
         } returns Result.success(BudgetResponse(id = 101, name = "Budget 1", amount = 1000.0, date = "2026-01-15"))
-        every { localDataSource.markAsSynced(1, 101, any()) } returns Unit
+        every { localDataSource.markAsSynced(1, 101, any(), any()) } returns Unit
 
         // When
         val result = syncManager.syncPendingBudgets()
@@ -604,7 +604,7 @@ class BudgetSyncManagerTest {
         coEvery {
             apiService.updateBudget(101, CreateBudgetRequest("Budget 1", 1000.0, date = "2026-02-20"))
         } returns Result.success(BudgetResponse(id = 101, name = "Budget 1", amount = 1000.0, date = "2026-02-20"))
-        every { localDataSource.markAsSynced(1, 101, any()) } returns Unit
+        every { localDataSource.markAsSynced(1, 101, any(), any()) } returns Unit
 
         // When
         val result = syncManager.syncPendingBudgets()
@@ -769,16 +769,16 @@ class BudgetSyncManagerTest {
     }
 
     @Test
-    fun `pullBudgetsFromServer keeps local date for an unsynced existing budget even when server sends a different date`() = runTest {
-        // Given - Local budget hasn't been pushed yet, so it's considered newer than the server's copy
+    fun `pullBudgetsFromServer does not overwrite a budget with a change still to be pushed`() = runTest {
+        // Given - The local change has not reached the server (its push failed), so it is newer
         coEvery { authRepository.isAuthenticated() } returns true
 
-        val serverBudget = BudgetResponse(id = 101, name = "Updated Name", amount = 1500.0, date = "2026-05-01")
+        val serverBudget = BudgetResponse(id = 101, name = "Server Name", amount = 1500.0, date = "2026-05-01")
         coEvery { apiService.getBudgets() } returns Result.success(listOf(serverBudget))
 
         val existingBudget = Budget(
             id = 1,
-            name = "Old Name",
+            name = "Edited Here",
             amount = 1000.0,
             date = "2026-01-01",
             serverId = 101,
@@ -790,11 +790,40 @@ class BudgetSyncManagerTest {
         // When
         val result = syncManager.pullBudgetsFromServer()
 
-        // Then
+        // Then - Nothing written: the change stays as it is, pending for the next push
         assertIs<SyncResult.Success<SyncStats>>(result)
-        verify {
-            localDataSource.update(match { it.date == "2026-01-01" })
-        }
+        verify(exactly = 0) { localDataSource.update(any()) }
+    }
+
+    @Test
+    fun `pullBudgetsFromServer only takes the collaborator count for a budget with a change still to be pushed`() = runTest {
+        coEvery { authRepository.isAuthenticated() } returns true
+        val serverBudget = BudgetResponse(
+            id = 101,
+            name = "Server Name",
+            amount = 1500.0,
+            date = "2026-05-01",
+            collaboratorCount = 3
+        )
+        coEvery { apiService.getBudgets() } returns Result.success(listOf(serverBudget))
+        val existingBudget = Budget(
+            id = 1,
+            name = "Edited Here",
+            amount = 1000.0,
+            date = "2026-01-01",
+            serverId = 101,
+            isSynced = false,
+            collaboratorCount = 1
+        )
+        every { localDataSource.getByServerId(101) } returns existingBudget
+        every { localDataSource.update(any()) } returns Unit
+        coEvery { localDataSource.updateCollaboratorCount(any(), any()) } returns Unit
+
+        syncManager.pullBudgetsFromServer()
+
+        // Only that column: a whole-row update from the copy read by the pull could undo an edit saved since
+        coVerify(exactly = 1) { localDataSource.updateCollaboratorCount(101, 3) }
+        verify(exactly = 0) { localDataSource.update(any()) }
     }
 
     @Test
@@ -835,7 +864,7 @@ class BudgetSyncManagerTest {
         val budget = Budget(id = 1, name = "Budget 1", amount = 1000.0)
         every { localDataSource.getUnsynced() } returns listOf(budget)
         coEvery { apiService.createBudget(any()) } returns Result.success(entryBudgetResponse)
-        every { localDataSource.markAsSynced(any(), any(), any()) } returns Unit
+        every { localDataSource.markAsSynced(any(), any(), any(), any()) } returns Unit
 
         // When
         syncManager.syncPendingBudgets()
@@ -843,7 +872,7 @@ class BudgetSyncManagerTest {
         // Then - entries are pushed after the budget got its serverId
         coVerify(exactly = 1) { entrySyncManager.syncPendingEntries(1) }
         io.mockk.coVerifyOrder {
-            localDataSource.markAsSynced(1, 101, any())
+            localDataSource.markAsSynced(1, 101, any(), any())
             entrySyncManager.syncPendingEntries(1)
         }
     }
@@ -855,7 +884,7 @@ class BudgetSyncManagerTest {
         val budget = Budget(id = 1, name = "Budget 1", amount = 1000.0, serverId = 101)
         every { localDataSource.getUnsynced() } returns listOf(budget)
         coEvery { apiService.updateBudget(101, any()) } returns Result.success(entryBudgetResponse)
-        every { localDataSource.markAsSynced(any(), any(), any()) } returns Unit
+        every { localDataSource.markAsSynced(any(), any(), any(), any()) } returns Unit
 
         // When
         syncManager.syncPendingBudgets()
@@ -886,7 +915,7 @@ class BudgetSyncManagerTest {
         val budget = Budget(id = 1, name = "Budget 1", amount = 1000.0)
         every { localDataSource.getUnsynced() } returns listOf(budget)
         coEvery { apiService.createBudget(any()) } returns Result.success(entryBudgetResponse)
-        every { localDataSource.markAsSynced(any(), any(), any()) } returns Unit
+        every { localDataSource.markAsSynced(any(), any(), any(), any()) } returns Unit
         coEvery { entrySyncManager.syncPendingEntries(1) } returns SyncResult.Failure(Exception("boom"))
 
         // When
@@ -905,7 +934,7 @@ class BudgetSyncManagerTest {
         val budget = Budget(id = 1, name = "Budget 1", amount = 1000.0)
         every { localDataSource.getUnsynced() } returns listOf(budget)
         coEvery { apiService.createBudget(any()) } returns Result.success(entryBudgetResponse)
-        every { localDataSource.markAsSynced(any(), any(), any()) } returns Unit
+        every { localDataSource.markAsSynced(any(), any(), any(), any()) } returns Unit
         coEvery { entrySyncManager.syncPendingEntries(1) } throws RuntimeException("boom")
 
         // When
@@ -915,5 +944,19 @@ class BudgetSyncManagerTest {
         assertIs<SyncResult.Success<SyncStats>>(result)
         assertEquals(1, result.data.syncedItems)
         assertEquals(0, result.data.failedItems)
+    }
+
+    @Test
+    fun `syncPendingBudgets marks the budget synced against the budget as it was pushed`() = runTest {
+        coEvery { authRepository.isAuthenticated() } returns true
+        val budget = Budget(id = 1, name = "Budget", amount = 1000.0, date = "2026-01-01", serverId = 101, isSynced = false)
+        every { localDataSource.getUnsynced() } returns listOf(budget)
+        coEvery { apiService.updateBudget(101, any()) } returns
+            Result.success(BudgetResponse(id = 101, name = "Budget", amount = 1000.0, date = "2026-01-01"))
+        every { localDataSource.markAsSynced(any(), any(), any(), any()) } returns Unit
+
+        syncManager.syncPendingBudgets()
+
+        verify(exactly = 1) { localDataSource.markAsSynced(1, 101, any(), budget) }
     }
 }
