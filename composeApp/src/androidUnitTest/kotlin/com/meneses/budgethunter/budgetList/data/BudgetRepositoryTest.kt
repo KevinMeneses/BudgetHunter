@@ -2,7 +2,6 @@ package com.meneses.budgethunter.budgetList.data
 
 import com.meneses.budgethunter.auth.data.AuthRepository
 import com.meneses.budgethunter.budgetList.data.datasource.BudgetLocalDataSource
-import com.meneses.budgethunter.budgetList.data.network.BudgetApiService
 import com.meneses.budgethunter.budgetList.data.sync.BudgetSyncManager
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.budgetList.domain.BudgetFilter
@@ -27,10 +26,9 @@ class BudgetRepositoryTest {
     private fun buildRepository(
         dataSource: BudgetLocalDataSource = mockk(relaxed = true),
         syncManager: BudgetSyncManager = mockk(relaxed = true),
-        apiService: BudgetApiService = mockk(relaxed = true),
         authRepository: AuthRepository = mockk { coEvery { isAuthenticated() } returns false },
         logger: Logger = mockk(relaxed = true)
-    ) = BudgetRepository(dataSource, syncManager, apiService, authRepository, Dispatchers.Default, logger)
+    ) = BudgetRepository(dataSource, syncManager, authRepository, Dispatchers.Default, logger)
 
     // ── budgets ───────────────────────────────────────────────────────────────
 
@@ -473,69 +471,58 @@ class BudgetRepositoryTest {
     // ── delete ────────────────────────────────────────────────────────────────
 
     @Test
-    fun `delete removes budget locally when not authenticated`() = runTest {
-        val budget = Budget(id = 5, name = "To Delete", amount = 100.0, serverId = 99L)
-        val dataSource = mockk<BudgetLocalDataSource> {
-            coEvery { getById(5) } returns budget
-            every { delete(5L) } returns Unit
-        }
-        val authRepository = mockk<AuthRepository> {
-            coEvery { isAuthenticated() } returns false
-        }
-        val repository = buildRepository(dataSource = dataSource, authRepository = authRepository)
+    fun `delete removes the budget locally recording its deletion and pushes nothing when not authenticated`() = runTest {
+        val dataSource = mockk<BudgetLocalDataSource>(relaxed = true)
+        val syncManager = mockk<BudgetSyncManager>(relaxed = true)
+        val repository = buildRepository(dataSource = dataSource, syncManager = syncManager)
 
         repository.delete(5)
 
-        coVerify { dataSource.delete(5L) }
+        coVerify { dataSource.deleteRecordingPending(5, any()) }
+        coVerify(exactly = 0) { syncManager.syncPendingDeletions() }
     }
 
     @Test
-    fun `delete removes budget from server then locally when authenticated with serverId`() = runTest {
-        val budget = Budget(id = 5, name = "To Delete", amount = 100.0, serverId = 99L)
-        val dataSource = mockk<BudgetLocalDataSource> {
-            coEvery { getById(5) } returns budget
-            every { delete(5L) } returns Unit
+    fun `delete pushes the pending deletions when authenticated`() = runTest {
+        val dataSource = mockk<BudgetLocalDataSource>(relaxed = true)
+        val syncManager = mockk<BudgetSyncManager> {
+            coEvery { syncPendingDeletions() } returns SyncResult.Success(SyncStats(totalItems = 1, syncedItems = 1))
         }
-        val authRepository = mockk<AuthRepository> {
-            coEvery { isAuthenticated() } returns true
-        }
-        val apiService = mockk<BudgetApiService> {
-            coEvery { deleteBudget(99L) } returns Result.success(Unit)
-        }
-        val repository = buildRepository(
-            dataSource = dataSource,
-            apiService = apiService,
-            authRepository = authRepository
-        )
+        val authRepository = mockk<AuthRepository> { coEvery { isAuthenticated() } returns true }
+        val repository = buildRepository(dataSource = dataSource, syncManager = syncManager, authRepository = authRepository)
 
         repository.delete(5)
 
-        coVerify { apiService.deleteBudget(99L) }
-        coVerify { dataSource.delete(5L) }
+        io.mockk.coVerifyOrder {
+            dataSource.deleteRecordingPending(5, any())
+            syncManager.syncPendingDeletions()
+        }
     }
 
     @Test
-    fun `delete only removes locally when authenticated but budget has no serverId`() = runTest {
-        val budget = Budget(id = 5, name = "To Delete", amount = 100.0, serverId = null)
-        val dataSource = mockk<BudgetLocalDataSource> {
-            coEvery { getById(5) } returns budget
-            every { delete(5L) } returns Unit
+    fun `delete does not throw when the deletion cannot be pushed`() = runTest {
+        // No connection: it used to throw before deleting anything, crashing the screen
+        val dataSource = mockk<BudgetLocalDataSource>(relaxed = true)
+        val syncManager = mockk<BudgetSyncManager> {
+            coEvery { syncPendingDeletions() } returns SyncResult.Failure(Exception("No connection"))
         }
-        val authRepository = mockk<AuthRepository> {
-            coEvery { isAuthenticated() } returns true
-        }
-        val apiService = mockk<BudgetApiService>(relaxed = true)
-        val repository = buildRepository(
-            dataSource = dataSource,
-            apiService = apiService,
-            authRepository = authRepository
-        )
+        val authRepository = mockk<AuthRepository> { coEvery { isAuthenticated() } returns true }
+        val repository = buildRepository(dataSource = dataSource, syncManager = syncManager, authRepository = authRepository)
 
         repository.delete(5)
 
-        // apiService is relaxed — deleteBudget was never configured, so any call would use default Unit
-        // The important assertion is that the local delete still happened
-        coVerify { dataSource.delete(5L) }
+        coVerify { dataSource.deleteRecordingPending(5, any()) }
+    }
+
+    @Test
+    fun `hasUnsyncedChanges counts deletions not pushed yet`() = runTest {
+        val dataSource = mockk<BudgetLocalDataSource> {
+            every { countUnsynced() } returns 0
+            every { countPendingDeletions() } returns 1
+        }
+        val repository = buildRepository(dataSource = dataSource)
+
+        assertTrue(repository.hasUnsyncedChanges())
     }
 
     // ── clearAllData ──────────────────────────────────────────────────────────

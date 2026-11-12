@@ -1,0 +1,8 @@
+-- Deletions waiting to be pushed: see PendingDeletion.sq.
+CREATE TABLE pending_deletion (
+  kind TEXT NOT NULL,
+  server_id INTEGER NOT NULL,
+  budget_server_id INTEGER NOT NULL,
+  created_at TEXT NOT NULL,
+  PRIMARY KEY (kind, server_id)
+);

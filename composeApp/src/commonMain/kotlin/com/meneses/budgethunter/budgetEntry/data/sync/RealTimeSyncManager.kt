@@ -157,7 +157,7 @@ class RealTimeSyncManager(
      *
      * Based on the action type:
      * - CREATED/UPDATED: Triggers a full refresh from server to get latest state
-     * - DELETED: Removes the entry from local database
+     * - DELETED: Removes the entry from local database, unless it holds a change still to be pushed
      *
      * @param event The notification event received from SSE
      */
@@ -186,8 +186,9 @@ class RealTimeSyncManager(
                 }
 
                 BudgetEntryAction.DELETED -> {
-                    val existingEntry = localDataSource.selectByServerId(event.entryId)
-                    if (existingEntry != null) localDataSource.delete(existingEntry.id)
+                    // An entry with a change of its own still to be pushed stays: its push finds
+                    // it gone and creates it again, as for a deletion seen by a pull
+                    localDataSource.deleteSyncedByServerId(event.entryId)
                 }
             }
         }

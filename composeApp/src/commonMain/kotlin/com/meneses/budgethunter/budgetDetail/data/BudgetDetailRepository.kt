@@ -62,28 +62,15 @@ class BudgetDetailRepository(
         deleteBudgetUseCase.execute(budgetId.toLong())
     }
 
+    /**
+     * Deletes the entries by id straight from the database (a stale selection may hold ids the
+     * cached detail no longer has), recording the deletion of those on the server to be pushed.
+     */
     suspend fun deleteEntriesByIds(ids: List<Int>) = withContext(ioDispatcher) {
         if (ids.isEmpty()) {
             return@withContext
         }
-
-        // Resolve the current entry models so each deletion can run through the repository
-        // (which handles authenticated server deletes before removing the local row).
-        val cachedEntries = getCachedDetail().entries
-        val idsSet = ids.toSet()
-        val entriesToDelete = cachedEntries.filter { it.id in idsSet }
-
-        entriesToDelete.forEach { entry ->
-            budgetEntryRepository.delete(entry)
-        }
-
-        // If any IDs were missing from the cached snapshot (e.g., stale selection),
-        // fall back to direct DAO deletion to keep the database consistent.
-        val deletedIds = entriesToDelete.map { it.id }.toSet()
-        val missingIds = idsSet.minus(deletedIds)
-        if (missingIds.isNotEmpty()) {
-            entriesLocalDataSource.deleteByIds(missingIds.map { it.toLong() })
-        }
+        budgetEntryRepository.delete(budgetId = getCachedDetail().budget.id, ids = ids)
     }
 
     suspend fun syncEntries(budgetId: Int? = null, serverId: Long? = null): Result<Unit> {

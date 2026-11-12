@@ -5,6 +5,8 @@ import com.meneses.budgethunter.budgetEntry.data.datasource.BudgetEntryLocalData
 import com.meneses.budgethunter.budgetEntry.data.network.BudgetEntryApiService
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.budgetList.data.datasource.BudgetLocalDataSource
+import com.meneses.budgethunter.commons.data.network.ApiError
+import com.meneses.budgethunter.commons.data.network.isGoneFromServer
 import com.meneses.budgethunter.commons.data.network.models.BudgetEntryResponse
 import com.meneses.budgethunter.commons.data.sync.BaseSyncManager
 import com.meneses.budgethunter.commons.data.sync.Logger
@@ -79,18 +81,30 @@ class BudgetEntrySyncManager(
                 throw SyncException.ParentNotSynced("Budget $budgetId must be synced to server before syncing its entries")
             }
 
-            // Get all unsynced entries for this budget
+            // Deletions first, then the entries created or changed here
+            val pendingDeletions = localDataSource.getPendingDeletions(budgetServerId)
             val pendingEntries = localDataSource.getUnsynced(budgetId)
 
-            if (pendingEntries.isEmpty()) {
+            if (pendingDeletions.isEmpty() && pendingEntries.isEmpty()) {
                 return@authenticatedSync SyncStats(totalItems = 0)
             }
 
-            // Use aggregateSync to push each entry and track partial failures
-            aggregateSync(
+            // Use aggregateSync to push each one and track partial failures
+            val deletionStats = aggregateSync(
+                items = pendingDeletions,
+                itemIdentifier = { serverId -> "BudgetEntryDeletion(serverId=$serverId)" },
+                syncOperation = { serverId -> pushDeletion(budgetServerId, serverId) }
+            )
+            val entryStats = aggregateSync(
                 items = pendingEntries,
                 itemIdentifier = { entry -> "BudgetEntry(id=${entry.id}, desc='${entry.description}')" },
                 syncOperation = { entry -> pushEntry(budgetServerId, entry) }
+            )
+            SyncStats(
+                totalItems = deletionStats.totalItems + entryStats.totalItems,
+                syncedItems = deletionStats.syncedItems + entryStats.syncedItems,
+                failedItems = deletionStats.failedItems + entryStats.failedItems,
+                errors = deletionStats.errors + entryStats.errors
             )
         }.fold(
             onSuccess = { stats -> statsToResult(stats) },
@@ -102,6 +116,22 @@ class BudgetEntrySyncManager(
         _budgetsWithFailedPush.update { failed ->
             if (result is SyncResult.Success) failed - budgetId else failed + budgetId
         }
+
+    /**
+     * Pushes the deletion of an entry deleted here (see PendingDeletion.sq). It is done once the
+     * server confirms it, or answers that the entry or its budget is gone or out of reach for this
+     * account (see [isGoneFromServer]); any other failure keeps it for the next push.
+     */
+    private suspend fun pushDeletion(budgetServerId: Long, entryServerId: Long): Result<Unit> {
+        val error = budgetEntryApiService.deleteEntry(budgetServerId, entryServerId).exceptionOrNull()
+        if (error != null && !error.isGoneFromServer()) {
+            logger.warn(logTag, "Failed to delete entry $entryServerId on the server", error)
+            return Result.failure(error)
+        }
+
+        localDataSource.removePendingDeletion(entryServerId)
+        return Result.success(Unit)
+    }
 
     /**
      * Pushes a single entry to the server (creates if new, updates if existing).
@@ -126,28 +156,33 @@ class BudgetEntrySyncManager(
         localBudgetId: Int? = null
     ): SyncResult<SyncStats> = syncMutex.withLock {
         return authenticatedSync {
-            // Find the local budget ID if not provided
-            val budgetId = localBudgetId ?: budgetLocalDataSource
-                .getAllCached()
-                .firstOrNull { it.serverId == budgetServerId }
-                ?.id
+            // Find the local budget ID if not provided (in the database: the cache may be stale)
+            val budgetId = localBudgetId ?: budgetLocalDataSource.getByServerId(budgetServerId)?.id
 
             if (budgetId == null) {
                 logger.error(logTag, "Local budget not found for server ID $budgetServerId")
                 throw Exception("Local budget not found for server ID $budgetServerId")
             }
 
+            // Taken before the fetch, like the budgets' pull does. Deleted here, deletion not pushed
+            // yet: the server still has them, but they must not come back.
+            val knownServerIds = localDataSource.getSyncedServerIds(budgetId)
+            val pendingDeletions = localDataSource.getPendingDeletions(budgetServerId).toSet()
+
             // Fetch entries from server
             budgetEntryApiService.getEntries(budgetServerId).fold(
                 onSuccess = { serverEntries ->
-                    if (serverEntries.isEmpty()) {
+                    pruneEntriesGoneFromServer(budgetId, knownServerIds, serverEntries)
+
+                    val entriesToMerge = serverEntries.filter { it.id !in pendingDeletions }
+                    if (entriesToMerge.isEmpty()) {
                         return@authenticatedSync SyncStats(totalItems = 0)
                     }
 
                     // Use aggregateSync to merge each entry and track partial failures
                     aggregateSync(
                         // Oldest first, so the local auto-increment ids follow the creation order
-                        items = serverEntries.sortedBy { it.id },
+                        items = entriesToMerge.sortedBy { it.id },
                         itemIdentifier = { entry -> "ServerEntry(id=${entry.id}, desc='${entry.description}')" },
                         syncOperation = { entry -> mergeServerEntry(budgetId, entry) }
                     )
@@ -161,6 +196,25 @@ class BudgetEntrySyncManager(
             onSuccess = { stats -> statsToResult(stats) },
             onFailure = { error -> SyncResult.Failure(error) }
         )
+    }
+
+    /**
+     * Drops the budget's entries the server no longer has: deleted by someone else while this
+     * device was not listening (the real-time stream only runs with the budget open). Unlike the
+     * budgets' prune, an empty list is trusted: a budget with no entries is ordinary, and what is
+     * dropped here is on the server no more, or comes back with the next pull. Entries with a change
+     * still to be pushed are kept: their push finds them gone and creates them again.
+     */
+    private fun pruneEntriesGoneFromServer(
+        budgetId: Int,
+        knownServerIds: Set<Long>,
+        serverEntries: List<BudgetEntryResponse>
+    ) {
+        val goneServerIds = knownServerIds - serverEntries.map { it.id }.toSet()
+        if (goneServerIds.isEmpty()) return
+
+        logger.debug(logTag, "Removing ${goneServerIds.size} entries the server no longer returns: $goneServerIds")
+        localDataSource.deleteSyncedByServerIds(budgetId, goneServerIds)
     }
 
     /**
@@ -220,7 +274,7 @@ class BudgetEntrySyncManager(
      */
     suspend fun syncAllBudgetsEntries(): SyncResult<SyncStats> {
         return authenticatedSync {
-            val budgets = budgetLocalDataSource.getAllCached()
+            val budgets = budgetLocalDataSource.getAll()
                 .filter { it.serverId != null }
 
             if (budgets.isEmpty()) {
@@ -293,6 +347,13 @@ class BudgetEntrySyncManager(
                 Result.success(Unit)
             },
             onFailure = { error ->
+                // Deleted on the server (by someone else) while it was being edited here: the edit
+                // wins, as any change still to be pushed does, so the entry is created again. A
+                // 403 means the whole budget is gone or out of reach: the budgets' pull drops it.
+                if (error == ApiError.BadRequest || error == ApiError.NotFound) {
+                    logger.debug(logTag, "Entry ${entry.id} is gone from the server; creating it again")
+                    return pushNewEntry(budgetServerId, entry)
+                }
                 logger.warn(logTag, "Failed to update entry ${entry.id}", error)
                 Result.failure(error)
             }
@@ -344,7 +405,9 @@ class BudgetEntrySyncManager(
                 creationDate = serverEntry.creationDate,
                 modificationDate = serverEntry.modificationDate
             )
-            localDataSource.update(updatedEntry)
+            // Written only if the entry is still synced: an edit saved since it was read above
+            // stays, pending
+            localDataSource.updateFromServer(updatedEntry)
         } else {
             // Create new entry from server (this is a new entry from another user/device)
             val newEntry = BudgetEntry(

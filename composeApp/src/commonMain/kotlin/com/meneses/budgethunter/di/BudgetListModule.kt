@@ -2,7 +2,6 @@ package com.meneses.budgethunter.di
 
 import com.meneses.budgethunter.budgetEntry.data.BudgetEntryRepository
 import com.meneses.budgethunter.budgetEntry.data.BudgetEntrySyncManager
-import com.meneses.budgethunter.budgetEntry.data.datasource.BudgetEntryLocalDataSource
 import com.meneses.budgethunter.budgetList.BudgetListViewModel
 import com.meneses.budgethunter.budgetList.application.DeleteBudgetUseCase
 import com.meneses.budgethunter.budgetList.application.DuplicateBudgetUseCase
@@ -11,6 +10,7 @@ import com.meneses.budgethunter.budgetList.data.datasource.BudgetLocalDataSource
 import com.meneses.budgethunter.budgetList.data.network.BudgetApiService
 import com.meneses.budgethunter.budgetList.data.sync.BudgetSyncManager
 import com.meneses.budgethunter.db.BudgetQueries
+import com.meneses.budgethunter.db.PendingDeletionQueries
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineDispatcher
 import org.koin.core.qualifier.named
@@ -19,7 +19,11 @@ import org.koin.dsl.module
 val budgetListModule = module {
 
     single<BudgetLocalDataSource> {
-        BudgetLocalDataSource(get<BudgetQueries>(), get<CoroutineDispatcher>(named("IO")))
+        BudgetLocalDataSource(
+            get<BudgetQueries>(),
+            get<PendingDeletionQueries>(),
+            get<CoroutineDispatcher>(named("IO"))
+        )
     }
 
     single<BudgetApiService> {
@@ -44,7 +48,6 @@ val budgetListModule = module {
         BudgetRepository(
             localDataSource = get<BudgetLocalDataSource>(),
             budgetSyncManager = get<BudgetSyncManager>(),
-            budgetApiService = get<BudgetApiService>(),
             authRepository = get(),
             ioDispatcher = get<CoroutineDispatcher>(named("IO")),
             logger = get()
@@ -62,7 +65,6 @@ val budgetListModule = module {
     single<DeleteBudgetUseCase> {
         DeleteBudgetUseCase(
             get<BudgetRepository>(),
-            get<BudgetEntryLocalDataSource>(),
             get<CoroutineDispatcher>(named("IO"))
         )
     }

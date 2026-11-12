@@ -34,6 +34,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.content.TextContent
 import io.ktor.http.contentType
 import io.ktor.http.headersOf
 import io.ktor.serialization.kotlinx.json.json
@@ -128,6 +129,7 @@ class SyncFlowIntegrationTest {
         // Initialize data sources with real database
         budgetLocalDataSource = BudgetLocalDataSource(
             queries = database.budgetQueries,
+            pendingDeletionQueries = database.pendingDeletionQueries,
             dispatcher = testDispatcher
         )
 
@@ -212,6 +214,9 @@ class SyncFlowIntegrationTest {
      * Helper to get unsynced entries for a budget.
      * Uses direct database query since this isn't cached.
      */
+    private fun getEntriesOfBudget(budgetId: Int): List<BudgetEntry> =
+        database.budgetEntryQueries.selectAllByBudgetId(budgetId.toLong()).executeAsList().toDomain()
+
     private fun getUnsyncedEntries(budgetId: Int): List<BudgetEntry> {
         return database.budgetEntryQueries.selectUnsyncedByBudgetId(budgetId.toLong())
             .executeAsList()
@@ -422,112 +427,63 @@ class SyncFlowIntegrationTest {
             )
         )
 
-        var requestCount = 0
+        // Answered by what each request is, not by its arrival order: the budgets are pushed
+        // concurrently, so the order of their requests is not fixed
+        fun entry(id: Long, description: String, creationDate: String) = BudgetEntryResponse(
+            id = id,
+            budgetId = 402, // budget1 has server ID 402
+            amount = if (id == 501L) 100.0 else 200.0,
+            description = description,
+            category = "OTHER",
+            type = "OUTCOME",
+            createdByEmail = "user@test.com",
+            updatedByEmail = null,
+            creationDate = creationDate,
+            modificationDate = creationDate
+        )
+        val entry1 = entry(501, "Old Entry 1", "2023-12-05")
+        val entry2 = entry(502, "Old Entry 2", "2023-12-10")
+        val jsonHeaders = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+
         setupMockApi { request ->
-            when (val method = request.method to requestCount++) {
-                HttpMethod.Post to 0 -> respond(
+            val path = request.url.encodedPath
+            val body = (request.body as? TextContent)?.text.orEmpty()
+            when {
+                request.method == HttpMethod.Post && path == "/api/budgets" -> respond(
                     content = json.encodeToString(
-                        BudgetResponse(id = 401, name = "Old Budget 1", amount = 5000.0)
+                        if ("Old Budget 1" in body) BudgetResponse(id = 402, name = "Old Budget 1", amount = 5000.0)
+                        else BudgetResponse(id = 401, name = "Old Budget 2", amount = 6000.0)
                     ),
                     status = HttpStatusCode.OK,
-                    headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                    headers = jsonHeaders
                 )
-                HttpMethod.Post to 1 -> respond(
-                    content = json.encodeToString(
-                        BudgetResponse(id = 402, name = "Old Budget 2", amount = 6000.0)
-                    ),
-                    status = HttpStatusCode.OK,
-                    headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-                )
-                HttpMethod.Get to 4 -> respond(
+                request.method == HttpMethod.Get && path == "/api/budgets" -> respond(
                     content = json.encodeToString(
                         ListSerializer(BudgetResponse.serializer()),
                         listOf(
-                            BudgetResponse(id = 401, name = "Old Budget 1", amount = 5000.0),
-                            BudgetResponse(id = 402, name = "Old Budget 2", amount = 6000.0)
+                            BudgetResponse(id = 401, name = "Old Budget 2", amount = 6000.0),
+                            BudgetResponse(id = 402, name = "Old Budget 1", amount = 5000.0)
                         )
                     ),
                     status = HttpStatusCode.OK,
-                    headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                    headers = jsonHeaders
                 )
-                HttpMethod.Post to 2 -> respond(
-                    content = json.encodeToString(
-                        BudgetEntryResponse(
-                            id = 501,
-                            budgetId = 402, // budget1 has server ID 402
-                            amount = 100.0,
-                            description = "Old Entry 1",
-                            category = "OTHER",
-                            type = "OUTCOME",
-                            createdByEmail = "user@test.com",
-                            updatedByEmail = null,
-                            creationDate = "2023-12-05",
-                            modificationDate = "2023-12-05"
-                        )
-                    ),
+                request.method == HttpMethod.Post && path == "/api/budgets/402/entries" -> respond(
+                    content = json.encodeToString(if ("Old Entry 1" in body) entry1 else entry2),
                     status = HttpStatusCode.OK,
-                    headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                    headers = jsonHeaders
                 )
-                HttpMethod.Post to 3 -> respond(
-                    content = json.encodeToString(
-                        BudgetEntryResponse(
-                            id = 502,
-                            budgetId = 402, // budget1 has server ID 402
-                            amount = 200.0,
-                            description = "Old Entry 2",
-                            category = "OTHER",
-                            type = "OUTCOME",
-                            createdByEmail = "user@test.com",
-                            updatedByEmail = null,
-                            creationDate = "2023-12-10",
-                            modificationDate = "2023-12-10"
-                        )
-                    ),
+                request.method == HttpMethod.Get && path == "/api/budgets/402/entries" -> respond(
+                    content = json.encodeToString(ListSerializer(BudgetEntryResponse.serializer()), listOf(entry1, entry2)),
                     status = HttpStatusCode.OK,
-                    headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                    headers = jsonHeaders
                 )
-                HttpMethod.Get to 5 -> respond(
-                    content = json.encodeToString(
-                        ListSerializer(BudgetEntryResponse.serializer()),
-                        listOf(
-                            BudgetEntryResponse(
-                                id = 501,
-                                budgetId = 402, // budget1 has server ID 402
-                                amount = 100.0,
-                                description = "Old Entry 1",
-                                category = "OTHER",
-                                type = "OUTCOME",
-                                createdByEmail = "user@test.com",
-                                updatedByEmail = null,
-                                creationDate = "2023-12-05",
-                                modificationDate = "2023-12-05"
-                            ),
-                            BudgetEntryResponse(
-                                id = 502,
-                                budgetId = 402, // budget1 has server ID 402
-                                amount = 200.0,
-                                description = "Old Entry 2",
-                                category = "OTHER",
-                                type = "OUTCOME",
-                                createdByEmail = "user@test.com",
-                                updatedByEmail = null,
-                                creationDate = "2023-12-10",
-                                modificationDate = "2023-12-10"
-                            )
-                        )
-                    ),
+                request.method == HttpMethod.Get && path == "/api/budgets/401/entries" -> respond(
+                    content = json.encodeToString(ListSerializer(BudgetEntryResponse.serializer()), emptyList()),
                     status = HttpStatusCode.OK,
-                    headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                    headers = jsonHeaders
                 )
-                HttpMethod.Get to 6 -> respond(
-                    content = json.encodeToString(
-                        ListSerializer(BudgetEntryResponse.serializer()),
-                        emptyList<BudgetEntryResponse>()
-                    ),
-                    status = HttpStatusCode.OK,
-                    headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-                )
-                else -> error("Unexpected request: ${method.first} #${method.second}")
+                else -> error("Unexpected request: ${request.method.value} $path")
             }
         }
 
@@ -549,7 +505,6 @@ class SyncFlowIntegrationTest {
         val syncedBudget1 = getBudgetById(budget1.id)
         assertNotNull(syncedBudget1)
         assertTrue(syncedBudget1.isSynced)
-        // Budgets are synced in DESC order by ID, so budget2 (higher ID) gets server ID 401
         assertEquals(402L, syncedBudget1.serverId)
 
         val syncedBudget2 = getBudgetById(budget2.id)
@@ -564,6 +519,9 @@ class SyncFlowIntegrationTest {
 
         // Creating a budget on the server pushes its pending entries right away
         assertTrue(getUnsyncedEntries(budget1.id).isEmpty(), "Entries should be pushed once their budget is created")
+        // and the pull of each budget keeps them where they belong
+        assertEquals(2, getEntriesOfBudget(budget1.id).size)
+        assertEquals(0, getEntriesOfBudget(budget2.id).size)
     }
 
     @Test

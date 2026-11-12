@@ -49,6 +49,9 @@ class BudgetSyncManagerPerformanceTest {
         coEvery { entrySyncManager.syncPendingEntries(any()) } returns SyncResult.Success(SyncStats(totalItems = 0))
         // Nothing synced locally by default, so the pull has nothing to prune.
         every { localDataSource.getSyncedServerIds() } returns emptySet()
+        // Nothing deleted here and waiting to be pushed, by default
+        every { localDataSource.getPendingDeletions() } returns emptyList()
+        every { localDataSource.updateFromServer(any()) } returns Unit
         syncManager = BudgetSyncManager(
             localDataSource = localDataSource,
             budgetApiService = apiService,

@@ -98,6 +98,55 @@ class BudgetEntryLocalDataSource(
         )
     }
 
+    /**
+     * Deletes entries, recording the deletion of those that reached the server so it is pushed
+     * (see PendingDeletion.sq).
+     */
+    fun deleteRecordingPending(ids: List<Long>, deletedAt: String) {
+        if (ids.isEmpty()) return
+        queries.transaction {
+            queries.recordDeletions(created_at = deletedAt, ids = ids)
+            queries.deleteByIds(ids)
+        }
+    }
+
+    /** Server ids of this budget's entries deleted here whose deletion has not reached the server yet. */
+    fun getPendingDeletions(budgetServerId: Long): List<Long> =
+        queries.selectPendingDeletionsOfBudget(budgetServerId).executeAsList()
+
+    fun removePendingDeletion(serverId: Long) = queries.removePendingDeletion(serverId)
+
+    /** Server ids of the budget's entries that hold no change of their own still to be pushed. */
+    fun getSyncedServerIds(budgetId: Int): Set<Long> =
+        queries.selectSyncedServerIdsByBudgetId(budgetId.toLong()).executeAsList().filterNotNull().toSet()
+
+    /** Drops the budget's entries with these server ids, unless they hold a change still to be pushed. */
+    fun deleteSyncedByServerIds(budgetId: Int, serverIds: Collection<Long>) {
+        if (serverIds.isEmpty()) return
+        queries.deleteSyncedByServerIds(budgetId.toLong(), serverIds)
+    }
+
+    /** Drops the entry with this server id, unless it holds a change still to be pushed. */
+    fun deleteSyncedByServerId(serverId: Long) = queries.deleteSyncedByServerId(serverId)
+
+    /**
+     * Stores what a pull brought for [entry] only if it has no change of its own still to be
+     * pushed: one saved after the pull read the entry stays, pending, instead of being overwritten.
+     */
+    fun updateFromServer(entry: BudgetEntry) = queries.updateFromServerIfSynced(
+        amount = entry.amount.toDoubleOrNull() ?: 0.0,
+        description = entry.description,
+        type = entry.type,
+        date = entry.date,
+        category = entry.category,
+        server_id = entry.serverId,
+        created_by_email = entry.createdByEmail,
+        updated_by_email = entry.updatedByEmail,
+        creation_date = entry.creationDate,
+        modification_date = entry.modificationDate,
+        id = entry.id.toLong()
+    )
+
     fun deleteByIds(list: List<Long>) =
         queries.deleteByIds(list)
 

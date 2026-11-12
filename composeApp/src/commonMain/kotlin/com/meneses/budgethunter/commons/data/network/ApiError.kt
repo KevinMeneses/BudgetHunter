@@ -30,6 +30,11 @@ sealed class ApiError(val messageResource: StringResource) : Exception() {
     data object Unauthorized : ApiError(Res.string.error_unauthorized)
 
     /**
+     * Rejected request (400). The server also answers it for an entry that no longer exists.
+     */
+    data object BadRequest : ApiError(Res.string.error_unknown)
+
+    /**
      * Permission errors (403)
      */
     data object Forbidden : ApiError(Res.string.error_forbidden)
@@ -73,6 +78,7 @@ fun Throwable.toApiError(): ApiError {
         // HTTP 4xx - Client errors
         is ClientRequestException -> {
             when (response.status) {
+                HttpStatusCode.BadRequest -> ApiError.BadRequest
                 HttpStatusCode.Unauthorized -> ApiError.Unauthorized
                 HttpStatusCode.Forbidden -> ApiError.Forbidden
                 HttpStatusCode.NotFound -> ApiError.NotFound
@@ -123,3 +129,11 @@ suspend fun <T> safeApiCall(
         Result.failure(e.toApiError())
     }
 }
+
+/**
+ * True when the server answered that the thing a request was about is gone for this account: no
+ * longer exists (404, or 400 for an entry, see the backend's BudgetService) or is no longer
+ * reachable (403: the budget was deleted, or the user removed from it). Retrying cannot change it.
+ */
+fun Throwable.isGoneFromServer(): Boolean =
+    this == ApiError.NotFound || this == ApiError.BadRequest || this == ApiError.Forbidden
