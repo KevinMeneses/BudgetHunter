@@ -218,7 +218,7 @@ object SettingsScreen {
                         TextButton(
                             onClick = { onIntent(SettingsIntent.ToggleDeleteAccountConfirmation(true)) },
                             enabled = !uiState.isDeletingAccount,
-                            modifier = Modifier.padding(start = 4.dp)
+                            modifier = Modifier.align(Alignment.CenterHorizontally)
                         ) {
                             Text(
                                 text = stringResource(Res.string.delete_account),
