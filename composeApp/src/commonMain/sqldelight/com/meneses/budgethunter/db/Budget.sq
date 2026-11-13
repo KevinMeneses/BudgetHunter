@@ -116,3 +116,35 @@ WHERE server_id = :server_id;
 
 countUnsynced:
 SELECT COUNT(*) FROM budget WHERE is_synced = 0;
+
+-- Records the deletion of a budget that reached the server, to be pushed (see PendingDeletion.sq).
+-- The server deletes a budget's entries with it, so pending deletions of its entries are dropped.
+recordDeletion {
+  INSERT OR REPLACE INTO pending_deletion (kind, server_id, budget_server_id, created_at)
+  SELECT 'BUDGET', server_id, server_id, :created_at FROM budget WHERE id = :id AND server_id IS NOT NULL;
+
+  DELETE FROM pending_deletion
+  WHERE kind = 'ENTRY'
+    AND budget_server_id IN (SELECT server_id FROM budget WHERE id = :id AND server_id IS NOT NULL);
+}
+
+deleteEntriesOfBudget:
+DELETE FROM budget_entry
+WHERE budget_id = :id;
+
+selectPendingDeletions:
+SELECT server_id FROM pending_deletion
+WHERE kind = 'BUDGET';
+
+removePendingDeletion:
+DELETE FROM pending_deletion
+WHERE kind = 'BUDGET' AND server_id = :server_id;
+
+-- Stores what a pull brought for a budget, only while it holds no change of its own still to be
+-- pushed: one saved after the pull read it must not be overwritten (and marked synced).
+updateFromServerIfSynced:
+UPDATE budget
+SET amount = :amount, name = :name, date = :date, collaborator_count = :collaborator_count,
+    is_synced = 1, last_synced_at = :last_synced_at
+WHERE id = :id AND is_synced = 1;
+

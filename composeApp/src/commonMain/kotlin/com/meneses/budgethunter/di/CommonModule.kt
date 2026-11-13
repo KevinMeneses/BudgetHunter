@@ -14,6 +14,7 @@ import com.meneses.budgethunter.db.BudgetEntryQueries
 import com.meneses.budgethunter.db.BudgetQueries
 import com.meneses.budgethunter.db.Budget_entry
 import com.meneses.budgethunter.db.Database
+import com.meneses.budgethunter.db.PendingDeletionQueries
 import com.meneses.budgethunter.navigation.DefaultBudgetLaunchRequest
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -32,6 +33,7 @@ val commonModule = module {
     single<BudgetEntryQueries> { get<Database>().budgetEntryQueries }
 
     single<BudgetQueries> { get<Database>().budgetQueries }
+    single<PendingDeletionQueries> { get<Database>().pendingDeletionQueries }
 
     single<CoroutineDispatcher>(named("IO")) { Dispatchers.IO }
 

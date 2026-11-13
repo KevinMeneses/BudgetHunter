@@ -43,10 +43,8 @@ class SyncUserPreferencesUseCaseTest {
         coEvery { preferencesManager.getSelectedBankIds() } returns setOf("nequi")
         coEvery { preferencesManager.getDefaultBudgetId() } returns 3
         coEvery { budgetRepository.getById(3) } returns Budget(id = 3, serverId = 30L)
-        coEvery { budgetRepository.getAllCached() } returns listOf(
-            Budget(id = 3, serverId = 30L),
-            Budget(id = 8, serverId = 80L)
-        )
+        val budgets = listOf(Budget(id = 3, serverId = 30L), Budget(id = 8, serverId = 80L))
+        coEvery { budgetRepository.getByServerId(any()) } answers { budgets.firstOrNull { it.serverId == firstArg() } }
     }
 
     @Test

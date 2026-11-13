@@ -6,6 +6,7 @@ import com.meneses.budgethunter.budgetList.data.mapSelectAllToBudget
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.budgetList.domain.BudgetFilter
 import com.meneses.budgethunter.db.BudgetQueries
+import com.meneses.budgethunter.db.PendingDeletionQueries
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.sync.Mutex
@@ -14,6 +15,7 @@ import kotlinx.coroutines.withContext
 
 class BudgetLocalDataSource(
     private val queries: BudgetQueries,
+    private val pendingDeletionQueries: PendingDeletionQueries,
     private val dispatcher: CoroutineDispatcher
 ) {
     private val cacheMutex = Mutex()
@@ -42,6 +44,11 @@ class BudgetLocalDataSource(
         queries.selectById(id.toLong(), ::mapSelectAllToBudget).executeAsOneOrNull()
     }
 
+    /** Every budget, read from the database: see [getById] for why sync code must not use the cache. */
+    suspend fun getAll(): List<Budget> = withContext(dispatcher) {
+        queries.selectAll(::mapSelectAllToBudget).executeAsList()
+    }
+
     fun getByServerId(serverId: Long): Budget? =
         queries.selectByServerId(serverId, ::mapSelectAllToBudget).executeAsOneOrNull()
 
@@ -49,6 +56,9 @@ class BudgetLocalDataSource(
         queries.selectUnsynced(::mapSelectAllToBudget).executeAsList()
 
     fun countUnsynced(): Long = queries.countUnsynced().executeAsOne()
+
+    /** Budgets and entries deleted here whose deletion has not reached the server yet. */
+    fun countPendingDeletions(): Long = pendingDeletionQueries.countAll().executeAsOne()
 
     suspend fun getAllFilteredBy(filter: BudgetFilter): List<Budget> = cacheMutex.withLock {
         cachedList.filter {
@@ -92,6 +102,19 @@ class BudgetLocalDataSource(
         collaborator_count = budget.collaboratorCount.toLong()
     )
 
+    /**
+     * Stores what a pull brought for [budget] only if it has no change of its own still to be
+     * pushed: one saved after the pull read the budget stays, pending, instead of being overwritten.
+     */
+    fun updateFromServer(budget: Budget) = queries.updateFromServerIfSynced(
+        amount = budget.amount,
+        name = budget.name,
+        date = budget.date,
+        collaborator_count = budget.collaboratorCount.toLong(),
+        last_synced_at = budget.lastSyncedAt,
+        id = budget.id.toLong()
+    )
+
     /** Writes only a changed count: every write makes the budget list query run again. */
     suspend fun updateCollaboratorCount(serverId: Long, count: Int) = withContext(dispatcher) {
         val current = queries.selectByServerId(serverId, ::mapSelectAllToBudget).executeAsOneOrNull()
@@ -118,9 +141,27 @@ class BudgetLocalDataSource(
         )
     }
 
-    fun delete(id: Long) = queries.delete(id)
+    /**
+     * Deletes a budget and its entries, recording the deletion to be pushed if the budget reached
+     * the server (see PendingDeletion.sq). Entries are deleted here too: the schema's
+     * `ON DELETE CASCADE` needs `PRAGMA foreign_keys`, which is off.
+     */
+    fun deleteRecordingPending(id: Int, deletedAt: String) = queries.transaction {
+        queries.recordDeletion(created_at = deletedAt, id = id.toLong())
+        queries.deleteEntriesOfBudget(id.toLong())
+        queries.delete(id.toLong())
+    }
 
-    fun clearAllData() = queries.deleteAll()
+    /** Server ids of the budgets deleted here whose deletion has not reached the server yet. */
+    fun getPendingDeletions(): List<Long> = queries.selectPendingDeletions().executeAsList()
+
+    fun removePendingDeletion(serverId: Long) = queries.removePendingDeletion(serverId)
+
+    /** Also forgets the deletions waiting to be pushed: they belong to the account signing out. */
+    fun clearAllData() = queries.transaction {
+        queries.deleteAll()
+        pendingDeletionQueries.deleteAll()
+    }
 
     fun getSyncedServerIds(): Set<Long> =
         queries.selectSyncedServerIds().executeAsList().toSet()
@@ -139,10 +180,12 @@ class BudgetLocalDataSource(
 
     /**
      * Removes every budget that reached the server, with its entries, keeping the ones created
-     * offline that were never pushed.
+     * offline that were never pushed. The deletions waiting to be pushed go too: they were made on
+     * the previous account's budgets.
      */
     fun deleteSynced() = queries.transaction {
         queries.deleteEntriesOfSyncedBudgets()
         queries.deleteSynced()
+        pendingDeletionQueries.deleteAll()
     }
 }

@@ -5,6 +5,7 @@ import com.meneses.budgethunter.auth.data.AuthRepository
 import com.meneses.budgethunter.budgetList.data.datasource.BudgetLocalDataSource
 import com.meneses.budgethunter.budgetList.data.network.BudgetApiService
 import com.meneses.budgethunter.budgetList.domain.Budget
+import com.meneses.budgethunter.commons.data.network.ApiError
 import com.meneses.budgethunter.commons.data.network.models.BudgetResponse
 import com.meneses.budgethunter.commons.data.network.models.CreateBudgetRequest
 import com.meneses.budgethunter.commons.data.sync.Logger
@@ -49,6 +50,9 @@ class BudgetSyncManagerTest {
         coEvery { entrySyncManager.syncPendingEntries(any()) } returns SyncResult.Success(SyncStats(totalItems = 0))
         // Nothing synced locally by default, so the pull has nothing to prune.
         every { localDataSource.getSyncedServerIds() } returns emptySet()
+        // Nothing deleted here and waiting to be pushed, by default
+        every { localDataSource.getPendingDeletions() } returns emptyList()
+        every { localDataSource.updateFromServer(any()) } returns Unit
         syncManager = BudgetSyncManager(
             localDataSource = localDataSource,
             budgetApiService = apiService,
@@ -275,7 +279,7 @@ class BudgetSyncManagerTest {
         every { localDataSource.getByServerId(101) } returns existingBudget
 
         // Updating budget succeeds
-        every { localDataSource.update(any()) } returns Unit
+        every { localDataSource.updateFromServer(any()) } returns Unit
 
         // When
         val result = syncManager.pullBudgetsFromServer()
@@ -287,7 +291,7 @@ class BudgetSyncManagerTest {
 
         // Verify budget was updated with new values
         verify {
-            localDataSource.update(
+            localDataSource.updateFromServer(
                 match { budget ->
                     budget.id == 1 &&
                         budget.name == "Updated Name" &&
@@ -315,7 +319,7 @@ class BudgetSyncManagerTest {
 
         // Verify no local operations were performed
         verify(exactly = 0) { localDataSource.create(any()) }
-        verify(exactly = 0) { localDataSource.update(any()) }
+        verify(exactly = 0) { localDataSource.updateFromServer(any()) }
     }
 
     // ========== pullBudgetsFromServer() pruning Tests ==========
@@ -328,7 +332,7 @@ class BudgetSyncManagerTest {
             Result.success(listOf(BudgetResponse(id = 2, name = "B", amount = 1.0)))
         every { localDataSource.getByServerId(2) } returns
             Budget(id = 5, name = "B", amount = 1.0, serverId = 2, isSynced = true)
-        justRun { localDataSource.update(any()) }
+        justRun { localDataSource.updateFromServer(any()) }
         justRun { localDataSource.deleteByServerIds(any()) }
 
         syncManager.pullBudgetsFromServer()
@@ -358,7 +362,7 @@ class BudgetSyncManagerTest {
             Result.success(listOf(BudgetResponse(id = 1, name = "A", amount = 1.0)))
         every { localDataSource.getByServerId(1) } returns
             Budget(id = 5, name = "A", amount = 1.0, serverId = 1, isSynced = true)
-        justRun { localDataSource.update(any()) }
+        justRun { localDataSource.updateFromServer(any()) }
 
         syncManager.pullBudgetsFromServer()
 
@@ -406,7 +410,7 @@ class BudgetSyncManagerTest {
             Result.success(listOf(BudgetResponse(id = 2, name = "B", amount = 1.0)))
         every { localDataSource.getByServerId(2) } returns
             Budget(id = 5, name = "B", amount = 1.0, serverId = 2, isSynced = true)
-        justRun { localDataSource.update(any()) }
+        justRun { localDataSource.updateFromServer(any()) }
         justRun { localDataSource.deleteByServerIds(any()) }
 
         syncManager.pullBudgetsFromServer()
@@ -427,7 +431,7 @@ class BudgetSyncManagerTest {
             Result.success(listOf(BudgetResponse(id = 2, name = "B", amount = 1.0)))
         every { localDataSource.getByServerId(2) } returns
             Budget(id = 5, name = "B", amount = 1.0, serverId = 2, isSynced = true)
-        justRun { localDataSource.update(any()) }
+        justRun { localDataSource.updateFromServer(any()) }
         justRun { localDataSource.deleteByServerIds(any()) }
 
         syncManager.pullBudgetsFromServer()
@@ -669,11 +673,11 @@ class BudgetSyncManagerTest {
         coEvery { apiService.getBudgets() } returns Result.success(listOf(serverBudget))
         every { localDataSource.getByServerId(101) } returns
             Budget(id = 1, name = "Shared", amount = 1.0, serverId = 101, isSynced = true, collaboratorCount = 2)
-        every { localDataSource.update(any()) } returns Unit
+        every { localDataSource.updateFromServer(any()) } returns Unit
 
         syncManager.pullBudgetsFromServer()
 
-        verify { localDataSource.update(match { it.collaboratorCount == 4 }) }
+        verify { localDataSource.updateFromServer(match { it.collaboratorCount == 4 }) }
     }
 
     @Test
@@ -683,11 +687,11 @@ class BudgetSyncManagerTest {
         coEvery { apiService.getBudgets() } returns Result.success(listOf(serverBudget))
         every { localDataSource.getByServerId(101) } returns
             Budget(id = 1, name = "Shared", amount = 1.0, serverId = 101, isSynced = true, collaboratorCount = 2)
-        every { localDataSource.update(any()) } returns Unit
+        every { localDataSource.updateFromServer(any()) } returns Unit
 
         syncManager.pullBudgetsFromServer()
 
-        verify { localDataSource.update(match { it.collaboratorCount == 2 }) }
+        verify { localDataSource.updateFromServer(match { it.collaboratorCount == 2 }) }
     }
 
     @Test
@@ -727,7 +731,7 @@ class BudgetSyncManagerTest {
             isSynced = true
         )
         every { localDataSource.getByServerId(101) } returns existingBudget
-        every { localDataSource.update(any()) } returns Unit
+        every { localDataSource.updateFromServer(any()) } returns Unit
 
         // When
         val result = syncManager.pullBudgetsFromServer()
@@ -735,7 +739,7 @@ class BudgetSyncManagerTest {
         // Then
         assertIs<SyncResult.Success<SyncStats>>(result)
         verify {
-            localDataSource.update(match { it.date == "2026-05-01" })
+            localDataSource.updateFromServer(match { it.date == "2026-05-01" })
         }
     }
 
@@ -756,7 +760,7 @@ class BudgetSyncManagerTest {
             isSynced = true
         )
         every { localDataSource.getByServerId(101) } returns existingBudget
-        every { localDataSource.update(any()) } returns Unit
+        every { localDataSource.updateFromServer(any()) } returns Unit
 
         // When
         val result = syncManager.pullBudgetsFromServer()
@@ -764,7 +768,7 @@ class BudgetSyncManagerTest {
         // Then
         assertIs<SyncResult.Success<SyncStats>>(result)
         verify {
-            localDataSource.update(match { it.date == "2026-01-01" })
+            localDataSource.updateFromServer(match { it.date == "2026-01-01" })
         }
     }
 
@@ -785,14 +789,14 @@ class BudgetSyncManagerTest {
             isSynced = false
         )
         every { localDataSource.getByServerId(101) } returns existingBudget
-        every { localDataSource.update(any()) } returns Unit
+        every { localDataSource.updateFromServer(any()) } returns Unit
 
         // When
         val result = syncManager.pullBudgetsFromServer()
 
         // Then - Nothing written: the change stays as it is, pending for the next push
         assertIs<SyncResult.Success<SyncStats>>(result)
-        verify(exactly = 0) { localDataSource.update(any()) }
+        verify(exactly = 0) { localDataSource.updateFromServer(any()) }
     }
 
     @Test
@@ -816,14 +820,14 @@ class BudgetSyncManagerTest {
             collaboratorCount = 1
         )
         every { localDataSource.getByServerId(101) } returns existingBudget
-        every { localDataSource.update(any()) } returns Unit
+        every { localDataSource.updateFromServer(any()) } returns Unit
         coEvery { localDataSource.updateCollaboratorCount(any(), any()) } returns Unit
 
         syncManager.pullBudgetsFromServer()
 
         // Only that column: a whole-row update from the copy read by the pull could undo an edit saved since
         coVerify(exactly = 1) { localDataSource.updateCollaboratorCount(101, 3) }
-        verify(exactly = 0) { localDataSource.update(any()) }
+        verify(exactly = 0) { localDataSource.updateFromServer(any()) }
     }
 
     @Test
@@ -958,5 +962,88 @@ class BudgetSyncManagerTest {
         syncManager.syncPendingBudgets()
 
         verify(exactly = 1) { localDataSource.markAsSynced(1, 101, any(), budget) }
+    }
+
+    // ========== Pending deletions ==========
+
+    @Test
+    fun `syncPendingDeletions deletes each budget on the server and forgets it`() = runTest {
+        coEvery { authRepository.isAuthenticated() } returns true
+        every { localDataSource.getPendingDeletions() } returns listOf(101, 102)
+        coEvery { apiService.deleteBudget(any()) } returns Result.success(Unit)
+        justRun { localDataSource.removePendingDeletion(any()) }
+
+        val result = syncManager.syncPendingDeletions()
+
+        assertIs<SyncResult.Success<SyncStats>>(result)
+        assertEquals(2, result.data.syncedItems)
+        verify { localDataSource.removePendingDeletion(101) }
+        verify { localDataSource.removePendingDeletion(102) }
+    }
+
+    @Test
+    fun `syncPendingDeletions forgets a deletion the server answers is gone or out of reach`() = runTest {
+        coEvery { authRepository.isAuthenticated() } returns true
+        every { localDataSource.getPendingDeletions() } returns listOf(101, 102, 103)
+        coEvery { apiService.deleteBudget(101) } returns Result.failure(ApiError.Forbidden)
+        coEvery { apiService.deleteBudget(102) } returns Result.failure(ApiError.NotFound)
+        coEvery { apiService.deleteBudget(103) } returns Result.failure(ApiError.BadRequest)
+        justRun { localDataSource.removePendingDeletion(any()) }
+
+        val result = syncManager.syncPendingDeletions()
+
+        assertIs<SyncResult.Success<SyncStats>>(result)
+        verify(exactly = 3) { localDataSource.removePendingDeletion(any()) }
+    }
+
+    @Test
+    fun `syncPendingDeletions keeps a deletion that could not reach the server`() = runTest {
+        coEvery { authRepository.isAuthenticated() } returns true
+        every { localDataSource.getPendingDeletions() } returns listOf(101, 102)
+        coEvery { apiService.deleteBudget(101) } returns Result.success(Unit)
+        coEvery { apiService.deleteBudget(102) } returns Result.failure(ApiError.Timeout)
+        justRun { localDataSource.removePendingDeletion(any()) }
+
+        val result = syncManager.syncPendingDeletions()
+
+        assertIs<SyncResult.PartialSuccess<SyncStats>>(result)
+        verify(exactly = 1) { localDataSource.removePendingDeletion(101) }
+        verify(exactly = 0) { localDataSource.removePendingDeletion(102) }
+    }
+
+    @Test
+    fun `pullBudgetsFromServer does not bring back a budget whose deletion is pending`() = runTest {
+        coEvery { authRepository.isAuthenticated() } returns true
+        every { localDataSource.getPendingDeletions() } returns listOf(101)
+        coEvery { apiService.getBudgets() } returns Result.success(
+            listOf(
+                BudgetResponse(id = 101, name = "Deleted here", amount = 1.0),
+                BudgetResponse(id = 102, name = "Kept", amount = 2.0)
+            )
+        )
+        every { localDataSource.getByServerId(102) } returns null
+        every { localDataSource.create(any()) } answers { firstArg() }
+
+        syncManager.pullBudgetsFromServer()
+
+        verify(exactly = 0) { localDataSource.getByServerId(101) }
+        verify(exactly = 1) { localDataSource.create(match { it.serverId == 102L }) }
+    }
+
+    @Test
+    fun `performFullSync pushes deletions before the budgets and the pull`() = runTest {
+        coEvery { authRepository.isAuthenticated() } returns true
+        every { localDataSource.getPendingDeletions() } returns listOf(101)
+        coEvery { apiService.deleteBudget(101) } returns Result.success(Unit)
+        justRun { localDataSource.removePendingDeletion(101) }
+        every { localDataSource.getUnsynced() } returns emptyList()
+        coEvery { apiService.getBudgets() } returns Result.success(emptyList())
+
+        syncManager.performFullSync()
+
+        coVerifyOrder {
+            apiService.deleteBudget(101)
+            apiService.getBudgets()
+        }
     }
 }

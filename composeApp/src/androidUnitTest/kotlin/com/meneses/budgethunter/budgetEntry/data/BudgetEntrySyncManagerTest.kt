@@ -6,6 +6,7 @@ import com.meneses.budgethunter.budgetEntry.data.network.BudgetEntryApiService
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.budgetList.data.datasource.BudgetLocalDataSource
 import com.meneses.budgethunter.budgetList.domain.Budget
+import com.meneses.budgethunter.commons.data.network.ApiError
 import com.meneses.budgethunter.commons.data.network.models.BudgetEntryResponse
 import com.meneses.budgethunter.commons.data.network.models.CreateBudgetEntryRequest
 import com.meneses.budgethunter.commons.data.network.models.UpdateBudgetEntryRequest
@@ -16,6 +17,7 @@ import com.meneses.budgethunter.commons.data.sync.SyncStats
 import com.meneses.budgethunter.db.Budget_entry
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -49,6 +51,12 @@ class BudgetEntrySyncManagerTest {
 
     @BeforeTest
     fun setup() {
+        // Nothing deleted here and waiting to be pushed, and nothing synced to prune, by default
+        every { entryLocalDataSource.getPendingDeletions(any()) } returns emptyList()
+        every { entryLocalDataSource.getSyncedServerIds(any()) } returns emptySet()
+        every { entryLocalDataSource.deleteSyncedByServerIds(any(), any()) } returns Unit
+        every { entryLocalDataSource.updateFromServer(any()) } returns Unit
+        every { budgetLocalDataSource.getByServerId(any()) } returns null
         syncManager = BudgetEntrySyncManager(
             localDataSource = entryLocalDataSource,
             budgetEntryApiService = apiService,
@@ -308,7 +316,7 @@ class BudgetEntrySyncManagerTest {
     fun `pullEntriesFromServer returns failure when local budget not found`() = runTest {
         // Given - User is authenticated but local budget doesn't exist
         coEvery { authRepository.isAuthenticated() } returns true
-        coEvery { budgetLocalDataSource.getAllCached() } returns emptyList()
+        every { budgetLocalDataSource.getByServerId(101) } returns null
 
         // When
         val result = syncManager.pullEntriesFromServer(budgetServerId = 101)
@@ -409,7 +417,7 @@ class BudgetEntrySyncManagerTest {
 
         // Verify entry was updated
         verify {
-            entryLocalDataSource.update(
+            entryLocalDataSource.updateFromServer(
                 match { entry ->
                     entry.amount.toDouble() == 60.0 && entry.description == "Updated Description"
                 }
@@ -520,7 +528,7 @@ class BudgetEntrySyncManagerTest {
     fun `syncAllBudgetsEntries returns success with zero items when no synced budgets`() = runTest {
         // Given - User is authenticated but no synced budgets
         coEvery { authRepository.isAuthenticated() } returns true
-        coEvery { budgetLocalDataSource.getAllCached() } returns emptyList()
+        coEvery { budgetLocalDataSource.getAll() } returns emptyList()
 
         // When
         val result = syncManager.syncAllBudgetsEntries()
@@ -537,7 +545,7 @@ class BudgetEntrySyncManagerTest {
 
         val budget1 = Budget(id = 1, name = "Budget 1", amount = 1000.0, serverId = 101)
         val budget2 = Budget(id = 2, name = "Budget 2", amount = 2000.0, serverId = 102)
-        coEvery { budgetLocalDataSource.getAllCached() } returns listOf(budget1, budget2)
+        coEvery { budgetLocalDataSource.getAll() } returns listOf(budget1, budget2)
 
         // Budget 1 push/pull
         coEvery { budgetLocalDataSource.getById(1) } returns budget1
@@ -569,7 +577,7 @@ class BudgetEntrySyncManagerTest {
 
         val budget1 = Budget(id = 1, name = "Budget 1", amount = 1000.0, serverId = 101)
         val budget2 = Budget(id = 2, name = "Budget 2", amount = 2000.0, serverId = 102)
-        coEvery { budgetLocalDataSource.getAllCached() } returns listOf(budget1, budget2)
+        coEvery { budgetLocalDataSource.getAll() } returns listOf(budget1, budget2)
 
         // Budget 1 fails during push (parent not synced, shouldn't happen but testing)
         coEvery { budgetLocalDataSource.getById(1) } returns budget1.copy(serverId = null)
@@ -758,7 +766,7 @@ class BudgetEntrySyncManagerTest {
         // Then
         assertIs<SyncResult.Success<SyncStats>>(result)
         verify {
-            entryLocalDataSource.update(match { it.date == "2026-05-01" })
+            entryLocalDataSource.updateFromServer(match { it.date == "2026-05-01" })
         }
     }
 
@@ -800,7 +808,7 @@ class BudgetEntrySyncManagerTest {
         // Then
         assertIs<SyncResult.Success<SyncStats>>(result)
         verify {
-            entryLocalDataSource.update(match { it.date == "2024-01-01" })
+            entryLocalDataSource.updateFromServer(match { it.date == "2024-01-01" })
         }
     }
 
@@ -843,6 +851,7 @@ class BudgetEntrySyncManagerTest {
         // Then - Nothing written: amount, description and date stay, pending for the next push
         assertIs<SyncResult.Success<SyncStats>>(result)
         verify(exactly = 0) { entryLocalDataSource.update(any()) }
+        verify(exactly = 0) { entryLocalDataSource.updateFromServer(any()) }
         verify(exactly = 0) { entryLocalDataSource.create(any()) }
     }
 
@@ -1083,7 +1092,7 @@ class BudgetEntrySyncManagerTest {
         val budget1 = Budget(id = 1, name = "Budget 1", amount = 1000.0, serverId = 101)
         val budget2 = Budget(id = 2, name = "Budget 2", amount = 2000.0, serverId = 102)
         coEvery { authRepository.isAuthenticated() } returns true
-        coEvery { budgetLocalDataSource.getAllCached() } returns listOf(budget1, budget2)
+        coEvery { budgetLocalDataSource.getAll() } returns listOf(budget1, budget2)
         coEvery { budgetLocalDataSource.getById(1) } returns budget1
         coEvery { budgetLocalDataSource.getById(2) } returns budget2
         givenAllPushesFail(budgetId = 1)
@@ -1230,5 +1239,131 @@ class BudgetEntrySyncManagerTest {
             )
         }
         verify(exactly = 0) { entryLocalDataSource.update(any()) }
+    }
+
+    // ========== Pending deletions and entries gone from the server ==========
+
+    @Test
+    fun `syncPendingEntries pushes the deletions of the budget and forgets them`() = runTest {
+        givenSyncedBudget()
+        every { entryLocalDataSource.getPendingDeletions(101) } returns listOf(201, 202)
+        every { entryLocalDataSource.getUnsynced(1) } returns emptyList()
+        coEvery { apiService.deleteEntry(101, 201) } returns Result.success(Unit)
+        // Already deleted by someone else
+        coEvery { apiService.deleteEntry(101, 202) } returns Result.failure(ApiError.BadRequest)
+        every { entryLocalDataSource.removePendingDeletion(any()) } returns Unit
+
+        val result = syncManager.syncPendingEntries(budgetId = 1)
+
+        assertIs<SyncResult.Success<SyncStats>>(result)
+        verify { entryLocalDataSource.removePendingDeletion(201) }
+        verify { entryLocalDataSource.removePendingDeletion(202) }
+        assertTrue(syncManager.budgetsWithFailedPush.value.isEmpty())
+    }
+
+    @Test
+    fun `syncPendingEntries keeps a deletion that could not reach the server and reports the failure`() = runTest {
+        givenSyncedBudget()
+        every { entryLocalDataSource.getPendingDeletions(101) } returns listOf(201)
+        every { entryLocalDataSource.getUnsynced(1) } returns emptyList()
+        coEvery { apiService.deleteEntry(101, 201) } returns Result.failure(ApiError.ServerError)
+
+        val result = syncManager.syncPendingEntries(budgetId = 1)
+
+        assertIs<SyncResult.Failure>(result)
+        verify(exactly = 0) { entryLocalDataSource.removePendingDeletion(any()) }
+        assertEquals(setOf(1), syncManager.budgetsWithFailedPush.value)
+    }
+
+    @Test
+    fun `an edit of an entry deleted on the server meanwhile creates it again`() = runTest {
+        givenSyncedBudget()
+        val edited = BudgetEntry(id = 1, budgetId = 1, amount = "60.0", description = "Edited", serverId = 201)
+        every { entryLocalDataSource.getUnsynced(1) } returns listOf(edited)
+        coEvery { apiService.updateEntry(101, 201, any()) } returns Result.failure(ApiError.BadRequest)
+        coEvery { apiService.createEntry(101, any()) } returns Result.success(serverResponse(301, 60.0, "Edited"))
+        every { entryLocalDataSource.savePushResponse(any(), any()) } returns Unit
+
+        val result = syncManager.syncPendingEntries(budgetId = 1)
+
+        assertIs<SyncResult.Success<SyncStats>>(result)
+        coVerify { apiService.createEntry(101, match { it.description == "Edited" && it.amount == 60.0 }) }
+        verify { entryLocalDataSource.savePushResponse(pushed = edited, synced = match { it.serverId == 301L }) }
+    }
+
+    @Test
+    fun `an edit refused because the budget is out of reach is not created again`() = runTest {
+        givenSyncedBudget()
+        val edited = BudgetEntry(id = 1, budgetId = 1, amount = "60.0", description = "Edited", serverId = 201)
+        every { entryLocalDataSource.getUnsynced(1) } returns listOf(edited)
+        coEvery { apiService.updateEntry(101, 201, any()) } returns Result.failure(ApiError.Forbidden)
+
+        val result = syncManager.syncPendingEntries(budgetId = 1)
+
+        assertIs<SyncResult.Failure>(result)
+        coVerify(exactly = 0) { apiService.createEntry(any(), any()) }
+    }
+
+    @Test
+    fun `pullEntriesFromServer removes the entries the server no longer has`() = runTest {
+        coEvery { authRepository.isAuthenticated() } returns true
+        every { entryLocalDataSource.getSyncedServerIds(1) } returns setOf(201, 202)
+        coEvery { apiService.getEntries(101) } returns Result.success(listOf(serverResponse(201, 50.0, "Kept")))
+        coEvery { entryLocalDataSource.selectByServerId(201) } returns null
+        coEvery { entryLocalDataSource.selectByUniqueFields(any(), any(), any(), any()) } returns null
+        every { entryLocalDataSource.create(any()) } returns Unit
+
+        syncManager.pullEntriesFromServer(budgetServerId = 101, localBudgetId = 1)
+
+        verify { entryLocalDataSource.deleteSyncedByServerIds(1, setOf(202L)) }
+    }
+
+    @Test
+    fun `pullEntriesFromServer trusts an empty list and removes every synced entry`() = runTest {
+        // A budget with no entries is ordinary, and what is removed comes back if the answer was wrong
+        coEvery { authRepository.isAuthenticated() } returns true
+        every { entryLocalDataSource.getSyncedServerIds(1) } returns setOf(201)
+        coEvery { apiService.getEntries(101) } returns Result.success(emptyList())
+
+        syncManager.pullEntriesFromServer(budgetServerId = 101, localBudgetId = 1)
+
+        verify { entryLocalDataSource.deleteSyncedByServerIds(1, setOf(201L)) }
+    }
+
+    @Test
+    fun `pullEntriesFromServer takes the synced ids before fetching`() = runTest {
+        coEvery { authRepository.isAuthenticated() } returns true
+        coEvery { apiService.getEntries(101) } returns Result.success(emptyList())
+
+        syncManager.pullEntriesFromServer(budgetServerId = 101, localBudgetId = 1)
+
+        coVerifyOrder {
+            entryLocalDataSource.getSyncedServerIds(1)
+            apiService.getEntries(101)
+        }
+    }
+
+    @Test
+    fun `pullEntriesFromServer does not bring back an entry whose deletion is pending`() = runTest {
+        coEvery { authRepository.isAuthenticated() } returns true
+        every { entryLocalDataSource.getPendingDeletions(101) } returns listOf(201)
+        coEvery { apiService.getEntries(101) } returns Result.success(listOf(serverResponse(201, 50.0, "Deleted here")))
+
+        syncManager.pullEntriesFromServer(budgetServerId = 101, localBudgetId = 1)
+
+        coVerify(exactly = 0) { entryLocalDataSource.selectByServerId(201) }
+        verify(exactly = 0) { entryLocalDataSource.create(any()) }
+    }
+
+    @Test
+    fun `pullEntriesFromServer finds the local budget in the database when not given`() = runTest {
+        coEvery { authRepository.isAuthenticated() } returns true
+        every { budgetLocalDataSource.getByServerId(101) } returns Budget(id = 7, name = "Budget", amount = 1.0, serverId = 101)
+        coEvery { apiService.getEntries(101) } returns Result.success(emptyList())
+
+        val result = syncManager.pullEntriesFromServer(budgetServerId = 101)
+
+        assertIs<SyncResult.Success<SyncStats>>(result)
+        verify { entryLocalDataSource.getSyncedServerIds(7) }
     }
 }

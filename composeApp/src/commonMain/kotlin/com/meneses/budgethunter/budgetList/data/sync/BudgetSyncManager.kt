@@ -5,6 +5,7 @@ import com.meneses.budgethunter.budgetEntry.data.BudgetEntrySyncManager
 import com.meneses.budgethunter.budgetList.data.datasource.BudgetLocalDataSource
 import com.meneses.budgethunter.budgetList.data.network.BudgetApiService
 import com.meneses.budgethunter.budgetList.domain.Budget
+import com.meneses.budgethunter.commons.data.network.isGoneFromServer
 import com.meneses.budgethunter.commons.data.network.models.BudgetResponse
 import com.meneses.budgethunter.commons.data.network.models.CreateBudgetRequest
 import com.meneses.budgethunter.commons.data.sync.BaseSyncManager
@@ -132,20 +133,25 @@ class BudgetSyncManager(
             // Taken before the fetch: a budget pushed while the request is in flight gets its
             // server id afterwards and is missing from the response, but must not be pruned.
             val knownServerIds = localDataSource.getSyncedServerIds()
+            // Deleted here, deletion not pushed yet: the server still lists them, but they must not
+            // come back. Taken before the fetch, like the ids above, so a deletion pushed meanwhile
+            // still counts.
+            val pendingDeletions = localDataSource.getPendingDeletions().toSet()
 
             // Fetch budgets from server
             budgetApiService.getBudgets().fold(
                 onSuccess = { serverBudgets ->
                     pruneBudgetsGoneFromServer(knownServerIds, serverBudgets)
 
-                    if (serverBudgets.isEmpty()) {
+                    val budgetsToMerge = serverBudgets.filter { it.id !in pendingDeletions }
+                    if (budgetsToMerge.isEmpty()) {
                         return@authenticatedSync SyncStats(totalItems = 0)
                     }
 
                     // Use aggregateSync to merge each budget and track partial failures
                     aggregateSync(
                         // Oldest first, so the local auto-increment ids follow the creation order
-                        items = serverBudgets.sortedBy { it.id },
+                        items = budgetsToMerge.sortedBy { it.id },
                         itemIdentifier = { serverBudget -> "ServerBudget(id=${serverBudget.id}, name='${serverBudget.name}')" },
                         syncOperation = { serverBudget -> mergeServerBudget(serverBudget) }
                     )
@@ -203,8 +209,9 @@ class BudgetSyncManager(
             serverBudget.collaboratorCount?.let { localDataSource.updateCollaboratorCount(serverBudget.id, it) }
         } else if (existingBudget != null) {
             // The server wins, falling back to the local date for budgets the server stored before
-            // it kept a date of its own.
-            localDataSource.update(
+            // it kept a date of its own. Written only if the budget is still synced: an edit saved
+            // since it was read above stays, pending.
+            localDataSource.updateFromServer(
                 existingBudget.copy(
                     amount = serverBudget.amount,
                     name = serverBudget.name,
@@ -234,6 +241,37 @@ class BudgetSyncManager(
     }
 
     /**
+     * Pushes the deletions of budgets deleted here (see PendingDeletion.sq). The server deletes a
+     * budget's entries with it. A deletion is done once the server confirms it, or answers that
+     * the budget is gone or out of reach for this account (see [isGoneFromServer]); any other
+     * failure (no connection, a server error) keeps it for the next sync.
+     */
+    suspend fun syncPendingDeletions(): SyncResult<SyncStats> {
+        return authenticatedSync {
+            val serverIds = localDataSource.getPendingDeletions()
+            if (serverIds.isEmpty()) return@authenticatedSync SyncStats(totalItems = 0)
+
+            aggregateSync(
+                items = serverIds,
+                itemIdentifier = { serverId -> "BudgetDeletion(serverId=$serverId)" },
+                syncOperation = { serverId -> pushDeletion(serverId) }
+            )
+        }.fold(
+            onSuccess = { stats -> statsToResult(stats) },
+            onFailure = { error -> SyncResult.Failure(error) }
+        )
+    }
+
+    private suspend fun pushDeletion(serverId: Long): Result<Unit> {
+        val result = budgetApiService.deleteBudget(serverId)
+        val error = result.exceptionOrNull()
+        if (error != null && !error.isGoneFromServer()) return Result.failure(error)
+
+        localDataSource.removePendingDeletion(serverId)
+        return Result.success(Unit)
+    }
+
+    /**
      * Performs a full bidirectional sync:
      * 1. Pushes unsynced local budgets to server
      * 2. Pulls all budgets from server and merges with local
@@ -241,6 +279,13 @@ class BudgetSyncManager(
      * @return SyncResult aggregating both push and pull operations
      */
     suspend fun performFullSync(): SyncResult<SyncStats> {
+        // Deletions first: a budget deleted here must be gone from the server before the pull
+        val deletionResult = syncPendingDeletions()
+        if (deletionResult is SyncResult.Failure) {
+            logger.error(logTag, "Full sync failed while pushing deletions", deletionResult.error)
+            return deletionResult
+        }
+
         // Push local changes first
         val pushResult = syncPendingBudgets()
         if (pushResult is SyncResult.Failure) {
@@ -268,11 +313,18 @@ class BudgetSyncManager(
             is SyncResult.Failure -> SyncStats(totalItems = 0) // Already returned above
         }
 
+        val deletionStats = when (deletionResult) {
+            is SyncResult.Success -> deletionResult.data
+            is SyncResult.PartialSuccess -> deletionResult.data
+            is SyncResult.Failure -> SyncStats(totalItems = 0) // Already returned above
+        }
+
+        val allStats = listOf(deletionStats, pushStats, pullStats)
         val aggregatedStats = SyncStats(
-            totalItems = pushStats.totalItems + pullStats.totalItems,
-            syncedItems = pushStats.syncedItems + pullStats.syncedItems,
-            failedItems = pushStats.failedItems + pullStats.failedItems,
-            errors = pushStats.errors + pullStats.errors
+            totalItems = allStats.sumOf { it.totalItems },
+            syncedItems = allStats.sumOf { it.syncedItems },
+            failedItems = allStats.sumOf { it.failedItems },
+            errors = allStats.flatMap { it.errors }
         )
 
         return statsToResult(aggregatedStats)

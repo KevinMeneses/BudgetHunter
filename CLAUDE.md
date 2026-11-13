@@ -85,6 +85,30 @@ bundle's `CFBundleName`, which iOS shows in Shortcuts, Siri and some system scre
 - Event classes handle user interactions
 - StateFlow for reactive state updates
 
+### Sync
+Offline-first: every change is written to SQLite first and pushed later; screens only read the database.
+`BudgetSyncManager` (budgets) and `BudgetEntrySyncManager` (entries of one budget, serialized by a mutex) push
+then pull; `RealTimeSyncManager` pulls a shared budget's entries on SSE events while its detail is open.
+- `server_id` null: never reached the server. `is_synced = 0`: holds a change of its own still to be pushed.
+- A change still to be pushed wins over the server until it is pushed: a pull never overwrites it (it only takes
+  a missing server id, or a budget's collaborator count, written as that column alone), and the server's values
+  are stored only with `WHERE is_synced = 1` (`updateFromServerIfSynced`), so an edit saved while a pull runs
+  stays. Two people editing the same row: the last to reach the server wins.
+- A push stores the server id always, but takes the answer and marks the row synced only if it still holds what
+  was pushed (`markPushedIfUnchanged`, `markSyncedIfUnchanged`). Plain updates never clear a server id.
+- Deletions: the row is deleted at once and, if it had a server id, recorded in `pending_deletion`
+  (`PendingDeletion.sq`), pushed first in every sync (budgets: `syncPendingDeletions`; entries: with the
+  budget's pending entries). A deletion is done once the server confirms it or answers 400/403/404
+  (`isGoneFromServer`: gone or out of reach); other failures keep it. Pulls skip what is in that table, and
+  sign out / account switch empty it. Deleting a budget drops its entries' pending deletions (the server
+  cascades).
+- Gone from the server: the budgets' pull drops synced budgets the server no longer lists (an empty list is
+  not trusted); the entries' pull drops synced entries the server no longer returns (an empty list is trusted:
+  they come back if it was wrong); an SSE `DELETED` drops a synced entry. Rows with a change still to be pushed
+  are kept: an entry edited here and deleted elsewhere is created again (its PUT gets 400/404, then a POST).
+- The backend answers 403 for a deleted budget (its access check runs first) and 400 for a deleted entry, not 404.
+- Sync code reads the database, never `BudgetLocalDataSource.getAllCached()`, which lags behind writes.
+
 ### Session
 - A failed token refresh (`HttpClientFactory`) drops the tokens only when the server refuses the refresh token
   (401) or there is none left; no connection, timeouts, other statuses and unreadable answers keep the session.

@@ -46,6 +46,12 @@ class BudgetEntrySyncManagerPerformanceTest {
 
     @BeforeTest
     fun setup() {
+        // Nothing deleted here and waiting to be pushed, and nothing synced to prune, by default
+        every { entryLocalDataSource.getPendingDeletions(any()) } returns emptyList()
+        every { entryLocalDataSource.getSyncedServerIds(any()) } returns emptySet()
+        every { entryLocalDataSource.deleteSyncedByServerIds(any(), any()) } returns Unit
+        every { entryLocalDataSource.updateFromServer(any()) } returns Unit
+        every { budgetLocalDataSource.getByServerId(any()) } returns null
         syncManager = BudgetEntrySyncManager(
             localDataSource = entryLocalDataSource,
             budgetEntryApiService = apiService,
@@ -197,7 +203,7 @@ class BudgetEntrySyncManagerPerformanceTest {
         coEvery { authRepository.isAuthenticated() } returns true
 
         val budgets = TestDataFactory.budgets(count = 10, synced = true)
-        coEvery { budgetLocalDataSource.getAllCached() } returns budgets
+        coEvery { budgetLocalDataSource.getAll() } returns budgets
 
         // For each budget: push 100 unsynced entries, pull returns empty list
         budgets.forEach { budget ->
