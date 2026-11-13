@@ -1,6 +1,5 @@
 package com.meneses.budgethunter.di
 
-import com.meneses.budgethunter.BuildKonfig
 import com.meneses.budgethunter.auth.SignInViewModel
 import com.meneses.budgethunter.auth.SignUpViewModel
 import com.meneses.budgethunter.auth.application.DeleteAccountUseCase
@@ -12,6 +11,7 @@ import com.meneses.budgethunter.auth.data.AuthSession
 import com.meneses.budgethunter.auth.data.TokenStorage
 import com.meneses.budgethunter.commons.data.network.createHttpClient
 import com.meneses.budgethunter.commons.data.network.getBaseUrl
+import com.meneses.budgethunter.commons.util.Platform
 import kotlinx.coroutines.CoroutineScope
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngineFactory
@@ -34,7 +34,7 @@ val authModule = module {
             tokenStorage = get<TokenStorage>(),
             json = get<Json>(),
             appLogger = get(),
-            logLevel = if (BuildKonfig.DEBUG) LogLevel.ALL else LogLevel.NONE,
+            logLevel = if (Platform.isDebugBuild) LogLevel.ALL else LogLevel.NONE,
             onSessionExpired = authSession::onSessionExpired
         )
     }

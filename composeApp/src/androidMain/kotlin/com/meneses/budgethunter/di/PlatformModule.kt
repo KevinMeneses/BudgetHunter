@@ -90,8 +90,7 @@ val androidPlatformModule = module {
         AndroidStoreBilling(
             context = get<Context>(),
             apiKey = BuildKonfig.REVENUECAT_ANDROID_API_KEY,
-            // From the APK, not BuildKonfig.DEBUG: that one is true in release builds too unless the
-            // buildkonfig.flavor property is set, and the SDK's debug log would print purchase details.
+            // From the APK: the SDK's debug log would print purchase details (see also Platform.isDebugBuild)
             debugLogs = (get<Context>().applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0,
             logger = get()
         )
