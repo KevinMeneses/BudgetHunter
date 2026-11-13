@@ -1,4 +1,3 @@
-import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.BOOLEAN
 import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.STRING
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
@@ -245,17 +244,8 @@ buildkonfig {
         // purchases. Empty keeps the build working with purchases unavailable (see StoreBilling.isAvailable).
         buildConfigField(STRING, "REVENUECAT_ANDROID_API_KEY", props.getProperty("REVENUECAT_ANDROID_API_KEY") ?: "")
 
-        // Debug flag - defaults to true for safety
-        buildConfigField(BOOLEAN, "DEBUG", "true")
-    }
-
-    // Build type specific configs
-    defaultConfigs("debug") {
-        buildConfigField(BOOLEAN, "DEBUG", "true")
-    }
-
-    defaultConfigs("release") {
-        buildConfigField(BOOLEAN, "DEBUG", "false")
+        // No DEBUG flag here: buildkonfig picks its flavor per Gradle run (buildkonfig.flavor), not per Android
+        // build type or iOS configuration, so it was true in release builds. Use Platform.isDebugBuild instead.
     }
 
     // Platform-specific overrides

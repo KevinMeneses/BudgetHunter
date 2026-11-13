@@ -1,8 +1,8 @@
 package com.meneses.budgethunter.di
 
-import com.meneses.budgethunter.BuildKonfig
 import com.meneses.budgethunter.auth.SignInViewModel
 import com.meneses.budgethunter.auth.SignUpViewModel
+import com.meneses.budgethunter.auth.application.DeleteAccountUseCase
 import com.meneses.budgethunter.auth.application.PrepareDataForAccountUseCase
 import com.meneses.budgethunter.auth.application.SignInWithGoogleUseCase
 import com.meneses.budgethunter.auth.application.SignOutUseCase
@@ -11,6 +11,7 @@ import com.meneses.budgethunter.auth.data.AuthSession
 import com.meneses.budgethunter.auth.data.TokenStorage
 import com.meneses.budgethunter.commons.data.network.createHttpClient
 import com.meneses.budgethunter.commons.data.network.getBaseUrl
+import com.meneses.budgethunter.commons.util.Platform
 import kotlinx.coroutines.CoroutineScope
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngineFactory
@@ -33,7 +34,7 @@ val authModule = module {
             tokenStorage = get<TokenStorage>(),
             json = get<Json>(),
             appLogger = get(),
-            logLevel = if (BuildKonfig.DEBUG) LogLevel.ALL else LogLevel.NONE,
+            logLevel = if (Platform.isDebugBuild) LogLevel.ALL else LogLevel.NONE,
             onSessionExpired = authSession::onSessionExpired
         )
     }
@@ -58,6 +59,17 @@ val authModule = module {
             preferencesManager = get(),
             googleSignInManager = get(),
             storeBilling = get(),
+            logger = get(),
+            ioDispatcher = get<CoroutineDispatcher>(named("IO"))
+        )
+    }
+
+    single<DeleteAccountUseCase> {
+        DeleteAccountUseCase(
+            authRepository = get<AuthRepository>(),
+            premiumRepository = get(),
+            signOutUseCase = get(),
+            authSession = get(),
             logger = get(),
             ioDispatcher = get<CoroutineDispatcher>(named("IO"))
         )

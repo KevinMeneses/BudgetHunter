@@ -473,7 +473,7 @@
     <string name="notification_reader_stopped_banner">No se están leyendo las notificaciones de tus bancos. Toca para solucionarlo</string>
     <string name="notification_reader_stopped_title">Lectura detenida</string>
     <string name="notification_reader_stopped_description">Android dejó de entregar las notificaciones de tus bancos. Toca para ver cómo reactivarla</string>
-    <string name="notification_reader_stopped_explanation">Android dejó de entregarle a Budget Hunter las notificaciones de tus bancos, algo que puede pasar después de apagar y encender sus notificaciones. La app no puede reactivarlo por su cuenta.\n\nEn la siguiente pantalla toca “Forzar detención” y confirma. Luego vuelve a abrir Budget Hunter.</string>
+    <string name="notification_reader_stopped_explanation">Android dejó de entregarle a Budget Hunter las notificaciones de tus bancos, algo que pasa en algunos teléfonos. La app no puede reactivarlo por su cuenta.\n\nEn la siguiente pantalla toca “Forzar detención” y confirma. Luego vuelve a abrir Budget Hunter.</string>
     <string name="app_notifications_off_title">Notificaciones desactivadas</string>
     <string name="app_notifications_off_description">Con las notificaciones de la app apagadas, Android no le deja leer las de tus bancos. Toca para activarlas</string>
     <string name="notification_access_explanation">Budget Hunter leerá solo las notificaciones de las apps de los bancos que agregues con el canal App, para registrar en tu presupuesto por defecto los movimientos que muestran. De las notificaciones de tus apps de correo solo mira quién envía el correo, y lee únicamente los de los bancos con el canal Correo. Las notificaciones de las demás apps se descartan sin leerse.\n\nEn la siguiente pantalla activa Budget Hunter. Android muestra una advertencia porque este acceso podría ver todas las notificaciones.\n\nSi la opción aparece deshabilitada, abre la información de la app, toca el menú ⋮ y elige “Permitir ajustes restringidos”.</string>
@@ -521,4 +521,14 @@
     <string name="premium_restore_none">No encontramos una suscripción activa para restaurar en esta cuenta de Google</string>
     <string name="premium_error_purchase">No se pudo completar la compra. Inténtalo de nuevo.</string>
     <string name="premium_error_restore">No pudimos restaurar tus compras. Revisa tu conexión e inténtalo de nuevo.</string>
+    <string name="delete_account">Eliminar cuenta</string>
+    <string name="delete_account_title">¿Eliminar tu cuenta?</string>
+    <string name="delete_account_permanent">Tu cuenta se eliminará de forma permanente. No se puede deshacer.</string>
+    <string name="delete_account_owned_budgets">• Los presupuestos compartidos de los que eres dueño pasarán a otro miembro. Los que no compartes con nadie se borrarán, con sus gastos.</string>
+    <string name="delete_account_other_budgets">• Saldrás de los presupuestos de otras personas. Los gastos que registraste allí se conservan.</string>
+    <string name="delete_account_device">• También se borrarán los datos de este dispositivo.</string>
+    <string name="delete_account_subscription_premium">Tu suscripción Premium NO se cancela al eliminar la cuenta. Cancélala en %1$s para que no te sigan cobrando.</string>
+    <string name="delete_account_subscription_unknown">Si tienes una suscripción Premium, NO se cancela al eliminar la cuenta. Cancélala en %1$s para que no te sigan cobrando.</string>
+    <string name="manage_subscription">Gestionar suscripción en %1$s</string>
+    <string name="delete_account_failed">No se pudo eliminar la cuenta. Revisa tu conexión e inténtalo de nuevo</string>
 </resources>

@@ -1,5 +1,6 @@
 package com.meneses.budgethunter.di
 
+import com.meneses.budgethunter.auth.application.DeleteAccountUseCase
 import com.meneses.budgethunter.auth.application.SignOutUseCase
 import com.meneses.budgethunter.auth.data.AuthRepository
 import com.meneses.budgethunter.budgetList.data.BudgetRepository
@@ -42,6 +43,7 @@ val settingsModule = module {
             authRepository = get<AuthRepository>(),
             syncUserPreferences = get<SyncUserPreferencesUseCase>(),
             signOutUseCase = get<SignOutUseCase>(),
+            deleteAccountUseCase = get<DeleteAccountUseCase>(),
             isNotificationReaderStopped = get<IsNotificationReaderStoppedUseCase>(),
             applicationScope = get<CoroutineScope>(named("ApplicationScope"))
         )

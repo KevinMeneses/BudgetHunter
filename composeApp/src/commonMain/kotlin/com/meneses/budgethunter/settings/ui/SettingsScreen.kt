@@ -39,6 +39,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -91,6 +92,7 @@ import budgethunter.composeapp.generated.resources.section_automatic_entries
 import budgethunter.composeapp.generated.resources.set_password
 import budgethunter.composeapp.generated.resources.set_password_description
 import budgethunter.composeapp.generated.resources.settings
+import budgethunter.composeapp.generated.resources.delete_account
 import budgethunter.composeapp.generated.resources.sign_out
 import budgethunter.composeapp.generated.resources.sign_out_confirmation
 import budgethunter.composeapp.generated.resources.sign_out_unsynced_warning
@@ -138,6 +140,13 @@ object SettingsScreen {
             LaunchedEffect(error) {
                 snackbarHostState.showSnackbar(message)
                 onIntent(SettingsIntent.DismissSignOutError)
+            }
+        }
+        uiState.deleteAccountError?.let { error ->
+            val message = stringResource(error)
+            LaunchedEffect(error) {
+                snackbarHostState.showSnackbar(message)
+                onIntent(SettingsIntent.DismissDeleteAccountError)
             }
         }
 
@@ -218,6 +227,19 @@ object SettingsScreen {
                                 onClick = { onIntent(SettingsIntent.ToggleSignOutConfirmation(true)) }
                             )
                         }
+                        // Out of the group and as plain text: easy to find, as Google Play asks, but
+                        // not next to the everyday options as one of them. The dialog explains the rest.
+                        TextButton(
+                            onClick = { onIntent(SettingsIntent.ToggleDeleteAccountConfirmation(true)) },
+                            enabled = !uiState.isDeletingAccount,
+                            modifier = Modifier.align(Alignment.CenterHorizontally)
+                        ) {
+                            Text(
+                                text = stringResource(Res.string.delete_account),
+                                fontSize = 14.sp,
+                                color = AppColors.error
+                            )
+                        }
                     }
 
                     AboutFooter()
@@ -226,7 +248,9 @@ object SettingsScreen {
 
             // Covers the first frames, until the device's values are read, so the screen never
             // flashes its empty defaults. The account refresh is not waited on.
-            if (uiState.isLoading || uiState.isSigningOut) {
+            if (uiState.isLoading || uiState.isSigningOut || uiState.isCheckingPlanForDeletion ||
+                uiState.isDeletingAccount
+            ) {
                 LoadingOverlay()
             }
         }
@@ -307,6 +331,14 @@ object SettingsScreen {
             onDismiss = { onIntent(SettingsIntent.ToggleSignOutConfirmation(false)) },
             onConfirm = { onIntent(SettingsIntent.SignOut) }
         )
+
+        if (uiState.isDeleteAccountConfirmationVisible) {
+            DeleteAccountDialog(
+                subscriptionNotice = uiState.deleteAccountSubscriptionNotice,
+                onDismiss = { onIntent(SettingsIntent.ToggleDeleteAccountConfirmation(false)) },
+                onConfirm = { onIntent(SettingsIntent.DeleteAccount) }
+            )
+        }
     }
 
     /**

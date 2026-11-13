@@ -11,7 +11,8 @@ import org.koin.dsl.module
 
 val smsModule = module {
 
-    factory {
+    // A single: it counts the grace period for the reader to connect once per process
+    single {
         IsNotificationReaderStoppedUseCase(
             preferencesManager = get(),
             permissionsManager = get()
