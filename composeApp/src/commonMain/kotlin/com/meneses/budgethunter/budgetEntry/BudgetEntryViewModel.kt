@@ -192,7 +192,8 @@ class BudgetEntryViewModel(
             BudgetEntryEvent.ShowNotification(
                 message = message,
                 // Not errors: the file was fine, the plan or the account is what stops the AI
-                isError = reason !in NOT_ERRORS
+                isError = reason !in NOT_ERRORS,
+                offersPremium = reason == AiFailureReason.QUOTA_EXCEEDED
             )
         )
     }

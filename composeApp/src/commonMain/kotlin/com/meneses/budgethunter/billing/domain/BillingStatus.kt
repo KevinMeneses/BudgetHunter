@@ -19,3 +19,12 @@ sealed interface PurchaseOutcome {
 
     data object Pending : PurchaseOutcome
 }
+
+/** This month's AI receipt scans (`GET /api/receipts/usage`). */
+data class ScanUsage(
+    val used: Int,
+    val limit: Int,
+    val remaining: Int,
+    /** First day of next month (ISO date, UTC), when the count starts again. */
+    val resetsOn: String
+)

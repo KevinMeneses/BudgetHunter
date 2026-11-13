@@ -192,3 +192,8 @@ Freemium, with RevenueCat for the store purchases (in progress; plan and decisio
   configured lazily with the public `goog_` key from `REVENUECAT_ANDROID_API_KEY`; empty = `isAvailable` false and
   nothing can be bought). iOS has `UnavailableStoreBilling` until the iOS launch. Sign out logs the store out.
   The purchase sheet needs the Activity, handed over by `MainActivity` like Google sign-in.
+- Paywall: `PremiumScreen` / `PremiumViewModel` (`billing/`), opened from Settings (signed-in accounts only) and from
+  the "no scans left" snackbar's "See Premium" action (`BudgetEntryEvent.ShowNotification.offersPremium`). It shows
+  the plan and this month's scans from the server, the store's plans (yearly first) and restore; a premium account
+  gets "manage in Google Play" instead. A purchase the server has not synced yet says premium arrives in minutes.
+  The renewal and cancellation text under the plans is required by Google Play: keep it.

@@ -59,6 +59,16 @@ class BillingApiServiceTest {
     }
 
     @Test
+    fun `receipt usage reads this month's scans`() = runTest {
+        val usage = service(
+            body = """{"plan":"FREE","period":"2026-11","receiptScansUsed":3,"receiptScansLimit":10,"receiptScansRemaining":7,"resetsOn":"2026-12-01"}"""
+        ).receiptUsage()
+
+        assertEquals(7, usage.receiptScansRemaining)
+        assertEquals(ApiEndpoints.RECEIPTS_USAGE, lastRequest?.url?.encodedPath)
+    }
+
+    @Test
     fun `an error status, an unreadable body and no connection are BillingApiExceptions`() = runTest {
         val throttled = assertFailsWith<BillingApiException> {
             service(status = HttpStatusCode.TooManyRequests, body = "{}").sync()

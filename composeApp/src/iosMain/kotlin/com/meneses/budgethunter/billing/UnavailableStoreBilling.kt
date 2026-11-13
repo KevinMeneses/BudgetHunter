@@ -21,5 +21,7 @@ class UnavailableStoreBilling : StoreBilling {
     override suspend fun purchase(offerId: String): StorePurchaseResult =
         throw StoreBillingException("Purchases are not available on iOS yet")
 
-    override suspend fun restore() = throw StoreBillingException("Purchases are not available on iOS yet")
+    override suspend fun restore() {
+        throw StoreBillingException("Purchases are not available on iOS yet")
+    }
 }

@@ -1,6 +1,7 @@
 package com.meneses.budgethunter.billing.data
 
 import com.meneses.budgethunter.commons.data.network.ApiEndpoints
+import com.meneses.budgethunter.commons.data.network.models.AiUsageResponse
 import com.meneses.budgethunter.commons.data.network.models.BillingStatusResponse
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.ResponseException
@@ -22,7 +23,10 @@ class BillingApiService(
     /** Makes the server re-read the plan from RevenueCat now (after a purchase or restore). */
     suspend fun sync(): BillingStatusResponse = call { httpClient.post(ApiEndpoints.BILLING_SYNC) }
 
-    private suspend fun call(request: suspend () -> HttpResponse): BillingStatusResponse {
+    /** This month's receipt scans. */
+    suspend fun receiptUsage(): AiUsageResponse = call { httpClient.get(ApiEndpoints.RECEIPTS_USAGE) }
+
+    private suspend inline fun <reified T> call(request: suspend () -> HttpResponse): T {
         val response = try {
             request()
         } catch (e: CancellationException) {
@@ -36,7 +40,7 @@ class BillingApiService(
         val status = response.status.value
         if (status !in 200..299) throw BillingApiException(status, "HTTP $status")
         return try {
-            json.decodeFromString<BillingStatusResponse>(response.bodyAsText())
+            json.decodeFromString<T>(response.bodyAsText())
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {

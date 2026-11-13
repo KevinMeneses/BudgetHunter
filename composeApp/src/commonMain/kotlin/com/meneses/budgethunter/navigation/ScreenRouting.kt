@@ -4,7 +4,9 @@ import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -16,6 +18,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import budgethunter.composeapp.generated.resources.Res
 import budgethunter.composeapp.generated.resources.new_entry_from_collaborator
+import budgethunter.composeapp.generated.resources.premium_see
 import budgethunter.composeapp.generated.resources.signed_in_as
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -34,6 +37,8 @@ import com.meneses.budgethunter.auth.application.SignUpEvent
 import com.meneses.budgethunter.auth.data.AuthSession
 import com.meneses.budgethunter.auth.ui.SignInScreen
 import com.meneses.budgethunter.auth.ui.SignUpScreen
+import com.meneses.budgethunter.billing.PremiumViewModel
+import com.meneses.budgethunter.billing.ui.PremiumScreen
 import com.meneses.budgethunter.budgetDetail.BudgetDetailViewModel
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailEvent
 import com.meneses.budgethunter.budgetDetail.application.BudgetDetailIntent
@@ -265,7 +270,21 @@ fun BudgetHunterNavigation() {
                     uiState = uiState,
                     onIntent = settingsViewModel::sendIntent,
                     goBack = { navController.popBackStackOnce(backStackEntry) },
-                    showSmsShortcutTutorial = { navController.navigateOnce(SmsShortcutTutorialScreen) }
+                    showSmsShortcutTutorial = { navController.navigateOnce(SmsShortcutTutorialScreen) },
+                    showPremium = { navController.navigateOnce(PremiumScreen) }
+                )
+            }
+
+            composable<PremiumScreen> { backStackEntry ->
+                // Scoped to the entry: the purchase in flight survives a rotation and stops when the screen is left
+                val koin = getKoin()
+                val premiumViewModel = viewModel { koin.get<PremiumViewModel>() }
+                val uiState by premiumViewModel.uiState.collectAsStateWithLifecycle()
+
+                PremiumScreen.Show(
+                    uiState = uiState,
+                    onIntent = premiumViewModel::sendIntent,
+                    goBack = { navController.popBackStackOnce(backStackEntry) }
                 )
             }
 
@@ -370,22 +389,29 @@ fun BudgetHunterNavigation() {
                 val budgetEntryViewModel: BudgetEntryViewModel = koinInject()
                 val uiState by budgetEntryViewModel.uiState.collectAsStateWithLifecycle()
                 val snackbarHostState = remember { SnackbarHostState() }
-                var pendingNotification by remember { mutableStateOf<StringResource?>(null) }
+                var pendingNotification by remember { mutableStateOf<BudgetEntryEvent.ShowNotification?>(null) }
 
                 LaunchedEffect(Unit) {
                     budgetEntryViewModel.events.collect { event ->
                         when (event) {
                             is BudgetEntryEvent.NavigateBack -> navController.popBackStackOnce(backStackEntry)
-                            is BudgetEntryEvent.ShowNotification -> pendingNotification = event.message
+                            is BudgetEntryEvent.ShowNotification -> pendingNotification = event
                         }
                     }
                 }
 
-                pendingNotification?.let { res ->
-                    val message = stringResource(res)
-                    LaunchedEffect(res) {
-                        snackbarHostState.showSnackbar(message)
+                pendingNotification?.let { notification ->
+                    val message = stringResource(notification.message)
+                    // No scans left: the notice leads to the paywall
+                    val action = if (notification.offersPremium) stringResource(Res.string.premium_see) else null
+                    LaunchedEffect(notification) {
+                        val result = snackbarHostState.showSnackbar(
+                            message = message,
+                            actionLabel = action,
+                            duration = if (action != null) SnackbarDuration.Long else SnackbarDuration.Short
+                        )
                         pendingNotification = null
+                        if (result == SnackbarResult.ActionPerformed) navController.navigateOnce(PremiumScreen)
                     }
                 }
 

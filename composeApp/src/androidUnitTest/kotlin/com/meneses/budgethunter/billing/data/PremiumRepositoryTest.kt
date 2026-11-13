@@ -4,9 +4,11 @@ import com.meneses.budgethunter.billing.domain.BillingStatus
 import com.meneses.budgethunter.billing.domain.PremiumOffer
 import com.meneses.budgethunter.billing.domain.PremiumPeriod
 import com.meneses.budgethunter.billing.domain.PurchaseOutcome
+import com.meneses.budgethunter.billing.domain.ScanUsage
 import com.meneses.budgethunter.billing.domain.StoreBilling
 import com.meneses.budgethunter.billing.domain.StoreBillingException
 import com.meneses.budgethunter.billing.domain.StorePurchaseResult
+import com.meneses.budgethunter.commons.data.network.models.AiUsageResponse
 import com.meneses.budgethunter.commons.data.network.models.BillingStatusResponse
 import com.meneses.budgethunter.commons.data.sync.NoOpLogger
 import io.mockk.coEvery
@@ -98,6 +100,30 @@ class PremiumRepositoryTest {
 
         assertFailsWith<StoreBillingException> { repository.purchase("annual") }
         coVerify(exactly = 0) { store.purchase(any()) }
+    }
+
+    @Test
+    fun `a restore the store fails is reported and not synced`() = runTest {
+        coEvery { store.restore() } throws StoreBillingException("Could not restore")
+
+        assertFailsWith<StoreBillingException> { repository.restore() }
+        coVerify(exactly = 0) { api.sync() }
+    }
+
+    @Test
+    fun `without the server the store is never touched`() = runTest {
+        coEvery { api.status() } throws BillingApiException(null, "offline")
+
+        assertFailsWith<BillingApiException> { repository.purchase("annual") }
+        assertFailsWith<BillingApiException> { repository.offers() }
+        coVerify(exactly = 0) { store.logIn(any()) }
+    }
+
+    @Test
+    fun `scan usage is read from the receipts endpoint`() = runTest {
+        coEvery { api.receiptUsage() } returns AiUsageResponse("FREE", "2026-11", 3, 10, 7, "2026-12-01")
+
+        assertEquals(ScanUsage(used = 3, limit = 10, remaining = 7, resetsOn = "2026-12-01"), repository.scanUsage())
     }
 
     @Test

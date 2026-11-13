@@ -28,6 +28,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Sms
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.WorkspacePremium
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -55,6 +56,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import budgethunter.composeapp.generated.resources.Res
+import budgethunter.composeapp.generated.resources.premium_title
+import budgethunter.composeapp.generated.resources.premium_settings_subtitle
 import budgethunter.composeapp.generated.resources.account
 import budgethunter.composeapp.generated.resources.add_bank
 import budgethunter.composeapp.generated.resources.add_bank_description
@@ -122,7 +125,8 @@ object SettingsScreen {
         uiState: SettingsState,
         onIntent: (SettingsIntent) -> Unit,
         goBack: () -> Unit,
-        showSmsShortcutTutorial: () -> Unit
+        showSmsShortcutTutorial: () -> Unit,
+        showPremium: () -> Unit
     ) {
         val snackbarHostState = remember { SnackbarHostState() }
         // Notification access is granted in the system settings, so it is read again on the way back
@@ -175,6 +179,16 @@ object SettingsScreen {
 
                     SectionLabel(stringResource(Res.string.section_ai))
                     SettingsGroup {
+                        // The plan lives on the account: offline mode has nothing to show or buy
+                        if (uiState.isSignedIn) {
+                            SettingRow(
+                                icon = Icons.Default.WorkspacePremium,
+                                title = stringResource(Res.string.premium_title),
+                                subtitle = stringResource(Res.string.premium_settings_subtitle),
+                                onClick = showPremium
+                            )
+                            GroupDivider()
+                        }
                         SettingRow(
                             icon = Icons.Default.AutoAwesome,
                             title = stringResource(Res.string.ai_processing),

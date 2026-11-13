@@ -3,10 +3,13 @@ package com.meneses.budgethunter.billing.data
 import com.meneses.budgethunter.billing.domain.BillingStatus
 import com.meneses.budgethunter.billing.domain.PremiumOffer
 import com.meneses.budgethunter.billing.domain.PurchaseOutcome
+import com.meneses.budgethunter.billing.domain.ScanUsage
 import com.meneses.budgethunter.billing.domain.StoreBilling
 import com.meneses.budgethunter.billing.domain.StorePurchaseResult
 import com.meneses.budgethunter.commons.data.network.models.BillingStatusResponse
 import com.meneses.budgethunter.commons.data.sync.Logger
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlin.coroutines.cancellation.CancellationException
 
 /**
@@ -24,22 +27,36 @@ class PremiumRepository(
     /** False when this build cannot sell (no RevenueCat key for the platform): hide the buy buttons. */
     val canPurchase: Boolean get() = store.isAvailable
 
+    // One store flow at a time: the account is linked and then used, and a second flow in between (a double
+    // tap, a reload) must not interleave its own link with this one's purchase.
+    private val storeFlow = Mutex()
+
     /** @throws BillingApiException when the server cannot be asked */
     suspend fun status(): BillingStatus = billingApi.status().toStatus()
+
+    /** @throws BillingApiException when the server cannot be asked */
+    suspend fun scanUsage(): ScanUsage = billingApi.receiptUsage().let {
+        ScanUsage(
+            used = it.receiptScansUsed,
+            limit = it.receiptScansLimit,
+            remaining = it.receiptScansRemaining,
+            resetsOn = it.resetsOn
+        )
+    }
 
     /**
      * @throws BillingApiException when the server cannot be asked
      * @throws com.meneses.budgethunter.billing.domain.StoreBillingException when the store cannot
      */
-    suspend fun offers(): List<PremiumOffer> {
+    suspend fun offers(): List<PremiumOffer> = storeFlow.withLock {
         linkAccount()
-        return store.offers()
+        store.offers()
     }
 
     /** @param offerId a [PremiumOffer.id] from [offers] */
-    suspend fun purchase(offerId: String): PurchaseOutcome {
+    suspend fun purchase(offerId: String): PurchaseOutcome = storeFlow.withLock {
         linkAccount()
-        return when (store.purchase(offerId)) {
+        when (store.purchase(offerId)) {
             StorePurchaseResult.PURCHASED -> PurchaseOutcome.Purchased(syncedStatus())
             StorePurchaseResult.CANCELLED -> PurchaseOutcome.Cancelled
             StorePurchaseResult.PENDING -> PurchaseOutcome.Pending
@@ -47,10 +64,10 @@ class PremiumRepository(
     }
 
     /** Hands this device's earlier store purchases to the account, then answers the plan the server sees. */
-    suspend fun restore(): BillingStatus {
+    suspend fun restore(): BillingStatus = storeFlow.withLock {
         linkAccount()
         store.restore()
-        return syncedStatus() ?: status()
+        syncedStatus() ?: status()
     }
 
     private suspend fun linkAccount() {
