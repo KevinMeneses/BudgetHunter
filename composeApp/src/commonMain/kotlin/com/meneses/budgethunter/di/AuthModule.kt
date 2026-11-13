@@ -58,6 +58,7 @@ val authModule = module {
             budgetEntryRepository = get(),
             preferencesManager = get(),
             googleSignInManager = get(),
+            storeBilling = get(),
             logger = get(),
             ioDispatcher = get<CoroutineDispatcher>(named("IO"))
         )

@@ -9,6 +9,10 @@ inputs:
     description: Google OAuth web client id, used as serverClientId for Sign in with Google
     required: false
     default: ''
+  revenuecat_android_api_key:
+    description: RevenueCat public Android key (goog_...); empty builds an app that cannot sell premium
+    required: false
+    default: ''
 
 runs:
   using: composite
@@ -19,3 +23,4 @@ runs:
         echo "sdk.dir=$ANDROID_HOME" > local.properties
         echo "BACKEND_URL=${{ inputs.backend_url }}" >> local.properties
         echo "GOOGLE_SERVER_CLIENT_ID=${{ inputs.google_server_client_id }}" >> local.properties
+        echo "REVENUECAT_ANDROID_API_KEY=${{ inputs.revenuecat_android_api_key }}" >> local.properties
