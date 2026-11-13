@@ -105,14 +105,33 @@ class PremiumViewModelTest {
     }
 
     @Test
-    fun `a failing usage call is a failed load, not a crash`() = runTest(testDispatcher) {
+    fun `a failing usage call still shows the plan and the plans for sale`() = runTest(testDispatcher) {
         coEvery { repository.scanUsage() } throws BillingApiException(503, "HTTP 503")
 
         val viewModel = viewModel()
         advanceUntilIdle()
 
-        assertTrue(viewModel.uiState.value.loadFailed)
-        assertFalse(viewModel.uiState.value.isLoading)
+        val state = viewModel.uiState.value
+        assertFalse(state.loadFailed)
+        assertNull(state.usage)
+        assertEquals(listOf(annual), state.offers)
+    }
+
+    @Test
+    fun `a purchase the server has not applied hides the plans and asks again`() = runTest(testDispatcher) {
+        coEvery { repository.purchase(any()) } returns PurchaseOutcome.Purchased(null)
+        val viewModel = viewModel()
+        advanceUntilIdle()
+
+        viewModel.sendIntent(PremiumIntent.Purchase("x"))
+        runCurrent()
+        assertTrue(viewModel.uiState.value.isAwaitingServer)
+        assertEquals(emptyList(), viewModel.uiState.value.offers)
+
+        coEvery { repository.status() } returns premium
+        advanceUntilIdle()
+        assertFalse(viewModel.uiState.value.isAwaitingServer)
+        assertTrue(viewModel.uiState.value.isPremium)
     }
 
     @Test

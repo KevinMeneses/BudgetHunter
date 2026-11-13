@@ -20,6 +20,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -63,9 +64,10 @@ class PremiumViewModel(
         val version = planVersion
         loadJob = viewModelScope.launch {
             val account = try {
-                // coroutineScope keeps a failing usage call inside this try instead of failing the whole job
+                // The usage is extra: without it the plan and the plans for sale still show. coroutineScope
+                // keeps any failure inside this try instead of failing the whole job.
                 coroutineScope {
-                    val usage = async { premiumRepository.scanUsage() }
+                    val usage = async { usageOrNull() }
                     premiumRepository.status() to usage.await()
                 }
             } catch (e: CancellationException) {
@@ -77,7 +79,7 @@ class PremiumViewModel(
             }
             val (status, usage) = account
             val isPremium = if (planVersion == version) {
-                _uiState.update { it.copy(usage = usage).withStatus(status) }
+                _uiState.update { state -> state.copy(usage = usage ?: state.usage).withStatus(status) }
                 status.isPremium
             } else {
                 _uiState.value.isPremium
@@ -117,7 +119,9 @@ class PremiumViewModel(
                         val status = outcome.status
                         if (status != null) applyPlan(status)
                         nowPremium = status?.isPremium == true
-                        // Paid, but the server has not seen it yet: the webhook brings it in a moment
+                        // Paid, but the server has not seen it yet: the webhook brings it in a moment. The plans are
+                        // hidden meanwhile (nothing to buy twice) and the screen asks again shortly.
+                        if (!nowPremium) awaitServer()
                         if (nowPremium) Res.string.premium_welcome else Res.string.premium_processing
                     }
                     PurchaseOutcome.Pending -> Res.string.premium_pending
@@ -155,6 +159,24 @@ class PremiumViewModel(
         }
     }
 
+    private fun awaitServer() {
+        _uiState.update { it.copy(isAwaitingServer = true, offers = emptyList()) }
+        viewModelScope.launch {
+            delay(SERVER_RECHECK_MILLIS)
+            _uiState.update { it.copy(isAwaitingServer = false) }
+            load()
+        }
+    }
+
+    private suspend fun usageOrNull() = try {
+        premiumRepository.scanUsage()
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        logger.warn(TAG, "Could not read the scans", e)
+        null
+    }
+
     /** The premium allowance replaces the free one as soon as the plan changes. */
     private suspend fun refreshUsage() {
         try {
@@ -180,5 +202,8 @@ class PremiumViewModel(
 
     private companion object {
         const val TAG = "PremiumViewModel"
+
+        // The webhook usually lands within seconds of a purchase
+        const val SERVER_RECHECK_MILLIS = 15_000L
     }
 }

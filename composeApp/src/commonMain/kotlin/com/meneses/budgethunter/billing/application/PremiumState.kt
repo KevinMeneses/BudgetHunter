@@ -16,6 +16,8 @@ data class PremiumState(
     val canPurchase: Boolean = false,
     /** The plans were wanted but the store could not list them. */
     val offersFailed: Boolean = false,
+    /** Bought, but the server has not applied it yet: the plans stay hidden until it does. */
+    val isAwaitingServer: Boolean = false,
     /** A purchase or a restore is in progress. */
     val isWorking: Boolean = false,
     /** One-off message for the snackbar, cleared with [PremiumIntent.DismissMessage]. */

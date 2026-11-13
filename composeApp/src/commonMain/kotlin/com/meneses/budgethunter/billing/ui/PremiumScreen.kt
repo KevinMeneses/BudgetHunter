@@ -57,6 +57,7 @@ import budgethunter.composeapp.generated.resources.premium_per_year
 import budgethunter.composeapp.generated.resources.premium_plan_annual
 import budgethunter.composeapp.generated.resources.premium_plan_monthly
 import budgethunter.composeapp.generated.resources.premium_plan_other
+import budgethunter.composeapp.generated.resources.premium_processing
 import budgethunter.composeapp.generated.resources.premium_restore
 import budgethunter.composeapp.generated.resources.premium_retry
 import budgethunter.composeapp.generated.resources.premium_scans_left
@@ -150,11 +151,13 @@ object PremiumScreen {
 
             uiState.usage?.let { UsageCard(it) }
 
-            if (!uiState.isPremium) {
-                Benefits()
-                Plans(uiState = uiState, onIntent = onIntent)
-            } else {
-                ManageButton()
+            when {
+                uiState.isPremium -> if (uiState.canPurchase) ManageButton()
+                uiState.isAwaitingServer -> Notice(Res.string.premium_processing)
+                else -> {
+                    Benefits()
+                    Plans(uiState = uiState, onIntent = onIntent)
+                }
             }
         }
     }
@@ -269,7 +272,7 @@ object PremiumScreen {
             }
             else -> {
                 // Yearly first: it is the better deal and the one worth defaulting to
-                uiState.offers.sortedBy { it.period != PremiumPeriod.ANNUAL }.forEach { offer ->
+                uiState.offers.sortedByDescending { it.period == PremiumPeriod.ANNUAL }.forEach { offer ->
                     OfferButton(offer = offer, enabled = !uiState.isWorking) {
                         onIntent(PremiumIntent.Purchase(offer.id))
                     }
