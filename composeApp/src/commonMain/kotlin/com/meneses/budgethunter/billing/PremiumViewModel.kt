@@ -17,7 +17,9 @@ import com.meneses.budgethunter.billing.domain.BillingStatus
 import com.meneses.budgethunter.billing.domain.PurchaseOutcome
 import com.meneses.budgethunter.commons.data.sync.Logger
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -35,6 +37,12 @@ class PremiumViewModel(
     private val _uiState = MutableStateFlow(PremiumState(canPurchase = premiumRepository.canPurchase))
     val uiState = _uiState.asStateFlow()
 
+    private var loadJob: Job? = null
+
+    // Bumped whenever a purchase or a restore writes the plan, so a load that started before cannot put the
+    // older plan back when it finishes
+    private var planVersion = 0
+
     init {
         load()
     }
@@ -49,11 +57,17 @@ class PremiumViewModel(
     }
 
     private fun load() {
+        // A retry replaces the load in flight rather than racing it
+        loadJob?.cancel()
         _uiState.update { it.copy(isLoading = true, loadFailed = false) }
-        viewModelScope.launch {
+        val version = planVersion
+        loadJob = viewModelScope.launch {
             val account = try {
-                val usage = async { premiumRepository.scanUsage() }
-                premiumRepository.status() to usage.await()
+                // coroutineScope keeps a failing usage call inside this try instead of failing the whole job
+                coroutineScope {
+                    val usage = async { premiumRepository.scanUsage() }
+                    premiumRepository.status() to usage.await()
+                }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -62,10 +76,15 @@ class PremiumViewModel(
                 return@launch
             }
             val (status, usage) = account
-            _uiState.update { it.copy(usage = usage).withStatus(status) }
+            val isPremium = if (planVersion == version) {
+                _uiState.update { it.copy(usage = usage).withStatus(status) }
+                status.isPremium
+            } else {
+                _uiState.value.isPremium
+            }
 
             // The plans are only shown to whoever can buy them
-            val wantsOffers = premiumRepository.canPurchase && !status.isPremium
+            val wantsOffers = premiumRepository.canPurchase && !isPremium
             val offers = if (wantsOffers) loadOffers() else emptyList()
             _uiState.update {
                 it.copy(
@@ -91,13 +110,15 @@ class PremiumViewModel(
         if (_uiState.value.isWorking) return
         _uiState.update { it.copy(isWorking = true) }
         viewModelScope.launch {
+            var nowPremium = false
             val message = try {
                 when (val outcome = premiumRepository.purchase(offerId)) {
                     is PurchaseOutcome.Purchased -> {
                         val status = outcome.status
-                        if (status != null) _uiState.update { it.withStatus(status) }
+                        if (status != null) applyPlan(status)
+                        nowPremium = status?.isPremium == true
                         // Paid, but the server has not seen it yet: the webhook brings it in a moment
-                        if (status?.isPremium == true) Res.string.premium_welcome else Res.string.premium_processing
+                        if (nowPremium) Res.string.premium_welcome else Res.string.premium_processing
                     }
                     PurchaseOutcome.Pending -> Res.string.premium_pending
                     PurchaseOutcome.Cancelled -> null
@@ -109,7 +130,7 @@ class PremiumViewModel(
                 Res.string.premium_error_purchase
             }
             _uiState.update { it.copy(isWorking = false, message = message) }
-            if (message == Res.string.premium_welcome) refreshUsage()
+            if (nowPremium) refreshUsage()
         }
     }
 
@@ -117,10 +138,12 @@ class PremiumViewModel(
         if (_uiState.value.isWorking) return
         _uiState.update { it.copy(isWorking = true) }
         viewModelScope.launch {
+            var nowPremium = false
             val message = try {
                 val status = premiumRepository.restore()
-                _uiState.update { it.withStatus(status) }
-                if (status.isPremium) Res.string.premium_restored else Res.string.premium_restore_none
+                applyPlan(status)
+                nowPremium = status.isPremium
+                if (nowPremium) Res.string.premium_restored else Res.string.premium_restore_none
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -128,7 +151,7 @@ class PremiumViewModel(
                 Res.string.premium_error_restore
             }
             _uiState.update { it.copy(isWorking = false, message = message) }
-            if (message == Res.string.premium_restored) refreshUsage()
+            if (nowPremium) refreshUsage()
         }
     }
 
@@ -142,6 +165,11 @@ class PremiumViewModel(
         } catch (e: Exception) {
             logger.warn(TAG, "Could not refresh the scans", e)
         }
+    }
+
+    private fun applyPlan(status: BillingStatus) {
+        planVersion++
+        _uiState.update { it.withStatus(status) }
     }
 
     private fun PremiumState.withStatus(status: BillingStatus) = copy(

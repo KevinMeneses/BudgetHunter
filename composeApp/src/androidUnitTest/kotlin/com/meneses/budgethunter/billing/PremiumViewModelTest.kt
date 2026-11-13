@@ -20,11 +20,13 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlin.test.AfterTest
@@ -100,6 +102,36 @@ class PremiumViewModelTest {
         viewModel.sendIntent(PremiumIntent.Load)
         advanceUntilIdle()
         assertFalse(viewModel.uiState.value.loadFailed)
+    }
+
+    @Test
+    fun `a failing usage call is a failed load, not a crash`() = runTest(testDispatcher) {
+        coEvery { repository.scanUsage() } throws BillingApiException(503, "HTTP 503")
+
+        val viewModel = viewModel()
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.loadFailed)
+        assertFalse(viewModel.uiState.value.isLoading)
+    }
+
+    @Test
+    fun `a load that finishes after a purchase does not bring the free plan back`() = runTest(testDispatcher) {
+        coEvery { repository.purchase(any()) } returns PurchaseOutcome.Purchased(premium)
+        val slowStatus = CompletableDeferred<BillingStatus>()
+        val viewModel = viewModel()
+        advanceUntilIdle()
+
+        coEvery { repository.status() } coAnswers { slowStatus.await() }
+        viewModel.sendIntent(PremiumIntent.Load)
+        runCurrent()
+        viewModel.sendIntent(PremiumIntent.Purchase("x"))
+        advanceUntilIdle()
+        assertTrue(viewModel.uiState.value.isPremium)
+
+        slowStatus.complete(free)
+        advanceUntilIdle()
+        assertTrue(viewModel.uiState.value.isPremium)
     }
 
     @Test
