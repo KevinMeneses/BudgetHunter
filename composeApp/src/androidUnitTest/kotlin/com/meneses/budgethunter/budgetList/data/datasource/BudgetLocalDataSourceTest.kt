@@ -35,7 +35,7 @@ class BudgetLocalDataSourceTest {
         Database.Schema.create(driver)
         val budgetEntryAdapter = Budget_entry.Adapter(typeAdapter, categoryAdapter)
         database = Database(driver, budgetEntryAdapter)
-        dataSource = BudgetLocalDataSource(database.budgetQueries, Dispatchers.Unconfined)
+        dataSource = BudgetLocalDataSource(database.budgetQueries, database.pendingDeletionQueries, Dispatchers.Unconfined)
     }
 
     @AfterTest
@@ -144,7 +144,7 @@ class BudgetLocalDataSourceTest {
         val insertedId = insertBudget(name = "To Delete", amount = 1000.0)
 
         // When
-        dataSource.delete(insertedId.toLong())
+        dataSource.deleteRecordingPending(insertedId, deletedAt = "2025-01-01T00:00:00Z")
 
         // Then
         val allBudgets = dataSource.budgets.first()
@@ -261,7 +261,7 @@ class BudgetLocalDataSourceTest {
         // Given - no budget with this id exists
 
         // When - should not throw
-        dataSource.delete(Long.MAX_VALUE)
+        dataSource.deleteRecordingPending(Int.MAX_VALUE, deletedAt = "2025-01-01T00:00:00Z")
 
         // Then - verify no error occurred
         val allBudgets = dataSource.budgets.first()

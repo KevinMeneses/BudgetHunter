@@ -65,9 +65,9 @@ class SyncUserPreferencesUseCase(
         remote.aiProcessingEnabled?.let { preferencesManager.setAiProcessingEnabled(it) }
         remote.selectedBankIds?.let { preferencesManager.setSelectedBankIds(it.toSet()) }
 
-        val defaultBudget = remote.defaultBudgetId?.let { serverId ->
-            budgetRepository.getAllCached().firstOrNull { it.serverId == serverId }
-        }
+        // From the database: right after the sign-in sync the cached list may not have the
+        // budgets that sync just brought yet
+        val defaultBudget = remote.defaultBudgetId?.let { serverId -> budgetRepository.getByServerId(serverId) }
         // No match is "none": the account's default is a budget this device does not have (yet),
         // and keeping an old local id would point at an unrelated budget.
         preferencesManager.setDefaultBudgetId(defaultBudget?.id ?: -1)

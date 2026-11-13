@@ -2,7 +2,6 @@ package com.meneses.budgethunter.budgetList.data
 
 import com.meneses.budgethunter.auth.data.AuthRepository
 import com.meneses.budgethunter.budgetList.data.datasource.BudgetLocalDataSource
-import com.meneses.budgethunter.budgetList.data.network.BudgetApiService
 import com.meneses.budgethunter.budgetList.data.sync.BudgetSyncManager
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.budgetList.domain.BudgetFilter
@@ -11,11 +10,11 @@ import com.meneses.budgethunter.commons.data.sync.SyncResult
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
+import kotlinx.datetime.Clock
 
 class BudgetRepository(
     private val localDataSource: BudgetLocalDataSource,
     private val budgetSyncManager: BudgetSyncManager,
-    private val budgetApiService: BudgetApiService,
     private val authRepository: AuthRepository,
     private val ioDispatcher: CoroutineDispatcher,
     private val logger: Logger
@@ -81,9 +80,17 @@ class BudgetRepository(
         }
     }
 
-    /** True when a budget was created or changed here and has not reached the server yet. */
+    /**
+     * True when a budget was created, changed or deleted here and that has not reached the server
+     * yet. Counts the deletions of entries too, which live in the same table.
+     */
     suspend fun hasUnsyncedChanges(): Boolean = withContext(ioDispatcher) {
-        localDataSource.countUnsynced() > 0
+        localDataSource.countUnsynced() > 0 || localDataSource.countPendingDeletions() > 0
+    }
+
+    /** Read from the database: the cache behind [getAllCached] may not have caught up yet. */
+    suspend fun getByServerId(serverId: Long): Budget? = withContext(ioDispatcher) {
+        localDataSource.getByServerId(serverId)
     }
 
     /**
@@ -103,22 +110,21 @@ class BudgetRepository(
     }
 
     /**
-     * Delete a budget.
-     * If the budget is synced to the server, it will be deleted from the server first,
-     * then deleted locally. If the server deletion fails, local deletion proceeds anyway
-     * and the inconsistency will be cleaned up on next sync.
+     * Deletes a budget with its entries here at once. If it reached the server, the deletion is
+     * recorded and pushed now when signed in, or with the next sync if that fails (no connection, a
+     * server error): it never blocks or undoes the local deletion, and the pull does not bring the
+     * budget back meanwhile.
      *
      * @param budgetId Local budget ID to delete
      */
     suspend fun delete(budgetId: Int) = withContext(ioDispatcher) {
-        val budget = localDataSource.getById(budgetId)
+        localDataSource.deleteRecordingPending(budgetId, deletedAt = Clock.System.now().toString())
 
-        // If synced, delete from server first
-        if (budget != null && authRepository.isAuthenticated() && budget.serverId != null) {
-            budgetApiService.deleteBudget(budget.serverId).getOrThrow()
+        if (authRepository.isAuthenticated()) {
+            val result = budgetSyncManager.syncPendingDeletions()
+            if (result !is SyncResult.Success) {
+                logger.warn(tag, "Deletion of budget $budgetId not pushed yet; it is retried with the next sync")
+            }
         }
-
-        // Then delete locally
-        localDataSource.delete(budgetId.toLong()) // Domain Int → SQLite Long for query parameter
     }
 }

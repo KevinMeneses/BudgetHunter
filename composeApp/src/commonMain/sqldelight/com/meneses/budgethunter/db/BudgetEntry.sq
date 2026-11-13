@@ -87,3 +87,46 @@ WHERE budget_id = :budgetId
 
 countUnsynced:
 SELECT COUNT(*) FROM budget_entry WHERE is_synced = 0;
+
+-- Records the deletion of entries that reached the server, to be pushed (see PendingDeletion.sq).
+-- An entry of a budget the server does not have cannot be on the server either.
+recordDeletions:
+INSERT OR REPLACE INTO pending_deletion (kind, server_id, budget_server_id, created_at)
+SELECT 'ENTRY', be.server_id, b.server_id, :created_at
+FROM budget_entry be
+JOIN budget b ON b.id = be.budget_id
+WHERE be.id IN :ids AND be.server_id IS NOT NULL AND b.server_id IS NOT NULL;
+
+selectPendingDeletionsOfBudget:
+SELECT server_id FROM pending_deletion
+WHERE kind = 'ENTRY' AND budget_server_id = :budget_server_id;
+
+removePendingDeletion:
+DELETE FROM pending_deletion
+WHERE kind = 'ENTRY' AND server_id = :server_id;
+
+selectSyncedServerIdsByBudgetId:
+SELECT server_id FROM budget_entry
+WHERE budget_id = :budgetId AND is_synced = 1 AND server_id IS NOT NULL;
+
+-- Drops entries the server no longer has (deleted by someone else). A change of its own still to be
+-- pushed keeps an entry: its push finds it gone and creates it again.
+deleteSyncedByServerIds:
+DELETE FROM budget_entry
+WHERE budget_id = :budgetId AND is_synced = 1 AND server_id IN :serverIds;
+
+deleteSyncedByServerId:
+DELETE FROM budget_entry
+WHERE server_id = :serverId AND is_synced = 1;
+
+-- Stores what a pull brought for an entry, only while it holds no change of its own still to be
+-- pushed: one saved after the pull read it must not be overwritten (and marked synced). The
+-- invoice is not on the server, so it is not written.
+updateFromServerIfSynced:
+UPDATE budget_entry
+SET amount = :amount, description = :description, type = :type, date = :date, category = :category,
+    server_id = :server_id, is_synced = 1, created_by_email = :created_by_email,
+    updated_by_email = :updated_by_email, creation_date = :creation_date,
+    modification_date = :modification_date
+WHERE id = :id AND is_synced = 1;
+

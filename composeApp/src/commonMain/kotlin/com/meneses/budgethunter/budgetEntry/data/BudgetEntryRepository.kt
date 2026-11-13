@@ -2,20 +2,17 @@ package com.meneses.budgethunter.budgetEntry.data
 
 import com.meneses.budgethunter.auth.data.AuthRepository
 import com.meneses.budgethunter.budgetEntry.data.datasource.BudgetEntryLocalDataSource
-import com.meneses.budgethunter.budgetEntry.data.network.BudgetEntryApiService
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
-import com.meneses.budgethunter.budgetList.data.datasource.BudgetLocalDataSource
 import com.meneses.budgethunter.commons.data.sync.Logger
 import com.meneses.budgethunter.commons.data.sync.SyncResult
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
+import kotlinx.datetime.Clock
 
 class BudgetEntryRepository(
     private val localDataSource: BudgetEntryLocalDataSource,
     private val syncManager: BudgetEntrySyncManager,
     private val authRepository: AuthRepository,
-    private val budgetEntryApiService: BudgetEntryApiService,
-    private val budgetLocalDataSource: BudgetLocalDataSource,
     private val ioDispatcher: CoroutineDispatcher,
     private val logger: Logger
 ) {
@@ -76,29 +73,18 @@ class BudgetEntryRepository(
     }
 
     /**
-     * Deletes a budget entry locally and remotely (when possible).
-     *
-     * @param budgetEntry Entry to delete
+     * Deletes entries of a budget here at once. The deletion of those that reached the server is
+     * recorded and pushed now when signed in, or with the next push of the budget if that fails:
+     * it never blocks the local deletion, and the pull does not bring them back meanwhile.
      */
-    suspend fun delete(budgetEntry: BudgetEntry) = withContext(ioDispatcher) {
-        if (budgetEntry.id < 0) {
-            logger.debug(tag, "Entry ${budgetEntry.id} not persisted; skipping delete")
-            return@withContext
-        }
+    suspend fun delete(budgetId: Int, ids: List<Int>) = withContext(ioDispatcher) {
+        val persistedIds = ids.filter { it >= 0 }
+        if (persistedIds.isEmpty()) return@withContext
 
-        if (authRepository.isAuthenticated()) {
-            val entryServerId = budgetEntry.serverId
-            val budgetServerId = budgetLocalDataSource.getById(budgetEntry.budgetId)?.serverId
-
-            if (budgetServerId != null && entryServerId != null) {
-                budgetEntryApiService
-                    .deleteEntry(budgetServerId, entryServerId)
-                    .onFailure {
-                        logger.warn(tag, "Failed to delete entry from server, proceeding with local deletion", it)
-                    }
-            }
-        }
-
-        localDataSource.delete(budgetEntry.id.toLong()) // Domain Int → SQLite Long for query parameter
+        localDataSource.deleteRecordingPending(
+            ids = persistedIds.map { it.toLong() }, // Domain Int → SQLite Long for query parameter
+            deletedAt = Clock.System.now().toString()
+        )
+        pushPendingEntries(budgetId, operation = "delete")
     }
 }

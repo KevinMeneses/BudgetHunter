@@ -1,0 +1,20 @@
+-- Deletions made on this device that the server has not confirmed yet. The deleted row itself is
+-- gone at once, so no screen or query has to skip it; this only keeps what the server needs to
+-- delete it too, and lets a pull tell "deleted here, not pushed yet" from "new on the server".
+-- Only rows that reached the server (a server id) are recorded. The queries that write and read it
+-- live with the budget and entry queries, next to the rows they come from.
+CREATE TABLE pending_deletion (
+  -- 'BUDGET' or 'ENTRY'
+  kind TEXT NOT NULL,
+  server_id INTEGER NOT NULL,
+  -- The budget the entry belongs to (the delete endpoint needs it); for a budget, its own id
+  budget_server_id INTEGER NOT NULL,
+  created_at TEXT NOT NULL,
+  PRIMARY KEY (kind, server_id)
+);
+
+deleteAll:
+DELETE FROM pending_deletion;
+
+countAll:
+SELECT COUNT(*) FROM pending_deletion;

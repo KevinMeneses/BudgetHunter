@@ -2,9 +2,7 @@ package com.meneses.budgethunter.budgetEntry.data
 
 import com.meneses.budgethunter.auth.data.AuthRepository
 import com.meneses.budgethunter.budgetEntry.data.datasource.BudgetEntryLocalDataSource
-import com.meneses.budgethunter.budgetEntry.data.network.BudgetEntryApiService
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
-import com.meneses.budgethunter.budgetList.data.datasource.BudgetLocalDataSource
 import com.meneses.budgethunter.commons.data.sync.Logger
 import com.meneses.budgethunter.commons.data.sync.SyncResult
 import com.meneses.budgethunter.commons.data.sync.SyncStats
@@ -31,8 +29,6 @@ class BudgetEntryRepositoryTest {
     private val localDataSource = mockk<BudgetEntryLocalDataSource>(relaxed = true)
     private val syncManager = mockk<BudgetEntrySyncManager>()
     private val authRepository = mockk<AuthRepository>()
-    private val budgetEntryApiService = mockk<BudgetEntryApiService>(relaxed = true)
-    private val budgetLocalDataSource = mockk<BudgetLocalDataSource>(relaxed = true)
     private val logger = mockk<Logger>(relaxed = true)
 
     private val failedPushes = MutableStateFlow<Set<Int>>(emptySet())
@@ -53,8 +49,6 @@ class BudgetEntryRepositoryTest {
             localDataSource = localDataSource,
             syncManager = syncManager,
             authRepository = authRepository,
-            budgetEntryApiService = budgetEntryApiService,
-            budgetLocalDataSource = budgetLocalDataSource,
             ioDispatcher = Dispatchers.Unconfined,
             logger = logger
         )
@@ -125,5 +119,39 @@ class BudgetEntryRepositoryTest {
 
         verify(exactly = 1) { localDataSource.clearAllData() }
         verify(exactly = 1) { syncManager.clearFailedPushes() }
+    }
+
+    // ========== delete() ==========
+
+    @Test
+    fun `delete removes the entries locally recording their deletion and pushes when authenticated`() = runTest {
+        coEvery { authRepository.isAuthenticated() } returns true
+
+        repository.delete(budgetId = 7, ids = listOf(1, 2))
+
+        io.mockk.coVerifyOrder {
+            localDataSource.deleteRecordingPending(listOf(1L, 2L), any())
+            syncManager.syncPendingEntries(7)
+        }
+    }
+
+    @Test
+    fun `delete removes the entries locally and does not push when not authenticated`() = runTest {
+        coEvery { authRepository.isAuthenticated() } returns false
+
+        repository.delete(budgetId = 7, ids = listOf(1))
+
+        verify { localDataSource.deleteRecordingPending(listOf(1L), any()) }
+        coVerify(exactly = 0) { syncManager.syncPendingEntries(any()) }
+    }
+
+    @Test
+    fun `delete ignores entries that were never saved`() = runTest {
+        coEvery { authRepository.isAuthenticated() } returns true
+
+        repository.delete(budgetId = 7, ids = listOf(-1))
+
+        verify(exactly = 0) { localDataSource.deleteRecordingPending(any(), any()) }
+        coVerify(exactly = 0) { syncManager.syncPendingEntries(any()) }
     }
 }
