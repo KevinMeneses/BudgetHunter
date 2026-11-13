@@ -25,7 +25,6 @@ import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Sms
 import androidx.compose.material.icons.filled.Warning
@@ -39,6 +38,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -90,7 +90,6 @@ import budgethunter.composeapp.generated.resources.set_password
 import budgethunter.composeapp.generated.resources.set_password_description
 import budgethunter.composeapp.generated.resources.settings
 import budgethunter.composeapp.generated.resources.delete_account
-import budgethunter.composeapp.generated.resources.delete_account_description
 import budgethunter.composeapp.generated.resources.sign_out
 import budgethunter.composeapp.generated.resources.sign_out_confirmation
 import budgethunter.composeapp.generated.resources.sign_out_unsynced_warning
@@ -213,16 +212,18 @@ object SettingsScreen {
                                 showChevron = false,
                                 onClick = { onIntent(SettingsIntent.ToggleSignOutConfirmation(true)) }
                             )
-                            GroupDivider()
-                            // Last in the list and in red, apart from the options that can be undone
-                            SettingRow(
-                                icon = Icons.Default.DeleteForever,
-                                title = stringResource(Res.string.delete_account),
-                                subtitle = stringResource(Res.string.delete_account_description),
-                                contentColor = AppColors.error,
-                                showChevron = false,
-                                enabled = !uiState.isDeletingAccount,
-                                onClick = { onIntent(SettingsIntent.ToggleDeleteAccountConfirmation(true)) }
+                        }
+                        // Out of the group and as plain text: easy to find, as Google Play asks, but
+                        // not next to the everyday options as one of them. The dialog explains the rest.
+                        TextButton(
+                            onClick = { onIntent(SettingsIntent.ToggleDeleteAccountConfirmation(true)) },
+                            enabled = !uiState.isDeletingAccount,
+                            modifier = Modifier.padding(start = 4.dp)
+                        ) {
+                            Text(
+                                text = stringResource(Res.string.delete_account),
+                                fontSize = 14.sp,
+                                color = AppColors.error
                             )
                         }
                     }

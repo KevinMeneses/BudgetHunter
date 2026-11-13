@@ -489,7 +489,6 @@
     <string name="sms_permission_missing_title">SMS permission</string>
     <string name="sms_permission_missing_description">The permission to read your banks' SMS is missing. Tap to grant it</string>
     <string name="delete_account">Delete account</string>
-    <string name="delete_account_description">Deletes your account and its data for good</string>
     <string name="delete_account_title">Delete your account?</string>
     <string name="delete_account_permanent">Your account will be deleted for good. This cannot be undone.</string>
     <string name="delete_account_owned_budgets">• Shared budgets you own will pass to another member. Budgets you do not share with anyone will be deleted, with their expenses.</string>
