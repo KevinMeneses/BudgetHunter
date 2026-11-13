@@ -51,6 +51,8 @@ import org.koin.core.context.GlobalContext
 import org.robolectric.annotation.Config
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
+import java.util.concurrent.atomic.AtomicInteger
+import io.ktor.http.content.TextContent
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -422,19 +424,32 @@ class SyncFlowIntegrationTest {
             )
         )
 
-        var requestCount = 0
+        // The budgets (and then the entries) are pushed concurrently (aggregateSync), so which POST arrives
+        // first is not fixed: each POST is answered by what it carries, and only the counter decides the GETs,
+        // which come after each phase has finished.
+        val requestCount = AtomicInteger(0)
         setupMockApi { request ->
-            when (val method = request.method to requestCount++) {
+            val sent = (request.body as? TextContent)?.text.orEmpty()
+            val order = when {
+                request.method != HttpMethod.Post -> requestCount.getAndIncrement()
+                // Budgets are pushed newest date first: "Old Budget 2" gets 401, "Old Budget 1" 402
+                "Old Budget 2" in sent -> 0.also { requestCount.incrementAndGet() }
+                "Old Budget 1" in sent -> 1.also { requestCount.incrementAndGet() }
+                "Old Entry 1" in sent -> 2.also { requestCount.incrementAndGet() }
+                "Old Entry 2" in sent -> 3.also { requestCount.incrementAndGet() }
+                else -> requestCount.getAndIncrement()
+            }
+            when (val method = request.method to order) {
                 HttpMethod.Post to 0 -> respond(
                     content = json.encodeToString(
-                        BudgetResponse(id = 401, name = "Old Budget 1", amount = 5000.0)
+                        BudgetResponse(id = 401, name = "Old Budget 2", amount = 6000.0)
                     ),
                     status = HttpStatusCode.OK,
                     headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString())
                 )
                 HttpMethod.Post to 1 -> respond(
                     content = json.encodeToString(
-                        BudgetResponse(id = 402, name = "Old Budget 2", amount = 6000.0)
+                        BudgetResponse(id = 402, name = "Old Budget 1", amount = 5000.0)
                     ),
                     status = HttpStatusCode.OK,
                     headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString())
@@ -443,8 +458,8 @@ class SyncFlowIntegrationTest {
                     content = json.encodeToString(
                         ListSerializer(BudgetResponse.serializer()),
                         listOf(
-                            BudgetResponse(id = 401, name = "Old Budget 1", amount = 5000.0),
-                            BudgetResponse(id = 402, name = "Old Budget 2", amount = 6000.0)
+                            BudgetResponse(id = 401, name = "Old Budget 2", amount = 6000.0),
+                            BudgetResponse(id = 402, name = "Old Budget 1", amount = 5000.0)
                         )
                     ),
                     status = HttpStatusCode.OK,
