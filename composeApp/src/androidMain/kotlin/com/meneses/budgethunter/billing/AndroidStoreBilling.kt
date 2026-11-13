@@ -41,6 +41,7 @@ class AndroidStoreBilling(
     private val logger: Logger
 ) : StoreBilling {
 
+    @Volatile
     private var activityDelegate: StoreActivityDelegate? = null
 
     // The packages of the last offers() call, by id, so purchase() can hand the store the real object.

@@ -77,7 +77,8 @@ class PremiumViewModel(
                 throw e
             } catch (e: Exception) {
                 logger.warn(TAG, "Could not read the plan", e)
-                _uiState.update { it.copy(isLoading = false, loadFailed = true) }
+                // A purchase or restore that applied the plan meanwhile is shown, not hidden behind a retry
+                _uiState.update { it.copy(isLoading = false, loadFailed = planVersion == version) }
                 return@launch
             }
             val (status, usage) = account
@@ -114,7 +115,8 @@ class PremiumViewModel(
     }
 
     private fun purchase(offerId: String) {
-        if (_uiState.value.isWorking) return
+        // Nothing to buy twice while a purchase is still on its way to the server
+        if (_uiState.value.isWorking || _uiState.value.isAwaitingServer) return
         _uiState.update { it.copy(isWorking = true) }
         viewModelScope.launch {
             var nowPremium = false

@@ -192,6 +192,20 @@ class PremiumViewModelTest {
     }
 
     @Test
+    fun `no second purchase while the first is on its way to the server`() = runTest(testDispatcher) {
+        coEvery { repository.purchase(any()) } returns PurchaseOutcome.Purchased(null)
+        val viewModel = viewModel()
+        advanceUntilIdle()
+
+        viewModel.sendIntent(PremiumIntent.Purchase("x"))
+        runCurrent()
+        viewModel.sendIntent(PremiumIntent.Purchase("x"))
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { repository.purchase(any()) }
+    }
+
+    @Test
     fun `plans that finish loading after a purchase are not shown again`() = runTest(testDispatcher) {
         val slowOffers = CompletableDeferred<List<PremiumOffer>>()
         coEvery { repository.offers() } coAnswers { slowOffers.await() }
@@ -241,23 +255,24 @@ class PremiumViewModelTest {
 
     @Test
     fun `each purchase outcome has its message, a cancel has none`() = runTest(testDispatcher) {
-        val viewModel = viewModel()
-        advanceUntilIdle()
-
         val cases = listOf(
             PurchaseOutcome.Purchased(null) to Res.string.premium_processing,
             PurchaseOutcome.Pending to Res.string.premium_pending,
             PurchaseOutcome.Cancelled to null
         )
+        // A fresh screen each time: after an unconfirmed purchase the screen takes no other purchase
         for ((outcome, message) in cases) {
             coEvery { repository.purchase(any()) } returns outcome
+            val viewModel = viewModel()
+            advanceUntilIdle()
             viewModel.sendIntent(PremiumIntent.Purchase("x"))
             advanceUntilIdle()
             assertEquals(message, viewModel.uiState.value.message)
-            viewModel.sendIntent(PremiumIntent.DismissMessage)
         }
 
         coEvery { repository.purchase(any()) } throws StoreBillingException("store error")
+        val viewModel = viewModel()
+        advanceUntilIdle()
         viewModel.sendIntent(PremiumIntent.Purchase("x"))
         advanceUntilIdle()
         assertEquals(Res.string.premium_error_purchase, viewModel.uiState.value.message)
