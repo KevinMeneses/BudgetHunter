@@ -143,9 +143,9 @@ Type-safe navigation using Navigation Compose with serializable route objects. M
   the listener is bound (seen on a Galaxy A55 with no toggling at all: `dumpsys activity exit-info` shows the kill at
   importance 125, then only cached processes). requestRebind, toggling the component, re-granting the access or the
   app killing itself do not help, only a force stop from the system settings does. `IsNotificationReaderStoppedUseCase`
-  (a single) detects it (`BankNotificationListenerService.isConnected`) while some bank uses APP or EMAIL; it waits a
-  grace period for the bind only within 3 s of first seeing everything granted (app start, access granted again), and
-  answers at once after that, so Settings shows the warning without a pause. The budget list shows a banner that
+  (a single) detects it (`BankNotificationListenerService.isConnected`) while some bank uses APP or EMAIL; a reader found
+  unbound gets a 3 s grace period for the bind, counted from the first check that found it so (reset by any check that
+  finds it connected or not needed), and later checks answer at once, so Settings shows the warning without a pause. The budget list shows a banner that
   leads to Settings, which asks the user for that force stop. Title and text are
   parsed together (`BankNotification`) by the same parser, the entry is described by the text (with the bank name,
   "Nu: ..."), and unreadable notifications are dropped silently (apps also post codes and news).

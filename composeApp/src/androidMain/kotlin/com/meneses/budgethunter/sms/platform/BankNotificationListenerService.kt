@@ -169,9 +169,10 @@ class BankNotificationListenerService : NotificationListenerService(), KoinCompo
 
         /**
          * Whether the system has the listener bound in this process. After the app's own notifications
-         * are switched off and on, or the system kills the app for memory, some devices leave it unbound for good: the access stays granted
-         * while nothing is read, and neither requestRebind nor anything else the app can do brings it
-         * back. Only a force stop from the system settings does, so Settings asks the user for it.
+         * are switched off and on, or after the system kills the app for memory, some devices leave it
+         * unbound for good: the access stays granted while nothing is read, and neither requestRebind
+         * nor anything else the app can do brings it back. Only a force stop from the system settings
+         * does, so Settings asks the user for it.
          */
         @Volatile
         var isConnected = false

@@ -15,8 +15,8 @@ import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
-import kotlin.test.assertFalse
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -119,6 +119,35 @@ class IsNotificationReaderStoppedUseCaseTest {
         assertFalse(isNotificationReaderStopped())
 
         every { permissionsManager.hasNotificationListenerAccess() } returns true
+        val start = testScheduler.currentTime
+        assertTrue(isNotificationReaderStopped())
+        assertEquals(start + 3_000, testScheduler.currentTime)
+    }
+
+    @Test
+    fun `a reader that drops while away gets a new grace period`() = runTest {
+        // Bound at the last check; the access is revoked and granted again with no check in between
+        val isNotificationReaderStopped = useCase()
+        every { permissionsManager.isNotificationListenerConnected() } returns true
+        assertFalse(isNotificationReaderStopped())
+        advanceTimeBy(60_000)
+
+        // The system is still binding it again and connects it within the grace period
+        every { permissionsManager.isNotificationListenerConnected() } returnsMany listOf(false, true)
+        val start = testScheduler.currentTime
+        assertFalse(isNotificationReaderStopped())
+        assertEquals(start + 3_000, testScheduler.currentTime)
+    }
+
+    @Test
+    fun `reading only by SMS for a while starts a new grace period`() = runTest {
+        val isNotificationReaderStopped = useCase()
+        assertTrue(isNotificationReaderStopped())
+
+        coEvery { preferencesManager.getChannelsInUse() } returns setOf(ReadingChannel.SMS)
+        assertFalse(isNotificationReaderStopped())
+
+        coEvery { preferencesManager.getChannelsInUse() } returns setOf(ReadingChannel.APP)
         val start = testScheduler.currentTime
         assertTrue(isNotificationReaderStopped())
         assertEquals(start + 3_000, testScheduler.currentTime)
