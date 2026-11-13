@@ -488,6 +488,39 @@
     <string name="bank_may_repeat_movements">Si te avisa un mismo movimiento por varios de estos canales, se registrará una vez por cada uno</string>
     <string name="sms_permission_missing_title">Permiso de SMS</string>
     <string name="sms_permission_missing_description">Falta el permiso para leer los SMS de tus bancos. Toca para darlo</string>
+
+    <!-- Premium (paywall) -->
+    <string name="premium_title">BudgetHunter Premium</string>
+    <string name="premium_subtitle">Lee todos tus recibos con IA y apoya lo que viene</string>
+    <string name="premium_settings_subtitle">Tu plan y tus escaneos de recibos</string>
+    <string name="premium_see">Ver Premium</string>
+    <string name="premium_active_title">Tienes Premium</string>
+    <string name="premium_active_until">Se renueva o termina el %1$s</string>
+    <string name="premium_scans_left">Te quedan %1$s de %2$s escaneos de recibos</string>
+    <string name="premium_scans_resets">Se renuevan el %1$s</string>
+    <string name="premium_benefit_scans">Muchos más escaneos de recibos y categorizaciones con IA cada mes</string>
+    <string name="premium_benefit_more">Las nuevas funciones con IA a medida que lleguen</string>
+    <string name="premium_benefit_support">Apoyas una app hecha en Colombia, sin anuncios</string>
+    <string name="premium_plan_monthly">Mensual</string>
+    <string name="premium_plan_annual">Anual</string>
+    <string name="premium_plan_other">Premium</string>
+    <string name="premium_per_month">%1$s/mes</string>
+    <string name="premium_per_year">%1$s/año</string>
+    <string name="premium_free_trial">%1$d días gratis, luego se cobra</string>
+    <string name="premium_fine_print">La suscripción se renueva automáticamente hasta que la canceles. Puedes cancelarla cuando quieras en Google Play y conservas Premium hasta el final del periodo pagado.</string>
+    <string name="premium_restore">Restaurar compras</string>
+    <string name="premium_manage">Gestionar suscripción en Google Play</string>
+    <string name="premium_retry">Reintentar</string>
+    <string name="premium_unavailable">Las compras todavía no están disponibles en esta versión de la app.</string>
+    <string name="premium_offers_failed">No pudimos cargar los planes. Revisa tu conexión e inténtalo de nuevo.</string>
+    <string name="premium_load_failed">No pudimos cargar tu plan. Revisa tu conexión y que hayas iniciado sesión con tu cuenta.</string>
+    <string name="premium_welcome">¡Bienvenido a Premium!</string>
+    <string name="premium_processing">Recibimos tu compra. Premium se activará en unos minutos.</string>
+    <string name="premium_pending">Tu pago está pendiente. Premium se activará apenas se confirme.</string>
+    <string name="premium_restored">Recuperaste tu Premium</string>
+    <string name="premium_restore_none">No encontramos una suscripción activa para restaurar en esta cuenta de Google</string>
+    <string name="premium_error_purchase">No se pudo completar la compra. Inténtalo de nuevo.</string>
+    <string name="premium_error_restore">No pudimos restaurar tus compras. Revisa tu conexión e inténtalo de nuevo.</string>
     <string name="delete_account">Eliminar cuenta</string>
     <string name="delete_account_title">¿Eliminar tu cuenta?</string>
     <string name="delete_account_permanent">Tu cuenta se eliminará de forma permanente. No se puede deshacer.</string>
@@ -498,4 +531,10 @@
     <string name="delete_account_subscription_unknown">Si tienes una suscripción Premium, NO se cancela al eliminar la cuenta. Cancélala en %1$s para que no te sigan cobrando.</string>
     <string name="manage_subscription">Gestionar suscripción en %1$s</string>
     <string name="delete_account_failed">No se pudo eliminar la cuenta. Revisa tu conexión e inténtalo de nuevo</string>
+    <string name="premium_usage_title">Tu IA este mes</string>
+    <string name="premium_categorizations_left">Te quedan %1$s de %2$s categorizaciones con IA</string>
+    <string name="categorize_quota_exceeded">Se categorizaron %1$d. Se acabaron tus categorizaciones con IA de este mes; %2$d siguen sin categoría</string>
+    <string name="number_group_separator">.</string>
+    <string name="premium_check_again">Revisar de nuevo</string>
+    <string name="premium_still_processing">Aún no se confirma. Premium se activará en unos minutos.</string>
 </resources>

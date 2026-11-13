@@ -34,10 +34,12 @@ Companion changes in the backend repo: `receipts/` package, `users.plan`, `ai_us
    backend's id before each store call, sync after buying or restoring), store log out on sign out. Deleting
    the account runs the same sign out; it never cancels the store subscription, so its confirmation warns
    premium accounts and links to the store's subscriptions page.
-3. **Paywall.** A screen opened from the 402 message and from settings, showing what premium includes, the
-   prices from RevenueCat and the scans left (`GET /api/receipts/usage`). Show "N scans left" when few remain.
-4. **Categorization behind the plan.** Count categorized entries per month like receipts (free: a small number),
-   402 past it; the metrics dialog then offers the paywall.
+3. **Paywall (done).** `PremiumScreen`, opened from the 402 message ("See Premium") and from settings, showing what
+   premium includes, the prices from RevenueCat and this month's AI usage (`GET /api/ai/usage`). Still open: a
+   "N scans left" hint on the entry screen when few remain.
+4. **Categorization behind the plan (done).** FREE 50, PREMIUM 1000 descriptions sent to the AI per month; rules and
+   cache are free. Past the limit there is no 402: the run categorizes what it can and answers `quotaExceeded` and
+   `usage`; the metrics screen then says so with a "See Premium" action.
 5. **Shared budgets.** Adding a collaborator requires premium (being invited stays free).
 6. **Export** (CSV/PDF) as a premium feature.
 7. **Receipt backup in the cloud (premium), after parts 2-3.** Not part of the scan request (the entry may not

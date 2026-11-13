@@ -208,15 +208,20 @@ not `OTHER` ("looked at it, nothing fits"). It is never offered in the AI's cate
   `POST /api/budgets/{id}/entries/categorize` (the server sends only the descriptions to the AI), pulls
   the entries back and the totals are recomputed. A 403 pushes the preferences once and retries; 409 means a run
   is already going.
+- The AI part has a monthly allowance per plan (server side: FREE 50, PREMIUM 1000 descriptions sent to the AI;
+  keyword rules and cache are free). Past it the run still answers 200 with the rest pending and `quotaExceeded`;
+  the metrics snackbar then says so with a "See Premium" action (`CategorizationOutcome.Done.quotaExceeded`).
 - SMS entries are created `UNCATEGORIZED`; a category chosen by the receipt AI is a normal category and is never
   overwritten. The server's rules live in the backend repository.
 - Design notes and decisions: `docs/plans/auto-categorization.md`.
 
 ### Monetization
 Freemium, with RevenueCat for the store purchases (in progress; plan and decisions in `docs/plans/monetization.md`).
-- Free: everything manual, SMS reading, metrics, and a monthly allowance of AI receipt scans (server setting,
-  10 by default). Premium: a much larger allowance (fair use) and, later, the other paid features.
-- The server is the source of truth: `users.plan` and the monthly count live there (`GET /api/receipts/usage`).
+- Free: everything manual, SMS reading, metrics, and monthly allowances of AI receipt scans (10) and AI
+  categorizations (50), both server settings. Premium: much larger allowances (fair use) and, later, the other
+  paid features.
+- The server is the source of truth: `users.plan` and the monthly counts live there (`GET /api/ai/usage` has both;
+  `GET /api/receipts/usage` only the scans).
   The app never decides on its own whether something is allowed.
 - Purchases (`billing/`): `PremiumRepository` asks the backend for the account's RevenueCat id
   (`GET /api/billing/status`, a random id, never the email), logs the store in with it before every offer list,
@@ -226,3 +231,8 @@ Freemium, with RevenueCat for the store purchases (in progress; plan and decisio
   configured lazily with the public `goog_` key from `REVENUECAT_ANDROID_API_KEY`; empty = `isAvailable` false and
   nothing can be bought). iOS has `UnavailableStoreBilling` until the iOS launch. Sign out logs the store out.
   The purchase sheet needs the Activity, handed over by `MainActivity` like Google sign-in.
+- Paywall: `PremiumScreen` / `PremiumViewModel` (`billing/`), opened from Settings (signed-in accounts only) and from
+  the "no scans left" snackbar's "See Premium" action (`BudgetEntryEvent.ShowNotification.offersPremium`). It shows
+  the plan and this month's AI usage from the server (scans and categorizations, `GET /api/ai/usage`), the store's plans (yearly first) and restore; a premium account
+  gets "manage in Google Play" instead. A purchase the server has not synced yet says premium arrives in minutes.
+  The renewal and cancellation text under the plans is required by Google Play: keep it.

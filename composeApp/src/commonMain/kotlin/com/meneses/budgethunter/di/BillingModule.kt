@@ -1,5 +1,6 @@
 package com.meneses.budgethunter.di
 
+import com.meneses.budgethunter.billing.PremiumViewModel
 import com.meneses.budgethunter.billing.data.BillingApiService
 import com.meneses.budgethunter.billing.data.PremiumRepository
 import io.ktor.client.HttpClient
@@ -14,5 +15,9 @@ val billingModule = module {
 
     single<PremiumRepository> {
         PremiumRepository(billingApi = get(), store = get(), logger = get())
+    }
+
+    factory<PremiumViewModel> {
+        PremiumViewModel(premiumRepository = get(), logger = get())
     }
 }

@@ -103,7 +103,7 @@ class MainActivity :
         // The manager is a singleton, so a delegate left pointing here would leak this Activity
         // across every configuration change.
         googleSignInManager.setActivityDelegate(null)
-        storeBilling.setActivityDelegate(null)
+        storeBilling.clearActivityDelegate(this)
         super.onDestroy()
     }
 

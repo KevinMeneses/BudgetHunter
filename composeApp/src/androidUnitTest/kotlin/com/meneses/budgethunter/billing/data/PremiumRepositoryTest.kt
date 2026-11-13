@@ -4,9 +4,11 @@ import com.meneses.budgethunter.billing.domain.BillingStatus
 import com.meneses.budgethunter.billing.domain.PremiumOffer
 import com.meneses.budgethunter.billing.domain.PremiumPeriod
 import com.meneses.budgethunter.billing.domain.PurchaseOutcome
+import com.meneses.budgethunter.billing.domain.Allowance
 import com.meneses.budgethunter.billing.domain.StoreBilling
 import com.meneses.budgethunter.billing.domain.StoreBillingException
 import com.meneses.budgethunter.billing.domain.StorePurchaseResult
+import com.meneses.budgethunter.commons.data.network.models.AiUsageOverviewResponse
 import com.meneses.budgethunter.commons.data.network.models.BillingStatusResponse
 import com.meneses.budgethunter.commons.data.sync.NoOpLogger
 import io.mockk.coEvery
@@ -19,6 +21,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 
 class PremiumRepositoryTest {
 
@@ -98,6 +101,41 @@ class PremiumRepositoryTest {
 
         assertFailsWith<StoreBillingException> { repository.purchase("annual") }
         coVerify(exactly = 0) { store.purchase(any()) }
+    }
+
+    @Test
+    fun `a restore the store fails is reported and not synced`() = runTest {
+        coEvery { store.restore() } throws StoreBillingException("Could not restore")
+
+        assertFailsWith<StoreBillingException> { repository.restore() }
+        coVerify(exactly = 0) { api.sync() }
+    }
+
+    @Test
+    fun `without the server the store is never touched`() = runTest {
+        coEvery { api.status() } throws BillingApiException(null, "offline")
+
+        assertFailsWith<BillingApiException> { repository.purchase("annual") }
+        assertFailsWith<BillingApiException> { repository.offers() }
+        coVerify(exactly = 0) { store.logIn(any()) }
+    }
+
+    @Test
+    fun `ai usage reads both allowances, and a feature off on the server has none`() = runTest {
+        coEvery { api.aiUsage() } returns AiUsageOverviewResponse(
+            plan = "FREE",
+            period = "2026-11",
+            receiptScansUsed = 3,
+            receiptScansLimit = 10,
+            receiptScansRemaining = 7,
+            resetsOn = "2026-12-01"
+        )
+
+        val usage = repository.aiUsage()
+
+        assertEquals(Allowance(used = 3, limit = 10, remaining = 7), usage.receiptScans)
+        assertNull(usage.categorizations)
+        assertEquals("2026-12-01", usage.resetsOn)
     }
 
     @Test

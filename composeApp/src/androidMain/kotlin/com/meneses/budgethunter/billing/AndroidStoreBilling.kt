@@ -41,6 +41,7 @@ class AndroidStoreBilling(
     private val logger: Logger
 ) : StoreBilling {
 
+    @Volatile
     private var activityDelegate: StoreActivityDelegate? = null
 
     // The packages of the last offers() call, by id, so purchase() can hand the store the real object.
@@ -48,9 +49,16 @@ class AndroidStoreBilling(
     @Volatile
     private var packages: Map<String, Package> = emptyMap()
 
-    /** Pass null from `onDestroy`: this is a singleton, and a delegate left behind would leak the Activity. */
-    fun setActivityDelegate(delegate: StoreActivityDelegate?) {
+    fun setActivityDelegate(delegate: StoreActivityDelegate) {
         activityDelegate = delegate
+    }
+
+    /**
+     * Call from `onDestroy`: this is a singleton, and a delegate left behind would leak the Activity. Only clears
+     * [delegate]'s own registration, so an Activity created before the old one is destroyed keeps its own.
+     */
+    fun clearActivityDelegate(delegate: StoreActivityDelegate) {
+        if (activityDelegate === delegate) activityDelegate = null
     }
 
     override val isAvailable: Boolean get() = apiKey.isNotBlank()
