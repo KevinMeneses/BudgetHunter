@@ -24,7 +24,8 @@ import kotlin.time.TimeSource
  * revoked and granted again, the notifications switched off and on) gets its own grace period.
  *
  * Kept as a single so the count spans the screens. It is only called from view models, on the main
- * thread, so the mark needs no lock.
+ * thread, so the mark needs no lock: two screens checking at once interleave only at the delay, and the
+ * second one just waits what is left of the period. A caller off the main thread would need one.
  */
 class IsNotificationReaderStoppedUseCase(
     private val preferencesManager: PreferencesManager,
@@ -35,22 +36,24 @@ class IsNotificationReaderStoppedUseCase(
     private var unboundSince: TimeMark? = null
 
     suspend operator fun invoke(): Boolean {
-        if (!looksStopped()) return false
-        val remaining = CONNECT_GRACE - (unboundSince?.elapsedNow() ?: return false)
+        val since = unboundSinceIfStopped() ?: return false
+        val remaining = CONNECT_GRACE - since.elapsedNow()
         if (!remaining.isPositive()) return true
         delay(remaining)
         // It may have connected meanwhile, which also clears the mark
-        return looksStopped()
+        return unboundSinceIfStopped() != null
     }
 
-    private suspend fun looksStopped(): Boolean {
+    /** Since when the reader has looked stopped, or null while it does not. */
+    private suspend fun unboundSinceIfStopped(): TimeMark? {
         // The bank apps and the bank emails are both read by the one listener
         val stopped = preferencesManager.getChannelsInUse().any { it != ReadingChannel.SMS } &&
             permissionsManager.hasNotificationListenerAccess() &&
             permissionsManager.areAppNotificationsEnabled() &&
             !permissionsManager.isNotificationListenerConnected()
-        unboundSince = if (stopped) unboundSince ?: timeSource.markNow() else null
-        return stopped
+        val since = if (stopped) unboundSince ?: timeSource.markNow() else null
+        unboundSince = since
+        return since
     }
 
     private companion object {

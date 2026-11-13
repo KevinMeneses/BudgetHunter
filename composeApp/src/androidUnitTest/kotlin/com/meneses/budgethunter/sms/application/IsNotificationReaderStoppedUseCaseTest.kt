@@ -163,4 +163,30 @@ class IsNotificationReaderStoppedUseCaseTest {
         assertEquals(start, testScheduler.currentTime)
         verify(exactly = 1) { permissionsManager.isNotificationListenerConnected() }
     }
+
+    @Test
+    fun `a reader that connects late and drops again gets a new grace period`() = runTest {
+        val isNotificationReaderStopped = useCase()
+        assertTrue(isNotificationReaderStopped())
+
+        every { permissionsManager.isNotificationListenerConnected() } returns true
+        assertFalse(isNotificationReaderStopped())
+
+        every { permissionsManager.isNotificationListenerConnected() } returns false
+        val start = testScheduler.currentTime
+        assertTrue(isNotificationReaderStopped())
+        assertEquals(start + 3_000, testScheduler.currentTime)
+    }
+
+    @Test
+    fun `a reader that connects during the wait leaves no mark behind`() = runTest {
+        val isNotificationReaderStopped = useCase()
+        every { permissionsManager.isNotificationListenerConnected() } returnsMany listOf(false, true, false)
+        assertFalse(isNotificationReaderStopped())
+
+        // Unbound again later: a fresh grace period, not the old mark's immediate answer
+        val start = testScheduler.currentTime
+        assertTrue(isNotificationReaderStopped())
+        assertEquals(start + 3_000, testScheduler.currentTime)
+    }
 }
