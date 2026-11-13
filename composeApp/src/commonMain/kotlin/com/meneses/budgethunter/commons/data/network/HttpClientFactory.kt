@@ -22,6 +22,7 @@ import io.ktor.client.plugins.sse.SSE
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.http.encodedPath
@@ -39,6 +40,8 @@ private const val TAG = "HttpClient"
  *   it finds first on the classpath: on Android that was the `Android` (HttpURLConnection)
  *   engine, which never closes the socket when a request is cancelled, so every SSE stream
  *   left behind (e.g. when switching budgets) stayed open until the network dropped.
+ * @param logLevel [LogLevel.NONE] outside debug builds (see Platform.isDebugBuild).
+ * @param httpLogger Where the HTTP log goes; tests pass their own to read it.
  * @param onSessionExpired Called when the server rejects the refresh token, after the tokens are
  *   cleared. Not called for network or server errors, which keep the session.
  */
@@ -53,6 +56,7 @@ fun createHttpClient(
     },
     appLogger: AppLogger,
     logLevel: LogLevel,
+    httpLogger: Logger = Logger.SIMPLE,
     onSessionExpired: () -> Unit = {}
 ): HttpClient {
     return HttpClient(engine) {
@@ -61,8 +65,10 @@ fun createHttpClient(
         }
 
         install(Logging) {
-            logger = Logger.SIMPLE
+            logger = httpLogger
             level = logLevel
+            // The access token is a credential: logcat is readable by bug reports and adb, never print it
+            sanitizeHeader { header -> header == HttpHeaders.Authorization }
             // A receipt scan carries the whole photo or PDF (megabytes of Base64): never dump it to the log
             filter { request -> !request.url.encodedPath.endsWith(ApiEndpoints.RECEIPTS_EXTRACT) }
         }

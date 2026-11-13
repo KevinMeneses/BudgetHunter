@@ -1,6 +1,5 @@
 package com.meneses.budgethunter.di
 
-import com.meneses.budgethunter.BuildKonfig
 import com.meneses.budgethunter.budgetList.data.adapter.categoryAdapter
 import com.meneses.budgethunter.budgetList.data.adapter.typeAdapter
 import com.meneses.budgethunter.commons.application.ValidateFilePathUseCase
@@ -10,6 +9,7 @@ import com.meneses.budgethunter.commons.data.sync.Logger
 import com.meneses.budgethunter.commons.data.sync.NoOpLogger
 import com.meneses.budgethunter.commons.resources.StringResourceProviderImpl
 import com.meneses.budgethunter.commons.resources.StringResourceProvider
+import com.meneses.budgethunter.commons.util.Platform
 import com.meneses.budgethunter.db.BudgetEntryQueries
 import com.meneses.budgethunter.db.BudgetQueries
 import com.meneses.budgethunter.db.Budget_entry
@@ -59,7 +59,7 @@ val commonModule = module {
     single<StringResourceProvider> { StringResourceProviderImpl() }
 
     single<Logger> {
-        if (BuildKonfig.DEBUG) {
+        if (Platform.isDebugBuild) {
             ConsoleLogger()
         } else {
             NoOpLogger()
