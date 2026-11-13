@@ -67,7 +67,7 @@ val authModule = module {
     single<DeleteAccountUseCase> {
         DeleteAccountUseCase(
             authRepository = get<AuthRepository>(),
-            receiptApiService = get(),
+            premiumRepository = get(),
             signOutUseCase = get(),
             authSession = get(),
             logger = get(),

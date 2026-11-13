@@ -4,7 +4,6 @@ import com.meneses.budgethunter.budgetEntry.domain.AiExtractionResult
 import com.meneses.budgethunter.budgetEntry.domain.AiFailureReason
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.commons.data.network.ApiEndpoints
-import com.meneses.budgethunter.commons.data.network.models.AiUsageResponse
 import com.meneses.budgethunter.commons.data.network.models.ReceiptErrorResponse
 import com.meneses.budgethunter.commons.data.network.models.ReceiptExtractionRequest
 import com.meneses.budgethunter.commons.data.network.models.ReceiptExtractionResponse
@@ -13,13 +12,11 @@ import io.ktor.client.HttpClient
 import io.ktor.client.plugins.HttpRequestTimeoutException
 import io.ktor.client.plugins.ResponseException
 import io.ktor.client.plugins.timeout
-import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
-import io.ktor.http.isSuccess
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
@@ -74,27 +71,6 @@ class ReceiptApiService(
             AiExtractionResult.Failure(AiFailureReason.NETWORK)
         }
     }
-
-    /**
-     * The account's plan and this month's scans (`GET /api/receipts/usage`).
-     *
-     * @return null when it could not be read: no connection, no session or an unreadable answer.
-     */
-    suspend fun getUsage(): AiUsageResponse? =
-        try {
-            val response = httpClient.get(ApiEndpoints.RECEIPTS_USAGE)
-            if (response.status.isSuccess()) {
-                json.decodeFromString<AiUsageResponse>(response.bodyAsText())
-            } else {
-                logger.warn(tag, "Usage not read: HTTP ${response.status.value}")
-                null
-            }
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            logger.warn(tag, "Usage request failed", e)
-            null
-        }
 
     private fun parseSuccess(body: String): AiExtractionResult {
         val response = try {

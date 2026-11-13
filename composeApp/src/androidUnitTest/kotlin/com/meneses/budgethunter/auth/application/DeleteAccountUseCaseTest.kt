@@ -3,8 +3,9 @@ package com.meneses.budgethunter.auth.application
 import com.meneses.budgethunter.auth.data.AuthRepository
 import com.meneses.budgethunter.auth.data.AuthSession
 import com.meneses.budgethunter.auth.data.DeleteAccountResult
-import com.meneses.budgethunter.budgetEntry.data.network.ReceiptApiService
-import com.meneses.budgethunter.commons.data.network.models.AiUsageResponse
+import com.meneses.budgethunter.billing.data.BillingApiException
+import com.meneses.budgethunter.billing.data.PremiumRepository
+import com.meneses.budgethunter.billing.domain.BillingStatus
 import com.meneses.budgethunter.commons.data.sync.NoOpLogger
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -22,27 +23,18 @@ import kotlin.test.assertTrue
 class DeleteAccountUseCaseTest {
 
     private val authRepository = mockk<AuthRepository>(relaxed = true)
-    private val receiptApiService = mockk<ReceiptApiService>(relaxed = true)
+    private val premiumRepository = mockk<PremiumRepository>(relaxed = true)
     private val signOutUseCase = mockk<SignOutUseCase>(relaxed = true)
     private val authSession = AuthSession()
 
     private val useCase = DeleteAccountUseCase(
         authRepository = authRepository,
-        receiptApiService = receiptApiService,
+        premiumRepository = premiumRepository,
         signOutUseCase = signOutUseCase,
         authSession = authSession,
         logger = NoOpLogger(),
         ioDispatcher = Dispatchers.Unconfined,
         planTimeoutMillis = 1_000
-    )
-
-    private fun usage(plan: String) = AiUsageResponse(
-        plan = plan,
-        period = "2026-11",
-        receiptScansUsed = 0,
-        receiptScansLimit = 10,
-        receiptScansRemaining = 10,
-        resetsOn = "2026-12-01"
     )
 
     @Test
@@ -107,28 +99,28 @@ class DeleteAccountUseCaseTest {
 
     @Test
     fun `isPremium is true for a premium plan`() = runTest {
-        coEvery { receiptApiService.getUsage() } returns usage("PREMIUM")
+        coEvery { premiumRepository.status() } returns BillingStatus(isPremium = true, premiumUntil = "2026-12-07T10:00:00Z")
 
         assertEquals(true, useCase.isPremium())
     }
 
     @Test
     fun `isPremium is false for a free plan`() = runTest {
-        coEvery { receiptApiService.getUsage() } returns usage("FREE")
+        coEvery { premiumRepository.status() } returns BillingStatus(isPremium = false, premiumUntil = null)
 
         assertEquals(false, useCase.isPremium())
     }
 
     @Test
     fun `isPremium is unknown when the plan cannot be read`() = runTest {
-        coEvery { receiptApiService.getUsage() } returns null
+        coEvery { premiumRepository.status() } throws BillingApiException(null, "offline")
 
         assertNull(useCase.isPremium())
     }
 
     @Test
     fun `isPremium is unknown when the server takes too long`() = runTest {
-        coEvery { receiptApiService.getUsage() } coAnswers { awaitCancellation() }
+        coEvery { premiumRepository.status() } coAnswers { awaitCancellation() }
 
         assertNull(useCase.isPremium())
     }

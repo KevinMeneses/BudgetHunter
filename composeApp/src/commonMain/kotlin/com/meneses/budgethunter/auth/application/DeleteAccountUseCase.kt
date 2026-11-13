@@ -3,7 +3,7 @@ package com.meneses.budgethunter.auth.application
 import com.meneses.budgethunter.auth.data.AuthRepository
 import com.meneses.budgethunter.auth.data.AuthSession
 import com.meneses.budgethunter.auth.data.DeleteAccountResult
-import com.meneses.budgethunter.budgetEntry.data.network.ReceiptApiService
+import com.meneses.budgethunter.billing.data.PremiumRepository
 import com.meneses.budgethunter.commons.data.sync.Logger
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
@@ -18,10 +18,11 @@ import kotlinx.coroutines.withTimeoutOrNull
  * The server hands the user's shared budgets to another member, deletes the ones nobody else is
  * in and keeps their entries in other people's budgets. It cannot cancel a store subscription:
  * only Google Play or the App Store can, which is why the confirmation asks about the plan first.
+ * Signing out also logs the store out (RevenueCat), so the next account starts clean.
  */
 class DeleteAccountUseCase(
     private val authRepository: AuthRepository,
-    private val receiptApiService: ReceiptApiService,
+    private val premiumRepository: PremiumRepository,
     private val signOutUseCase: SignOutUseCase,
     private val authSession: AuthSession,
     private val logger: Logger,
@@ -44,9 +45,14 @@ class DeleteAccountUseCase(
      * be asked in time.
      */
     suspend fun isPremium(): Boolean? = withContext(ioDispatcher) {
-        withTimeoutOrNull(planTimeoutMillis) { receiptApiService.getUsage() }
-            ?.plan
-            ?.equals(PREMIUM_PLAN, ignoreCase = true)
+        try {
+            withTimeoutOrNull(planTimeoutMillis) { premiumRepository.status().isPremium }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            logger.warn(TAG, "Could not read the plan before deleting the account", e)
+            null
+        }
     }
 
     suspend fun execute(): Result = withContext(ioDispatcher) {
@@ -97,7 +103,6 @@ class DeleteAccountUseCase(
 
     private companion object {
         const val TAG = "DeleteAccountUseCase"
-        const val PREMIUM_PLAN = "PREMIUM"
 
         // The confirmation waits on this; past it the dialog warns about the subscription anyway
         const val PLAN_TIMEOUT_MILLIS = 5_000L

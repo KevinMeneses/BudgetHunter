@@ -29,7 +29,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
-import kotlin.test.assertNull
 
 /** The client side of `POST /api/receipts/extract`: what is sent and how every answer is read. */
 class ReceiptApiServiceTest {
@@ -154,24 +153,5 @@ class ReceiptApiServiceTest {
     fun `a request over the deadline is TIMEOUT`() = runTest {
         val result = service(body = "{}", delayMillis = 5_000, timeoutMillis = 100).extract("QUJD", "image/jpeg", today)
         assertEquals(AiFailureReason.TIMEOUT, assertIs<AiExtractionResult.Failure>(result).reason)
-    }
-
-    @Test
-    fun `getUsage reads the plan`() = runTest {
-        val read = service(body = usage).getUsage()
-
-        assertEquals(HttpMethod.Get, lastRequest?.method)
-        assertEquals(ApiEndpoints.RECEIPTS_USAGE, lastRequest?.url?.encodedPath)
-        assertEquals("FREE", read?.plan)
-    }
-
-    @Test
-    fun `getUsage is null when the server refuses`() = runTest {
-        assertNull(service(status = HttpStatusCode.Unauthorized, body = "").getUsage())
-    }
-
-    @Test
-    fun `getUsage is null without a connection`() = runTest {
-        assertNull(service(failWith = IOException("offline")).getUsage())
     }
 }
