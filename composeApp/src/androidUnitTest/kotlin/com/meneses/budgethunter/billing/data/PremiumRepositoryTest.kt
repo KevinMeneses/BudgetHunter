@@ -4,11 +4,11 @@ import com.meneses.budgethunter.billing.domain.BillingStatus
 import com.meneses.budgethunter.billing.domain.PremiumOffer
 import com.meneses.budgethunter.billing.domain.PremiumPeriod
 import com.meneses.budgethunter.billing.domain.PurchaseOutcome
-import com.meneses.budgethunter.billing.domain.ScanUsage
+import com.meneses.budgethunter.billing.domain.Allowance
 import com.meneses.budgethunter.billing.domain.StoreBilling
 import com.meneses.budgethunter.billing.domain.StoreBillingException
 import com.meneses.budgethunter.billing.domain.StorePurchaseResult
-import com.meneses.budgethunter.commons.data.network.models.AiUsageResponse
+import com.meneses.budgethunter.commons.data.network.models.AiUsageOverviewResponse
 import com.meneses.budgethunter.commons.data.network.models.BillingStatusResponse
 import com.meneses.budgethunter.commons.data.sync.NoOpLogger
 import io.mockk.coEvery
@@ -21,6 +21,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 
 class PremiumRepositoryTest {
 
@@ -120,10 +121,21 @@ class PremiumRepositoryTest {
     }
 
     @Test
-    fun `scan usage is read from the receipts endpoint`() = runTest {
-        coEvery { api.receiptUsage() } returns AiUsageResponse("FREE", "2026-11", 3, 10, 7, "2026-12-01")
+    fun `ai usage reads both allowances, and a feature off on the server has none`() = runTest {
+        coEvery { api.aiUsage() } returns AiUsageOverviewResponse(
+            plan = "FREE",
+            period = "2026-11",
+            receiptScansUsed = 3,
+            receiptScansLimit = 10,
+            receiptScansRemaining = 7,
+            resetsOn = "2026-12-01"
+        )
 
-        assertEquals(ScanUsage(used = 3, limit = 10, remaining = 7, resetsOn = "2026-12-01"), repository.scanUsage())
+        val usage = repository.aiUsage()
+
+        assertEquals(Allowance(used = 3, limit = 10, remaining = 7), usage.receiptScans)
+        assertNull(usage.categorizations)
+        assertEquals("2026-12-01", usage.resetsOn)
     }
 
     @Test

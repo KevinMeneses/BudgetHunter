@@ -13,7 +13,8 @@ import com.meneses.budgethunter.billing.domain.BillingStatus
 import com.meneses.budgethunter.billing.domain.PremiumOffer
 import com.meneses.budgethunter.billing.domain.PremiumPeriod
 import com.meneses.budgethunter.billing.domain.PurchaseOutcome
-import com.meneses.budgethunter.billing.domain.ScanUsage
+import com.meneses.budgethunter.billing.domain.AiUsage
+import com.meneses.budgethunter.billing.domain.Allowance
 import com.meneses.budgethunter.billing.domain.StoreBillingException
 import com.meneses.budgethunter.commons.data.sync.NoOpLogger
 import io.mockk.coEvery
@@ -45,8 +46,8 @@ class PremiumViewModelTest {
 
     private val free = BillingStatus(isPremium = false, premiumUntil = null)
     private val premium = BillingStatus(isPremium = true, premiumUntil = "2026-12-07T10:00:00Z")
-    private val freeUsage = ScanUsage(used = 10, limit = 10, remaining = 0, resetsOn = "2026-12-01")
-    private val premiumUsage = ScanUsage(used = 10, limit = 200, remaining = 190, resetsOn = "2026-12-01")
+    private val freeUsage = AiUsage(Allowance(10, 10, 0), Allowance(20, 50, 30), resetsOn = "2026-12-01")
+    private val premiumUsage = AiUsage(Allowance(10, 200, 190), Allowance(20, 1000, 980), resetsOn = "2026-12-01")
     private val annual = PremiumOffer("\$rc_annual", PremiumPeriod.ANNUAL, "COP 59.900", freeTrialDays = 7)
 
     @BeforeTest
@@ -54,7 +55,7 @@ class PremiumViewModelTest {
         Dispatchers.setMain(testDispatcher)
         every { repository.canPurchase } returns true
         coEvery { repository.status() } returns free
-        coEvery { repository.scanUsage() } returns freeUsage
+        coEvery { repository.aiUsage() } returns freeUsage
         coEvery { repository.offers() } returns listOf(annual)
     }
 
@@ -106,7 +107,7 @@ class PremiumViewModelTest {
 
     @Test
     fun `a failing usage call still shows the plan and the plans for sale`() = runTest(testDispatcher) {
-        coEvery { repository.scanUsage() } throws BillingApiException(503, "HTTP 503")
+        coEvery { repository.aiUsage() } throws BillingApiException(503, "HTTP 503")
 
         val viewModel = viewModel()
         advanceUntilIdle()
@@ -172,7 +173,7 @@ class PremiumViewModelTest {
         coEvery { repository.purchase("\$rc_annual") } returns PurchaseOutcome.Purchased(premium)
         val viewModel = viewModel()
         advanceUntilIdle()
-        coEvery { repository.scanUsage() } returns premiumUsage
+        coEvery { repository.aiUsage() } returns premiumUsage
 
         viewModel.sendIntent(PremiumIntent.Purchase("\$rc_annual"))
         advanceUntilIdle()

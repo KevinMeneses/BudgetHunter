@@ -169,7 +169,7 @@ class PremiumViewModel(
     }
 
     private suspend fun usageOrNull() = try {
-        premiumRepository.scanUsage()
+        premiumRepository.aiUsage()
     } catch (e: CancellationException) {
         throw e
     } catch (e: Exception) {
@@ -180,7 +180,7 @@ class PremiumViewModel(
     /** The premium allowance replaces the free one as soon as the plan changes. */
     private suspend fun refreshUsage() {
         try {
-            val usage = premiumRepository.scanUsage()
+            val usage = premiumRepository.aiUsage()
             _uiState.update { it.copy(usage = usage) }
         } catch (e: CancellationException) {
             throw e

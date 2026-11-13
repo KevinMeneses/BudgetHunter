@@ -59,13 +59,14 @@ class BillingApiServiceTest {
     }
 
     @Test
-    fun `receipt usage reads this month's scans`() = runTest {
+    fun `ai usage reads both monthly counters`() = runTest {
         val usage = service(
-            body = """{"plan":"FREE","period":"2026-11","receiptScansUsed":3,"receiptScansLimit":10,"receiptScansRemaining":7,"resetsOn":"2026-12-01"}"""
-        ).receiptUsage()
+            body = """{"plan":"FREE","period":"2026-11","receiptScansUsed":3,"receiptScansLimit":10,"receiptScansRemaining":7,"categorizedEntriesUsed":12,"categorizedEntriesLimit":50,"categorizedEntriesRemaining":38,"resetsOn":"2026-12-01"}"""
+        ).aiUsage()
 
         assertEquals(7, usage.receiptScansRemaining)
-        assertEquals(ApiEndpoints.RECEIPTS_USAGE, lastRequest?.url?.encodedPath)
+        assertEquals(38, usage.categorizedEntriesRemaining)
+        assertEquals(ApiEndpoints.AI_USAGE, lastRequest?.url?.encodedPath)
     }
 
     @Test

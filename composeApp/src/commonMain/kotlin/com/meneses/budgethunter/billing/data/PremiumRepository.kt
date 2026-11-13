@@ -3,7 +3,8 @@ package com.meneses.budgethunter.billing.data
 import com.meneses.budgethunter.billing.domain.BillingStatus
 import com.meneses.budgethunter.billing.domain.PremiumOffer
 import com.meneses.budgethunter.billing.domain.PurchaseOutcome
-import com.meneses.budgethunter.billing.domain.ScanUsage
+import com.meneses.budgethunter.billing.domain.AiUsage
+import com.meneses.budgethunter.billing.domain.Allowance
 import com.meneses.budgethunter.billing.domain.StoreBilling
 import com.meneses.budgethunter.billing.domain.StorePurchaseResult
 import com.meneses.budgethunter.commons.data.network.models.BillingStatusResponse
@@ -35,14 +36,20 @@ class PremiumRepository(
     suspend fun status(): BillingStatus = billingApi.status().toStatus()
 
     /** @throws BillingApiException when the server cannot be asked */
-    suspend fun scanUsage(): ScanUsage = billingApi.receiptUsage().let {
-        ScanUsage(
-            used = it.receiptScansUsed,
-            limit = it.receiptScansLimit,
-            remaining = it.receiptScansRemaining,
+    suspend fun aiUsage(): AiUsage = billingApi.aiUsage().let {
+        AiUsage(
+            receiptScans = allowance(it.receiptScansUsed, it.receiptScansLimit, it.receiptScansRemaining),
+            categorizations = allowance(
+                it.categorizedEntriesUsed,
+                it.categorizedEntriesLimit,
+                it.categorizedEntriesRemaining
+            ),
             resetsOn = it.resetsOn
         )
     }
+
+    private fun allowance(used: Int?, limit: Int?, remaining: Int?): Allowance? =
+        if (used != null && limit != null && remaining != null) Allowance(used, limit, remaining) else null
 
     /**
      * @throws BillingApiException when the server cannot be asked

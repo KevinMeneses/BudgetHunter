@@ -14,5 +14,11 @@ data class CategorizeEntriesResponse(
      * Entries still without a category afterwards: ones nobody could place, or that could not be
      * asked about yet because the AI provider's quota ran out. Asking again later retries them.
      */
-    val pending: Long
+    val pending: Long,
+
+    /**
+     * True when some entries were left waiting because the account's monthly AI categorizations ran out (the
+     * keyword rules still applied). Absent on older servers.
+     */
+    val quotaExceeded: Boolean = false
 )

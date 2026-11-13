@@ -34,6 +34,9 @@ object ApiEndpoints {
     const val BILLING_STATUS = "/api/billing/status"
     const val BILLING_SYNC = "/api/billing/sync"
 
+    // Every monthly AI allowance (receipt scans and categorizations)
+    const val AI_USAGE = "/api/ai/usage"
+
     // Collaborator endpoints
     fun budgetCollaborators(budgetId: Long) = "/api/budgets/$budgetId/collaborators"
     fun budgetCollaborator(budgetId: Long, encodedEmail: String) = "/api/budgets/$budgetId/collaborators/$encodedEmail"

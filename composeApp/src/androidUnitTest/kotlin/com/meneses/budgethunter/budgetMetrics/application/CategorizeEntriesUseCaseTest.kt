@@ -57,6 +57,16 @@ class CategorizeEntriesUseCaseTest {
     }
 
     @Test
+    fun `a run that used up the monthly AI categorizations says so`() = runTest {
+        coEvery { apiService.categorizeEntries(10L) } returns
+            Result.success(CategorizeEntriesResponse(categorized = 2, pending = 5, quotaExceeded = true))
+
+        val outcome = useCase.execute(budget)
+
+        assertEquals(CategorizationOutcome.Done(categorized = 2, pending = 5, quotaExceeded = true), outcome)
+    }
+
+    @Test
     fun `a push that fails stops before the server is called`() = runTest {
         val error = IllegalStateException("offline")
         coEvery { entrySyncManager.syncPendingEntries(1) } returns SyncResult.Failure(error)

@@ -45,6 +45,7 @@ import budgethunter.composeapp.generated.resources.come_back
 import budgethunter.composeapp.generated.resources.premium_active_title
 import budgethunter.composeapp.generated.resources.premium_active_until
 import budgethunter.composeapp.generated.resources.premium_benefit_more
+import budgethunter.composeapp.generated.resources.premium_categorizations_left
 import budgethunter.composeapp.generated.resources.premium_benefit_scans
 import budgethunter.composeapp.generated.resources.premium_benefit_support
 import budgethunter.composeapp.generated.resources.premium_fine_print
@@ -65,11 +66,13 @@ import budgethunter.composeapp.generated.resources.premium_scans_resets
 import budgethunter.composeapp.generated.resources.premium_subtitle
 import budgethunter.composeapp.generated.resources.premium_title
 import budgethunter.composeapp.generated.resources.premium_unavailable
+import budgethunter.composeapp.generated.resources.premium_usage_title
 import com.meneses.budgethunter.billing.application.PremiumIntent
 import com.meneses.budgethunter.billing.application.PremiumState
 import com.meneses.budgethunter.billing.domain.PremiumOffer
 import com.meneses.budgethunter.billing.domain.PremiumPeriod
-import com.meneses.budgethunter.billing.domain.ScanUsage
+import com.meneses.budgethunter.billing.domain.AiUsage
+import com.meneses.budgethunter.billing.domain.Allowance
 import com.meneses.budgethunter.commons.ui.AppBar
 import com.meneses.budgethunter.commons.ui.LoadingOverlay
 import com.meneses.budgethunter.commons.ui.LoadingScreen
@@ -219,26 +222,38 @@ object PremiumScreen {
     }
 
     @Composable
-    private fun UsageCard(usage: ScanUsage) {
+    private fun UsageCard(usage: AiUsage) {
         Card(modifier = Modifier.fillMaxWidth()) {
             Column(
                 modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
-                    text = stringResource(Res.string.premium_scans_left, usage.remaining, usage.limit),
+                    text = stringResource(Res.string.premium_usage_title),
                     style = MaterialTheme.typography.titleMedium
                 )
-                LinearProgressIndicator(
-                    progress = { if (usage.limit > 0) usage.used.toFloat() / usage.limit else 1f },
-                    modifier = Modifier.fillMaxWidth()
-                )
+                usage.receiptScans?.let { AllowanceRow(Res.string.premium_scans_left, it) }
+                usage.categorizations?.let { AllowanceRow(Res.string.premium_categorizations_left, it) }
                 Text(
                     text = stringResource(Res.string.premium_scans_resets, shortDateLabel(usage.resetsOn)),
                     style = MaterialTheme.typography.bodySmall,
                     color = AppColors.onSurfaceVariant
                 )
             }
+        }
+    }
+
+    @Composable
+    private fun AllowanceRow(text: StringResource, allowance: Allowance) {
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(
+                text = stringResource(text, allowance.remaining, allowance.limit),
+                style = MaterialTheme.typography.bodyMedium
+            )
+            LinearProgressIndicator(
+                progress = { if (allowance.limit > 0) allowance.used.toFloat() / allowance.limit else 1f },
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 

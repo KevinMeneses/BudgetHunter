@@ -1,7 +1,7 @@
 package com.meneses.budgethunter.billing.application
 
 import com.meneses.budgethunter.billing.domain.PremiumOffer
-import com.meneses.budgethunter.billing.domain.ScanUsage
+import com.meneses.budgethunter.billing.domain.AiUsage
 import org.jetbrains.compose.resources.StringResource
 
 data class PremiumState(
@@ -10,7 +10,7 @@ data class PremiumState(
     val loadFailed: Boolean = false,
     val isPremium: Boolean = false,
     val premiumUntil: String? = null,
-    val usage: ScanUsage? = null,
+    val usage: AiUsage? = null,
     val offers: List<PremiumOffer> = emptyList(),
     /** False when this build or platform cannot sell; the plans are then not shown. */
     val canPurchase: Boolean = false,

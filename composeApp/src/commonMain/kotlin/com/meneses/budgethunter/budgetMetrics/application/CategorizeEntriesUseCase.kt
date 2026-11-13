@@ -38,7 +38,7 @@ class CategorizeEntriesUseCase(
         // are computed from, which would otherwise catch up on their own a moment later.
         budgetEntryLocalDataSource.selectAllByBudgetId(budget.id.toLong()).first()
 
-        return CategorizationOutcome.Done(response.categorized, response.pending)
+        return CategorizationOutcome.Done(response.categorized, response.pending, response.quotaExceeded)
     }
 
     /**

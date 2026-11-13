@@ -496,9 +496,9 @@
     <string name="premium_see">Ver Premium</string>
     <string name="premium_active_title">Tienes Premium</string>
     <string name="premium_active_until">Se renueva o termina el %1$s</string>
-    <string name="premium_scans_left">Te quedan %1$d de %2$d escaneos de recibos este mes</string>
+    <string name="premium_scans_left">Te quedan %1$d de %2$d escaneos de recibos</string>
     <string name="premium_scans_resets">Se renuevan el %1$s</string>
-    <string name="premium_benefit_scans">Muchos más escaneos de recibos con IA cada mes</string>
+    <string name="premium_benefit_scans">Muchos más escaneos de recibos y categorizaciones con IA cada mes</string>
     <string name="premium_benefit_more">Las nuevas funciones con IA a medida que lleguen</string>
     <string name="premium_benefit_support">Apoyas una app hecha en Colombia, sin anuncios</string>
     <string name="premium_plan_monthly">Mensual</string>
@@ -531,4 +531,7 @@
     <string name="delete_account_subscription_unknown">Si tienes una suscripción Premium, NO se cancela al eliminar la cuenta. Cancélala en %1$s para que no te sigan cobrando.</string>
     <string name="manage_subscription">Gestionar suscripción en %1$s</string>
     <string name="delete_account_failed">No se pudo eliminar la cuenta. Revisa tu conexión e inténtalo de nuevo</string>
+    <string name="premium_usage_title">Tu IA este mes</string>
+    <string name="premium_categorizations_left">Te quedan %1$d de %2$d categorizaciones con IA</string>
+    <string name="categorize_quota_exceeded">Se categorizaron %1$d. Se acabaron tus categorizaciones con IA de este mes; %2$d siguen sin categoría</string>
 </resources>

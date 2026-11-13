@@ -446,7 +446,8 @@ fun BudgetHunterNavigation() {
                                 handle[METRICS_FILTER_CATEGORY_KEY] = category.name
                             }
                         navController.popBackStackOnce(backStackEntry)
-                    }
+                    },
+                    showPremium = { navController.navigateOnce(PremiumScreen) }
                 )
             }
 

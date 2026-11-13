@@ -10,8 +10,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -19,6 +21,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import budgethunter.composeapp.generated.resources.Res
+import budgethunter.composeapp.generated.resources.premium_see
+import budgethunter.composeapp.generated.resources.categorize_quota_exceeded
 import budgethunter.composeapp.generated.resources.categorize_ai_off
 import budgethunter.composeapp.generated.resources.categorize_already_running
 import budgethunter.composeapp.generated.resources.categorize_done
@@ -46,15 +50,24 @@ data class BudgetMetricsScreen(val budget: Budget) {
         uiState: BudgetMetricsState,
         onIntent: (BudgetMetricsIntent) -> Unit,
         goBack: () -> Unit,
-        showCategoryEntries: (BudgetEntry.Category, BudgetEntry.Type) -> Unit
+        showCategoryEntries: (BudgetEntry.Category, BudgetEntry.Type) -> Unit,
+        showPremium: () -> Unit
     ) {
         val snackbarHostState = remember { SnackbarHostState() }
         val outcome = uiState.categorizationOutcome
         if (outcome != null) {
             val message = outcome.toMessage()
+            // Out of AI categorizations this month: the notice leads to the paywall
+            val offersPremium = outcome is CategorizationOutcome.Done && outcome.quotaExceeded
+            val action = if (offersPremium) stringResource(Res.string.premium_see) else null
             LaunchedEffect(outcome) {
-                snackbarHostState.showSnackbar(message)
+                val result = snackbarHostState.showSnackbar(
+                    message = message,
+                    actionLabel = action,
+                    duration = if (action != null) SnackbarDuration.Long else SnackbarDuration.Short
+                )
                 onIntent(BudgetMetricsIntent.OutcomeShown)
+                if (result == SnackbarResult.ActionPerformed) showPremium()
             }
         }
 
@@ -128,9 +141,11 @@ private fun TypeSelector(
 
 @Composable
 private fun CategorizationOutcome.toMessage(): String = when (this) {
-    is CategorizationOutcome.Done ->
-        if (pending > 0) stringResource(Res.string.categorize_done_pending, categorized, pending)
-        else stringResource(Res.string.categorize_done, categorized)
+    is CategorizationOutcome.Done -> when {
+        quotaExceeded -> stringResource(Res.string.categorize_quota_exceeded, categorized, pending)
+        pending > 0 -> stringResource(Res.string.categorize_done_pending, categorized, pending)
+        else -> stringResource(Res.string.categorize_done, categorized)
+    }
     CategorizationOutcome.AlreadyRunning -> stringResource(Res.string.categorize_already_running)
     CategorizationOutcome.AiOff -> stringResource(Res.string.categorize_ai_off)
     is CategorizationOutcome.Failed ->
