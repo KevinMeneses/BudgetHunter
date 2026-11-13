@@ -496,7 +496,7 @@
     <string name="premium_see">See Premium</string>
     <string name="premium_active_title">You have Premium</string>
     <string name="premium_active_until">Renews or ends on %1$s</string>
-    <string name="premium_scans_left">%1$d of %2$d receipt scans left</string>
+    <string name="premium_scans_left">%1$s of %2$s receipt scans left</string>
     <string name="premium_scans_resets">They renew on %1$s</string>
     <string name="premium_benefit_scans">Many more receipt scans and AI categorizations every month</string>
     <string name="premium_benefit_more">The new AI features as they arrive</string>
@@ -532,6 +532,9 @@
     <string name="manage_subscription">Manage subscription in %1$s</string>
     <string name="delete_account_failed">Could not delete your account. Check your connection and try again</string>
     <string name="premium_usage_title">Your AI this month</string>
-    <string name="premium_categorizations_left">%1$d of %2$d AI categorizations left</string>
+    <string name="premium_categorizations_left">%1$s of %2$s AI categorizations left</string>
     <string name="categorize_quota_exceeded">%1$d categorized. You used up this month's AI categorizations; %2$d are still uncategorized</string>
+    <string name="number_group_separator">,</string>
+    <string name="premium_check_again">Check again</string>
+    <string name="premium_still_processing">Not confirmed yet. Premium will be active in a few minutes.</string>
 </resources>

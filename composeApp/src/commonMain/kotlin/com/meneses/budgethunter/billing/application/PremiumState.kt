@@ -28,5 +28,8 @@ sealed interface PremiumIntent {
     data object Load : PremiumIntent
     data class Purchase(val offerId: String) : PremiumIntent
     data object Restore : PremiumIntent
+
+    /** Ask the server again whether a purchase it had not applied has arrived. */
+    data object CheckAgain : PremiumIntent
     data object DismissMessage : PremiumIntent
 }

@@ -25,6 +25,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -42,6 +43,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import budgethunter.composeapp.generated.resources.Res
 import budgethunter.composeapp.generated.resources.come_back
+import budgethunter.composeapp.generated.resources.premium_check_again
+import budgethunter.composeapp.generated.resources.number_group_separator
 import budgethunter.composeapp.generated.resources.premium_active_title
 import budgethunter.composeapp.generated.resources.premium_active_until
 import budgethunter.composeapp.generated.resources.premium_benefit_more
@@ -156,7 +159,16 @@ object PremiumScreen {
 
             when {
                 uiState.isPremium -> if (uiState.canPurchase) ManageButton()
-                uiState.isAwaitingServer -> Notice(Res.string.premium_processing)
+                uiState.isAwaitingServer -> {
+                    Notice(Res.string.premium_processing)
+                    OutlinedButton(
+                        onClick = { onIntent(PremiumIntent.CheckAgain) },
+                        enabled = !uiState.isWorking,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(stringResource(Res.string.premium_check_again))
+                    }
+                }
                 else -> {
                     Benefits()
                     Plans(uiState = uiState, onIntent = onIntent)
@@ -245,13 +257,27 @@ object PremiumScreen {
 
     @Composable
     private fun AllowanceRow(text: StringResource, allowance: Allowance) {
+        val separator = stringResource(Res.string.number_group_separator)
+        // What is left, emptying as it is used; low ones in the error color
+        val left = if (allowance.limit > 0) allowance.remaining.toFloat() / allowance.limit else 0f
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(
-                text = stringResource(text, allowance.remaining, allowance.limit),
+                text = stringResource(
+                    text,
+                    allowance.remaining.grouped(separator),
+                    allowance.limit.grouped(separator)
+                ),
                 style = MaterialTheme.typography.bodyMedium
             )
             LinearProgressIndicator(
-                progress = { if (allowance.limit > 0) allowance.used.toFloat() / allowance.limit else 1f },
+                progress = { left.coerceIn(0f, 1f) },
+                color = if (left <= LOW_ALLOWANCE) AppColors.error else ProgressIndicatorDefaults.linearColor,
+                // Tinted too, so an allowance used up (an empty bar) still reads as "none left"
+                trackColor = if (left <= LOW_ALLOWANCE) {
+                    AppColors.error.copy(alpha = LOW_TRACK_ALPHA)
+                } else {
+                    ProgressIndicatorDefaults.linearTrackColor
+                },
                 modifier = Modifier.fillMaxWidth()
             )
         }
@@ -380,4 +406,14 @@ object PremiumScreen {
     }
 
     private const val ISO_DATE_LENGTH = 10
+
+    // A fifth or less left: the bar turns to the error color
+    private const val LOW_ALLOWANCE = 0.2f
+    private const val LOW_TRACK_ALPHA = 0.25f
+
+    /** 1000 -> "1.000" (es) / "1,000" (en). */
+    private fun Int.grouped(separator: String): String =
+        toString().reversed().chunked(DIGITS_PER_GROUP).joinToString(separator).reversed()
+
+    private const val DIGITS_PER_GROUP = 3
 }

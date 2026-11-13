@@ -5,6 +5,7 @@ import budgethunter.composeapp.generated.resources.premium_error_purchase
 import budgethunter.composeapp.generated.resources.premium_pending
 import budgethunter.composeapp.generated.resources.premium_processing
 import budgethunter.composeapp.generated.resources.premium_restore_none
+import budgethunter.composeapp.generated.resources.premium_still_processing
 import budgethunter.composeapp.generated.resources.premium_welcome
 import com.meneses.budgethunter.billing.application.PremiumIntent
 import com.meneses.budgethunter.billing.data.BillingApiException
@@ -167,6 +168,27 @@ class PremiumViewModelTest {
         assertTrue(viewModel.uiState.value.isAwaitingServer)
         assertEquals(emptyList(), viewModel.uiState.value.offers)
         coVerify(exactly = 1) { repository.offers() }
+    }
+
+    @Test
+    fun `check again applies premium once the server has it`() = runTest(testDispatcher) {
+        coEvery { repository.purchase(any()) } returns PurchaseOutcome.Purchased(null)
+        val viewModel = viewModel()
+        advanceUntilIdle()
+        viewModel.sendIntent(PremiumIntent.Purchase("x"))
+        runCurrent()
+
+        viewModel.sendIntent(PremiumIntent.CheckAgain)
+        runCurrent()
+        assertTrue(viewModel.uiState.value.isAwaitingServer)
+        assertEquals(Res.string.premium_still_processing, viewModel.uiState.value.message)
+
+        coEvery { repository.status() } returns premium
+        viewModel.sendIntent(PremiumIntent.CheckAgain)
+        runCurrent()
+        assertFalse(viewModel.uiState.value.isAwaitingServer)
+        assertTrue(viewModel.uiState.value.isPremium)
+        assertEquals(Res.string.premium_welcome, viewModel.uiState.value.message)
     }
 
     @Test

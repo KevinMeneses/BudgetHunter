@@ -9,6 +9,7 @@ import budgethunter.composeapp.generated.resources.premium_pending
 import budgethunter.composeapp.generated.resources.premium_processing
 import budgethunter.composeapp.generated.resources.premium_restore_none
 import budgethunter.composeapp.generated.resources.premium_restored
+import budgethunter.composeapp.generated.resources.premium_still_processing
 import budgethunter.composeapp.generated.resources.premium_welcome
 import com.meneses.budgethunter.billing.application.PremiumIntent
 import com.meneses.budgethunter.billing.application.PremiumState
@@ -54,6 +55,7 @@ class PremiumViewModel(
             PremiumIntent.Load -> load()
             is PremiumIntent.Purchase -> purchase(intent.offerId)
             PremiumIntent.Restore -> restore()
+            PremiumIntent.CheckAgain -> checkAgain()
             PremiumIntent.DismissMessage -> _uiState.update { it.copy(message = null) }
         }
     }
@@ -188,6 +190,30 @@ class PremiumViewModel(
                     refreshUsage()
                     return@launch
                 }
+            }
+        }
+    }
+
+    /** The user asks, from the "arrives in a few minutes" notice, whether the purchase has reached the server. */
+    private fun checkAgain() {
+        if (_uiState.value.isWorking || !_uiState.value.isAwaitingServer) return
+        _uiState.update { it.copy(isWorking = true) }
+        viewModelScope.launch {
+            val status = try {
+                premiumRepository.status()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                logger.warn(TAG, "Could not check the plan again", e)
+                null
+            }
+            if (status?.isPremium == true) {
+                awaitJob?.cancel()
+                applyPlan(status)
+                _uiState.update { it.copy(isWorking = false, isAwaitingServer = false, message = Res.string.premium_welcome) }
+                refreshUsage()
+            } else {
+                _uiState.update { it.copy(isWorking = false, message = Res.string.premium_still_processing) }
             }
         }
     }
