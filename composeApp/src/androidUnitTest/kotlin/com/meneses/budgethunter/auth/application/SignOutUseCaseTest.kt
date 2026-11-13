@@ -2,6 +2,7 @@ package com.meneses.budgethunter.auth.application
 
 import com.meneses.budgethunter.auth.data.AuthRepository
 import com.meneses.budgethunter.auth.data.AuthSession
+import com.meneses.budgethunter.billing.domain.StoreBilling
 import com.meneses.budgethunter.budgetEntry.data.BudgetEntryRepository
 import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.commons.data.PreferencesManager
@@ -26,6 +27,7 @@ class SignOutUseCaseTest {
     private val budgetEntryRepository = mockk<BudgetEntryRepository>(relaxed = true)
     private val preferencesManager = mockk<PreferencesManager>(relaxed = true)
     private val googleSignInManager = mockk<GoogleSignInManager>(relaxed = true)
+    private val storeBilling = mockk<StoreBilling>(relaxed = true)
 
     private val useCase = SignOutUseCase(
         authRepository = authRepository,
@@ -34,6 +36,7 @@ class SignOutUseCaseTest {
         budgetEntryRepository = budgetEntryRepository,
         preferencesManager = preferencesManager,
         googleSignInManager = googleSignInManager,
+        storeBilling = storeBilling,
         logger = NoOpLogger(),
         ioDispatcher = Dispatchers.Unconfined
     )
@@ -46,6 +49,7 @@ class SignOutUseCaseTest {
             authRepository.signOut()
             preferencesManager.setOfflineModeEnabled(false)
             googleSignInManager.signOut()
+            storeBilling.logOut()
             budgetRepository.clearAllData()
             budgetEntryRepository.clearAllData()
             preferencesManager.clearUserPreferences()

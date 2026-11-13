@@ -41,6 +41,7 @@ jobs:
         with:
           backend_url: ${{ secrets.BACKEND_URL_PROD }}
           google_server_client_id: ${{ secrets.GOOGLE_SERVER_CLIENT_ID }}
+          revenuecat_android_api_key: ${{ secrets.REVENUECAT_ANDROID_API_KEY }}
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
       - name: Build Release AAB

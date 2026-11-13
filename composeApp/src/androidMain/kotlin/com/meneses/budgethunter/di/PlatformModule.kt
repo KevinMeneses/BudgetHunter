@@ -1,12 +1,15 @@
 package com.meneses.budgethunter.di
 
 import android.content.Context
+import android.content.pm.ApplicationInfo
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import com.meneses.budgethunter.BuildKonfig
 import com.meneses.budgethunter.auth.data.AndroidSecureTokenStorage
 import com.meneses.budgethunter.auth.data.TokenStorage
+import com.meneses.budgethunter.billing.AndroidStoreBilling
+import com.meneses.budgethunter.billing.domain.StoreBilling
 import com.meneses.budgethunter.budgetEntry.data.ImageProcessor
 import com.meneses.budgethunter.budgetEntry.data.network.ReceiptApiService
 import com.meneses.budgethunter.budgetEntry.domain.AIImageProcessor
@@ -81,6 +84,19 @@ val androidPlatformModule = module {
             logger = get()
         )
     }
+
+    // Google Play purchases through RevenueCat; without REVENUECAT_ANDROID_API_KEY nothing can be bought
+    single<StoreBilling> {
+        AndroidStoreBilling(
+            context = get<Context>(),
+            apiKey = BuildKonfig.REVENUECAT_ANDROID_API_KEY,
+            // From the APK, not BuildKonfig.DEBUG: that one is true in release builds too unless the
+            // buildkonfig.flavor property is set, and the SDK's debug log would print purchase details.
+            debugLogs = (get<Context>().applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0,
+            logger = get()
+        )
+    }
+    single<AndroidStoreBilling> { get<StoreBilling>() as AndroidStoreBilling }
 
     // Keep concrete types available if needed elsewhere - use the same instance as the interface
     single<AndroidCameraManager> { get<CameraManager>() as AndroidCameraManager }

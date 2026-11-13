@@ -42,6 +42,7 @@ slf4j = "2.0.12"
 mockk = "1.13.5"
 ui-test-manifest = "1.9.1"
 robolectric = "4.13"
+revenuecat = "11.1.0"
 
 [libraries]
 # AndroidX Core
@@ -114,6 +115,9 @@ androidx-security-crypto = { group = "androidx.security", name = "security-crypt
 androidx-credentials = { group = "androidx.credentials", name = "credentials", version.ref = "androidx-credentials" }
 androidx-credentials-play-services-auth = { group = "androidx.credentials", name = "credentials-play-services-auth", version.ref = "androidx-credentials" }
 google-identity-googleid = { group = "com.google.android.libraries.identity.googleid", name = "googleid", version.ref = "googleid" }
+
+# Store purchases
+revenuecat-purchases = { group = "com.revenuecat.purchases", name = "purchases", version.ref = "revenuecat" }
 
 # Logging
 slf4j-simple = { group = "org.slf4j", name = "slf4j-simple", version.ref = "slf4j" }

@@ -14,6 +14,8 @@ import com.meneses.budgethunter.commons.platform.AndroidCameraManager
 import com.meneses.budgethunter.commons.platform.AndroidFilePickerManager
 import com.meneses.budgethunter.commons.platform.AndroidGoogleSignInManager
 import com.meneses.budgethunter.commons.platform.AndroidNotificationManager
+import com.meneses.budgethunter.billing.AndroidStoreBilling
+import com.meneses.budgethunter.billing.StoreActivityDelegate
 import com.meneses.budgethunter.commons.platform.CameraLauncherDelegate
 import com.meneses.budgethunter.commons.platform.FilePickerLauncherDelegate
 import com.meneses.budgethunter.commons.platform.GoogleSignInActivityDelegate
@@ -29,7 +31,8 @@ class MainActivity :
     CameraLauncherDelegate,
     FilePickerLauncherDelegate,
     PermissionsLauncherDelegate,
-    GoogleSignInActivityDelegate {
+    GoogleSignInActivityDelegate,
+    StoreActivityDelegate {
 
     // Activity result launchers
     private lateinit var takePhotoLauncher: ActivityResultLauncher<Uri>
@@ -41,6 +44,7 @@ class MainActivity :
     private val filePickerManager: AndroidFilePickerManager by inject()
     private val permissionsManager: PermissionsManager by inject()
     private val googleSignInManager: AndroidGoogleSignInManager by inject()
+    private val storeBilling: AndroidStoreBilling by inject()
     private val defaultBudgetLaunchRequest: DefaultBudgetLaunchRequest by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -65,6 +69,7 @@ class MainActivity :
         filePickerManager.setLauncherDelegate(this)
         permissionsManager.setLauncherDelegate(this)
         googleSignInManager.setActivityDelegate(this)
+        storeBilling.setActivityDelegate(this)
 
         // Not gated on savedInstanceState: when the process was killed in the background, the
         // system recreates the Activity with the tapped notification's intent AND a saved state.
@@ -98,10 +103,11 @@ class MainActivity :
         // The manager is a singleton, so a delegate left pointing here would leak this Activity
         // across every configuration change.
         googleSignInManager.setActivityDelegate(null)
+        storeBilling.setActivityDelegate(null)
         super.onDestroy()
     }
 
-    // Implement GoogleSignInActivityDelegate
+    // Implement GoogleSignInActivityDelegate and StoreActivityDelegate
     override fun currentActivity(): Activity = this
 
     // Implement CameraLauncherDelegate

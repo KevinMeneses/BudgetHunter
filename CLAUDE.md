@@ -18,7 +18,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Running the App
 - **Android**: Use Android Studio or `./gradlew :app:installDebug` to install on device/emulator
-- Debug builds read `BACKEND_URL` (and optionally `GOOGLE_SERVER_CLIENT_ID`) from local.properties. There is no AI key in
+- Debug builds read `BACKEND_URL` (and optionally `GOOGLE_SERVER_CLIENT_ID` and `REVENUECAT_ANDROID_API_KEY`) from local.properties. There is no AI key in
   the app: every AI call goes through the backend
 
 ## Architecture Overview
@@ -184,3 +184,11 @@ Freemium, with RevenueCat for the store purchases (in progress; plan and decisio
   10 by default). Premium: a much larger allowance (fair use) and, later, the other paid features.
 - The server is the source of truth: `users.plan` and the monthly count live there (`GET /api/receipts/usage`).
   The app never decides on its own whether something is allowed.
+- Purchases (`billing/`): `PremiumRepository` asks the backend for the account's RevenueCat id
+  (`GET /api/billing/status`, a random id, never the email), logs the store in with it before every offer list,
+  purchase and restore (so a purchase cannot land on the previous account), and after buying or restoring calls
+  `POST /api/billing/sync` so premium applies at once (if that fails the webhook applies it a moment later).
+  `StoreBilling` is the platform side: `AndroidStoreBilling` uses RevenueCat's Android SDK (`com.revenuecat.purchases`,
+  configured lazily with the public `goog_` key from `REVENUECAT_ANDROID_API_KEY`; empty = `isAvailable` false and
+  nothing can be bought). iOS has `UnavailableStoreBilling` until the iOS launch. Sign out logs the store out.
+  The purchase sheet needs the Activity, handed over by `MainActivity` like Google sign-in.

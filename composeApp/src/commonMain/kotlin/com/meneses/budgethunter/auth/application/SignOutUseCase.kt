@@ -2,6 +2,7 @@ package com.meneses.budgethunter.auth.application
 
 import com.meneses.budgethunter.auth.data.AuthRepository
 import com.meneses.budgethunter.auth.data.AuthSession
+import com.meneses.budgethunter.billing.domain.StoreBilling
 import com.meneses.budgethunter.budgetEntry.data.BudgetEntryRepository
 import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.commons.data.PreferencesManager
@@ -25,6 +26,7 @@ class SignOutUseCase(
     private val budgetEntryRepository: BudgetEntryRepository,
     private val preferencesManager: PreferencesManager,
     private val googleSignInManager: GoogleSignInManager,
+    private val storeBilling: StoreBilling,
     private val logger: Logger,
     private val ioDispatcher: CoroutineDispatcher
 ) {
@@ -64,6 +66,8 @@ class SignOutUseCase(
             // Without this the platform keeps auto-selecting the last Google account, so the user
             // could never sign back in as somebody else.
             cleanUp("Google credential") { googleSignInManager.signOut() }
+            // The next account to buy on this device logs in with its own id anyway; this drops the cache
+            cleanUp("store account") { storeBilling.logOut() }
             // The budgets and entries belong to the account that just left
             val budgetsCleared = cleanUp("budgets") { budgetRepository.clearAllData() }
             val entriesCleared = cleanUp("entries") { budgetEntryRepository.clearAllData() }
