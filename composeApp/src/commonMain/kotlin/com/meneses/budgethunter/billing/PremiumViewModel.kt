@@ -39,6 +39,7 @@ class PremiumViewModel(
     val uiState = _uiState.asStateFlow()
 
     private var loadJob: Job? = null
+    private var awaitJob: Job? = null
 
     // Bumped whenever a purchase or a restore writes the plan, so a load that started before cannot put the
     // older plan back when it finishes
@@ -85,14 +86,16 @@ class PremiumViewModel(
                 _uiState.value.isPremium
             }
 
-            // The plans are only shown to whoever can buy them
-            val wantsOffers = premiumRepository.canPurchase && !isPremium
+            // The plans are only shown to whoever can buy them, and not while a purchase is still on its way
+            val wantsOffers = premiumRepository.canPurchase && !isPremium && !_uiState.value.isAwaitingServer
             val offers = if (wantsOffers) loadOffers() else emptyList()
             _uiState.update {
+                // A purchase or restore that landed meanwhile owns the plan (and cleared the plans for sale)
+                val stillCurrent = planVersion == version && !it.isAwaitingServer
                 it.copy(
                     isLoading = false,
-                    offers = offers.orEmpty(),
-                    offersFailed = wantsOffers && offers == null
+                    offers = if (stillCurrent) offers.orEmpty() else it.offers,
+                    offersFailed = stillCurrent && wantsOffers && offers == null
                 )
             }
         }
@@ -140,6 +143,7 @@ class PremiumViewModel(
 
     private fun restore() {
         if (_uiState.value.isWorking) return
+        awaitJob?.cancel()
         _uiState.update { it.copy(isWorking = true) }
         viewModelScope.launch {
             var nowPremium = false
@@ -154,17 +158,37 @@ class PremiumViewModel(
                 logger.warn(TAG, "Restore failed", e)
                 Res.string.premium_error_restore
             }
-            _uiState.update { it.copy(isWorking = false, message = message) }
+            _uiState.update { it.copy(isWorking = false, isAwaitingServer = false, message = message) }
             if (nowPremium) refreshUsage()
         }
     }
 
+    /**
+     * Paid, but the server has not applied it yet. The plans stay hidden (nothing to buy twice) while the plan is
+     * asked again a few times, further apart each time; leaving the screen or a restore stops it. If the webhook
+     * is slower still, the notice stays until the screen is opened again.
+     */
     private fun awaitServer() {
+        awaitJob?.cancel()
         _uiState.update { it.copy(isAwaitingServer = true, offers = emptyList()) }
-        viewModelScope.launch {
-            delay(SERVER_RECHECK_MILLIS)
-            _uiState.update { it.copy(isAwaitingServer = false) }
-            load()
+        awaitJob = viewModelScope.launch {
+            for (wait in SERVER_RECHECK_MILLIS) {
+                delay(wait)
+                val status = try {
+                    premiumRepository.status()
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    logger.warn(TAG, "Could not recheck the plan", e)
+                    continue
+                }
+                if (status.isPremium) {
+                    applyPlan(status)
+                    _uiState.update { it.copy(isAwaitingServer = false, message = Res.string.premium_welcome) }
+                    refreshUsage()
+                    return@launch
+                }
+            }
         }
     }
 
@@ -203,7 +227,7 @@ class PremiumViewModel(
     private companion object {
         const val TAG = "PremiumViewModel"
 
-        // The webhook usually lands within seconds of a purchase
-        const val SERVER_RECHECK_MILLIS = 15_000L
+        // The webhook usually lands within seconds of a purchase; asked again after these waits
+        val SERVER_RECHECK_MILLIS = listOf(5_000L, 15_000L, 30_000L, 60_000L)
     }
 }

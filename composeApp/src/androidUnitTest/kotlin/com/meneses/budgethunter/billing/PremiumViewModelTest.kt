@@ -155,6 +155,38 @@ class PremiumViewModelTest {
     }
 
     @Test
+    fun `while the server has not applied a purchase the plans stay hidden`() = runTest(testDispatcher) {
+        coEvery { repository.purchase(any()) } returns PurchaseOutcome.Purchased(null)
+        val viewModel = viewModel()
+        advanceUntilIdle()
+
+        viewModel.sendIntent(PremiumIntent.Purchase("x"))
+        advanceUntilIdle()
+
+        // Every recheck still saw FREE: the notice stays, nothing is offered again
+        assertTrue(viewModel.uiState.value.isAwaitingServer)
+        assertEquals(emptyList(), viewModel.uiState.value.offers)
+        coVerify(exactly = 1) { repository.offers() }
+    }
+
+    @Test
+    fun `plans that finish loading after a purchase are not shown again`() = runTest(testDispatcher) {
+        val slowOffers = CompletableDeferred<List<PremiumOffer>>()
+        coEvery { repository.offers() } coAnswers { slowOffers.await() }
+        coEvery { repository.purchase(any()) } returns PurchaseOutcome.Purchased(premium)
+        val viewModel = viewModel()
+        runCurrent()
+
+        viewModel.sendIntent(PremiumIntent.Purchase("x"))
+        runCurrent()
+        slowOffers.complete(listOf(annual))
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.isPremium)
+        assertEquals(emptyList(), viewModel.uiState.value.offers)
+    }
+
+    @Test
     fun `a store that cannot list the plans is told apart from a build that cannot sell`() = runTest(testDispatcher) {
         coEvery { repository.offers() } throws StoreBillingException("no network")
         val failing = viewModel()
