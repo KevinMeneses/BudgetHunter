@@ -488,4 +488,14 @@
     <string name="bank_may_repeat_movements">If it tells you about the same movement through several of these channels, it will be added once per channel</string>
     <string name="sms_permission_missing_title">SMS permission</string>
     <string name="sms_permission_missing_description">The permission to read your banks' SMS is missing. Tap to grant it</string>
+    <string name="delete_account">Delete account</string>
+    <string name="delete_account_title">Delete your account?</string>
+    <string name="delete_account_permanent">Your account will be deleted for good. This cannot be undone.</string>
+    <string name="delete_account_owned_budgets">• Shared budgets you own will pass to another member. Budgets you do not share with anyone will be deleted, with their expenses.</string>
+    <string name="delete_account_other_budgets">• You will leave other people's budgets. The expenses you added there will stay.</string>
+    <string name="delete_account_device">• The data on this device will be deleted too.</string>
+    <string name="delete_account_subscription_premium">Your Premium subscription is NOT cancelled when you delete your account. Cancel it in %1$s so you are not charged again.</string>
+    <string name="delete_account_subscription_unknown">If you have a Premium subscription, it is NOT cancelled when you delete your account. Cancel it in %1$s so you are not charged again.</string>
+    <string name="manage_subscription">Manage subscription in %1$s</string>
+    <string name="delete_account_failed">Could not delete your account. Check your connection and try again</string>
 </resources>

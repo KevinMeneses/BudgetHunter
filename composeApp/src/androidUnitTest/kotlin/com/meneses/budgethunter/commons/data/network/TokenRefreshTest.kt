@@ -9,9 +9,12 @@ import io.ktor.client.engine.mock.MockEngineConfig
 import io.ktor.client.engine.mock.MockRequestHandleScope
 import io.ktor.client.engine.mock.respond
 import io.ktor.client.engine.mock.respondError
+import io.ktor.client.plugins.auth.AuthCircuitBreaker
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.request.HttpRequestData
 import io.ktor.client.request.HttpResponseData
+import io.ktor.client.request.bearerAuth
+import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
@@ -140,6 +143,25 @@ class TokenRefreshTest {
         assertEquals(2, budgetCalls)
         assertEquals("new-auth", tokenStorage.auth)
         assertEquals("new-refresh", tokenStorage.refresh)
+        assertEquals(0, sessionExpiredCalls)
+    }
+
+    @Test
+    fun `a request opting out of the refresh keeps its own token and is not refreshed on 401`() = runTest {
+        val sent = mutableListOf<HttpRequestData>()
+        val client = createClient { request ->
+            sent += request
+            respondError(HttpStatusCode.Unauthorized)
+        }
+
+        val response = client.delete(ApiEndpoints.ME) {
+            attributes.put(AuthCircuitBreaker, Unit)
+            bearerAuth("own-token")
+        }
+
+        assertEquals(HttpStatusCode.Unauthorized, response.status)
+        assertEquals("Bearer own-token", sent.single().headers[HttpHeaders.Authorization])
+        assertEquals("old-auth", tokenStorage.auth)
         assertEquals(0, sessionExpiredCalls)
     }
 

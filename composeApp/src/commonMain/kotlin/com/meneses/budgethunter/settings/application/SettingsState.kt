@@ -48,8 +48,26 @@ data class SettingsState(
     val signOutLosesUnsyncedChanges: Boolean = false,
     val isSigningOut: Boolean = false,
     /** Why the last sign out failed; the user stays signed in and can try again. */
-    val signOutError: StringResource? = null
+    val signOutError: StringResource? = null,
+    /** True while the plan is asked for, before the delete confirmation shows. */
+    val isCheckingPlanForDeletion: Boolean = false,
+    val isDeleteAccountConfirmationVisible: Boolean = false,
+    /** Whether the confirmation warns that the store subscription is not cancelled with the account. */
+    val deleteAccountSubscriptionNotice: SubscriptionNotice = SubscriptionNotice.NONE,
+    val isDeletingAccount: Boolean = false,
+    /** Why the last deletion failed; the user stays signed in and can try again. */
+    val deleteAccountError: StringResource? = null
 ) {
+    enum class SubscriptionNotice {
+        NONE,
+
+        /** The account is premium: its subscription keeps being charged until cancelled in the store. */
+        PREMIUM,
+
+        /** The plan could not be read: the warning is shown as a possibility rather than skipped. */
+        UNKNOWN
+    }
+
     fun channelsOf(bank: BankSmsConfig): Set<ReadingChannel> = BankChannels.of(bank, bankChannels)
 
     /** Every channel some selected bank is read from: each needs its permission. */

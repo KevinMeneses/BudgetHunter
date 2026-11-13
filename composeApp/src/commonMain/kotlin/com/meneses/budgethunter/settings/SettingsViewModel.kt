@@ -3,9 +3,11 @@ package com.meneses.budgethunter.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import budgethunter.composeapp.generated.resources.Res
+import budgethunter.composeapp.generated.resources.delete_account_failed
 import budgethunter.composeapp.generated.resources.error_current_password_incorrect
 import budgethunter.composeapp.generated.resources.error_password_too_short
 import budgethunter.composeapp.generated.resources.sign_out_failed
+import com.meneses.budgethunter.auth.application.DeleteAccountUseCase
 import com.meneses.budgethunter.auth.application.SignOutUseCase
 import com.meneses.budgethunter.auth.data.AuthRepository
 import com.meneses.budgethunter.budgetList.data.BudgetRepository
@@ -14,6 +16,7 @@ import com.meneses.budgethunter.commons.data.PreferencesManager
 import com.meneses.budgethunter.commons.platform.PermissionsManager
 import com.meneses.budgethunter.settings.application.SettingsIntent
 import com.meneses.budgethunter.settings.application.SettingsState
+import com.meneses.budgethunter.settings.application.SettingsState.SubscriptionNotice
 import com.meneses.budgethunter.settings.application.SyncUserPreferencesUseCase
 import com.meneses.budgethunter.sms.application.IsNotificationReaderStoppedUseCase
 import com.meneses.budgethunter.sms.domain.BankChannels
@@ -36,6 +39,7 @@ class SettingsViewModel(
     private val authRepository: AuthRepository,
     private val syncUserPreferences: SyncUserPreferencesUseCase,
     private val signOutUseCase: SignOutUseCase,
+    private val deleteAccountUseCase: DeleteAccountUseCase,
     private val isNotificationReaderStopped: IsNotificationReaderStoppedUseCase,
     // Pushes outlive the screen: leaving Settings right after a toggle must not drop the save.
     private val applicationScope: CoroutineScope
@@ -82,6 +86,9 @@ class SettingsViewModel(
             is SettingsIntent.ToggleSignOutConfirmation -> toggleSignOutConfirmation(intent.show)
             is SettingsIntent.SignOut -> signOut()
             is SettingsIntent.DismissSignOutError -> _uiState.update { it.copy(signOutError = null) }
+            is SettingsIntent.ToggleDeleteAccountConfirmation -> toggleDeleteAccountConfirmation(intent.show)
+            is SettingsIntent.DeleteAccount -> deleteAccount()
+            is SettingsIntent.DismissDeleteAccountError -> _uiState.update { it.copy(deleteAccountError = null) }
         }
     }
 
@@ -126,6 +133,61 @@ class SettingsViewModel(
             _uiState.update { it.copy(signOutError = Res.string.sign_out_failed) }
         } finally {
             _uiState.update { it.copy(isSigningOut = false) }
+        }
+    }
+
+    // Like the sign out one: a cancel tapped while the plan is asked for must not reopen the dialog
+    private var deleteAccountConfirmationJob: Job? = null
+    private var deleteAccountJob: Job? = null
+
+    private fun toggleDeleteAccountConfirmation(show: Boolean) {
+        // Nothing to confirm while the account is already being deleted
+        if (show && deleteAccountJob?.isActive == true) return
+        deleteAccountConfirmationJob?.cancel()
+        if (!show) {
+            _uiState.update { it.copy(isDeleteAccountConfirmationVisible = false, isCheckingPlanForDeletion = false) }
+            return
+        }
+        _uiState.update { it.copy(isCheckingPlanForDeletion = true, deleteAccountError = null) }
+        deleteAccountConfirmationJob = viewModelScope.launch {
+            // Deleting the account does not cancel a store subscription. Unable to tell whether
+            // there is one, say it might be: a needless line costs less than months of charges.
+            val notice = when (deleteAccountUseCase.isPremium()) {
+                true -> SubscriptionNotice.PREMIUM
+                false -> SubscriptionNotice.NONE
+                null -> SubscriptionNotice.UNKNOWN
+            }
+            _uiState.update {
+                it.copy(
+                    isCheckingPlanForDeletion = false,
+                    isDeleteAccountConfirmationVisible = true,
+                    deleteAccountSubscriptionNotice = notice
+                )
+            }
+        }
+    }
+
+    // Outlives the screen like the sign out: once the server deleted the account, leaving Settings
+    // must not stop the device from being cleared. Navigation follows AuthSession on success and
+    // on a refused session, so only a failure has something to show here.
+    private fun deleteAccount() {
+        // One request at a time: a second tap while the first is under way is ignored
+        if (deleteAccountJob?.isActive == true) return
+        _uiState.update {
+            it.copy(isDeleteAccountConfirmationVisible = false, isDeletingAccount = true, deleteAccountError = null)
+        }
+        deleteAccountJob = applicationScope.launch {
+            try {
+                if (deleteAccountUseCase.execute() == DeleteAccountUseCase.Result.FAILED) {
+                    _uiState.update { it.copy(deleteAccountError = Res.string.delete_account_failed) }
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                _uiState.update { it.copy(deleteAccountError = Res.string.delete_account_failed) }
+            } finally {
+                _uiState.update { it.copy(isDeletingAccount = false) }
+            }
         }
     }
 

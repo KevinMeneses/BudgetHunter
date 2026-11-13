@@ -3,6 +3,7 @@ package com.meneses.budgethunter.di
 import com.meneses.budgethunter.BuildKonfig
 import com.meneses.budgethunter.auth.SignInViewModel
 import com.meneses.budgethunter.auth.SignUpViewModel
+import com.meneses.budgethunter.auth.application.DeleteAccountUseCase
 import com.meneses.budgethunter.auth.application.PrepareDataForAccountUseCase
 import com.meneses.budgethunter.auth.application.SignInWithGoogleUseCase
 import com.meneses.budgethunter.auth.application.SignOutUseCase
@@ -58,6 +59,17 @@ val authModule = module {
             preferencesManager = get(),
             googleSignInManager = get(),
             storeBilling = get(),
+            logger = get(),
+            ioDispatcher = get<CoroutineDispatcher>(named("IO"))
+        )
+    }
+
+    single<DeleteAccountUseCase> {
+        DeleteAccountUseCase(
+            authRepository = get<AuthRepository>(),
+            premiumRepository = get(),
+            signOutUseCase = get(),
+            authSession = get(),
             logger = get(),
             ioDispatcher = get<CoroutineDispatcher>(named("IO"))
         )

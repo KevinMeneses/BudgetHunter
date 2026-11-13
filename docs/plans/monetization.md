@@ -31,7 +31,9 @@ Companion changes in the backend repo: `receipts/` package, `users.plan`, `ai_us
    entitlement from RevenueCat's API into `users.plan` / `plan_expires_at`; `GET /api/billing/status`,
    `POST /api/billing/sync`. App: RevenueCat's Android SDK behind `StoreBilling` (not `purchases-kmp`: on iOS it
    needs RevenueCat's framework linked in Xcode, and iOS launches later), `PremiumRepository` (log in with the
-   backend's id before each store call, sync after buying or restoring), store log out on sign out.
+   backend's id before each store call, sync after buying or restoring), store log out on sign out. Deleting
+   the account runs the same sign out; it never cancels the store subscription, so its confirmation warns
+   premium accounts and links to the store's subscriptions page.
 3. **Paywall.** A screen opened from the 402 message and from settings, showing what premium includes, the
    prices from RevenueCat and the scans left (`GET /api/receipts/usage`). Show "N scans left" when few remain.
 4. **Categorization behind the plan.** Count categorized entries per month like receipts (free: a small number),
