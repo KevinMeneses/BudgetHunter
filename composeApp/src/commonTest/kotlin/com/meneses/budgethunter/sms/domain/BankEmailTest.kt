@@ -42,7 +42,7 @@ class BankEmailTest {
         )
 
         assertEquals("Realizaste una compra por \$20.000 en D1.", email.body)
-        assertEquals("Realizaste una compra por \$20.000 en D1", email.toNotification().description)
+        assertEquals("Realizaste una compra por \$20.000 en D1", email.toNotification(SupportedBanks.DAVIVIENDA).description)
     }
 
     @Test
@@ -52,7 +52,7 @@ class BankEmailTest {
             text = "Alertas y Notificaciones",
             bigText = "Alertas y Notificaciones\nBancolombia le informa Compra por \$50.000,00 en EXITO. Hora 10:12"
         )
-        val notification = email.toNotification()
+        val notification = email.toNotification(SupportedBanks.BANCOLOMBIA)
 
         val analysis = SmsTransactionParser.analyze(notification.message, SupportedBanks.BANCOLOMBIA)
 
@@ -60,6 +60,60 @@ class BankEmailTest {
         assertEquals("50000.00", analysis.amount)
         assertEquals(BudgetEntry.Type.OUTCOME, analysis.type)
         assertEquals("Bancolombia le informa Compra por \$50.000,00 en EXITO", notification.description)
+    }
+
+    @Test
+    fun `the advice under the movement does not hide it`() {
+        // A real Bancolombia email: its security tips mention the card's "código de seguridad",
+        // which alone marks a message as no movement
+        val email = BankEmail.fromNotification(
+            title = "alertasynotificaciones",
+            text = "Alertas y Notificaciones",
+            bigText = "Alertas y Notificaciones\n¡Listo!\nTodo salió bien con tus movimientos\n" +
+                "Bancolombia: Compraste COP57.200,00 en GENUINOS FOOD TERRA con tu T.Cred *2900, el 15/11/2026 " +
+                "a las 15:35. Si tienes dudas, encuentranos aqui: 6045109095 o 018000931987. Estamos cerca.\n" +
+                "Controla tu dinero y gestiona tus gastos. Usa Día a Día en la app Bancolombia.\n" +
+                "Tu seguridad es nuestra prioridad:\n•\nCuida tu usuario, clave, número de tarjeta de crédito, " +
+                "fecha de vencimiento y código de seguridad. No los compartas."
+        )
+        val notification = email.toNotification(SupportedBanks.BANCOLOMBIA)
+
+        val analysis = SmsTransactionParser.analyze(notification.message, SupportedBanks.BANCOLOMBIA)
+
+        assertIs<SmsAnalysis.Transaction>(analysis)
+        assertEquals("57200.00", analysis.amount)
+        assertEquals(BudgetEntry.Type.OUTCOME, analysis.type)
+        assertFalse(notification.message.contains("seguridad"))
+    }
+
+    @Test
+    fun `a movement refused before it is told stays ignored`() {
+        val email = BankEmail.fromNotification(
+            title = "Bancolombia",
+            text = "Alertas y Notificaciones",
+            bigText = "Alertas y Notificaciones\nTransacción rechazada. Compra por \$50.000,00 en EXITO. Hora 10:12"
+        )
+
+        val analysis = SmsTransactionParser.analyze(
+            email.toNotification(SupportedBanks.BANCOLOMBIA).message,
+            SupportedBanks.BANCOLOMBIA
+        )
+
+        assertEquals(SmsAnalysis.Ignored, analysis)
+    }
+
+    @Test
+    fun `an email with no movement is read whole`() {
+        val email = BankEmail.fromNotification(
+            title = "Bancolombia",
+            text = "Tu extracto",
+            bigText = "Tu extracto\nYa puedes consultar tu extracto. Recuerda no compartir tu clave."
+        )
+
+        assertEquals(
+            "Ya puedes consultar tu extracto. Recuerda no compartir tu clave.",
+            email.toNotification(SupportedBanks.BANCOLOMBIA).text
+        )
     }
 
     @Test

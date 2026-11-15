@@ -14,8 +14,22 @@ data class BankEmail(
      * Read like a bank app notification: the subject opens the message and the body, which says
      * where the money went ("Bancolombia le informa Compra por $50.000 en EXITO"), describes the
      * entry. Subjects are often generic ("Alertas y Notificaciones") and then only the body counts.
+     *
+     * The body is read only up to the sentence that completes the movement: what follows is the
+     * email's boilerplate (security tips, ads), whose words would mark the whole message as no
+     * movement, like the "código de seguridad" of a card in Bancolombia's tips. An email whose
+     * start is no movement is read whole, as before, so a refusal or a code told before the
+     * movement still drops it.
      */
-    fun toNotification(): BankNotification = BankNotification(title = subject, text = body)
+    fun toNotification(bankConfig: BankSmsConfig): BankNotification {
+        val movement = sentenceEnds(body)
+            .map { end -> body.substring(0, end) }
+            .firstOrNull { start ->
+                val message = BankNotification(title = subject, text = start).message
+                SmsTransactionParser.analyze(message, bankConfig) is SmsAnalysis.Transaction
+            }
+        return BankNotification(title = subject, text = movement ?: body)
+    }
 
     val isBlank: Boolean
         get() = subject.isBlank() && body.isBlank()
@@ -98,6 +112,19 @@ data class BankEmail(
                 domain.all { char -> char.isLetterOrDigit() || char == '.' || char == '-' }
             return domain.takeIf { isDomain }
         }
+
+        /**
+         * Where each sentence of [text] ends, its closing mark included, and the end of the text.
+         * A mark closes a sentence only before a space, so "COP57.200,00" and "T.Cred" stay whole.
+         */
+        private fun sentenceEnds(text: String): Sequence<Int> =
+            text.indices
+                .asSequence()
+                .filter { index -> text[index] in SENTENCE_ENDS && text.getOrNull(index + 1)?.isWhitespace() == true }
+                .map { index -> index + 1 }
+                .plus(text.length)
+
+        private val SENTENCE_ENDS = setOf('.', '!', '?')
 
         private val WHITESPACE = Regex("""\s+""")
     }

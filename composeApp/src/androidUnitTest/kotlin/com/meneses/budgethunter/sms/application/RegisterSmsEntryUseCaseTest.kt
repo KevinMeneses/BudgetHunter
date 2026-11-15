@@ -213,7 +213,7 @@ class RegisterSmsEntryUseCaseTest {
                 "TIENDA D1. Si no la reconoces llámanos."
         )
 
-        val result = registerSmsEntry.registerNotification(email.toNotification(), SupportedBanks.DAVIVIENDA)
+        val result = registerSmsEntry.registerNotification(email.toNotification(SupportedBanks.DAVIVIENDA), SupportedBanks.DAVIVIENDA)
 
         assertIs<SmsParseResult.Success>(result)
         assertEquals("35900", stored.captured.amount)
