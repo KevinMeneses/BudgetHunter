@@ -61,7 +61,7 @@ class ProcessSmsUseCase(
 
     override suspend fun processBankEmail(email: BankEmail, bankConfig: BankSmsConfig) {
         reportFailures {
-            when (val result = registerSmsEntry.registerNotification(email.toNotification(), bankConfig)) {
+            when (val result = registerSmsEntry.registerNotification(email.toNotification(bankConfig), bankConfig)) {
                 is SmsParseResult.Success -> notifyEntryAdded(result.entry)
                 // The movement was read but had nowhere to go: the user can fix that
                 SmsParseResult.NoDefaultBudget -> notifyFailure(result, email.body)

@@ -182,8 +182,9 @@ Type-safe navigation using Navigation Compose with serializable route objects. M
   address is dropped as a fake. Only banks without known domains, or apps that attach no address, fall back to the
   name (`BankSmsConfig.isSender`). The domains in `SupportedBanks` need checking against real emails: a wrong one
   drops that bank's real emails. Then subject and the start of the body (the expanded text without its first line,
-  the subject) are read like a bank app notification (`BankEmail.toNotification`); anything but a movement or a
-  missing default budget is dropped silently.
+  the subject) are read like a bank app notification (`BankEmail.toNotification`), only up to the sentence that
+  completes the movement: the footer's security tips ("código de seguridad") would otherwise mark it as no movement;
+  anything but a movement or a missing default budget is dropped silently.
 - iOS cannot read SMS: a Shortcuts automation (trigger "Mensaje") passes the text to the App Intent
   `RegisterExpenseFromMessageIntent` (iosApp/, also an App Shortcut), which calls
   `SmsShortcutEntryPoint` (iosMain) -> `RegisterSmsFromShortcutUseCase` and answers with a dialog.
