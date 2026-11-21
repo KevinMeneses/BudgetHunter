@@ -395,6 +395,7 @@ fun BudgetHunterNavigation() {
                     budgetEntryViewModel.events.collect { event ->
                         when (event) {
                             is BudgetEntryEvent.NavigateBack -> navController.popBackStackOnce(backStackEntry)
+                            is BudgetEntryEvent.OpenPremium -> navController.navigateOnce(PremiumScreen)
                             is BudgetEntryEvent.ShowNotification -> pendingNotification = event
                         }
                     }

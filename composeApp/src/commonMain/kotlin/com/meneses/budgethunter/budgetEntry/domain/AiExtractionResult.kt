@@ -1,12 +1,17 @@
 package com.meneses.budgethunter.budgetEntry.domain
 
+import com.meneses.budgethunter.billing.domain.Allowance
+
 /**
  * Outcome of asking the AI to extract a budget entry from an invoice.
  * Distinguishes why nothing was extracted so the UI can tell the user instead of failing silently.
  */
 sealed interface AiExtractionResult {
-    data class Success(val entry: BudgetEntry) : AiExtractionResult
-    data class Failure(val reason: AiFailureReason) : AiExtractionResult
+    /** This month's receipt scans after this one, as the server answered them; null when it did not say. */
+    val scans: Allowance?
+
+    data class Success(val entry: BudgetEntry, override val scans: Allowance? = null) : AiExtractionResult
+    data class Failure(val reason: AiFailureReason, override val scans: Allowance? = null) : AiExtractionResult
 }
 
 enum class AiFailureReason {

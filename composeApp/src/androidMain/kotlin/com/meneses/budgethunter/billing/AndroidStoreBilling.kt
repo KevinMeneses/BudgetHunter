@@ -134,7 +134,14 @@ class AndroidStoreBilling(
         if (!Purchases.isConfigured) {
             if (debugLogs) Purchases.logLevel = LogLevel.DEBUG
             // No appUserID here: logIn() always sets the account's id before anything is bought
-            Purchases.configure(PurchasesConfiguration.Builder(context, apiKey).build())
+            Purchases.configure(
+                PurchasesConfiguration.Builder(context, apiKey)
+                    // The SDK would otherwise collect device identifiers (advertising id, ...) for ad
+                    // attribution, which the app does not use; off, they are not collected and need not be
+                    // declared in Google Play's Data safety form
+                    .automaticDeviceIdentifierCollectionEnabled(false)
+                    .build()
+            )
         }
         return Purchases.sharedInstance
     }

@@ -1,9 +1,11 @@
 package com.meneses.budgethunter.budgetEntry.data.network
 
+import com.meneses.budgethunter.billing.domain.Allowance
 import com.meneses.budgethunter.budgetEntry.domain.AiExtractionResult
 import com.meneses.budgethunter.budgetEntry.domain.AiFailureReason
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
 import com.meneses.budgethunter.commons.data.network.ApiEndpoints
+import com.meneses.budgethunter.commons.data.network.models.AiUsageResponse
 import com.meneses.budgethunter.commons.data.network.models.ReceiptErrorResponse
 import com.meneses.budgethunter.commons.data.network.models.ReceiptExtractionRequest
 import com.meneses.budgethunter.commons.data.network.models.ReceiptExtractionResponse
@@ -56,13 +58,13 @@ class ReceiptApiService(
             val body = response.bodyAsText()
             when (val status = response.status.value) {
                 in 200..299 -> parseSuccess(body)
-                else -> AiExtractionResult.Failure(failureFor(status, body))
+                else -> failure(status, body)
             }
         } catch (e: CancellationException) {
             throw e
         } catch (e: ResponseException) {
             // Only reached when the client is configured with expectSuccess
-            AiExtractionResult.Failure(failureFor(e.response.status.value, e.response.bodyAsText()))
+            failure(e.response.status.value, e.response.bodyAsText())
         } catch (e: HttpRequestTimeoutException) {
             logger.warn(tag, "Receipt request timed out", e)
             AiExtractionResult.Failure(AiFailureReason.TIMEOUT)
@@ -82,7 +84,9 @@ class ReceiptApiService(
             logger.warn(tag, "Unreadable receipt response", e)
             return AiExtractionResult.Failure(AiFailureReason.INVALID_RESPONSE)
         }
-        if (!response.isReceipt) return AiExtractionResult.Failure(AiFailureReason.NOT_AN_INVOICE)
+        // The server counts the scan whatever it read, and answers the month's usage after it
+        val scans = response.usage?.toAllowance()
+        if (!response.isReceipt) return AiExtractionResult.Failure(AiFailureReason.NOT_AN_INVOICE, scans)
 
         val category = BudgetEntry.getAssignableCategories()
             .firstOrNull { it.name.equals(response.category?.trim(), ignoreCase = true) }
@@ -94,17 +98,27 @@ class ReceiptApiService(
                 description = response.description?.trim().orEmpty(),
                 category = category,
                 date = response.date?.trim()?.takeIf { ISO_DATE.matches(it) } ?: defaults.date
-            )
+            ),
+            scans
         )
     }
 
-    private fun failureFor(status: Int, body: String): AiFailureReason {
-        val code = try {
-            json.decodeFromString<ReceiptErrorResponse>(body).code
+    private fun failure(status: Int, body: String): AiExtractionResult.Failure {
+        val error = try {
+            json.decodeFromString<ReceiptErrorResponse>(body)
         } catch (_: Exception) {
-            ""
+            null
         }
+        val code = error?.code.orEmpty()
         logger.warn(tag, "Receipt not read: HTTP $status $code")
+        // A 402 says how many scans the plan has (none left); other errors may carry the usage too
+        return AiExtractionResult.Failure(failureFor(status, code), error?.usage?.toAllowance())
+    }
+
+    private fun AiUsageResponse.toAllowance() =
+        Allowance(used = receiptScansUsed, limit = receiptScansLimit, remaining = receiptScansRemaining)
+
+    private fun failureFor(status: Int, code: String): AiFailureReason {
         return when (status) {
             401 -> AiFailureReason.SIGN_IN_REQUIRED
             402 -> AiFailureReason.QUOTA_EXCEEDED

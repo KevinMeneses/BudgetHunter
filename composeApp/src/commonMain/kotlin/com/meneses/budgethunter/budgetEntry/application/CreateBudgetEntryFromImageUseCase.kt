@@ -1,5 +1,6 @@
 package com.meneses.budgethunter.budgetEntry.application
 
+import com.meneses.budgethunter.billing.domain.Allowance
 import com.meneses.budgethunter.budgetEntry.domain.AIImageProcessor
 import com.meneses.budgethunter.budgetEntry.domain.AiExtractionResult
 import com.meneses.budgethunter.budgetEntry.domain.AiFailureReason
@@ -29,8 +30,13 @@ class CreateBudgetEntryFromImageUseCase(
      * @property entry The entry to use: the original one with the AI-extracted fields merged in,
      * or the original untouched when nothing could be extracted.
      * @property failure Why nothing was extracted, or null when the AI result was applied.
+     * @property scans This month's receipt scans after this one, when the server said; null otherwise.
      */
-    data class Result(val entry: BudgetEntry, val failure: AiFailureReason? = null)
+    data class Result(
+        val entry: BudgetEntry,
+        val failure: AiFailureReason? = null,
+        val scans: Allowance? = null
+    )
 
     suspend fun execute(
         imageUri: String,
@@ -44,9 +50,9 @@ class CreateBudgetEntryFromImageUseCase(
 
             val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
             when (val result = aiImageProcessor.processImage(imageData, today)) {
-                is AiExtractionResult.Success -> Result(merge(budgetEntry, result.entry))
+                is AiExtractionResult.Success -> Result(merge(budgetEntry, result.entry), scans = result.scans)
                 // Keep what the user already has and let the caller explain what went wrong
-                is AiExtractionResult.Failure -> Result(budgetEntry, result.reason)
+                is AiExtractionResult.Failure -> Result(budgetEntry, result.reason, result.scans)
             }
         } catch (e: CancellationException) {
             throw e

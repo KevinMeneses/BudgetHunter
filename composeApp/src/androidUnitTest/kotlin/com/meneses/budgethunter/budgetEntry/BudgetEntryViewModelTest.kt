@@ -5,6 +5,8 @@ import budgethunter.composeapp.generated.resources.ai_error_network
 import budgethunter.composeapp.generated.resources.ai_error_not_an_invoice
 import budgethunter.composeapp.generated.resources.ai_error_timeout
 import budgethunter.composeapp.generated.resources.error_no_app_to_open_file
+import com.meneses.budgethunter.billing.application.GetReceiptScansUseCase
+import com.meneses.budgethunter.billing.domain.Allowance
 import com.meneses.budgethunter.budgetEntry.application.BudgetEntryEvent
 import com.meneses.budgethunter.budgetEntry.application.BudgetEntryIntent
 import com.meneses.budgethunter.budgetEntry.application.CreateBudgetEntryFromImageUseCase
@@ -18,7 +20,9 @@ import com.meneses.budgethunter.commons.data.PreferencesManager
 import com.meneses.budgethunter.commons.platform.CameraManager
 import com.meneses.budgethunter.commons.platform.FilePickerManager
 import com.meneses.budgethunter.commons.platform.ShareManager
+import io.mockk.clearMocks
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -53,6 +57,7 @@ class BudgetEntryViewModelTest {
     // Mocks
     private val budgetEntryRepository = mockk<BudgetEntryRepository>(relaxed = true)
     private val createBudgetEntryFromImageUseCase = mockk<CreateBudgetEntryFromImageUseCase>(relaxed = true)
+    private val getReceiptScansUseCase = mockk<GetReceiptScansUseCase>(relaxed = true)
     private val validateFilePathUseCase = mockk<ValidateFilePathUseCase>(relaxed = true)
     private val preferencesManager = mockk<PreferencesManager>(relaxed = true)
     private val fileManager = mockk<FileManager>(relaxed = true)
@@ -69,6 +74,7 @@ class BudgetEntryViewModelTest {
         viewModel = BudgetEntryViewModel(
             budgetEntryRepository = budgetEntryRepository,
             createBudgetEntryFromImageUseCase = createBudgetEntryFromImageUseCase,
+            getReceiptScansUseCase = getReceiptScansUseCase,
             validateFilePathUseCase = validateFilePathUseCase,
             preferencesManager = preferencesManager,
             fileManager = fileManager,
@@ -176,6 +182,7 @@ class BudgetEntryViewModelTest {
     private fun createViewModel() = BudgetEntryViewModel(
         budgetEntryRepository = budgetEntryRepository,
         createBudgetEntryFromImageUseCase = createBudgetEntryFromImageUseCase,
+        getReceiptScansUseCase = getReceiptScansUseCase,
         validateFilePathUseCase = validateFilePathUseCase,
         preferencesManager = preferencesManager,
         fileManager = fileManager,
@@ -198,5 +205,107 @@ class BudgetEntryViewModelTest {
         val disabledViewModel = createViewModel()
         testDispatcher.scheduler.advanceUntilIdle()
         assertFalse(disabledViewModel.uiState.value.isAiProcessingEnabled)
+    }
+
+    // ========== Receipt scans left ==========
+
+    private fun scansViewModel(scans: Allowance?): BudgetEntryViewModel {
+        // The view model made in setup() reads the usage too: let it finish and forget its call
+        testDispatcher.scheduler.advanceUntilIdle()
+        clearMocks(getReceiptScansUseCase)
+        coEvery { preferencesManager.isAiProcessingEnabled() } returns true
+        coEvery { getReceiptScansUseCase.execute() } returns scans
+        return createViewModel().also { testDispatcher.scheduler.advanceUntilIdle() }
+    }
+
+    @Test
+    fun `scans left are shown only when few remain`() = runTest {
+        assertNull(scansViewModel(Allowance(used = 6, limit = 10, remaining = 4)).uiState.value.receiptScansLeftNotice())
+        assertEquals(3, scansViewModel(Allowance(used = 7, limit = 10, remaining = 3)).uiState.value.receiptScansLeftNotice())
+        // A large allowance is not "few" until the same count: no nagging from 20 % on
+        assertNull(scansViewModel(Allowance(used = 800, limit = 1000, remaining = 200)).uiState.value.receiptScansLeftNotice())
+    }
+
+    @Test
+    fun `the usage is read once when the screen opens`() = runTest {
+        val viewModel = scansViewModel(Allowance(used = 8, limit = 10, remaining = 2))
+
+        viewModel.sendIntent(BudgetEntryIntent.SetBudgetEntry(BudgetEntry()))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        coVerify(exactly = 1) { getReceiptScansUseCase.execute() }
+    }
+
+    @Test
+    fun `nothing is shown when the usage cannot be read`() = runTest {
+        val viewModel = scansViewModel(null)
+
+        assertNull(viewModel.uiState.value.receiptScans)
+        assertNull(viewModel.uiState.value.receiptScansLeftNotice())
+    }
+
+    @Test
+    fun `nothing is shown while AI processing is off`() = runTest {
+        testDispatcher.scheduler.advanceUntilIdle()
+        clearMocks(getReceiptScansUseCase)
+        coEvery { preferencesManager.isAiProcessingEnabled() } returns false
+        coEvery { getReceiptScansUseCase.execute() } returns Allowance(used = 9, limit = 10, remaining = 1)
+        val viewModel = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.receiptScansLeftNotice())
+        coVerify(exactly = 0) { getReceiptScansUseCase.execute() }
+    }
+
+    @Test
+    fun `a 402 shows no scans left even when nothing was known`() = runTest {
+        viewModel = scansViewModel(null)
+
+        attachWithAiResult(CreateBudgetEntryFromImageUseCase.Result(BudgetEntry(), AiFailureReason.QUOTA_EXCEEDED))
+
+        assertEquals(0, viewModel.uiState.value.receiptScansLeftNotice())
+    }
+
+    @Test
+    fun `a scan's answer updates the line without asking the server again`() = runTest {
+        viewModel = scansViewModel(Allowance(used = 6, limit = 10, remaining = 4))
+        assertNull(viewModel.uiState.value.receiptScansLeftNotice())
+
+        attachWithAiResult(
+            CreateBudgetEntryFromImageUseCase.Result(BudgetEntry(), scans = Allowance(used = 7, limit = 10, remaining = 3))
+        )
+
+        assertEquals(3, viewModel.uiState.value.receiptScansLeftNotice())
+        coVerify(exactly = 1) { getReceiptScansUseCase.execute() }
+    }
+
+    @Test
+    fun `a scan's answer shows the line even when the first read failed`() = runTest {
+        viewModel = scansViewModel(null)
+
+        attachWithAiResult(
+            CreateBudgetEntryFromImageUseCase.Result(BudgetEntry(), scans = Allowance(used = 9, limit = 10, remaining = 1))
+        )
+
+        assertEquals(1, viewModel.uiState.value.receiptScansLeftNotice())
+    }
+
+    @Test
+    fun `no scans left after a 402 without usage`() = runTest {
+        viewModel = scansViewModel(Allowance(used = 9, limit = 10, remaining = 1))
+
+        attachWithAiResult(CreateBudgetEntryFromImageUseCase.Result(BudgetEntry(), AiFailureReason.QUOTA_EXCEEDED))
+
+        assertEquals(0, viewModel.uiState.value.receiptScansLeftNotice())
+    }
+
+    @Test
+    fun `with no scans left the line offers Premium`() = runTest {
+        val viewModel = scansViewModel(Allowance(used = 10, limit = 10, remaining = 0))
+        assertEquals(0, viewModel.uiState.value.receiptScansLeftNotice())
+
+        viewModel.sendIntent(BudgetEntryIntent.SeePremium)
+
+        assertIs<BudgetEntryEvent.OpenPremium>(viewModel.events.first())
     }
 }

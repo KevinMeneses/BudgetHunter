@@ -21,4 +21,7 @@ sealed interface BudgetEntryIntent {
     data object ConfirmAiAutofill : BudgetEntryIntent
     data object DeclineAiAutofill : BudgetEntryIntent
     data object UpdateInvoice : BudgetEntryIntent
+
+    /** "See Premium" on the no-scans-left line. */
+    data object SeePremium : BudgetEntryIntent
 }
