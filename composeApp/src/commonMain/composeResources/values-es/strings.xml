@@ -504,6 +504,11 @@
     <string name="premium_title">BudgetHunter Premium</string>
     <string name="premium_subtitle">Lee todos tus recibos con IA y apoya lo que viene</string>
     <string name="premium_settings_subtitle">Tu plan y tus escaneos de recibos</string>
+    <plurals name="receipt_scans_left">
+        <item quantity="one">Te queda %1$d escaneo de recibos este mes</item>
+        <item quantity="other">Te quedan %1$d escaneos de recibos este mes</item>
+    </plurals>
+    <string name="receipt_scans_none_left">No te quedan escaneos este mes</string>
     <string name="premium_see">Ver Premium</string>
     <string name="premium_active_title">Tienes Premium</string>
     <string name="premium_active_until">Se renueva o termina el %1$s</string>

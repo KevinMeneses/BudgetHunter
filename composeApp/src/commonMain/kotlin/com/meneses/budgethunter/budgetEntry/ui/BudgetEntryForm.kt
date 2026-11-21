@@ -41,11 +41,14 @@ fun BudgetEntryForm(
     amountError: String?,
     isFileValid: Boolean,
     isAiEnabled: Boolean,
+    /** Receipt scans left this month, when few enough to show under the receipt card; null hides the line. */
+    receiptScansLeft: Int?,
     /** Opens the keyboard on the amount, for a new entry that is not starting from a receipt. */
     focusAmount: Boolean,
     paddingValues: PaddingValues,
     onBudgetItemChanged: (BudgetEntry) -> Unit,
     onInvoiceFieldClick: () -> Unit,
+    onSeePremium: () -> Unit,
     onSave: () -> Unit
 ) {
     val amountFocus = remember { FocusRequester() }
@@ -78,12 +81,16 @@ fun BudgetEntryForm(
                 focusRequester = amountFocus
             )
 
-            ReceiptCard(
-                invoice = budgetEntry.invoice,
-                isFileValid = isFileValid,
-                isAiEnabled = isAiEnabled,
-                onClick = onInvoiceFieldClick
-            )
+            // Kept with the card rather than spaced like a section of its own
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                ReceiptCard(
+                    invoice = budgetEntry.invoice,
+                    isFileValid = isFileValid,
+                    isAiEnabled = isAiEnabled,
+                    onClick = onInvoiceFieldClick
+                )
+                receiptScansLeft?.let { ReceiptScansLeftLine(scansLeft = it, onSeePremium = onSeePremium) }
+            }
 
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 FormSectionLabel(stringResource(Res.string.category))

@@ -13,6 +13,8 @@ import budgethunter.composeapp.generated.resources.ai_error_timeout
 import budgethunter.composeapp.generated.resources.amount_is_mandatory
 import budgethunter.composeapp.generated.resources.error_loading_file
 import budgethunter.composeapp.generated.resources.error_no_app_to_open_file
+import com.meneses.budgethunter.billing.application.GetReceiptScansUseCase
+import com.meneses.budgethunter.billing.domain.Allowance
 import com.meneses.budgethunter.budgetEntry.application.BudgetEntryEvent
 import com.meneses.budgethunter.budgetEntry.application.BudgetEntryIntent
 import com.meneses.budgethunter.budgetEntry.application.BudgetEntryState
@@ -37,6 +39,7 @@ import kotlinx.coroutines.launch
 class BudgetEntryViewModel(
     private val budgetEntryRepository: BudgetEntryRepository,
     private val createBudgetEntryFromImageUseCase: CreateBudgetEntryFromImageUseCase,
+    private val getReceiptScansUseCase: GetReceiptScansUseCase,
     private val validateFilePathUseCase: ValidateFilePathUseCase,
     private val preferencesManager: PreferencesManager,
     private val fileManager: FileManager,
@@ -55,6 +58,12 @@ class BudgetEntryViewModel(
         viewModelScope.launch {
             val isAiEnabled = preferencesManager.isAiProcessingEnabled()
             _uiState.update { it.copy(isAiProcessingEnabled = isAiEnabled) }
+        }
+        // Once per screen: each scan's answer brings the count after it, so it is never asked again here
+        viewModelScope.launch {
+            val scans = getReceiptScansUseCase.execute() ?: return@launch
+            // A scan that answered first has the newer count
+            _uiState.update { it.copy(receiptScans = it.receiptScans ?: scans) }
         }
     }
 
@@ -80,6 +89,7 @@ class BudgetEntryViewModel(
             is BudgetEntryIntent.ConfirmAiAutofill -> resolveAiAutofill(useAi = true)
             is BudgetEntryIntent.DeclineAiAutofill -> resolveAiAutofill(useAi = false)
             is BudgetEntryIntent.UpdateInvoice -> updateInvoice()
+            is BudgetEntryIntent.SeePremium -> _events.trySend(BudgetEntryEvent.OpenPremium)
         }
     }
 
@@ -148,6 +158,7 @@ class BudgetEntryViewModel(
 
     private suspend fun applyInvoice(invoicePath: String, useAi: Boolean) {
         var failure: AiFailureReason? = null
+        var scans: Allowance? = null
         val resultEntry = if (useAi) {
             _uiState.value.budgetEntry?.let { budgetEntry ->
                 val result = createBudgetEntryFromImageUseCase.execute(
@@ -155,6 +166,7 @@ class BudgetEntryViewModel(
                     budgetEntry = budgetEntry
                 )
                 failure = result.failure
+                scans = result.scans
                 result.entry
             }
         } else {
@@ -168,7 +180,8 @@ class BudgetEntryViewModel(
 
             it.copy(
                 budgetEntry = updatedEntry,
-                isProcessingInvoice = false
+                isProcessingInvoice = false,
+                receiptScans = scansAfter(it.receiptScans, scans, failure)
             )
         }
 
@@ -177,6 +190,14 @@ class BudgetEntryViewModel(
         // Validate the newly attached invoice file
         validateInvoiceFile(invoicePath)
     }
+
+    /** The count the server answered with the scan; a 402 without one still means none are left. */
+    private fun scansAfter(known: Allowance?, answered: Allowance?, failure: AiFailureReason?): Allowance? =
+        answered ?: if (failure == AiFailureReason.QUOTA_EXCEEDED) {
+            known?.copy(used = known.limit, remaining = 0)
+        } else {
+            known
+        }
 
     private fun showAiFailure(reason: AiFailureReason) {
         val message = when (reason) {

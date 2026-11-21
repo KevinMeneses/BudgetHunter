@@ -136,6 +136,12 @@ Type-safe navigation using Navigation Compose with serializable route objects. M
 - Reading a receipt needs a signed-in account (offline mode gets `SIGN_IN_REQUIRED`) and counts against the
   plan's monthly scans; past them the server answers 402 (`QUOTA_EXCEEDED`). See "Monetization" below.
 - The HTTP log never prints that request (it carries the whole file).
+- Scans left: the entry screen shows a quiet line under the receipt card when 3 or fewer scans remain this month
+  (`Allowance.isRunningLow`; a count, not a share of the limit, so PREMIUM is not nagged from 200 on), and "No scans
+  left" with "See Premium" at 0. `GetReceiptScansUseCase` reads `GET /api/ai/usage` once when the screen opens (only
+  signed in and not offline; null on any error, which shows nothing); after that each scan's answer brings the count
+  (`ReceiptExtractionResponse.usage`, also in the 402 body, through `AiExtractionResult.scans`), with no other call.
+  Only informative: the app never blocks a scan.
 - The AI processing toggle in settings is kept on the account too (`SyncUserPreferencesUseCase`), because it also gates the server-side categorization below
 
 ### SMS Processing
@@ -249,10 +255,12 @@ Freemium, with RevenueCat for the store purchases (in progress; plan and decisio
   `POST /api/billing/sync` so premium applies at once (if that fails the webhook applies it a moment later).
   `StoreBilling` is the platform side: `AndroidStoreBilling` uses RevenueCat's Android SDK (`com.revenuecat.purchases`,
   configured lazily with the public `goog_` key from `REVENUECAT_ANDROID_API_KEY`; empty = `isAvailable` false and
-  nothing can be bought). iOS has `UnavailableStoreBilling` until the iOS launch. Sign out logs the store out.
+  nothing can be bought), with `automaticDeviceIdentifierCollectionEnabled(false)`: no device identifiers for ad
+  attribution, so none are declared in Play's Data safety form. iOS has `UnavailableStoreBilling` until the iOS launch. Sign out logs the store out.
   The purchase sheet needs the Activity, handed over by `MainActivity` like Google sign-in.
-- Paywall: `PremiumScreen` / `PremiumViewModel` (`billing/`), opened from Settings (signed-in accounts only) and from
-  the "no scans left" snackbar's "See Premium" action (`BudgetEntryEvent.ShowNotification.offersPremium`). It shows
+- Paywall: `PremiumScreen` / `PremiumViewModel` (`billing/`), opened from Settings (signed-in accounts only), from
+  the "no scans left" snackbar's "See Premium" action (`BudgetEntryEvent.ShowNotification.offersPremium`) and from
+  the entry screen's scans line (`BudgetEntryEvent.OpenPremium`). It shows
   the plan and this month's AI usage from the server (scans and categorizations, `GET /api/ai/usage`), the store's plans (yearly first) and restore; a premium account
   gets "manage in Google Play" instead. A purchase the server has not synced yet says premium arrives in minutes.
   The renewal and cancellation text under the plans is required by Google Play: keep it.

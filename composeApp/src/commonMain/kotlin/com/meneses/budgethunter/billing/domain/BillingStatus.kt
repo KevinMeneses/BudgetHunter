@@ -23,7 +23,18 @@ sealed interface PurchaseOutcome {
 }
 
 /** One monthly AI allowance. */
-data class Allowance(val used: Int, val limit: Int, val remaining: Int)
+data class Allowance(val used: Int, val limit: Int, val remaining: Int) {
+    /**
+     * Few enough left to say so where they are spent: [RUNNING_LOW] or fewer. A count, not a share of the
+     * limit, because "few" is a count to the user: on FREE (10 scans) it warns for the last 3, and on PREMIUM
+     * (1000, fair use) also for the last 3 instead of from 200 on, which would nag a paying account for weeks.
+     */
+    val isRunningLow: Boolean get() = remaining <= RUNNING_LOW
+
+    companion object {
+        const val RUNNING_LOW = 3
+    }
+}
 
 /** This month's AI usage (`GET /api/ai/usage`). A feature turned off on the server has a null allowance. */
 data class AiUsage(

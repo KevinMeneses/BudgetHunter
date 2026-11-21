@@ -98,6 +98,7 @@ data class BudgetEntryScreen(
                 amountError = uiState.emptyAmountError?.let { stringResource(it) },
                 isFileValid = uiState.isFileValid,
                 isAiEnabled = uiState.isAiProcessingEnabled,
+                receiptScansLeft = uiState.receiptScansLeftNotice(),
                 focusAmount = budgetEntry.id < 0 && !scanReceipt,
                 paddingValues = paddingValues,
                 onBudgetItemChanged = setBudgetEntry,
@@ -107,6 +108,11 @@ data class BudgetEntryScreen(
                     } else {
                         BudgetEntryIntent.ToggleShowInvoiceModal(true)
                     }.run(onIntent)
+                },
+                onSeePremium = {
+                    BudgetEntryIntent
+                        .SeePremium
+                        .run(onIntent)
                 },
                 onSave = {
                     BudgetEntryIntent

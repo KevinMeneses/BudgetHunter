@@ -1,5 +1,6 @@
 package com.meneses.budgethunter.budgetEntry.data.network
 
+import com.meneses.budgethunter.billing.domain.Allowance
 import com.meneses.budgethunter.budgetEntry.domain.AiExtractionResult
 import com.meneses.budgethunter.budgetEntry.domain.AiFailureReason
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
@@ -29,6 +30,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 
 /** The client side of `POST /api/receipts/extract`: what is sent and how every answer is read. */
 class ReceiptApiServiceTest {
@@ -106,6 +108,24 @@ class ReceiptApiServiceTest {
     fun `not a receipt`() = runTest {
         val result = service(body = """{"isReceipt":false,"usage":$usage}""").extract("QUJD", "image/jpeg", today)
         assertEquals(AiFailureReason.NOT_AN_INVOICE, assertIs<AiExtractionResult.Failure>(result).reason)
+    }
+
+    @Test
+    fun `the month's scans come with every answer that has them`() = runTest {
+        val expected = Allowance(used = 3, limit = 10, remaining = 7)
+        val read = service(body = """{"isReceipt":true,"amount":10,"usage":$usage}""").extract("QUJD", "image/jpeg", today)
+        val notReceipt = service(body = """{"isReceipt":false,"usage":$usage}""").extract("QUJD", "image/jpeg", today)
+        val quota = service(
+            status = HttpStatusCode.PaymentRequired,
+            body = """{"status":402,"code":"QUOTA_EXCEEDED","usage":$usage}"""
+        ).extract("QUJD", "image/jpeg", today)
+        val noUsage = service(body = """{"isReceipt":true,"amount":10}""").extract("QUJD", "image/jpeg", today)
+
+        assertEquals(expected, read.scans)
+        assertEquals(expected, notReceipt.scans)
+        assertEquals(AiFailureReason.QUOTA_EXCEEDED, assertIs<AiExtractionResult.Failure>(quota).reason)
+        assertEquals(expected, quota.scans)
+        assertNull(noUsage.scans)
     }
 
     @Test
