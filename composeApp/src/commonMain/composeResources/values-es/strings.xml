@@ -444,6 +444,17 @@
         <item quantity="one">%1$d persona</item>
         <item quantity="other">%1$d personas</item>
     </plurals>
+    <string name="sharing_limit_collaborators">En el plan gratis puedes compartir cada presupuesto con 1 persona. Con Premium, con todas las que quieras</string>
+    <string name="sharing_limit_shared_budgets">En el plan gratis puedes compartir 1 presupuesto. Con Premium, todos los que quieras</string>
+    <string name="sharing_limit_generic">Tu plan no permite compartir este presupuesto con más personas. Con Premium no hay límite</string>
+    <string name="sharing_limit_not_owner">El plan del dueño de este presupuesto no permite agregar más personas</string>
+    <plurals name="sharing_shared_budgets">
+        <item quantity="one">%1$d presupuesto compartido</item>
+        <item quantity="other">%1$d presupuestos compartidos</item>
+    </plurals>
+    <string name="sharing_hint_both">Plan gratis: %1$s con %2$s</string>
+    <string name="sharing_hint_budgets_only">Plan gratis: %1$s</string>
+    <string name="sharing_hint_people_only">Plan gratis: cada presupuesto con %1$s</string>
 
     <!-- Redesign: sign in and sign up -->
     <string name="welcome_tagline">Tus presupuestos, al día y compartidos</string>
@@ -501,6 +512,7 @@
     <string name="premium_benefit_scans">Muchos más escaneos de recibos y categorizaciones con IA cada mes</string>
     <string name="premium_benefit_more">Las nuevas funciones con IA a medida que lleguen</string>
     <string name="premium_benefit_support">Apoyas una app hecha en Colombia, sin anuncios</string>
+    <string name="premium_benefit_sharing">Comparte todos los presupuestos que quieras, con quien quieras</string>
     <string name="premium_plan_monthly">Mensual</string>
     <string name="premium_plan_annual">Anual</string>
     <string name="premium_plan_other">Premium</string>
@@ -533,6 +545,9 @@
     <string name="delete_account_failed">No se pudo eliminar la cuenta. Revisa tu conexión e inténtalo de nuevo</string>
     <string name="premium_usage_title">Tu IA este mes</string>
     <string name="premium_categorizations_left">Te quedan %1$s de %2$s categorizaciones con IA</string>
+    <string name="premium_sharing_title">Compartir</string>
+    <string name="premium_shared_budgets_used">Presupuestos compartidos: %1$d de %2$d</string>
+    <string name="premium_sharing_people">Cada uno con %1$s además de ti</string>
     <string name="categorize_quota_exceeded">Se categorizaron %1$d. Se acabaron tus categorizaciones con IA de este mes; %2$d siguen sin categoría</string>
     <string name="number_group_separator">.</string>
     <string name="premium_check_again">Revisar de nuevo</string>

@@ -3,6 +3,7 @@ package com.meneses.budgethunter.billing.data
 import com.meneses.budgethunter.billing.domain.BillingStatus
 import com.meneses.budgethunter.billing.domain.PremiumOffer
 import com.meneses.budgethunter.billing.domain.PurchaseOutcome
+import com.meneses.budgethunter.billing.domain.SharingStatus
 import com.meneses.budgethunter.billing.domain.AiUsage
 import com.meneses.budgethunter.billing.domain.Allowance
 import com.meneses.budgethunter.billing.domain.StoreBilling
@@ -34,6 +35,13 @@ class PremiumRepository(
 
     /** @throws BillingApiException when the server cannot be asked */
     suspend fun status(): BillingStatus = billingApi.status().toStatus()
+
+    /**
+     * What the account can share as an owner, or null when the server does not say (older servers).
+     *
+     * @throws BillingApiException when the server cannot be asked
+     */
+    suspend fun sharingStatus(): SharingStatus? = status().sharing
 
     /** @throws BillingApiException when the server cannot be asked */
     suspend fun aiUsage(): AiUsage = billingApi.aiUsage().let {
@@ -93,7 +101,14 @@ class PremiumRepository(
 
     private fun BillingStatusResponse.toStatus() = BillingStatus(
         isPremium = plan.equals(PREMIUM, ignoreCase = true),
-        premiumUntil = premiumUntil
+        premiumUntil = premiumUntil,
+        sharing = sharing?.let {
+            SharingStatus(
+                sharedBudgetsLimit = it.sharedBudgetsLimit,
+                sharedBudgetsUsed = it.sharedBudgetsUsed,
+                collaboratorsPerBudgetLimit = it.collaboratorsPerBudgetLimit
+            )
+        }
     )
 
     private companion object {

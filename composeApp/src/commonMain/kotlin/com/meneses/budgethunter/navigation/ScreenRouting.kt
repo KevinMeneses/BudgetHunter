@@ -466,11 +466,24 @@ fun BudgetHunterNavigation() {
                     }
                 }
 
+                val showPremium = { navController.navigateOnce(PremiumScreen) }
                 pendingEvent?.let { event ->
                     val message = stringResource(event.message, *event.formatArgs.toTypedArray())
+                    // Past the owner's sharing limit: the owner's notice leads to the paywall
+                    val offersPremium = (event as? CollaboratorsEvent.ShowSharingLimit)?.offersPremium == true
+                    val action = if (offersPremium) stringResource(Res.string.premium_see) else null
                     LaunchedEffect(event) {
-                        snackbarHostState.showSnackbar(message)
+                        val result = snackbarHostState.showSnackbar(
+                            message = message,
+                            actionLabel = action,
+                            duration = if (event is CollaboratorsEvent.ShowSharingLimit) {
+                                SnackbarDuration.Long
+                            } else {
+                                SnackbarDuration.Short
+                            }
+                        )
                         pendingEvent = null
+                        if (result == SnackbarResult.ActionPerformed) showPremium()
                     }
                 }
 

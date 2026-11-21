@@ -9,5 +9,7 @@ data class BillingStatusResponse(
     val appUserId: String,
     /** FREE or PREMIUM. */
     val plan: String,
-    val premiumUntil: String? = null
+    val premiumUntil: String? = null,
+    /** What the account can share as an owner. Null from servers older than the sharing limits. */
+    val sharing: SharingStatusResponse? = null
 )

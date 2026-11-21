@@ -1,5 +1,6 @@
 package com.meneses.budgethunter.billing
 
+import com.meneses.budgethunter.billing.domain.SharingStatus
 import budgethunter.composeapp.generated.resources.Res
 import budgethunter.composeapp.generated.resources.premium_error_purchase
 import budgethunter.composeapp.generated.resources.premium_pending
@@ -291,5 +292,39 @@ class PremiumViewModelTest {
         assertEquals(Res.string.premium_restore_none, viewModel.uiState.value.message)
         viewModel.sendIntent(PremiumIntent.DismissMessage)
         assertNull(viewModel.uiState.value.message)
+    }
+
+    @Test
+    fun `a free account sees what it can share`() = runTest(testDispatcher) {
+        val sharing = SharingStatus(sharedBudgetsLimit = 1, sharedBudgetsUsed = 1, collaboratorsPerBudgetLimit = 1)
+        coEvery { repository.status() } returns free.copy(sharing = sharing)
+
+        val viewModel = viewModel()
+        advanceUntilIdle()
+
+        assertEquals(sharing, viewModel.uiState.value.sharing)
+    }
+
+    @Test
+    fun `an older server leaves the sharing out`() = runTest(testDispatcher) {
+        val viewModel = viewModel()
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.sharing)
+        assertFalse(viewModel.uiState.value.loadFailed)
+    }
+
+    @Test
+    fun `a purchase replaces the free limits with the premium ones`() = runTest(testDispatcher) {
+        coEvery { repository.status() } returns free.copy(sharing = SharingStatus(1, 1, 1))
+        val unlimited = SharingStatus(null, 1, null)
+        coEvery { repository.purchase(annual.id) } returns PurchaseOutcome.Purchased(premium.copy(sharing = unlimited))
+        val viewModel = viewModel()
+        advanceUntilIdle()
+
+        viewModel.sendIntent(PremiumIntent.Purchase(annual.id))
+        advanceUntilIdle()
+
+        assertEquals(unlimited, viewModel.uiState.value.sharing)
     }
 }

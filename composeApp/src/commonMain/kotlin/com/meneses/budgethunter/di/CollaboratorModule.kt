@@ -30,6 +30,8 @@ val collaboratorModule = module {
         CollaboratorsViewModel(
             collaboratorRepository = get(),
             preferencesManager = get(),
+            premiumRepository = get(),
+            logger = get(),
             budgetServerId = budgetServerId
         )
     }

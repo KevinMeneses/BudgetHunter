@@ -249,6 +249,7 @@ class PremiumViewModel(
     private fun PremiumState.withStatus(status: BillingStatus) = copy(
         isPremium = status.isPremium,
         premiumUntil = status.premiumUntil,
+        sharing = status.sharing,
         offers = if (status.isPremium) emptyList() else offers
     )
 

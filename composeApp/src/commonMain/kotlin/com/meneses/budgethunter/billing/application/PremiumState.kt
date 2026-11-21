@@ -2,6 +2,7 @@ package com.meneses.budgethunter.billing.application
 
 import com.meneses.budgethunter.billing.domain.PremiumOffer
 import com.meneses.budgethunter.billing.domain.AiUsage
+import com.meneses.budgethunter.billing.domain.SharingStatus
 import org.jetbrains.compose.resources.StringResource
 
 data class PremiumState(
@@ -11,6 +12,8 @@ data class PremiumState(
     val isPremium: Boolean = false,
     val premiumUntil: String? = null,
     val usage: AiUsage? = null,
+    /** What the account can share as an owner; null when the server does not say. */
+    val sharing: SharingStatus? = null,
     val offers: List<PremiumOffer> = emptyList(),
     /** False when this build or platform cannot sell; the plans are then not shown. */
     val canPurchase: Boolean = false,
