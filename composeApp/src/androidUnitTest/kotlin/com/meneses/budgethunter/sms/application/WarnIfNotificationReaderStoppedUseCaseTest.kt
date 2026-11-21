@@ -107,6 +107,7 @@ class WarnIfNotificationReaderStoppedUseCaseTest {
 
         warnIfStopped()
 
+        verify(exactly = 1) { notificationManager.showReaderStoppedNotification(any(), any()) }
         verify(exactly = 0) { notificationManager.showOpenSettingsNotification(any(), any()) }
     }
 
