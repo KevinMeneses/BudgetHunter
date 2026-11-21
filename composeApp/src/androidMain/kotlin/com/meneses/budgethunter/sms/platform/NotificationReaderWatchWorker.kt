@@ -33,10 +33,11 @@ class NotificationReaderWatchWorker(
 
     override suspend fun doWork(): Result {
         // A warning nobody would see must not count as given: once it can be shown, a later run gives it
-        if (!AndroidNotificationManager.canShowNotifications(applicationContext)) return Result.success()
+        val canNotify = AndroidNotificationManager.canShowNotifications(applicationContext)
         try {
-            // The stop detection is a single meant for the main thread, like the screens that use it
-            withContext(Dispatchers.Main) { warnIfNotificationReaderStopped() }
+            // The stop detection is a single meant for the main thread, like the screens that use it.
+            // Its 60 s wait suspends, it does not block; a run stopped meanwhile is retried next period
+            withContext(Dispatchers.Main) { warnIfNotificationReaderStopped(canNotify) }
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -62,6 +63,8 @@ class NotificationReaderWatchWorker(
             val request = PeriodicWorkRequestBuilder<NotificationReaderWatchWorker>(PERIOD_MINUTES, TimeUnit.MINUTES)
                 .build()
             try {
+                // KEEP: a change to the period or constraints needs UPDATE (or a new name) to reach
+                // installs that already have it scheduled
                 WorkManager.getInstance(context)
                     .enqueueUniquePeriodicWork(WORK_NAME, ExistingPeriodicWorkPolicy.KEEP, request)
             } catch (e: IllegalStateException) {

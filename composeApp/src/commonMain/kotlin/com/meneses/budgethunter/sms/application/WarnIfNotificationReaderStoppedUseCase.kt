@@ -19,6 +19,9 @@ import kotlin.time.Duration.Companion.seconds
  * Android usually binds the listener again within seconds, and only one still unbound by then is
  * the one that stays so. The user is told once per stop: the warning is remembered until the
  * reader is found running again.
+ *
+ * With [canNotify] false (the app's notifications or their channel are off) nothing is shown nor
+ * marked as told, so a run that can show it tells it; a reader found running still clears the mark.
  */
 class WarnIfNotificationReaderStoppedUseCase(
     private val isNotificationReaderStopped: IsNotificationReaderStoppedUseCase,
@@ -27,12 +30,12 @@ class WarnIfNotificationReaderStoppedUseCase(
     private val stringResourceProvider: StringResourceProvider,
     private val confirmationDelay: Duration = 60.seconds
 ) {
-    suspend operator fun invoke() {
+    suspend operator fun invoke(canNotify: Boolean = true) {
         if (!isStoppedAfterConfirming()) {
             if (preferencesManager.isReaderStoppedNotified()) preferencesManager.setReaderStoppedNotified(false)
             return
         }
-        if (preferencesManager.isReaderStoppedNotified()) return
+        if (!canNotify || preferencesManager.isReaderStoppedNotified()) return
 
         notificationManager.showOpenSettingsNotification(
             title = stringResourceProvider.getString(Res.string.notification_reader_stopped_title),

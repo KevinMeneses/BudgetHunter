@@ -90,4 +90,24 @@ class WarnIfNotificationReaderStoppedUseCaseTest {
 
         coVerify { preferencesManager.setReaderStoppedNotified(false) }
     }
+
+    @Test
+    fun `a stop that cannot be shown is neither shown nor marked as told`() = runTest {
+        coEvery { isNotificationReaderStopped() } returns true
+
+        warnIfStopped(canNotify = false)
+
+        verify(exactly = 0) { notificationManager.showOpenSettingsNotification(any(), any()) }
+        coVerify(exactly = 0) { preferencesManager.setReaderStoppedNotified(any()) }
+    }
+
+    @Test
+    fun `a reader running again clears the mark even while warnings cannot be shown`() = runTest {
+        coEvery { isNotificationReaderStopped() } returns false
+        coEvery { preferencesManager.isReaderStoppedNotified() } returns true
+
+        warnIfStopped(canNotify = false)
+
+        coVerify { preferencesManager.setReaderStoppedNotified(false) }
+    }
 }

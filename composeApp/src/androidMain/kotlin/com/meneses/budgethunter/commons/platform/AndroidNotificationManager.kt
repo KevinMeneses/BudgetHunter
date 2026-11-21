@@ -114,6 +114,7 @@ class AndroidNotificationManager(
             if (!manager.areNotificationsEnabled()) return false
             // Not created yet: it is created on the first notification, turned on
             val channel = manager.getNotificationChannel(CHANNEL_ID) ?: return true
+            // AndroidNotificationManager here is android.app.NotificationManager (imported under that alias)
             return channel.importance != AndroidNotificationManager.IMPORTANCE_NONE
         }
 
