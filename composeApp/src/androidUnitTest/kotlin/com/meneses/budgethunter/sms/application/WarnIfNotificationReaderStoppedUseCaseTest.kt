@@ -10,6 +10,7 @@ import io.mockk.verify
 import kotlinx.coroutines.test.runTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertEquals
 
 class WarnIfNotificationReaderStoppedUseCaseTest {
 
@@ -67,6 +68,17 @@ class WarnIfNotificationReaderStoppedUseCaseTest {
         warnIfStopped()
 
         verify(exactly = 0) { notificationManager.showOpenSettingsNotification(any(), any()) }
+        coVerify(exactly = 0) { preferencesManager.setReaderStoppedNotified(any()) }
+    }
+
+    @Test
+    fun `a stopped reader is checked again only after the confirmation wait`() = runTest {
+        coEvery { isNotificationReaderStopped() } returns true
+
+        warnIfStopped()
+
+        assertEquals(60_000L, testScheduler.currentTime)
+        coVerify(exactly = 2) { isNotificationReaderStopped() }
     }
 
     @Test
