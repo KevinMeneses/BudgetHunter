@@ -1,5 +1,7 @@
 package com.meneses.budgethunter.sms.data
 
+import com.meneses.budgethunter.sms.domain.MovementFingerprints
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.test.runTest
@@ -66,5 +68,25 @@ class RegisteredMovementsTest {
 
         assertTrue(RegisteredMovements(dataStore).registerOnce("a1", register))
         assertEquals(1, registrations)
+    }
+
+    @Test
+    fun `a registration cancelled midway is not remembered`() = runTest {
+        val registeredMovements = RegisteredMovements(dataStore)
+
+        assertFailsWith<CancellationException> {
+            registeredMovements.registerOnce("a1") { throw CancellationException("process going away") }
+        }
+
+        assertTrue(registeredMovements.registerOnce("a1", register))
+    }
+
+    @Test
+    fun `the oldest movement is forgotten past the last 200`() = runTest {
+        val registeredMovements = RegisteredMovements(dataStore)
+        for (n in 0..MovementFingerprints.CAPACITY) registeredMovements.registerOnce("f$n", register)
+
+        assertTrue(registeredMovements.registerOnce("f0", register))
+        assertFalse(registeredMovements.registerOnce("f${MovementFingerprints.CAPACITY}", register))
     }
 }

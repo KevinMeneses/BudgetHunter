@@ -366,6 +366,29 @@ class RegisterSmsEntryUseCaseTest {
         coVerify(exactly = 2) { budgetEntryRepository.createLocally(any()) }
     }
 
+    @Test
+    fun `a bank app notification with no identity is registered every time it comes`() = runTest {
+        givenDefaultBudget()
+
+        registerSmsEntry.registerNotification(nuTransfer, SupportedBanks.NU)
+        registerSmsEntry.registerNotification(nuTransfer, SupportedBanks.NU)
+
+        coVerify(exactly = 2) { budgetEntryRepository.create(any()) }
+        coVerify(exactly = 0) { budgetEntryRepository.createLocally(any()) }
+    }
+
+    @Test
+    fun `a bank email stored but not pushed still counts as registered`() = runTest {
+        givenDefaultBudget()
+        coEvery { budgetEntryRepository.pushPending(any()) } throws IllegalStateException("no connection")
+
+        val result = registerSmsEntry.registerEmail(bancolombiaEmail(), SupportedBanks.BANCOLOMBIA)
+        val again = registerSmsEntry.registerEmail(bancolombiaEmail(), SupportedBanks.BANCOLOMBIA)
+
+        assertIs<SmsParseResult.Success>(result)
+        assertEquals(SmsParseResult.Ignored, again)
+    }
+
     private companion object {
         const val RECEIVED_AT = 1_795_227_302_131L
     }

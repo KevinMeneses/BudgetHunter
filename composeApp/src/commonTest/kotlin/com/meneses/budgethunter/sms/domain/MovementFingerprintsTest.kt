@@ -102,7 +102,7 @@ class MovementFingerprintsTest {
         const val MESSAGE = "Alertas y Notificaciones. Bancolombia: Pagaste \$130,500.00 a EMPRESA DE ENERGIA desde " +
             "tu producto 1234 el 20/11/2026 21:14:58."
 
-        // 20 Nov 2026 around 21:15 in Colombia, well inside the day in any time zone near it
+        // 21 Nov 2026 02:15 UTC (20 Nov 21:15 in Colombia): days are counted in UTC
         const val RECEIVED_AT = 1_795_227_302_131L
     }
 }

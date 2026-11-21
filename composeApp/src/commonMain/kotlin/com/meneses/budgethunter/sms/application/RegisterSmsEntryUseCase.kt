@@ -9,6 +9,7 @@ import com.meneses.budgethunter.sms.domain.BankNotification
 import com.meneses.budgethunter.sms.domain.BankSmsConfig
 import com.meneses.budgethunter.sms.domain.MovementFingerprints
 import com.meneses.budgethunter.sms.domain.SmsParseResult
+import kotlinx.coroutines.CancellationException
 
 /**
  * Turns the text of a bank SMS into a budget entry and stores it, without telling the user.
@@ -62,8 +63,8 @@ class RegisterSmsEntryUseCase(
      * Registers a movement read from an email of [bankConfig], read like a bank app notification
      * ([BankEmail.toNotification]), once: email apps post an email again while it is in the shade,
      * also after the process that read it died, or show it twice when two apps hold the same
-     * mailbox (caught only when both show the same text). A movement already registered is [SmsParseResult.Ignored], even if the user deleted
-     * its entry since.
+     * mailbox (caught only when both show the same text). A movement already registered is
+     * [SmsParseResult.Ignored], even if the user deleted its entry since.
      */
     suspend fun registerEmail(email: BankEmail, bankConfig: BankSmsConfig): SmsParseResult =
         register(
@@ -72,7 +73,8 @@ class RegisterSmsEntryUseCase(
             // The whole text shown, not just the part the movement was read from: a bank may write
             // the time after the movement's sentence, and it is what tells two equal purchases apart
             fingerprintOf = { entry ->
-                MovementFingerprints.ofEmailMovement(bankConfig, "${email.subject}\n${email.body}", entry, email.receivedAt)
+                val shownText = "${email.subject}\n${email.body}"
+                MovementFingerprints.ofEmailMovement(bankConfig, shownText, entry, email.receivedAt)
             }
         )
 
@@ -98,7 +100,14 @@ class RegisterSmsEntryUseCase(
             budgetEntryRepository.createLocally(entry)
         }
         if (!registered) return SmsParseResult.Ignored
-        budgetEntryRepository.pushPending(entry.budgetId)
+        try {
+            budgetEntryRepository.pushPending(entry.budgetId)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            // The entry is stored and remembered: the next sync pushes it, and telling the user
+            // it failed would be wrong
+        }
         return SmsParseResult.Success(entry)
     }
 
