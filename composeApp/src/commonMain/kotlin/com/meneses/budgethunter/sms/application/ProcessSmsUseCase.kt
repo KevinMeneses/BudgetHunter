@@ -46,7 +46,11 @@ class ProcessSmsUseCase(
         }
     }
 
-    override suspend fun processBankNotification(notification: BankNotification, bankConfig: BankSmsConfig, identity: String?) {
+    override suspend fun processBankNotification(
+        notification: BankNotification,
+        bankConfig: BankSmsConfig,
+        identity: String?
+    ) {
         reportFailures {
             when (val result = registerSmsEntry.registerNotification(notification, bankConfig, identity)) {
                 is SmsParseResult.Success -> notifyEntryAdded(result.entry)

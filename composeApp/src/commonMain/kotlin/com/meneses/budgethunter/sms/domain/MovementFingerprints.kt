@@ -63,7 +63,11 @@ object MovementFingerprints {
 
     private fun split(stored: String?): List<String> = stored?.split(SEPARATOR)?.filter { it.isNotEmpty() }.orEmpty()
 
-    /** 64-bit FNV-1a: plain Kotlin on every platform, and collisions are negligible among 200. */
+    /**
+     * 64-bit FNV-1a: plain Kotlin on every platform. Not cryptographic, and it need not be: a
+     * collision among the last 200 would drop a real movement as already registered, and its
+     * odds are around 1 in 10^15.
+     */
     private fun hash(text: String): String {
         var hash = FNV_OFFSET_BASIS
         for (byte in text.encodeToByteArray()) {

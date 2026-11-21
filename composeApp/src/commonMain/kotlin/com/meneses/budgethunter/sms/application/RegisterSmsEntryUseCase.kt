@@ -53,11 +53,9 @@ class RegisterSmsEntryUseCase(
         notification: BankNotification,
         bankConfig: BankSmsConfig,
         identity: String? = null
-    ): SmsParseResult = register(
-        notification,
-        bankConfig,
-        fingerprintOf = identity?.let { { _: BudgetEntry -> MovementFingerprints.ofAppNotification(it) } }
-    )
+    ): SmsParseResult = register(notification, bankConfig) {
+        identity?.let(MovementFingerprints::ofAppNotification)
+    }
 
     /**
      * Registers a movement read from an email of [bankConfig], read like a bank app notification
@@ -67,21 +65,21 @@ class RegisterSmsEntryUseCase(
      * [SmsParseResult.Ignored], even if the user deleted its entry since.
      */
     suspend fun registerEmail(email: BankEmail, bankConfig: BankSmsConfig): SmsParseResult =
-        register(
-            email.toNotification(bankConfig),
-            bankConfig,
+        register(email.toNotification(bankConfig), bankConfig) { entry ->
             // The whole text shown, not just the part the movement was read from: a bank may write
             // the time after the movement's sentence, and it is what tells two equal purchases apart
-            fingerprintOf = { entry ->
-                val shownText = "${email.subject}\n${email.body}"
-                MovementFingerprints.ofEmailMovement(bankConfig, shownText, entry, email.receivedAt)
-            }
-        )
+            val shownText = "${email.subject}\n${email.body}"
+            MovementFingerprints.ofEmailMovement(bankConfig, shownText, entry, email.receivedAt)
+        }
 
+    /**
+     * Stores the movement [notification] reports. [fingerprintOf] says what identifies it among the
+     * ones registered before ([MovementFingerprints]); null registers it every time it comes.
+     */
     private suspend fun register(
         notification: BankNotification,
         bankConfig: BankSmsConfig,
-        fingerprintOf: ((BudgetEntry) -> String)?
+        fingerprintOf: (BudgetEntry) -> String?
     ): SmsParseResult {
         val result = smsMapper.smsToBudgetEntry(notification.message, bankConfig)
         if (result !is SmsParseResult.Success) return result
@@ -90,13 +88,14 @@ class RegisterSmsEntryUseCase(
         val entry = notification.description
             ?.let { result.entry.copy(description = bankConfig.describe(it)) }
             ?: result.entry
-        if (fingerprintOf == null) {
+        val fingerprint = fingerprintOf(entry)
+        if (fingerprint == null) {
             budgetEntryRepository.create(entry)
             return SmsParseResult.Success(entry)
         }
         // Remembered as soon as the row is stored, before the push, which may wait on the network
         // while the process can be killed: a failure to store lets the next copy try again
-        val registered = registeredMovements.registerOnce(fingerprintOf(entry)) {
+        val registered = registeredMovements.registerOnce(fingerprint) {
             budgetEntryRepository.createLocally(entry)
         }
         if (!registered) return SmsParseResult.Ignored
