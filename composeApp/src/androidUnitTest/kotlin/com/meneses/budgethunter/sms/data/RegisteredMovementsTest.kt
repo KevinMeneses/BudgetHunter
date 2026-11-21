@@ -89,4 +89,12 @@ class RegisteredMovementsTest {
         assertTrue(registeredMovements.registerOnce("f0", register))
         assertFalse(registeredMovements.registerOnce("f${MovementFingerprints.CAPACITY}", register))
     }
+
+    @Test
+    fun `a list that cannot be read does not keep a movement from being registered`() = runTest {
+        dataStore.failReads = true
+
+        assertTrue(RegisteredMovements(dataStore).registerOnce("a1", register))
+        assertEquals(1, registrations)
+    }
 }

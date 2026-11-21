@@ -27,9 +27,17 @@ class RegisteredMovements(private val preferences: DataStore<Preferences>) {
      * the next copy of the notification tries again instead of the movement being lost. Once it
      * returned, the movement is registered even if remembering it fails (a full disk): that only
      * risks a copy later, while failing here would report an entry that was added as an error.
+     * For the same reason, a list that cannot be read is taken as empty: a copy is better than a
+     * movement lost.
      */
     suspend fun registerOnce(fingerprint: String, register: suspend () -> Unit): Boolean = mutex.withLock {
-        val stored = preferences.data.first()[KEY_REGISTERED_MOVEMENTS]
+        val stored = try {
+            preferences.data.first()[KEY_REGISTERED_MOVEMENTS]
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            null
+        }
         if (MovementFingerprints.isRemembered(stored, fingerprint)) return@withLock false
 
         register()

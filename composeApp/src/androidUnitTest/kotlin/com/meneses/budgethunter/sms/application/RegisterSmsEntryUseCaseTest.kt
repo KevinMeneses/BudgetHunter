@@ -389,6 +389,17 @@ class RegisterSmsEntryUseCaseTest {
         assertEquals(SmsParseResult.Ignored, again)
     }
 
+    @Test
+    fun `a bank email already registered is neither stored nor pushed again`() = runTest {
+        givenDefaultBudget()
+        registerSmsEntry.registerEmail(bancolombiaEmail(), SupportedBanks.BANCOLOMBIA)
+
+        registerSmsEntry.registerEmail(bancolombiaEmail(), SupportedBanks.BANCOLOMBIA)
+
+        coVerify(exactly = 1) { budgetEntryRepository.createLocally(any()) }
+        coVerify(exactly = 1) { budgetEntryRepository.pushPending(any()) }
+    }
+
     private companion object {
         const val RECEIVED_AT = 1_795_227_302_131L
     }
