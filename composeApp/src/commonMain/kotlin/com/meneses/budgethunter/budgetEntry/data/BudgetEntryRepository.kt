@@ -23,9 +23,22 @@ class BudgetEntryRepository(
     fun getAllByBudgetId(budgetId: Long) =
         localDataSource.selectAllByBudgetId(budgetId)
 
-    suspend fun create(budgetEntry: BudgetEntry) = withContext(ioDispatcher) {
+    suspend fun create(budgetEntry: BudgetEntry) {
+        createLocally(budgetEntry)
+        pushPending(budgetEntry.budgetId)
+    }
+
+    /**
+     * Stores the entry on the device only; [pushPending] sends it. Split for callers that must
+     * record something right after the row is stored, before a push that may wait on the network.
+     */
+    suspend fun createLocally(budgetEntry: BudgetEntry) = withContext(ioDispatcher) {
         localDataSource.create(budgetEntry)
-        pushPendingEntries(budgetEntry.budgetId, operation = "create")
+    }
+
+    /** Pushes the entries of [budgetId] still to be sent, when there is a session. */
+    suspend fun pushPending(budgetId: Int) = withContext(ioDispatcher) {
+        pushPendingEntries(budgetId, operation = "create")
     }
 
     suspend fun update(budgetEntry: BudgetEntry) = withContext(ioDispatcher) {

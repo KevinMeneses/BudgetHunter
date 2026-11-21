@@ -189,6 +189,21 @@ Type-safe navigation using Navigation Compose with serializable route objects. M
   the subject) are read like a bank app notification (`BankEmail.toNotification`), only up to the sentence that
   completes the movement: the footer's security tips ("código de seguridad") would otherwise mark it as no movement;
   anything but a movement or a missing default budget is dropped silently.
+- Notifications posted again are registered once. Gmail posts an email again while it is in the shade (on sync, after
+  a reboot), and the process may have died since (frequent LOW_MEMORY kills on the Galaxy A55), so the in-memory
+  `RecentNotifications` (key + `when`) is only a quick filter: `RegisteredMovements.registerOnce` keeps the last 200
+  movements on disk (DataStore key `registered_movements`, hashed by `MovementFingerprints`), under a lock (a Koin
+  single), and remembers one right after its row is stored locally (`BudgetEntryRepository.createLocally`; the push
+  runs after, outside the lock, and a row left unpushed goes up with the next full sync): a failed store is tried
+  again by the next copy, and codes, ads or a missing default budget are never remembered. When in doubt (the list
+  cannot be read or written) it registers: a copy the user can delete is better than a lost movement. An email
+  movement is told by bank, when the email arrived (the notification's `when`, which Gmail keeps on a repost; the read
+  day if missing), type, amount and the email's whole text as shown, subject and body
+  (`RegisterSmsEntryUseCase.registerEmail`), not the description (first sentence only). So a repost is the same
+  movement, while two emails that read alike but arrived apart are two; two email apps showing different snippets or
+  times of an email register it twice. A bank app notification is told by its key + `when` only
+  (`registerNotification`'s `identity`; equal transfers are real: "te envió 1000"), and one without `when` is not
+  remembered on disk. This is not the SMS + email deduplication above: those texts differ.
 - iOS cannot read SMS: a Shortcuts automation (trigger "Mensaje") passes the text to the App Intent
   `RegisterExpenseFromMessageIntent` (iosApp/, also an App Shortcut), which calls
   `SmsShortcutEntryPoint` (iosMain) -> `RegisterSmsFromShortcutUseCase` and answers with a dialog.
