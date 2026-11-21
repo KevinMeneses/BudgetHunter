@@ -14,8 +14,14 @@ class InMemoryPreferencesDataStore : DataStore<Preferences> {
     private val state = MutableStateFlow(emptyPreferences())
     private val mutex = Mutex()
 
+    /** Makes every write fail, like a full disk. */
+    var failWrites = false
+
     override val data: Flow<Preferences> = state
 
     override suspend fun updateData(transform: suspend (t: Preferences) -> Preferences): Preferences =
-        mutex.withLock { transform(state.value).also { state.value = it } }
+        mutex.withLock {
+            if (failWrites) throw java.io.IOException("No space left on device")
+            transform(state.value).also { state.value = it }
+        }
 }

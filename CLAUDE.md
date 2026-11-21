@@ -187,12 +187,17 @@ Type-safe navigation using Navigation Compose with serializable route objects. M
   anything but a movement or a missing default budget is dropped silently.
 - Notifications posted again are registered once. Gmail posts an email again while it is in the shade (on sync,
   after a reboot), and the process may have died since (frequent LOW_MEMORY kills on the Galaxy A55), so the
-  in-memory `RecentNotifications` (key + `when`) is only a quick filter: `RegisteredMovements` keeps the last 200
-  fingerprints on disk (DataStore, hashed, `MovementFingerprints`). An email movement is told by bank, date, type,
-  amount and description (`RegisterSmsEntryUseCase.registerEmail`), so another id or time, or two email apps with
-  the same mailbox, do not register it twice; two identical emails with no time in the text would be read as one.
-  A bank app notification is told by its key + `when` only (equal transfers are real: "te envió 1000").
-  This is not the SMS + email deduplication above: those texts differ.
+  in-memory `RecentNotifications` (key + `when`) is only a quick filter: `RegisteredMovements.registerOnce` keeps
+  the last 200 movements on disk (DataStore, hashed, `MovementFingerprints`), under a lock (a Koin single), and
+  remembers one right after its row is stored locally (`BudgetEntryRepository.createLocally`; the push runs after,
+  outside the lock): a failed store is tried again by the next copy, and codes, ads or a missing default budget are
+  never remembered. An email movement is told by bank, day the email arrived (the notification's `when`; the read
+  day if missing), type, amount and the email's whole text as shown, subject and body (`RegisterSmsEntryUseCase.registerEmail`),
+  not the description (first sentence only), so a time written after the movement still tells two equal purchases
+  apart; another id or time, a repost on a later day, or two email apps showing the same text do not register it
+  twice (apps showing different snippets of it do). Two emails of the same day that read exactly alike are taken as one. A bank app notification is told by its
+  key + `when` only (`registerNotification`'s `identity`; equal transfers are real: "te envió 1000"), and one without
+  `when` is not remembered on disk. This is not the SMS + email deduplication above: those texts differ.
 - iOS cannot read SMS: a Shortcuts automation (trigger "Mensaje") passes the text to the App Intent
   `RegisterExpenseFromMessageIntent` (iosApp/, also an App Shortcut), which calls
   `SmsShortcutEntryPoint` (iosMain) -> `RegisterSmsFromShortcutUseCase` and answers with a dialog.

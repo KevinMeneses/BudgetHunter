@@ -15,6 +15,7 @@ import com.meneses.budgethunter.sms.domain.SmsParseResult
 import com.meneses.budgethunter.sms.domain.SupportedBanks
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.coVerifyOrder
 import io.mockk.mockk
 import io.mockk.slot
 import kotlinx.coroutines.test.runTest
@@ -214,7 +215,7 @@ class RegisterSmsEntryUseCaseTest {
     fun `registers a bank email described by its body`() = runTest {
         givenDefaultBudget()
         val stored = slot<BudgetEntry>()
-        coEvery { budgetEntryRepository.create(capture(stored)) } returns Unit
+        coEvery { budgetEntryRepository.createLocally(capture(stored)) } returns Unit
         val email = BankEmail.fromNotification(
             title = "Davivienda",
             text = "Notificación de transacción",
@@ -222,7 +223,7 @@ class RegisterSmsEntryUseCaseTest {
                 "TIENDA D1. Si no la reconoces llámanos."
         )
 
-        val result = registerSmsEntry.registerEmail(email.toNotification(SupportedBanks.DAVIVIENDA), SupportedBanks.DAVIVIENDA)
+        val result = registerSmsEntry.registerEmail(email, SupportedBanks.DAVIVIENDA)
 
         assertIs<SmsParseResult.Success>(result)
         assertEquals("35900", stored.captured.amount)
@@ -239,8 +240,9 @@ class RegisterSmsEntryUseCaseTest {
         bigText = "Alertas y Notificaciones\n \nBancolombia: Pagaste \$130,500.00 a EMPRESA DE ENERGIA desde tu " +
             "producto 1234 el 20/11/2026 $time. ¿Dudas? Llamanos al 6045109095. Estamos cerca\n" +
             "Por tu seguridad, desde Bancolombia nunca te solicitaremos tus datos personales, como usuario y clave; " +
-            "ni tus datos bancarios, como números de tarjetas de crédito, códigos de seguridad y plazos."
-    ).toNotification(SupportedBanks.BANCOLOMBIA)
+            "ni tus datos bancarios, como números de tarjetas de crédito, códigos de seguridad y plazos.",
+        receivedAt = RECEIVED_AT
+    )
 
     @Test
     fun `registers a bank email only once when the email app posts it again`() = runTest {
@@ -251,7 +253,7 @@ class RegisterSmsEntryUseCaseTest {
 
         assertIs<SmsParseResult.Success>(first)
         assertEquals(SmsParseResult.Ignored, again)
-        coVerify(exactly = 1) { budgetEntryRepository.create(any()) }
+        coVerify(exactly = 1) { budgetEntryRepository.createLocally(any()) }
     }
 
     @Test
@@ -262,7 +264,7 @@ class RegisterSmsEntryUseCaseTest {
         val afterRestart = newRegisterSmsEntry().registerEmail(bancolombiaEmail(), SupportedBanks.BANCOLOMBIA)
 
         assertEquals(SmsParseResult.Ignored, afterRestart)
-        coVerify(exactly = 1) { budgetEntryRepository.create(any()) }
+        coVerify(exactly = 1) { budgetEntryRepository.createLocally(any()) }
     }
 
     @Test
@@ -273,7 +275,7 @@ class RegisterSmsEntryUseCaseTest {
         val second = registerSmsEntry.registerEmail(bancolombiaEmail(time = "21:20:03"), SupportedBanks.BANCOLOMBIA)
 
         assertIs<SmsParseResult.Success>(second)
-        coVerify(exactly = 2) { budgetEntryRepository.create(any()) }
+        coVerify(exactly = 2) { budgetEntryRepository.createLocally(any()) }
     }
 
     @Test
@@ -285,5 +287,86 @@ class RegisterSmsEntryUseCaseTest {
         val result = registerSmsEntry.registerEmail(bancolombiaEmail(), SupportedBanks.BANCOLOMBIA)
 
         assertIs<SmsParseResult.Success>(result)
+    }
+
+    @Test
+    fun `a bank email whose entry could not be stored is tried again`() = runTest {
+        givenDefaultBudget()
+        var attempts = 0
+        coEvery { budgetEntryRepository.createLocally(any()) } answers {
+            attempts++
+            if (attempts == 1) error("database unavailable")
+        }
+
+        runCatching { registerSmsEntry.registerEmail(bancolombiaEmail(), SupportedBanks.BANCOLOMBIA) }
+        val retried = registerSmsEntry.registerEmail(bancolombiaEmail(), SupportedBanks.BANCOLOMBIA)
+
+        assertIs<SmsParseResult.Success>(retried)
+        assertEquals(2, attempts)
+    }
+
+    private val nuTransfer = BankNotification(
+        title = "Enviaste $1.952,00",
+        text = "Le enviaste a KEV**** MEN****** en su cuenta de Bancolombia."
+    )
+
+    @Test
+    fun `registers a bank app notification once by its identity also after the process restarted`() = runTest {
+        givenDefaultBudget()
+
+        val first = registerSmsEntry.registerNotification(nuTransfer, SupportedBanks.NU, identity = "nu-key|1795227302131")
+        val afterRestart = newRegisterSmsEntry().registerNotification(nuTransfer, SupportedBanks.NU, identity = "nu-key|1795227302131")
+        val anotherTransfer = registerSmsEntry.registerNotification(nuTransfer, SupportedBanks.NU, identity = "nu-key|1795227399999")
+
+        assertIs<SmsParseResult.Success>(first)
+        assertEquals(SmsParseResult.Ignored, afterRestart)
+        assertIs<SmsParseResult.Success>(anotherTransfer)
+        coVerify(exactly = 2) { budgetEntryRepository.createLocally(any()) }
+    }
+
+    @Test
+    fun `a bank app notification that reports no movement does not keep a later copy from being read`() = runTest {
+        coEvery { preferencesManager.getDefaultBudgetId() } returns -1
+        registerSmsEntry.registerNotification(nuTransfer, SupportedBanks.NU, identity = "nu-key|1795227302131")
+        givenDefaultBudget()
+
+        val result = registerSmsEntry.registerNotification(nuTransfer, SupportedBanks.NU, identity = "nu-key|1795227302131")
+
+        assertIs<SmsParseResult.Success>(result)
+    }
+
+    @Test
+    fun `stores a bank email entry before pushing it`() = runTest {
+        givenDefaultBudget()
+
+        registerSmsEntry.registerEmail(bancolombiaEmail(), SupportedBanks.BANCOLOMBIA)
+
+        coVerifyOrder {
+            budgetEntryRepository.createLocally(any())
+            budgetEntryRepository.pushPending(7)
+        }
+    }
+
+    @Test
+    fun `registers two bank emails whose time comes after the first sentence`() = runTest {
+        givenDefaultBudget()
+        fun purchaseAt(time: String) = BankEmail.fromNotification(
+            title = "Davivienda",
+            text = "Notificación de transacción",
+            bigText = "Notificación de transacción\nApreciado cliente: realizaste una compra por \$35.900 en " +
+                "TIENDA D1. Hora: $time. Si no la reconoces llámanos.",
+            receivedAt = RECEIVED_AT
+        )
+
+        val morning = registerSmsEntry.registerEmail(purchaseAt("08:11"), SupportedBanks.DAVIVIENDA)
+        val evening = registerSmsEntry.registerEmail(purchaseAt("19:40"), SupportedBanks.DAVIVIENDA)
+
+        assertIs<SmsParseResult.Success>(morning)
+        assertIs<SmsParseResult.Success>(evening)
+        coVerify(exactly = 2) { budgetEntryRepository.createLocally(any()) }
+    }
+
+    private companion object {
+        const val RECEIVED_AT = 1_795_227_302_131L
     }
 }

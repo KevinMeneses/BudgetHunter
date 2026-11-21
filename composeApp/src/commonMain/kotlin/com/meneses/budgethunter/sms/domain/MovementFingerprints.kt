@@ -1,6 +1,9 @@
 package com.meneses.budgethunter.sms.domain
 
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
+import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 
 /**
  * Identifies the movements already registered from notifications, so that one posted again is
@@ -17,12 +20,24 @@ object MovementFingerprints {
 
     /**
      * A movement read from an email, by what it says rather than by the notification that showed
-     * it: the same email posted again under another id or time, or shown by two email apps with
-     * the same mailbox, is the same movement. Banks write the date and time of the movement in
-     * the message, so two real movements read alike only if they also happen at the same time.
+     * it: the same email posted again under another id or time is the same movement (so is one
+     * shown by two email apps with the same mailbox, as long as both show the same text). [message] is the email's whole text as shown (subject
+     * and body), not the entry's description, which keeps only the first sentence, nor the part the
+     * movement was read from: the time a bank writes after the movement still tells two apart.
+     *
+     * The day is the email's ([receivedAt], when the email app tells it), not the entry's, which is
+     * the day it was read: an email posted again the next day is the same movement, while one that
+     * repeats another day's text is a new one. Two movements of the same day whose emails write no
+     * time and read alike (same amount, same shop) are taken as one: the price of not adding the
+     * same email twice.
      */
-    fun ofEmailMovement(bankConfig: BankSmsConfig, entry: BudgetEntry): String =
-        hash(listOf("email", bankConfig.id, entry.date, entry.type.name, entry.amount, entry.description).joinToString("|"))
+    fun ofEmailMovement(bankConfig: BankSmsConfig, message: String, entry: BudgetEntry, receivedAt: Long?): String {
+        val day = receivedAt
+            ?.takeIf { it > 0 }
+            ?.let { Instant.fromEpochMilliseconds(it).toLocalDateTime(TimeZone.currentSystemDefault()).date.toString() }
+            ?: entry.date
+        return hash(listOf("email", bankConfig.id, day, entry.type.name, entry.amount, message).joinToString("|"))
+    }
 
     /**
      * A bank app notification, by what identifies it on the device ([identity]: on Android its key
@@ -36,10 +51,13 @@ object MovementFingerprints {
      * null when it is already among them.
      */
     fun remember(stored: String?, fingerprint: String, capacity: Int = CAPACITY): String? {
-        val fingerprints = stored?.split(SEPARATOR)?.filter { it.isNotEmpty() }.orEmpty()
-        if (fingerprint in fingerprints) return null
-        return (fingerprints + fingerprint).takeLast(capacity).joinToString(SEPARATOR.toString())
+        if (isRemembered(stored, fingerprint)) return null
+        return (split(stored) + fingerprint).takeLast(capacity).joinToString(SEPARATOR.toString())
     }
+
+    fun isRemembered(stored: String?, fingerprint: String): Boolean = fingerprint in split(stored)
+
+    private fun split(stored: String?): List<String> = stored?.split(SEPARATOR)?.filter { it.isNotEmpty() }.orEmpty()
 
     /** 64-bit FNV-1a: plain Kotlin on every platform, and collisions are negligible among 200. */
     private fun hash(text: String): String {

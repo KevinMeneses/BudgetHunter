@@ -46,9 +46,9 @@ class ProcessSmsUseCase(
         }
     }
 
-    override suspend fun processBankNotification(notification: BankNotification, bankConfig: BankSmsConfig) {
+    override suspend fun processBankNotification(notification: BankNotification, bankConfig: BankSmsConfig, identity: String?) {
         reportFailures {
-            when (val result = registerSmsEntry.registerNotification(notification, bankConfig)) {
+            when (val result = registerSmsEntry.registerNotification(notification, bankConfig, identity)) {
                 is SmsParseResult.Success -> notifyEntryAdded(result.entry)
                 // Bank apps also notify codes, news and reminders. Unlike an SMS from a bank, a
                 // notification nobody can read is far more likely one of those than a movement,
@@ -61,7 +61,7 @@ class ProcessSmsUseCase(
 
     override suspend fun processBankEmail(email: BankEmail, bankConfig: BankSmsConfig) {
         reportFailures {
-            when (val result = registerSmsEntry.registerEmail(email.toNotification(bankConfig), bankConfig)) {
+            when (val result = registerSmsEntry.registerEmail(email, bankConfig)) {
                 is SmsParseResult.Success -> notifyEntryAdded(result.entry)
                 // The movement was read but had nowhere to go: the user can fix that
                 SmsParseResult.NoDefaultBudget -> notifyFailure(result, email.body)

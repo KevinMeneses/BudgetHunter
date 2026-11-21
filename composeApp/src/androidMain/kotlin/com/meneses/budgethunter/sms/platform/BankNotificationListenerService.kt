@@ -7,12 +7,10 @@ import android.os.Bundle
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import com.meneses.budgethunter.commons.data.PreferencesManager
-import com.meneses.budgethunter.sms.data.RegisteredMovements
 import com.meneses.budgethunter.sms.domain.BankChannels
 import com.meneses.budgethunter.sms.domain.BankEmail
 import com.meneses.budgethunter.sms.domain.BankNotification
 import com.meneses.budgethunter.sms.domain.BankNotificationService
-import com.meneses.budgethunter.sms.domain.MovementFingerprints
 import com.meneses.budgethunter.sms.domain.ReadingChannel
 import com.meneses.budgethunter.sms.domain.RecentNotifications
 import com.meneses.budgethunter.sms.domain.SupportedBanks
@@ -36,7 +34,6 @@ class BankNotificationListenerService : NotificationListenerService(), KoinCompo
 
     private val bankNotificationService: BankNotificationService by inject()
     private val preferencesManager: PreferencesManager by inject()
-    private val registeredMovements: RegisteredMovements by inject()
     private val ioScope: CoroutineScope by inject(named("IOScope"))
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
@@ -75,9 +72,15 @@ class BankNotificationListenerService : NotificationListenerService(), KoinCompo
                 if (bankConfig.id !in preferencesManager.getSelectedBankIds()) return@launch
                 val channels = BankChannels.of(bankConfig, preferencesManager.getBankChannels())
                 if (ReadingChannel.APP !in channels) return@launch
-                // The memory above dies with the process, and the app may post it again after that
-                if (!registeredMovements.markIfNew(MovementFingerprints.ofAppNotification(fingerprint))) return@launch
-                bankNotificationService.processBankNotification(bankNotification, bankConfig)
+                // The memory above dies with the process and the app may post it again after that:
+                // the movement is also remembered on disk, by this same identity, once registered.
+                // Not without a time: the text would then be the identity, and on disk an equal
+                // transfer days later ("te envió 1000") would be taken for this one
+                bankNotificationService.processBankNotification(
+                    bankNotification,
+                    bankConfig,
+                    identity = fingerprint.takeIf { postedAt != 0L }
+                )
             } catch (e: CancellationException) {
                 throw e
             } catch (_: Exception) {
@@ -116,7 +119,9 @@ class BankNotificationListenerService : NotificationListenerService(), KoinCompo
                 val email = BankEmail.fromNotification(
                     title = sender,
                     text = extras.getCharSequence(Notification.EXTRA_TEXT)?.toString().orEmpty(),
-                    bigText = extras.getCharSequence(Notification.EXTRA_BIG_TEXT)?.toString()
+                    bigText = extras.getCharSequence(Notification.EXTRA_BIG_TEXT)?.toString(),
+                    // Gmail sets it to when the email arrived and keeps it when it posts the email again
+                    receivedAt = notification.`when`.takeIf { it > 0 }
                 )
                 if (email.isBlank) return@launch
 
