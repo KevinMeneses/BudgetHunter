@@ -55,7 +55,7 @@ class CollaboratorApiService(
         budgetId: Long,
         request: AddCollaboratorRequest
     ): Result<CollaboratorResponse> = withContext(ioDispatcher) {
-        logger.debug(tag, "Adding collaborator to budget $budgetId with request: $request")
+        logger.debug(tag, "Adding a collaborator to budget $budgetId")
         safeApiCall {
             val response = try {
                 httpClient.post(ApiEndpoints.budgetCollaborators(budgetId)) {
@@ -63,12 +63,13 @@ class CollaboratorApiService(
                     setBody(request)
                 }
             } catch (e: ClientRequestException) {
-                // Only reached when the client is configured with expectSuccess
+                // Only reached when the client is configured with expectSuccess; Ktor keeps the body
+                // readable there, which the 402 needs (covered by CollaboratorApiServiceTest)
                 e.response
             }
             if (!response.status.isSuccess()) throw response.toAddCollaboratorError()
             response.body<CollaboratorResponse>().also {
-                logger.debug(tag, "Successfully added collaborator: $it")
+                logger.debug(tag, "Added a collaborator to budget ${it.budgetId}")
             }
         }
     }
@@ -126,11 +127,11 @@ class CollaboratorApiService(
         budgetId: Long,
         email: String
     ): Result<Unit> = withContext(ioDispatcher) {
-        logger.debug(tag, "Removing collaborator $email from budget $budgetId")
+        logger.debug(tag, "Removing a collaborator from budget $budgetId")
         safeApiCall {
             val encodedEmail = email.encodeURLPath()
             httpClient.delete(ApiEndpoints.budgetCollaborator(budgetId, encodedEmail))
-            logger.debug(tag, "Successfully removed collaborator: $email")
+            logger.debug(tag, "Removed a collaborator from budget $budgetId")
         }
     }
 
