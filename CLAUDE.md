@@ -171,7 +171,11 @@ Type-safe navigation using Navigation Compose with serializable route objects. M
   bank uses APP or EMAIL; a reader found unbound gets a 3 s grace period for the bind, counted from the first check
   that found it so (reset by any check that finds it connected or not needed), and later checks answer at once, so
   Settings shows the warning without a pause. The budget list shows a banner that leads to Settings, which asks the
-  user for that force stop. Title and text are parsed together (`BankNotification`) by the same parser, the entry is
+  user for that force stop. With the app closed, `NotificationReaderWatchWorker` (WorkManager, every 15 min,
+  scheduled in `MyApplication`) runs `WarnIfNotificationReaderStoppedUseCase`: a reader still stopped a minute after
+  it was found so gets a notification that opens Settings, once per stop (`PreferencesManager.isReaderStoppedNotified`,
+  cleared when the reader is found running). On 2026-11-21 three LOW_MEMORY kills overnight left it unbound and two
+  bank emails were missed without notice. Title and text are parsed together (`BankNotification`) by the same parser, the entry is
   described by the text (with the bank name, "Nu: ..."), and unreadable notifications are dropped silently (apps also
   post codes and news).
 - Bank emails are read from the email app's notification (Gmail, Outlook, Samsung Email...:
