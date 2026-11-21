@@ -3,6 +3,7 @@ package com.meneses.budgethunter
 import android.app.Application
 import com.meneses.budgethunter.di.androidPlatformModule
 import com.meneses.budgethunter.di.initKoin
+import com.meneses.budgethunter.sms.platform.NotificationReaderWatchWorker
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
@@ -20,5 +21,7 @@ class MyApplication : Application() {
         ).apply {
             androidContext(this@MyApplication)
         }
+
+        NotificationReaderWatchWorker.schedule(this)
     }
 }
