@@ -136,6 +136,8 @@ private class FakeNativeDependencies(override val keychainStore: KeychainStore) 
         override fun showNotification(title: String, message: String) = Unit
         override fun showEntryAddedNotification(title: String, message: String) = Unit
         override fun showOpenSettingsNotification(title: String, message: String) = Unit
+        override fun showReaderStoppedNotification(title: String, message: String) = Unit
+        override fun cancelReaderStoppedNotification() = Unit
     }
     override val googleSignInManager: GoogleSignInManager = object : GoogleSignInManager {
         override val isAvailable = false
