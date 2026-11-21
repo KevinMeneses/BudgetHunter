@@ -23,7 +23,7 @@ class ProcessBankEmailTest {
 
     @Test
     fun `a movement with no default budget leads to the settings`() = runTest {
-        coEvery { registerSmsEntry.registerNotification(any(), any()) } returns SmsParseResult.NoDefaultBudget
+        coEvery { registerSmsEntry.registerEmail(any(), any()) } returns SmsParseResult.NoDefaultBudget
 
         processSms.processBankEmail(email, SupportedBanks.BANCOLOMBIA)
 
@@ -33,7 +33,7 @@ class ProcessBankEmailTest {
     @Test
     fun `an email that is not a readable movement is dropped without a word`() = runTest {
         for (result in listOf(SmsParseResult.Unrecognized, SmsParseResult.AmountNotFound, SmsParseResult.Ignored)) {
-            coEvery { registerSmsEntry.registerNotification(any(), any()) } returns result
+            coEvery { registerSmsEntry.registerEmail(any(), any()) } returns result
 
             processSms.processBankEmail(email, SupportedBanks.BANCOLOMBIA)
         }

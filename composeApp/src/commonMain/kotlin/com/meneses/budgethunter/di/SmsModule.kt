@@ -4,6 +4,7 @@ import com.meneses.budgethunter.sms.application.IsNotificationReaderStoppedUseCa
 import com.meneses.budgethunter.sms.application.ProcessSmsUseCase
 import com.meneses.budgethunter.sms.application.RegisterSmsEntryUseCase
 import com.meneses.budgethunter.sms.application.RegisterSmsFromShortcutUseCase
+import com.meneses.budgethunter.sms.data.RegisteredMovements
 import com.meneses.budgethunter.sms.data.SmsMapper
 import com.meneses.budgethunter.sms.domain.BankNotificationService
 import com.meneses.budgethunter.sms.domain.SmsService
@@ -30,9 +31,12 @@ val smsModule = module {
     single {
         RegisterSmsEntryUseCase(
             smsMapper = get(),
-            budgetEntryRepository = get()
+            budgetEntryRepository = get(),
+            registeredMovements = get()
         )
     }
+
+    single { RegisteredMovements(preferences = get()) }
 
     single {
         ProcessSmsUseCase(
