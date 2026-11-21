@@ -4,6 +4,8 @@ import com.meneses.budgethunter.sms.domain.MovementFingerprints
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.yield
 import kotlin.test.Test
@@ -95,6 +97,23 @@ class RegisteredMovementsTest {
         dataStore.failReads = true
 
         assertTrue(RegisteredMovements(dataStore).registerOnce("a1", register))
+        assertEquals(1, registrations)
+    }
+
+    @Test
+    fun `a movement stored right before a cancellation is still remembered`() = runTest {
+        val registeredMovements = RegisteredMovements(dataStore)
+
+        val job = launch {
+            registeredMovements.registerOnce("a1") {
+                registrations++
+                coroutineContext.cancel()
+            }
+        }
+        job.join()
+
+        assertTrue(job.isCancelled)
+        assertFalse(registeredMovements.registerOnce("a1", register))
         assertEquals(1, registrations)
     }
 }

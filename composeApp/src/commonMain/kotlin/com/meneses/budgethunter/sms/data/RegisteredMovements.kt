@@ -6,9 +6,11 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.meneses.budgethunter.sms.domain.MovementFingerprints
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 
 /**
  * The last movements registered from notifications ([MovementFingerprints]), kept on disk so a
@@ -19,6 +21,8 @@ import kotlinx.coroutines.sync.withLock
  */
 class RegisteredMovements(private val preferences: DataStore<Preferences>) {
 
+    // Held while the entry is stored too (a local write, short): that is what makes check, store
+    // and remember one step for two copies arriving at once
     private val mutex = Mutex()
 
     /**
@@ -41,15 +45,17 @@ class RegisteredMovements(private val preferences: DataStore<Preferences>) {
         if (MovementFingerprints.isRemembered(stored, fingerprint)) return@withLock false
 
         register()
-        try {
-            preferences.edit { current ->
-                MovementFingerprints.remember(current[KEY_REGISTERED_MOVEMENTS], fingerprint)
-                    ?.let { current[KEY_REGISTERED_MOVEMENTS] = it }
+        // Not cancellable: the entry is stored, and a cancellation now (the listener going away)
+        // would leave it unremembered, so its next copy would be stored again
+        withContext(NonCancellable) {
+            try {
+                preferences.edit { current ->
+                    MovementFingerprints.remember(current[KEY_REGISTERED_MOVEMENTS], fingerprint)
+                        ?.let { current[KEY_REGISTERED_MOVEMENTS] = it }
+                }
+            } catch (_: Exception) {
+                // Registered all the same: see above
             }
-        } catch (e: CancellationException) {
-            throw e
-        } catch (_: Exception) {
-            // Registered all the same: see above
         }
         true
     }
