@@ -4,6 +4,7 @@ import com.meneses.budgethunter.sms.application.IsNotificationReaderStoppedUseCa
 import com.meneses.budgethunter.sms.application.ProcessSmsUseCase
 import com.meneses.budgethunter.sms.application.RegisterSmsEntryUseCase
 import com.meneses.budgethunter.sms.application.RegisterSmsFromShortcutUseCase
+import com.meneses.budgethunter.sms.application.WarnIfNotificationReaderStoppedUseCase
 import com.meneses.budgethunter.sms.data.RegisteredMovements
 import com.meneses.budgethunter.sms.data.SmsMapper
 import com.meneses.budgethunter.sms.domain.BankNotificationService
@@ -17,6 +18,15 @@ val smsModule = module {
         IsNotificationReaderStoppedUseCase(
             preferencesManager = get(),
             permissionsManager = get()
+        )
+    }
+
+    factory {
+        WarnIfNotificationReaderStoppedUseCase(
+            isNotificationReaderStopped = get(),
+            preferencesManager = get(),
+            notificationManager = get(),
+            stringResourceProvider = get()
         )
     }
 

@@ -174,6 +174,10 @@ Type-safe navigation using Navigation Compose with serializable route objects. M
   user for that force stop. Title and text are parsed together (`BankNotification`) by the same parser, the entry is
   described by the text (with the bank name, "Nu: ..."), and unreadable notifications are dropped silently (apps also
   post codes and news).
+- With the app closed, `NotificationReaderWatchWorker` (WorkManager, every 15 min, scheduled in `MyApplication`) runs
+  `WarnIfNotificationReaderStoppedUseCase`: a reader still stopped a minute after it was found so gets a notification
+  that opens Settings, once per stop (`PreferencesManager.isReaderStoppedNotified`, cleared when a run finds it
+  running, even with notifications off; with them off nothing is shown nor marked).
 - Bank emails are read from the email app's notification (Gmail, Outlook, Samsung Email...:
   `BankEmail.EMAIL_APP_PACKAGES`) by the same listener, only for banks with the EMAIL channel. The sender is checked
   before anything else is read (`BankEmail.findSender`): the display name (the title) can be written by anyone, so

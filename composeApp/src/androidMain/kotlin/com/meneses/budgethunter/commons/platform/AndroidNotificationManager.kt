@@ -105,6 +105,19 @@ class AndroidNotificationManager(
         NOTIFICATION_ID_BASE + notificationCounter.getAndIncrement().mod(MAX_STACKED_NOTIFICATIONS)
 
     companion object {
+        /**
+         * Whether a notification posted now would be seen: the app's notifications are on and the
+         * channel it posts to was not turned off. When it is false, [show] posts nothing.
+         */
+        fun canShowNotifications(context: Context): Boolean {
+            val manager = NotificationManagerCompat.from(context)
+            if (!manager.areNotificationsEnabled()) return false
+            // Not created yet: it is created on the first notification, turned on
+            val channel = manager.getNotificationChannel(CHANNEL_ID) ?: return true
+            // AndroidNotificationManager here is android.app.NotificationManager (imported under that alias)
+            return channel.importance != AndroidNotificationManager.IMPORTANCE_NONE
+        }
+
         const val EXTRA_OPEN_DEFAULT_BUDGET = "com.meneses.budgethunter.OPEN_DEFAULT_BUDGET"
         const val EXTRA_OPEN_SETTINGS = "com.meneses.budgethunter.OPEN_SETTINGS"
         private const val CHANNEL_ID = "sms_transactions"

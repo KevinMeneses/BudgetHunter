@@ -102,6 +102,9 @@ kotlin {
             // SqlDelight Android driver
             implementation(libs.sqldelight.android.driver)
 
+            // Periodic check that the bank notification reader is still bound, with the app closed
+            implementation(libs.androidx.work.runtime.ktx)
+
             // Google Play services
             implementation(libs.bundles.play.update)
 

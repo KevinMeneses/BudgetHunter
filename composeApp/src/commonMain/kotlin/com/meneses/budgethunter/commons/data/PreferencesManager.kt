@@ -110,6 +110,18 @@ class PreferencesManager(private val preferences: DataStore<Preferences>) {
     }
 
     /**
+     * Whether the user was already told, by a notification, that the bank notification reader
+     * stopped. Cleared once the reader is found running again, so the next stop is told too.
+     */
+    suspend fun isReaderStoppedNotified() = preferences.data
+        .map { it[KEY_READER_STOPPED_NOTIFIED] }
+        .firstOrNull() == true
+
+    suspend fun setReaderStoppedNotified(value: Boolean) {
+        preferences.edit { it[KEY_READER_STOPPED_NOTIFIED] = value }
+    }
+
+    /**
      * Email of the last account that signed in on this device. Deliberately left alone by sign out
      * and [clearUserPreferences]: it is what tells the next sign in whether the account changed.
      */
@@ -152,5 +164,6 @@ class PreferencesManager(private val preferences: DataStore<Preferences>) {
         private val KEY_OFFLINE_MODE_ENABLED = booleanPreferencesKey("offline_mode_enabled")
         private val KEY_LAST_SIGNED_IN_EMAIL = stringPreferencesKey("last_signed_in_email")
         private val KEY_LOCAL_WIPE_PENDING = booleanPreferencesKey("local_wipe_pending")
+        private val KEY_READER_STOPPED_NOTIFIED = booleanPreferencesKey("reader_stopped_notified")
     }
 }
