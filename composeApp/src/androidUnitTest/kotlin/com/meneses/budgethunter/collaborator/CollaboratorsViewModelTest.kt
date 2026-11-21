@@ -4,12 +4,23 @@ import budgethunter.composeapp.generated.resources.Res
 import budgethunter.composeapp.generated.resources.collaborator_added_successfully
 import budgethunter.composeapp.generated.resources.failed_to_add_collaborator
 import budgethunter.composeapp.generated.resources.failed_to_load_collaborators
+import budgethunter.composeapp.generated.resources.sharing_limit_collaborators
+import budgethunter.composeapp.generated.resources.sharing_limit_generic
+import budgethunter.composeapp.generated.resources.sharing_limit_not_owner
+import budgethunter.composeapp.generated.resources.sharing_limit_shared_budgets
+import com.meneses.budgethunter.billing.data.BillingApiException
+import com.meneses.budgethunter.billing.data.PremiumRepository
+import com.meneses.budgethunter.billing.domain.SharingLimitType
+import com.meneses.budgethunter.billing.domain.SharingStatus
 import com.meneses.budgethunter.collaborator.application.CollaboratorsEvent
 import com.meneses.budgethunter.collaborator.application.CollaboratorsIntent
 import com.meneses.budgethunter.collaborator.data.CollaboratorRepository
 import com.meneses.budgethunter.commons.data.PreferencesManager
+import com.meneses.budgethunter.commons.data.network.ApiError
 import com.meneses.budgethunter.commons.data.network.models.CollaboratorResponse
 import com.meneses.budgethunter.commons.data.network.models.UserInfo
+import com.meneses.budgethunter.commons.data.sync.NoOpLogger
+import io.mockk.coVerify
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
@@ -23,7 +34,10 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertIs
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 /**
  * Unit tests for CollaboratorsViewModel event emissions.
@@ -41,6 +55,7 @@ class CollaboratorsViewModelTest {
     // Mocks
     private val collaboratorRepository = mockk<CollaboratorRepository>(relaxed = true)
     private val preferencesManager = mockk<PreferencesManager>(relaxed = true)
+    private val premiumRepository = mockk<PremiumRepository>()
 
     // System under test
     private lateinit var viewModel: CollaboratorsViewModel
@@ -51,6 +66,8 @@ class CollaboratorsViewModelTest {
         viewModel = CollaboratorsViewModel(
             collaboratorRepository = collaboratorRepository,
             preferencesManager = preferencesManager,
+            premiumRepository = premiumRepository,
+            logger = NoOpLogger(),
             budgetServerId = budgetServerId
         )
     }
@@ -146,5 +163,128 @@ class CollaboratorsViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertEquals("me@example.com", viewModel.uiState.value.currentUserEmail)
+    }
+
+    // ========== Sharing limit Tests ==========
+
+    private suspend fun addRefusedWith(limitType: SharingLimitType?, callerIsOwner: Boolean): CollaboratorsEvent {
+        coEvery {
+            collaboratorRepository.addCollaborator(budgetServerId, "friend@example.com")
+        } returns Result.failure(ApiError.SharingLimitReached(limitType, callerIsOwner))
+
+        viewModel.sendIntent(CollaboratorsIntent.AddCollaborator("friend@example.com"))
+        testDispatcher.scheduler.advanceUntilIdle()
+        return viewModel.events.first()
+    }
+
+    @Test
+    fun `the owner past the people per budget limit is offered Premium`() = runTest {
+        val event = addRefusedWith(SharingLimitType.COLLABORATORS_PER_BUDGET, callerIsOwner = true)
+
+        assertIs<CollaboratorsEvent.ShowSharingLimit>(event)
+        assertEquals(Res.string.sharing_limit_collaborators, event.message)
+        assertTrue(event.offersPremium)
+    }
+
+    @Test
+    fun `the owner past the shared budgets limit is offered Premium`() = runTest {
+        val event = addRefusedWith(SharingLimitType.SHARED_BUDGETS, callerIsOwner = true)
+
+        assertIs<CollaboratorsEvent.ShowSharingLimit>(event)
+        assertEquals(Res.string.sharing_limit_shared_budgets, event.message)
+        assertTrue(event.offersPremium)
+    }
+
+    @Test
+    fun `the owner past a limit this app does not know gets the general notice and Premium`() = runTest {
+        val event = addRefusedWith(limitType = null, callerIsOwner = true)
+
+        assertIs<CollaboratorsEvent.ShowSharingLimit>(event)
+        assertEquals(Res.string.sharing_limit_generic, event.message)
+        assertTrue(event.offersPremium)
+    }
+
+    @Test
+    fun `a member past the people per budget limit is told it is the owner's plan, without Premium`() = runTest {
+        val event = addRefusedWith(SharingLimitType.COLLABORATORS_PER_BUDGET, callerIsOwner = false)
+
+        assertIs<CollaboratorsEvent.ShowSharingLimit>(event)
+        assertEquals(Res.string.sharing_limit_not_owner, event.message)
+        assertFalse(event.offersPremium)
+    }
+
+    @Test
+    fun `a member past the shared budgets limit is told it is the owner's plan, without Premium`() = runTest {
+        val event = addRefusedWith(SharingLimitType.SHARED_BUDGETS, callerIsOwner = false)
+
+        assertIs<CollaboratorsEvent.ShowSharingLimit>(event)
+        assertEquals(Res.string.sharing_limit_not_owner, event.message)
+        assertFalse(event.offersPremium)
+    }
+
+    @Test
+    fun `a refusal keeps the field open for another try`() = runTest {
+        addRefusedWith(SharingLimitType.SHARED_BUDGETS, callerIsOwner = true)
+
+        assertFalse(viewModel.uiState.value.isAddingCollaborator)
+    }
+
+    // ========== Sharing hint Tests ==========
+
+    private val freeLimits = SharingStatus(sharedBudgetsLimit = 1, sharedBudgetsUsed = 0, collaboratorsPerBudgetLimit = 1)
+
+    private fun membersWhereOwnerIs(owner: String) = listOf(
+        UserInfo(email = "me@example.com", name = "Me", isOwner = owner == "me@example.com"),
+        UserInfo(email = "other@example.com", name = "Other", isOwner = owner == "other@example.com")
+    )
+
+    private fun loadAs(members: List<UserInfo>) {
+        coEvery { preferencesManager.getLastSignedInEmail() } returns "me@example.com"
+        coEvery { collaboratorRepository.getCollaborators(budgetServerId) } returns Result.success(members)
+        viewModel.sendIntent(CollaboratorsIntent.LoadCollaborators)
+        testDispatcher.scheduler.advanceUntilIdle()
+    }
+
+    @Test
+    fun `the owner on a free plan sees its limits`() = runTest {
+        coEvery { premiumRepository.sharingStatus() } returns freeLimits
+
+        loadAs(membersWhereOwnerIs("me@example.com"))
+
+        assertEquals(freeLimits, viewModel.uiState.value.ownerSharingLimits)
+    }
+
+    @Test
+    fun `the owner on premium sees no limits`() = runTest {
+        coEvery { premiumRepository.sharingStatus() } returns SharingStatus(null, 3, null)
+
+        loadAs(membersWhereOwnerIs("me@example.com"))
+
+        assertNull(viewModel.uiState.value.ownerSharingLimits)
+    }
+
+    @Test
+    fun `a member sees no limits, and the plan is not even asked`() = runTest {
+        loadAs(membersWhereOwnerIs("other@example.com"))
+
+        assertNull(viewModel.uiState.value.ownerSharingLimits)
+        coVerify(exactly = 0) { premiumRepository.sharingStatus() }
+    }
+
+    @Test
+    fun `no hint when the plan cannot be read`() = runTest {
+        coEvery { premiumRepository.sharingStatus() } throws BillingApiException(null, "offline")
+
+        loadAs(membersWhereOwnerIs("me@example.com"))
+
+        assertNull(viewModel.uiState.value.ownerSharingLimits)
+        assertEquals(2, viewModel.uiState.value.collaborators.size)
+    }
+
+    @Test
+    fun `no hint from a server that does not say who owns the budget`() = runTest {
+        loadAs(membersWhereOwnerIs(owner = "nobody"))
+
+        assertNull(viewModel.uiState.value.ownerSharingLimits)
     }
 }

@@ -1,22 +1,31 @@
 package com.meneses.budgethunter.collaborator.data.network
 
+import com.meneses.budgethunter.billing.domain.SharingLimitType
 import com.meneses.budgethunter.commons.data.network.ApiEndpoints
+import com.meneses.budgethunter.commons.data.network.ApiError
 import com.meneses.budgethunter.commons.data.network.models.AddCollaboratorRequest
 import com.meneses.budgethunter.commons.data.network.models.CollaboratorResponse
+import com.meneses.budgethunter.commons.data.network.models.SharingErrorResponse
 import com.meneses.budgethunter.commons.data.network.models.UserInfo
 import com.meneses.budgethunter.commons.data.network.safeApiCall
+import com.meneses.budgethunter.commons.data.network.toApiError
 import com.meneses.budgethunter.commons.data.sync.Logger
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.http.encodeURLPath
+import io.ktor.http.isSuccess
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
+import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * API service for collaborator-related network operations.
@@ -34,6 +43,10 @@ class CollaboratorApiService(
      *
      * RESTful endpoint: POST /api/budgets/{budgetId}/collaborators
      *
+     * The status is checked before the body is read, so a refusal maps to its [ApiError]: 404 (no account with
+     * that email) is [ApiError.NotFound], 409 (already a member) [ApiError.Conflict], and 402 past the owner's
+     * sharing limit [ApiError.SharingLimitReached], with the limit hit and whether the caller owns the budget.
+     *
      * @param budgetId Server-side budget ID (passed in URL path)
      * @param request Collaborator addition request with budgetId and email
      * @return Result containing the collaborator response or error
@@ -44,13 +57,42 @@ class CollaboratorApiService(
     ): Result<CollaboratorResponse> = withContext(ioDispatcher) {
         logger.debug(tag, "Adding collaborator to budget $budgetId with request: $request")
         safeApiCall {
-            httpClient.post(ApiEndpoints.budgetCollaborators(budgetId)) {
-                contentType(ContentType.Application.Json)
-                setBody(request)
-            }.body<CollaboratorResponse>().also {
+            val response = try {
+                httpClient.post(ApiEndpoints.budgetCollaborators(budgetId)) {
+                    contentType(ContentType.Application.Json)
+                    setBody(request)
+                }
+            } catch (e: ClientRequestException) {
+                // Only reached when the client is configured with expectSuccess
+                e.response
+            }
+            if (!response.status.isSuccess()) throw response.toAddCollaboratorError()
+            response.body<CollaboratorResponse>().also {
                 logger.debug(tag, "Successfully added collaborator: $it")
             }
         }
+    }
+
+    private suspend fun HttpResponse.toAddCollaboratorError(): ApiError {
+        if (status == HttpStatusCode.PaymentRequired) {
+            val detail = try {
+                body<SharingErrorResponse>().takeIf { it.code == SHARING_LIMIT_REACHED }?.sharing
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                logger.warn(tag, "Unreadable sharing limit answer", e)
+                null
+            }
+            if (detail != null) {
+                logger.debug(tag, "Sharing limit reached: ${detail.limitType}, caller is owner: ${detail.callerIsOwner}")
+                return ApiError.SharingLimitReached(
+                    limitType = SharingLimitType.entries.firstOrNull { it.name == detail.limitType },
+                    callerIsOwner = detail.callerIsOwner
+                )
+            }
+        }
+        logger.warn(tag, "Collaborator not added: HTTP ${status.value}")
+        return status.toApiError()
     }
 
     /**
@@ -90,5 +132,9 @@ class CollaboratorApiService(
             httpClient.delete(ApiEndpoints.budgetCollaborator(budgetId, encodedEmail))
             logger.debug(tag, "Successfully removed collaborator: $email")
         }
+    }
+
+    private companion object {
+        const val SHARING_LIMIT_REACHED = "SHARING_LIMIT_REACHED"
     }
 }

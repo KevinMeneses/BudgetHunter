@@ -16,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.WorkspacePremium
 import androidx.compose.material3.Button
@@ -50,6 +51,11 @@ import budgethunter.composeapp.generated.resources.premium_active_until
 import budgethunter.composeapp.generated.resources.premium_benefit_more
 import budgethunter.composeapp.generated.resources.premium_categorizations_left
 import budgethunter.composeapp.generated.resources.premium_benefit_scans
+import budgethunter.composeapp.generated.resources.premium_benefit_sharing
+import budgethunter.composeapp.generated.resources.people_count
+import budgethunter.composeapp.generated.resources.premium_shared_budgets_used
+import budgethunter.composeapp.generated.resources.premium_sharing_people
+import budgethunter.composeapp.generated.resources.premium_sharing_title
 import budgethunter.composeapp.generated.resources.premium_benefit_support
 import budgethunter.composeapp.generated.resources.premium_fine_print
 import budgethunter.composeapp.generated.resources.premium_free_trial
@@ -76,6 +82,7 @@ import com.meneses.budgethunter.billing.domain.PremiumOffer
 import com.meneses.budgethunter.billing.domain.PremiumPeriod
 import com.meneses.budgethunter.billing.domain.AiUsage
 import com.meneses.budgethunter.billing.domain.Allowance
+import com.meneses.budgethunter.billing.domain.SharingStatus
 import com.meneses.budgethunter.commons.ui.AppBar
 import com.meneses.budgethunter.commons.ui.LoadingOverlay
 import com.meneses.budgethunter.commons.ui.LoadingScreen
@@ -83,6 +90,7 @@ import com.meneses.budgethunter.commons.ui.shortDateLabel
 import com.meneses.budgethunter.theme.AppColors
 import kotlinx.serialization.Serializable
 import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 
 /**
@@ -156,6 +164,9 @@ object PremiumScreen {
             }
 
             uiState.usage?.let { UsageCard(it) }
+
+            // Not AI, so a card of its own; only while the plan has a limit (FREE)
+            uiState.sharing?.takeIf { !uiState.isPremium && it.sharedBudgetsLimit != null }?.let { SharingCard(it) }
 
             when {
                 uiState.isPremium -> if (uiState.canPurchase) ManageButton()
@@ -256,6 +267,37 @@ object PremiumScreen {
     }
 
     @Composable
+    private fun SharingCard(sharing: SharingStatus) {
+        val limit = sharing.sharedBudgetsLimit ?: return
+        Card(modifier = Modifier.fillMaxWidth()) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = stringResource(Res.string.premium_sharing_title),
+                    style = MaterialTheme.typography.titleMedium
+                )
+                // The count can be above the limit: what was shared before stays shared
+                Text(
+                    text = stringResource(Res.string.premium_shared_budgets_used, sharing.sharedBudgetsUsed, limit),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                sharing.collaboratorsPerBudgetLimit?.let { people ->
+                    Text(
+                        text = stringResource(
+                            Res.string.premium_sharing_people,
+                            pluralStringResource(Res.plurals.people_count, people, people)
+                        ),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = AppColors.onSurfaceVariant
+                    )
+                }
+            }
+        }
+    }
+
+    @Composable
     private fun AllowanceRow(text: StringResource, allowance: Allowance) {
         val separator = stringResource(Res.string.number_group_separator)
         // What is left, emptying as it is used; low ones in the error color
@@ -287,6 +329,7 @@ object PremiumScreen {
     private fun Benefits() {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Benefit(Icons.AutoMirrored.Filled.ReceiptLong, Res.string.premium_benefit_scans)
+            Benefit(Icons.Default.Group, Res.string.premium_benefit_sharing)
             Benefit(Icons.Default.AutoAwesome, Res.string.premium_benefit_more)
             Benefit(Icons.Default.CheckCircle, Res.string.premium_benefit_support)
         }

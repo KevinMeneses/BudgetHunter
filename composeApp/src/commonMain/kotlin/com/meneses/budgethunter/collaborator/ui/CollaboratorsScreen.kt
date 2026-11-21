@@ -20,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.PersonRemove
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -67,7 +68,12 @@ import budgethunter.composeapp.generated.resources.remove
 import budgethunter.composeapp.generated.resources.remove_collaborator
 import budgethunter.composeapp.generated.resources.remove_collaborator_confirmation_message
 import budgethunter.composeapp.generated.resources.removing
+import budgethunter.composeapp.generated.resources.sharing_hint_both
+import budgethunter.composeapp.generated.resources.sharing_hint_budgets_only
+import budgethunter.composeapp.generated.resources.sharing_hint_people_only
+import budgethunter.composeapp.generated.resources.sharing_shared_budgets
 import budgethunter.composeapp.generated.resources.you_suffix
+import com.meneses.budgethunter.billing.domain.SharingStatus
 import com.meneses.budgethunter.collaborator.application.CollaboratorsIntent
 import com.meneses.budgethunter.collaborator.application.CollaboratorsState
 import com.meneses.budgethunter.commons.data.network.models.UserInfo
@@ -174,6 +180,12 @@ private fun CollaboratorsContent(
                 collaboratorCount = uiState.collaborators.size,
                 onInvite = { CollaboratorsIntent.AddCollaborator(it).run(onIntent) }
             )
+        }
+
+        uiState.ownerSharingLimits?.let { limits ->
+            item(key = "sharing_hint") {
+                SharingHint(limits)
+            }
         }
 
         if (uiState.isLoading) {
@@ -286,6 +298,39 @@ private fun InviteField(
                 Text(stringResource(Res.string.invite))
             }
         }
+    }
+}
+
+/**
+ * The owner's plan limits, in one quiet line under the field. Only informative: the server decides, and
+ * says so with a notice if an invitation goes past them.
+ */
+@Composable
+private fun SharingHint(limits: SharingStatus) {
+    val budgets = limits.sharedBudgetsLimit?.let { pluralStringResource(Res.plurals.sharing_shared_budgets, it, it) }
+    val people = limits.collaboratorsPerBudgetLimit?.let { pluralStringResource(Res.plurals.people_count, it, it) }
+    val text = when {
+        budgets != null && people != null -> stringResource(Res.string.sharing_hint_both, budgets, people)
+        budgets != null -> stringResource(Res.string.sharing_hint_budgets_only, budgets)
+        people != null -> stringResource(Res.string.sharing_hint_people_only, people)
+        else -> return
+    }
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        modifier = Modifier.padding(start = 4.dp)
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.Info,
+            contentDescription = null,
+            tint = AppColors.onSurfaceVariant,
+            modifier = Modifier.size(16.dp)
+        )
+        Text(
+            text = text,
+            fontSize = 13.sp,
+            color = AppColors.onSurfaceVariant
+        )
     }
 }
 

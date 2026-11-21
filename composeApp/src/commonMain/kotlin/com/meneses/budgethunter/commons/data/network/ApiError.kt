@@ -9,6 +9,8 @@ import budgethunter.composeapp.generated.resources.error_server
 import budgethunter.composeapp.generated.resources.error_timeout
 import budgethunter.composeapp.generated.resources.error_unauthorized
 import budgethunter.composeapp.generated.resources.error_unknown
+import budgethunter.composeapp.generated.resources.sharing_limit_generic
+import com.meneses.budgethunter.billing.domain.SharingLimitType
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.ResponseException
 import io.ktor.client.plugins.ServerResponseException
@@ -50,6 +52,17 @@ sealed class ApiError(val messageResource: StringResource) : Exception() {
     data object Conflict : ApiError(Res.string.error_conflict)
 
     /**
+     * Adding a member would take the budget's owner past their plan's sharing limit (402 SHARING_LIMIT_REACHED).
+     * Only the owner's upgrade lifts it, so Premium is offered only when [callerIsOwner].
+     *
+     * @property limitType null when the server names a limit this app does not know
+     */
+    data class SharingLimitReached(
+        val limitType: SharingLimitType?,
+        val callerIsOwner: Boolean
+    ) : ApiError(Res.string.sharing_limit_generic)
+
+    /**
      * Server errors (500+)
      */
     data object ServerError : ApiError(Res.string.error_server)
@@ -76,16 +89,7 @@ sealed class ApiError(val messageResource: StringResource) : Exception() {
 fun Throwable.toApiError(): ApiError {
     return when (this) {
         // HTTP 4xx - Client errors
-        is ClientRequestException -> {
-            when (response.status) {
-                HttpStatusCode.BadRequest -> ApiError.BadRequest
-                HttpStatusCode.Unauthorized -> ApiError.Unauthorized
-                HttpStatusCode.Forbidden -> ApiError.Forbidden
-                HttpStatusCode.NotFound -> ApiError.NotFound
-                HttpStatusCode.Conflict -> ApiError.Conflict
-                else -> ApiError.Unknown
-            }
-        }
+        is ClientRequestException -> response.status.toApiError()
 
         // HTTP 500+ - Server errors
         is ServerResponseException -> {
@@ -114,6 +118,17 @@ fun Throwable.toApiError(): ApiError {
         // Unknown errors
         else -> ApiError.Unknown
     }
+}
+
+/** The [ApiError] for an HTTP status that is not a success. */
+fun HttpStatusCode.toApiError(): ApiError = when {
+    this == HttpStatusCode.BadRequest -> ApiError.BadRequest
+    this == HttpStatusCode.Unauthorized -> ApiError.Unauthorized
+    this == HttpStatusCode.Forbidden -> ApiError.Forbidden
+    this == HttpStatusCode.NotFound -> ApiError.NotFound
+    this == HttpStatusCode.Conflict -> ApiError.Conflict
+    value >= 500 -> ApiError.ServerError
+    else -> ApiError.Unknown
 }
 
 /**

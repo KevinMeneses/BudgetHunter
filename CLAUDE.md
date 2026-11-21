@@ -237,3 +237,13 @@ Freemium, with RevenueCat for the store purchases (in progress; plan and decisio
   the plan and this month's AI usage from the server (scans and categorizations, `GET /api/ai/usage`), the store's plans (yearly first) and restore; a premium account
   gets "manage in Google Play" instead. A purchase the server has not synced yet says premium arrives in minutes.
   The renewal and cancellation text under the plans is required by Google Play: keep it.
+- Shared budgets: FREE owns 1 shared budget with 1 person besides the owner, PREMIUM is unlimited; the budget
+  **owner's** plan decides, being invited is free, and nothing already shared is taken away. Past a limit,
+  `POST /api/budgets/{id}/collaborators` answers 402 `SHARING_LIMIT_REACHED`, read by `CollaboratorApiService` as
+  `ApiError.SharingLimitReached(limitType, callerIsOwner)`: the collaborators snackbar offers "See Premium" only
+  when `callerIsOwner` (only the owner's upgrade lifts it; a member is told the owner's plan allows no more).
+  `BillingStatusResponse.sharing` (null on older servers; a null limit is unlimited) becomes `SharingStatus`: the
+  owner (`UserInfo.isOwner`) of a budget on FREE sees a hint with the limits, and the paywall a "Sharing" card. Both
+  are only informative.
+- The app's HTTP client does not set `expectSuccess`, so `safeApiCall` sees a 4xx only as an unreadable body
+  (`ParseError`) unless the call checks the status itself, as `addCollaborator` does (`HttpStatusCode.toApiError()`).

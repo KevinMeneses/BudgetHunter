@@ -8,13 +8,23 @@ import budgethunter.composeapp.generated.resources.failed_to_add_collaborator
 import budgethunter.composeapp.generated.resources.failed_to_load_collaborators
 import budgethunter.composeapp.generated.resources.failed_to_remove_collaborator
 import budgethunter.composeapp.generated.resources.invalid_email_address
+import budgethunter.composeapp.generated.resources.sharing_limit_collaborators
+import budgethunter.composeapp.generated.resources.sharing_limit_generic
+import budgethunter.composeapp.generated.resources.sharing_limit_not_owner
+import budgethunter.composeapp.generated.resources.sharing_limit_shared_budgets
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.meneses.budgethunter.billing.data.PremiumRepository
+import com.meneses.budgethunter.billing.domain.SharingLimitType
 import com.meneses.budgethunter.collaborator.application.CollaboratorsEvent
 import com.meneses.budgethunter.collaborator.application.CollaboratorsIntent
 import com.meneses.budgethunter.collaborator.application.CollaboratorsState
 import com.meneses.budgethunter.collaborator.data.CollaboratorRepository
 import com.meneses.budgethunter.commons.data.PreferencesManager
+import com.meneses.budgethunter.commons.data.network.ApiError
+import com.meneses.budgethunter.commons.data.network.models.UserInfo
+import com.meneses.budgethunter.commons.data.sync.Logger
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,6 +35,8 @@ import kotlinx.coroutines.launch
 class CollaboratorsViewModel(
     private val collaboratorRepository: CollaboratorRepository,
     private val preferencesManager: PreferencesManager,
+    private val premiumRepository: PremiumRepository,
+    private val logger: Logger,
     private val budgetServerId: Long
 ) : ViewModel() {
 
@@ -58,6 +70,7 @@ class CollaboratorsViewModel(
                             isLoading = false
                         )
                     }
+                    updateSharingHint(collaborators, currentUserEmail)
                 }
                 .onFailure { error ->
                     _uiState.update { it.copy(isLoading = false) }
@@ -66,6 +79,27 @@ class CollaboratorsViewModel(
                     )
                 }
         }
+    }
+
+    /**
+     * The owner of a budget on a plan with limits sees them before inviting. Read after the list, which says who
+     * owns the budget; when the plan cannot be read the hint is just not shown (or keeps what it showed).
+     */
+    private suspend fun updateSharingHint(collaborators: List<UserInfo>, currentUserEmail: String?) {
+        val isOwner = collaborators.any { it.isOwner && it.email.trim().equals(currentUserEmail?.trim(), ignoreCase = true) }
+        if (!isOwner) {
+            _uiState.update { it.copy(ownerSharingLimits = null) }
+            return
+        }
+        val sharing = try {
+            premiumRepository.sharingStatus()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            logger.warn(TAG, "Could not read the sharing limits", e)
+            return
+        }
+        _uiState.update { it.copy(ownerSharingLimits = sharing?.takeIf { s -> s.isLimited }) }
     }
 
     private fun toggleAddCollaboratorDialog(show: Boolean) {
@@ -107,7 +141,11 @@ class CollaboratorsViewModel(
                 .onFailure { error ->
                     _uiState.update { it.copy(isAddingCollaborator = false) }
                     _events.trySend(
-                        CollaboratorsEvent.ShowError(Res.string.failed_to_add_collaborator)
+                        if (error is ApiError.SharingLimitReached) {
+                            sharingLimitEvent(error)
+                        } else {
+                            CollaboratorsEvent.ShowError(Res.string.failed_to_add_collaborator)
+                        }
                     )
                 }
         }
@@ -145,5 +183,22 @@ class CollaboratorsViewModel(
                     )
                 }
         }
+    }
+
+    /** Only the owner is offered Premium: buying it does nothing for anyone else's budget. */
+    private fun sharingLimitEvent(error: ApiError.SharingLimitReached): CollaboratorsEvent {
+        if (!error.callerIsOwner) {
+            return CollaboratorsEvent.ShowSharingLimit(Res.string.sharing_limit_not_owner, offersPremium = false)
+        }
+        val message = when (error.limitType) {
+            SharingLimitType.COLLABORATORS_PER_BUDGET -> Res.string.sharing_limit_collaborators
+            SharingLimitType.SHARED_BUDGETS -> Res.string.sharing_limit_shared_budgets
+            null -> Res.string.sharing_limit_generic
+        }
+        return CollaboratorsEvent.ShowSharingLimit(message, offersPremium = true)
+    }
+
+    private companion object {
+        const val TAG = "CollaboratorsViewModel"
     }
 }

@@ -444,6 +444,17 @@
         <item quantity="one">%1$d person</item>
         <item quantity="other">%1$d people</item>
     </plurals>
+    <string name="sharing_limit_collaborators">On the free plan you can share each budget with 1 person. With Premium, with as many as you want</string>
+    <string name="sharing_limit_shared_budgets">On the free plan you can share 1 budget. With Premium, as many as you want</string>
+    <string name="sharing_limit_generic">Your plan does not allow sharing this budget with more people. With Premium, there is no limit</string>
+    <string name="sharing_limit_not_owner">The plan of this budget's owner does not allow adding more people</string>
+    <plurals name="sharing_shared_budgets">
+        <item quantity="one">%1$d shared budget</item>
+        <item quantity="other">%1$d shared budgets</item>
+    </plurals>
+    <string name="sharing_hint_both">Free plan: %1$s with %2$s</string>
+    <string name="sharing_hint_budgets_only">Free plan: %1$s</string>
+    <string name="sharing_hint_people_only">Free plan: each budget with %1$s</string>
 
     <!-- Redesign: sign in and sign up -->
     <string name="welcome_tagline">Your budgets, up to date and shared</string>
@@ -501,6 +512,7 @@
     <string name="premium_benefit_scans">Many more receipt scans and AI categorizations every month</string>
     <string name="premium_benefit_more">The new AI features as they arrive</string>
     <string name="premium_benefit_support">Support an app made in Colombia, with no ads</string>
+    <string name="premium_benefit_sharing">Share as many budgets as you want, with whoever you want</string>
     <string name="premium_plan_monthly">Monthly</string>
     <string name="premium_plan_annual">Yearly</string>
     <string name="premium_plan_other">Premium</string>
@@ -533,6 +545,9 @@
     <string name="delete_account_failed">Could not delete your account. Check your connection and try again</string>
     <string name="premium_usage_title">Your AI this month</string>
     <string name="premium_categorizations_left">%1$s of %2$s AI categorizations left</string>
+    <string name="premium_sharing_title">Sharing</string>
+    <string name="premium_shared_budgets_used">Shared budgets: %1$d of %2$d</string>
+    <string name="premium_sharing_people">Each one with %1$s besides you</string>
     <string name="categorize_quota_exceeded">%1$d categorized. You used up this month's AI categorizations; %2$d are still uncategorized</string>
     <string name="number_group_separator">,</string>
     <string name="premium_check_again">Check again</string>

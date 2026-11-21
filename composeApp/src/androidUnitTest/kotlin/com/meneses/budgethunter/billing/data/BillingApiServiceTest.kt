@@ -1,5 +1,6 @@
 package com.meneses.budgethunter.billing.data
 
+import com.meneses.budgethunter.commons.data.network.models.SharingStatusResponse
 import com.meneses.budgethunter.commons.data.network.ApiEndpoints
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
@@ -81,5 +82,30 @@ class BillingApiServiceTest {
 
         val offline = assertFailsWith<BillingApiException> { service(failWith = IOException("offline")).status() }
         assertNull(offline.status)
+    }
+
+    @Test
+    fun `status reads what the account can share`() = runTest {
+        val status = service(
+            body = """{"appUserId":"abc-123","plan":"FREE","sharing":{"plan":"FREE","sharedBudgetsLimit":1,""" +
+                """"sharedBudgetsUsed":2,"collaboratorsPerBudgetLimit":1}}"""
+        ).status()
+
+        assertEquals(SharingStatusResponse("FREE", 1, 2, 1), status.sharing)
+    }
+
+    @Test
+    fun `unlimited sharing comes as null limits`() = runTest {
+        val status = service(
+            body = """{"appUserId":"abc-123","plan":"PREMIUM","sharing":{"plan":"PREMIUM","sharedBudgetsLimit":null,""" +
+                """"sharedBudgetsUsed":4,"collaboratorsPerBudgetLimit":null}}"""
+        ).sync()
+
+        assertEquals(SharingStatusResponse("PREMIUM", null, 4, null), status.sharing)
+    }
+
+    @Test
+    fun `an older server without sharing reads as null`() = runTest {
+        assertNull(service(body = """{"appUserId":"abc-123","plan":"FREE"}""").status().sharing)
     }
 }

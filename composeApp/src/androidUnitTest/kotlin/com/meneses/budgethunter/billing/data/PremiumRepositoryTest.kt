@@ -1,5 +1,7 @@
 package com.meneses.budgethunter.billing.data
 
+import com.meneses.budgethunter.commons.data.network.models.SharingStatusResponse
+import com.meneses.budgethunter.billing.domain.SharingStatus
 import com.meneses.budgethunter.billing.domain.BillingStatus
 import com.meneses.budgethunter.billing.domain.PremiumOffer
 import com.meneses.budgethunter.billing.domain.PremiumPeriod
@@ -142,5 +144,31 @@ class PremiumRepositoryTest {
     fun `canPurchase follows the store`() {
         every { store.isAvailable } returns false
         assertFalse(repository.canPurchase)
+    }
+
+    @Test
+    fun `the sharing limits become the domain model`() = runTest {
+        coEvery { api.status() } returns free.copy(sharing = SharingStatusResponse("FREE", 1, 0, 1))
+
+        assertEquals(SharingStatus(1, 0, 1), repository.sharingStatus())
+        assertEquals(SharingStatus(1, 0, 1), repository.status().sharing)
+    }
+
+    @Test
+    fun `an older server gives no sharing limits, and that is not a failure`() = runTest {
+        assertNull(repository.sharingStatus())
+    }
+
+    @Test
+    fun `the sharing limits come from the status`() = runTest {
+        coEvery { api.status() } returns free.copy(sharing = SharingStatusResponse("FREE", 1, 0, 1))
+
+        assertEquals(SharingStatus(1, 0, 1), repository.sharingStatus())
+        assertEquals(SharingStatus(1, 0, 1), repository.status().sharing)
+    }
+
+    @Test
+    fun `an older server gives no sharing limits`() = runTest {
+        assertNull(repository.sharingStatus())
     }
 }

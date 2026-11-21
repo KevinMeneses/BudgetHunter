@@ -1,5 +1,6 @@
 package com.meneses.budgethunter.collaborator.application
 
+import com.meneses.budgethunter.billing.domain.SharingStatus
 import com.meneses.budgethunter.commons.data.network.models.UserInfo
 
 /**
@@ -20,5 +21,10 @@ data class CollaboratorsState(
     val showAddCollaboratorDialog: Boolean = false,
     val removeConfirmationEmail: String? = null,
     /** The signed-in user's email, to tell their own row apart from the others. */
-    val currentUserEmail: String? = null
+    val currentUserEmail: String? = null,
+    /**
+     * The plan's sharing limits, shown as a hint to the budget's owner while the plan has any (FREE). Null for
+     * members, for PREMIUM, and when the plan could not be read. Only informative: the server decides.
+     */
+    val ownerSharingLimits: SharingStatus? = null
 )

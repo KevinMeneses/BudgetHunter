@@ -4,7 +4,9 @@ package com.meneses.budgethunter.billing.domain
 data class BillingStatus(
     val isPremium: Boolean,
     /** End of the paid period (ISO-8601, UTC), or null when free or when it does not run out. */
-    val premiumUntil: String?
+    val premiumUntil: String?,
+    /** Null when the server does not send it (older servers). */
+    val sharing: SharingStatus? = null
 )
 
 /** How a purchase ended, for the paywall. */

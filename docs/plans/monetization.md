@@ -40,7 +40,19 @@ Companion changes in the backend repo: `receipts/` package, `users.plan`, `ai_us
 4. **Categorization behind the plan (done).** FREE 50, PREMIUM 1000 descriptions sent to the AI per month; rules and
    cache are free. Past the limit there is no 402: the run categorizes what it can and answers `quotaExceeded` and
    `usage`; the metrics screen then says so with a "See Premium" action.
-5. **Shared budgets.** Adding a collaborator requires premium (being invited stays free).
+5. **Shared budgets (done).** Not "premium only": FREE owns 1 shared budget, with 1 person besides the owner;
+   PREMIUM has no limit. The **owner's** plan decides, not the inviter's; any member may invite, being invited is
+   free, and nothing already shared is taken away (backend: `docs/plans/sharing-limits.md`).
+   Backend: `POST /api/budgets/{id}/collaborators` answers 402 `SHARING_LIMIT_REACHED` with `sharing.limitType`
+   (`SHARED_BUDGETS` / `COLLABORATORS_PER_BUDGET`) and `callerIsOwner`, after its 404 (no such account) and 409
+   (already a member); `GET /api/billing/status` and `POST /api/billing/sync` carry `sharing` (null limit =
+   unlimited). App: `CollaboratorApiService` checks the status before reading the body and maps the 402 to
+   `ApiError.SharingLimitReached` (404 and 409 now reach the app as `NotFound` / `Conflict` instead of an
+   unreadable body). The collaborators screen tells the owner which limit it hit, with "See Premium"; a member is
+   told the owner's plan allows no more, with no Premium action (buying it would not help). The owner of a budget
+   on FREE sees a quiet hint with the limits (`PremiumRepository.sharingStatus()`, owner from the members'
+   `isOwner`); nothing is blocked in the app. The paywall lists sharing as a benefit and, for FREE, a "Sharing"
+   card with "Shared budgets: X of Y".
 6. **Export** (CSV/PDF) as a premium feature.
 7. **Receipt backup in the cloud (premium), after parts 2-3.** Not part of the scan request (the entry may not
    exist yet, and many receipts never go through the AI; the scan endpoint stores nothing and should stay that
