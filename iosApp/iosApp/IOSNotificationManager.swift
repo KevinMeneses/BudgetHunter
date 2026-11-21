@@ -53,6 +53,14 @@ class IOSNotificationManager: NSObject, NotificationManager {
         showNotification(title: title, message: message)
     }
 
+    // iOS has no notification reader (bank messages come through Shortcuts), so these are never
+    // called there; they only complete the shared interface
+    func showReaderStoppedNotification(title: String, message: String) {
+        showOpenSettingsNotification(title: title, message: message)
+    }
+
+    func cancelReaderStoppedNotification() {}
+
     private func requestNotificationPermission() {
         let center = UNUserNotificationCenter.current()
         center.requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
