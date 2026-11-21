@@ -234,14 +234,14 @@ class RegisterSmsEntryUseCaseTest {
         )
     }
 
-    private fun bancolombiaEmail(time: String = "21:14:58") = BankEmail.fromNotification(
+    private fun bancolombiaEmail(time: String = "21:14:58", receivedAt: Long = RECEIVED_AT) = BankEmail.fromNotification(
         title = "alertasynotificaciones",
         text = "Alertas y Notificaciones",
         bigText = "Alertas y Notificaciones\n \nBancolombia: Pagaste \$130,500.00 a EMPRESA DE ENERGIA desde tu " +
             "producto 1234 el 20/11/2026 $time. ¿Dudas? Llamanos al 6045109095. Estamos cerca\n" +
             "Por tu seguridad, desde Bancolombia nunca te solicitaremos tus datos personales, como usuario y clave; " +
             "ni tus datos bancarios, como números de tarjetas de crédito, códigos de seguridad y plazos.",
-        receivedAt = RECEIVED_AT
+        receivedAt = receivedAt
     )
 
     @Test
@@ -398,6 +398,20 @@ class RegisterSmsEntryUseCaseTest {
 
         coVerify(exactly = 1) { budgetEntryRepository.createLocally(any()) }
         coVerify(exactly = 1) { budgetEntryRepository.pushPending(any()) }
+    }
+
+    @Test
+    fun `registers two emails that read alike but arrived at different times`() = runTest {
+        givenDefaultBudget()
+
+        registerSmsEntry.registerEmail(bancolombiaEmail(), SupportedBanks.BANCOLOMBIA)
+        val second = registerSmsEntry.registerEmail(
+            bancolombiaEmail(receivedAt = RECEIVED_AT + 60_000),
+            SupportedBanks.BANCOLOMBIA
+        )
+
+        assertIs<SmsParseResult.Success>(second)
+        coVerify(exactly = 2) { budgetEntryRepository.createLocally(any()) }
     }
 
     private companion object {

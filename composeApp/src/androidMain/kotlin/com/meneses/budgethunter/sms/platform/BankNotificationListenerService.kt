@@ -76,11 +76,8 @@ class BankNotificationListenerService : NotificationListenerService(), KoinCompo
                 // the movement is also remembered on disk, by this same identity, once registered.
                 // Not without a time: the text would then be the identity, and on disk an equal
                 // transfer days later ("te envió 1000") would be taken for this one
-                bankNotificationService.processBankNotification(
-                    bankNotification,
-                    bankConfig,
-                    identity = fingerprint.takeIf { postedAt != 0L }
-                )
+                val identity = fingerprint.takeIf { postedAt != 0L }
+                bankNotificationService.processBankNotification(bankNotification, bankConfig, identity)
             } catch (e: CancellationException) {
                 throw e
             } catch (_: Exception) {

@@ -188,17 +188,18 @@ Type-safe navigation using Navigation Compose with serializable route objects. M
 - Notifications posted again are registered once. Gmail posts an email again while it is in the shade (on sync, after
   a reboot), and the process may have died since (frequent LOW_MEMORY kills on the Galaxy A55), so the in-memory
   `RecentNotifications` (key + `when`) is only a quick filter: `RegisteredMovements.registerOnce` keeps the last 200
-  movements on disk (DataStore, hashed, `MovementFingerprints`), under a lock (a Koin single), and remembers one right
-  after its row is stored locally (`BudgetEntryRepository.createLocally`; the push runs after, outside the lock): a
-  failed store is tried again by the next copy, and codes, ads or a missing default budget are never remembered. An
-  email movement is told by bank, day the email arrived (the notification's `when`; the read day if missing), type,
-  amount and the email's whole text as shown, subject and body (`RegisterSmsEntryUseCase.registerEmail`), not the
-  description (first sentence only), so a time written after the movement still tells two equal purchases apart;
-  another id or time, a repost on a later day, or two email apps showing the same text do not register it twice (apps
-  showing different snippets of it do). Two emails of the same day that read exactly alike are taken as one. A bank
-  app notification is told by its key + `when` only (`registerNotification`'s `identity`; equal transfers are real:
-  "te envió 1000"), and one without `when` is not remembered on disk. This is not the SMS + email deduplication above:
-  those texts differ.
+  movements on disk (DataStore key `registered_movements`, hashed by `MovementFingerprints`), under a lock (a Koin
+  single), and remembers one right after its row is stored locally (`BudgetEntryRepository.createLocally`; the push
+  runs after, outside the lock, and a row left unpushed goes up with the next full sync): a failed store is tried
+  again by the next copy, and codes, ads or a missing default budget are never remembered. When in doubt (the list
+  cannot be read or written) it registers: a copy the user can delete is better than a lost movement. An email
+  movement is told by bank, when the email arrived (the notification's `when`, which Gmail keeps on a repost; the read
+  day if missing), type, amount and the email's whole text as shown, subject and body
+  (`RegisterSmsEntryUseCase.registerEmail`), not the description (first sentence only). So a repost is the same
+  movement, while two emails that read alike but arrived apart are two; two email apps showing different snippets or
+  times of an email register it twice. A bank app notification is told by its key + `when` only
+  (`registerNotification`'s `identity`; equal transfers are real: "te envió 1000"), and one without `when` is not
+  remembered on disk. This is not the SMS + email deduplication above: those texts differ.
 - iOS cannot read SMS: a Shortcuts automation (trigger "Mensaje") passes the text to the App Intent
   `RegisterExpenseFromMessageIntent` (iosApp/, also an App Shortcut), which calls
   `SmsShortcutEntryPoint` (iosMain) -> `RegisterSmsFromShortcutUseCase` and answers with a dialog.

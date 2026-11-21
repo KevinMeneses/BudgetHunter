@@ -51,10 +51,10 @@ class MovementFingerprintsTest {
     }
 
     @Test
-    fun `the same text in emails of different days is two movements`() {
-        val oneDay = 24 * 60 * 60 * 1000L
+    fun `emails that read alike but arrived at different times are two movements`() {
+        val oneMinute = 60 * 1000L
 
-        assertNotEquals(fingerprint(), fingerprint(receivedAt = RECEIVED_AT + oneDay))
+        assertNotEquals(fingerprint(), fingerprint(receivedAt = RECEIVED_AT + oneMinute))
     }
 
     @Test
@@ -102,7 +102,7 @@ class MovementFingerprintsTest {
         const val MESSAGE = "Alertas y Notificaciones. Bancolombia: Pagaste \$130,500.00 a EMPRESA DE ENERGIA desde " +
             "tu producto 1234 el 20/11/2026 21:14:58."
 
-        // 21 Nov 2026 02:15 UTC (20 Nov 21:15 in Colombia): days are counted in UTC
+        // 20 Nov 2026 21:15 in Colombia
         const val RECEIVED_AT = 1_795_227_302_131L
     }
 }

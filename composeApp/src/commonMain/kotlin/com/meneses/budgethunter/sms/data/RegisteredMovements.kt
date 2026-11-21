@@ -55,6 +55,6 @@ class RegisteredMovements(private val preferences: DataStore<Preferences>) {
     }
 
     private companion object {
-        val KEY_REGISTERED_MOVEMENTS = stringPreferencesKey("registered_notification_movements")
+        val KEY_REGISTERED_MOVEMENTS = stringPreferencesKey("registered_movements")
     }
 }

@@ -1,9 +1,6 @@
 package com.meneses.budgethunter.sms.domain
 
 import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
-import kotlinx.datetime.Instant
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 
 /**
  * Identifies the movements already registered from notifications, so that one posted again is
@@ -21,25 +18,21 @@ object MovementFingerprints {
 
     /**
      * A movement read from an email, by what it says rather than by the notification that showed
-     * it: the same email posted again under another id or time is the same movement (so is one
-     * shown by two email apps with the same mailbox, as long as both show the same text). [message]
+     * it: the same email posted again under another id is the same movement (so is one shown by
+     * two email apps with the same mailbox, as long as both show the same text and time). [message]
      * is the email's whole text as shown (subject and body), not the entry's description, which
      * keeps only the first sentence, nor the part the movement was read from: the time a bank
      * writes after the movement still tells two apart.
      *
-     * The day is the email's ([receivedAt], when the email app tells it), not the entry's, which is
-     * the day it was read: an email posted again the next day is the same movement, while one that
-     * repeats another day's text is a new one. It is counted in UTC, not in the device's zone, so a
-     * trip or a change of daylight saving between two posts of an email does not move its day. Two
-     * movements of the same day whose emails write no time and read alike (same amount, same shop)
-     * are taken as one: the price of not adding the same email twice.
+     * [receivedAt] is when the email arrived, which Gmail keeps when it posts the email again, so
+     * two emails that read exactly alike (two equal top-ups, with no time in the text) are still
+     * two movements. Should an app change it on a repost, that copy is registered again: a copy
+     * the user can delete is better than a movement lost. Without it (0 or null) the day the
+     * movement was read stands in, and then a repost on a later day is registered again.
      */
     fun ofEmailMovement(bankConfig: BankSmsConfig, message: String, entry: BudgetEntry, receivedAt: Long?): String {
-        val day = receivedAt
-            ?.takeIf { it > 0 }
-            ?.let { Instant.fromEpochMilliseconds(it).toLocalDateTime(TimeZone.UTC).date.toString() }
-            ?: entry.date
-        val identity = listOf("email", bankConfig.id, day, entry.type.name, entry.amount, message)
+        val arrival = receivedAt?.takeIf { it > 0 }?.toString() ?: entry.date
+        val identity = listOf("email", bankConfig.id, arrival, entry.type.name, entry.amount, message)
         return hash(identity.joinToString("|"))
     }
 
