@@ -1,11 +1,14 @@
 package com.meneses.budgethunter.sms.platform
 
 import android.content.Context
+import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import com.meneses.budgethunter.commons.data.sync.Logger
+import com.meneses.budgethunter.commons.platform.AndroidNotificationManager
 import com.meneses.budgethunter.sms.application.WarnIfNotificationReaderStoppedUseCase
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -26,20 +29,25 @@ class NotificationReaderWatchWorker(
 ) : CoroutineWorker(context, params), KoinComponent {
 
     private val warnIfNotificationReaderStopped: WarnIfNotificationReaderStoppedUseCase by inject()
+    private val logger: Logger by inject()
 
     override suspend fun doWork(): Result {
+        // A warning nobody would see must not count as given: once it can be shown, a later run gives it
+        if (!AndroidNotificationManager.canShowNotifications(applicationContext)) return Result.success()
         try {
             // The stop detection is a single meant for the main thread, like the screens that use it
             withContext(Dispatchers.Main) { warnIfNotificationReaderStopped() }
         } catch (e: CancellationException) {
             throw e
-        } catch (_: Exception) {
+        } catch (e: Exception) {
             // The next run checks again
+            logger.warn(TAG, "Could not check the notification reader", e)
         }
         return Result.success()
     }
 
     companion object {
+        private const val TAG = "NotificationReaderWatch"
         private const val WORK_NAME = "notification_reader_watch"
 
         // The shortest period WorkManager allows; Android may stretch it while the device dozes
@@ -56,8 +64,8 @@ class NotificationReaderWatchWorker(
             try {
                 WorkManager.getInstance(context)
                     .enqueueUniquePeriodicWork(WORK_NAME, ExistingPeriodicWorkPolicy.KEEP, request)
-            } catch (_: IllegalStateException) {
-                // WorkManager not initialized
+            } catch (e: IllegalStateException) {
+                Log.w(TAG, "WorkManager not initialized: the notification reader is not watched", e)
             }
         }
     }
