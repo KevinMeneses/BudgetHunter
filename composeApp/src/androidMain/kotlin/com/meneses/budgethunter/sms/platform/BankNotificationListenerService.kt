@@ -7,10 +7,12 @@ import android.os.Bundle
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import com.meneses.budgethunter.commons.data.PreferencesManager
+import com.meneses.budgethunter.sms.data.RegisteredMovements
 import com.meneses.budgethunter.sms.domain.BankChannels
 import com.meneses.budgethunter.sms.domain.BankEmail
 import com.meneses.budgethunter.sms.domain.BankNotification
 import com.meneses.budgethunter.sms.domain.BankNotificationService
+import com.meneses.budgethunter.sms.domain.MovementFingerprints
 import com.meneses.budgethunter.sms.domain.ReadingChannel
 import com.meneses.budgethunter.sms.domain.RecentNotifications
 import com.meneses.budgethunter.sms.domain.SupportedBanks
@@ -34,6 +36,7 @@ class BankNotificationListenerService : NotificationListenerService(), KoinCompo
 
     private val bankNotificationService: BankNotificationService by inject()
     private val preferencesManager: PreferencesManager by inject()
+    private val registeredMovements: RegisteredMovements by inject()
     private val ioScope: CoroutineScope by inject(named("IOScope"))
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
@@ -72,6 +75,8 @@ class BankNotificationListenerService : NotificationListenerService(), KoinCompo
                 if (bankConfig.id !in preferencesManager.getSelectedBankIds()) return@launch
                 val channels = BankChannels.of(bankConfig, preferencesManager.getBankChannels())
                 if (ReadingChannel.APP !in channels) return@launch
+                // The memory above dies with the process, and the app may post it again after that
+                if (!registeredMovements.markIfNew(MovementFingerprints.ofAppNotification(fingerprint))) return@launch
                 bankNotificationService.processBankNotification(bankNotification, bankConfig)
             } catch (e: CancellationException) {
                 throw e
@@ -118,7 +123,10 @@ class BankNotificationListenerService : NotificationListenerService(), KoinCompo
                 // Same identity as a bank app notification: an update keeps its key and its time
                 val postedAt = notification.`when`
                 val fingerprint = if (postedAt != 0L) "${posted.key}|$postedAt" else "${posted.key}|${email.body}"
-                // Marked off the main thread, unlike the bank apps' ones, so these have their own lock
+                // Marked off the main thread, unlike the bank apps' ones, so these have their own lock.
+                // Only a quick filter for updates: the movement itself is remembered on disk
+                // (RegisterSmsEntryUseCase.registerEmail), since Gmail posts the email again after
+                // this process died, or under another time
                 if (!synchronized(recentEmails) { recentEmails.markIfNew(fingerprint) }) return@launch
 
                 bankNotificationService.processBankEmail(email, bankConfig)

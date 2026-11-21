@@ -6,6 +6,8 @@ import com.meneses.budgethunter.budgetList.data.datasource.BudgetLocalDataSource
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.commons.data.PreferencesManager
 import com.meneses.budgethunter.commons.resources.StringResourceProvider
+import com.meneses.budgethunter.sms.data.InMemoryPreferencesDataStore
+import com.meneses.budgethunter.sms.data.RegisteredMovements
 import com.meneses.budgethunter.sms.data.SmsMapper
 import com.meneses.budgethunter.sms.domain.BankEmail
 import com.meneses.budgethunter.sms.domain.BankNotification
@@ -31,9 +33,16 @@ class RegisterSmsEntryUseCaseTest {
     private val stringResourceProvider = mockk<StringResourceProvider>(relaxed = true)
     private val budgetEntryRepository = mockk<BudgetEntryRepository>(relaxed = true)
 
-    private val registerSmsEntry = RegisterSmsEntryUseCase(
+    // Stands for the preferences file, which outlives the process
+    private val preferencesFile = InMemoryPreferencesDataStore()
+
+    private val registerSmsEntry = newRegisterSmsEntry()
+
+    /** A new one over the same file is what a new process gets. */
+    private fun newRegisterSmsEntry() = RegisterSmsEntryUseCase(
         smsMapper = SmsMapper(preferencesManager, budgetLocalDataSource, stringResourceProvider),
-        budgetEntryRepository = budgetEntryRepository
+        budgetEntryRepository = budgetEntryRepository,
+        registeredMovements = RegisteredMovements(preferencesFile)
     )
 
     private fun givenDefaultBudget(id: Int = 7) {
@@ -213,7 +222,7 @@ class RegisterSmsEntryUseCaseTest {
                 "TIENDA D1. Si no la reconoces llámanos."
         )
 
-        val result = registerSmsEntry.registerNotification(email.toNotification(SupportedBanks.DAVIVIENDA), SupportedBanks.DAVIVIENDA)
+        val result = registerSmsEntry.registerEmail(email.toNotification(SupportedBanks.DAVIVIENDA), SupportedBanks.DAVIVIENDA)
 
         assertIs<SmsParseResult.Success>(result)
         assertEquals("35900", stored.captured.amount)
@@ -222,5 +231,59 @@ class RegisterSmsEntryUseCaseTest {
             "Davivienda: Apreciado cliente: realizaste una compra por \$35.900 en TIENDA D1",
             stored.captured.description
         )
+    }
+
+    private fun bancolombiaEmail(time: String = "21:14:58") = BankEmail.fromNotification(
+        title = "alertasynotificaciones",
+        text = "Alertas y Notificaciones",
+        bigText = "Alertas y Notificaciones\n \nBancolombia: Pagaste \$130,500.00 a EMPRESA DE ENERGIA desde tu " +
+            "producto 1234 el 20/11/2026 $time. ¿Dudas? Llamanos al 6045109095. Estamos cerca\n" +
+            "Por tu seguridad, desde Bancolombia nunca te solicitaremos tus datos personales, como usuario y clave; " +
+            "ni tus datos bancarios, como números de tarjetas de crédito, códigos de seguridad y plazos."
+    ).toNotification(SupportedBanks.BANCOLOMBIA)
+
+    @Test
+    fun `registers a bank email only once when the email app posts it again`() = runTest {
+        givenDefaultBudget()
+
+        val first = registerSmsEntry.registerEmail(bancolombiaEmail(), SupportedBanks.BANCOLOMBIA)
+        val again = registerSmsEntry.registerEmail(bancolombiaEmail(), SupportedBanks.BANCOLOMBIA)
+
+        assertIs<SmsParseResult.Success>(first)
+        assertEquals(SmsParseResult.Ignored, again)
+        coVerify(exactly = 1) { budgetEntryRepository.create(any()) }
+    }
+
+    @Test
+    fun `does not register a bank email again after the process restarted`() = runTest {
+        givenDefaultBudget()
+        registerSmsEntry.registerEmail(bancolombiaEmail(), SupportedBanks.BANCOLOMBIA)
+
+        val afterRestart = newRegisterSmsEntry().registerEmail(bancolombiaEmail(), SupportedBanks.BANCOLOMBIA)
+
+        assertEquals(SmsParseResult.Ignored, afterRestart)
+        coVerify(exactly = 1) { budgetEntryRepository.create(any()) }
+    }
+
+    @Test
+    fun `registers two bank emails of movements at different times`() = runTest {
+        givenDefaultBudget()
+
+        registerSmsEntry.registerEmail(bancolombiaEmail(time = "21:14:58"), SupportedBanks.BANCOLOMBIA)
+        val second = registerSmsEntry.registerEmail(bancolombiaEmail(time = "21:20:03"), SupportedBanks.BANCOLOMBIA)
+
+        assertIs<SmsParseResult.Success>(second)
+        coVerify(exactly = 2) { budgetEntryRepository.create(any()) }
+    }
+
+    @Test
+    fun `an email with no default budget is not taken as registered`() = runTest {
+        coEvery { preferencesManager.getDefaultBudgetId() } returns -1
+        registerSmsEntry.registerEmail(bancolombiaEmail(), SupportedBanks.BANCOLOMBIA)
+        givenDefaultBudget()
+
+        val result = registerSmsEntry.registerEmail(bancolombiaEmail(), SupportedBanks.BANCOLOMBIA)
+
+        assertIs<SmsParseResult.Success>(result)
     }
 }

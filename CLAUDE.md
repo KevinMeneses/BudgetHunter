@@ -185,6 +185,14 @@ Type-safe navigation using Navigation Compose with serializable route objects. M
   the subject) are read like a bank app notification (`BankEmail.toNotification`), only up to the sentence that
   completes the movement: the footer's security tips ("código de seguridad") would otherwise mark it as no movement;
   anything but a movement or a missing default budget is dropped silently.
+- Notifications posted again are registered once. Gmail posts an email again while it is in the shade (on sync,
+  after a reboot), and the process may have died since (frequent LOW_MEMORY kills on the Galaxy A55), so the
+  in-memory `RecentNotifications` (key + `when`) is only a quick filter: `RegisteredMovements` keeps the last 200
+  fingerprints on disk (DataStore, hashed, `MovementFingerprints`). An email movement is told by bank, date, type,
+  amount and description (`RegisterSmsEntryUseCase.registerEmail`), so another id or time, or two email apps with
+  the same mailbox, do not register it twice; two identical emails with no time in the text would be read as one.
+  A bank app notification is told by its key + `when` only (equal transfers are real: "te envió 1000").
+  This is not the SMS + email deduplication above: those texts differ.
 - iOS cannot read SMS: a Shortcuts automation (trigger "Mensaje") passes the text to the App Intent
   `RegisterExpenseFromMessageIntent` (iosApp/, also an App Shortcut), which calls
   `SmsShortcutEntryPoint` (iosMain) -> `RegisterSmsFromShortcutUseCase` and answers with a dialog.

@@ -1,9 +1,12 @@
 package com.meneses.budgethunter.sms.application
 
 import com.meneses.budgethunter.budgetEntry.data.BudgetEntryRepository
+import com.meneses.budgethunter.budgetEntry.domain.BudgetEntry
+import com.meneses.budgethunter.sms.data.RegisteredMovements
 import com.meneses.budgethunter.sms.data.SmsMapper
 import com.meneses.budgethunter.sms.domain.BankNotification
 import com.meneses.budgethunter.sms.domain.BankSmsConfig
+import com.meneses.budgethunter.sms.domain.MovementFingerprints
 import com.meneses.budgethunter.sms.domain.SmsParseResult
 
 /**
@@ -15,7 +18,8 @@ import com.meneses.budgethunter.sms.domain.SmsParseResult
  */
 class RegisterSmsEntryUseCase(
     private val smsMapper: SmsMapper,
-    private val budgetEntryRepository: BudgetEntryRepository
+    private val budgetEntryRepository: BudgetEntryRepository,
+    private val registeredMovements: RegisteredMovements
 ) {
     /** Returns [SmsParseResult.Success] once stored, otherwise the failure that says the most. */
     suspend operator fun invoke(messageBody: String, bankConfigs: Collection<BankSmsConfig>): SmsParseResult {
@@ -38,7 +42,25 @@ class RegisterSmsEntryUseCase(
      * says which bank it is, so only that bank is tried, and the entry is described with the
      * notification's text rather than with its title.
      */
-    suspend fun registerNotification(notification: BankNotification, bankConfig: BankSmsConfig): SmsParseResult {
+    suspend fun registerNotification(notification: BankNotification, bankConfig: BankSmsConfig): SmsParseResult =
+        register(notification, bankConfig) { true }
+
+    /**
+     * Registers a movement read from a bank email ([com.meneses.budgethunter.sms.domain.BankEmail.toNotification]), once: email apps
+     * post an email again while it is in the shade, also after the process that read it died, or
+     * show it twice when two apps hold the same mailbox. A movement already registered is
+     * [SmsParseResult.Ignored], even if the user deleted its entry since.
+     */
+    suspend fun registerEmail(notification: BankNotification, bankConfig: BankSmsConfig): SmsParseResult =
+        register(notification, bankConfig) { entry ->
+            registeredMovements.markIfNew(MovementFingerprints.ofEmailMovement(bankConfig, entry))
+        }
+
+    private suspend fun register(
+        notification: BankNotification,
+        bankConfig: BankSmsConfig,
+        isNew: suspend (BudgetEntry) -> Boolean
+    ): SmsParseResult {
         val result = smsMapper.smsToBudgetEntry(notification.message, bankConfig)
         if (result !is SmsParseResult.Success) return result
 
@@ -46,6 +68,7 @@ class RegisterSmsEntryUseCase(
         val entry = notification.description
             ?.let { result.entry.copy(description = bankConfig.describe(it)) }
             ?: result.entry
+        if (!isNew(entry)) return SmsParseResult.Ignored
         budgetEntryRepository.create(entry)
         return SmsParseResult.Success(entry)
     }
