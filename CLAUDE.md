@@ -138,7 +138,7 @@ Type-safe navigation using Navigation Compose with serializable route objects. M
 - The HTTP log never prints that request (it carries the whole file).
 - Scans left: the entry screen shows a quiet line under the receipt card when 3 or fewer scans remain this month
   (`Allowance.isRunningLow`; a count, not a share of the limit, so PREMIUM is not nagged from 200 on), and "No scans
-  left" with "See Premium" at 0. `GetReceiptScansUseCase` reads `GET /api/ai/usage` once when the screen opens (only
+  left" with "See Premium" at 0 (also after a 402 with no count known). `GetReceiptScansUseCase` reads `GET /api/ai/usage` once when the screen opens (only with AI processing on,
   signed in and not offline; null on any error, which shows nothing); after that each scan's answer brings the count
   (`ReceiptExtractionResponse.usage`, also in the 402 body, through `AiExtractionResult.scans`), with no other call.
   Only informative: the app never blocks a scan.

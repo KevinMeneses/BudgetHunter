@@ -120,12 +120,19 @@ class ReceiptApiServiceTest {
             body = """{"status":402,"code":"QUOTA_EXCEEDED","usage":$usage}"""
         ).extract("QUJD", "image/jpeg", today)
         val noUsage = service(body = """{"isReceipt":true,"amount":10}""").extract("QUJD", "image/jpeg", today)
+        val busy = service(
+            status = HttpStatusCode.ServiceUnavailable,
+            body = """{"status":503,"code":"AI_BUSY","usage":$usage}"""
+        ).extract("QUJD", "image/jpeg", today)
 
         assertEquals(expected, read.scans)
         assertEquals(expected, notReceipt.scans)
         assertEquals(AiFailureReason.QUOTA_EXCEEDED, assertIs<AiExtractionResult.Failure>(quota).reason)
         assertEquals(expected, quota.scans)
         assertNull(noUsage.scans)
+        // Other errors may carry the usage too
+        assertEquals(AiFailureReason.RATE_LIMITED, assertIs<AiExtractionResult.Failure>(busy).reason)
+        assertEquals(expected, busy.scans)
     }
 
     @Test

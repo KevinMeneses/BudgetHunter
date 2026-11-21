@@ -58,9 +58,10 @@ class BudgetEntryViewModel(
         viewModelScope.launch {
             val isAiEnabled = preferencesManager.isAiProcessingEnabled()
             _uiState.update { it.copy(isAiProcessingEnabled = isAiEnabled) }
-        }
-        // Once per screen: each scan's answer brings the count after it, so it is never asked again here
-        viewModelScope.launch {
+            // With the AI off nothing is scanned and the line stays hidden: no need to ask. It is turned on in
+            // Settings, and coming back from there opens this screen again, which asks then.
+            if (!isAiEnabled) return@launch
+            // Once per screen: each scan's answer brings the count after it, so it is never asked again here
             val scans = getReceiptScansUseCase.execute() ?: return@launch
             // A scan that answered first has the newer count
             _uiState.update { it.copy(receiptScans = it.receiptScans ?: scans) }
@@ -194,7 +195,8 @@ class BudgetEntryViewModel(
     /** The count the server answered with the scan; a 402 without one still means none are left. */
     private fun scansAfter(known: Allowance?, answered: Allowance?, failure: AiFailureReason?): Allowance? =
         answered ?: if (failure == AiFailureReason.QUOTA_EXCEEDED) {
-            known?.copy(used = known.limit, remaining = 0)
+            // With nothing known yet the limit is unknown, but none are left all the same
+            known?.copy(used = known.limit, remaining = 0) ?: Allowance(used = 0, limit = 0, remaining = 0)
         } else {
             known
         }

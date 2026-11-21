@@ -246,12 +246,24 @@ class BudgetEntryViewModelTest {
 
     @Test
     fun `nothing is shown while AI processing is off`() = runTest {
+        testDispatcher.scheduler.advanceUntilIdle()
+        clearMocks(getReceiptScansUseCase)
         coEvery { preferencesManager.isAiProcessingEnabled() } returns false
         coEvery { getReceiptScansUseCase.execute() } returns Allowance(used = 9, limit = 10, remaining = 1)
         val viewModel = createViewModel()
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertNull(viewModel.uiState.value.receiptScansLeftNotice())
+        coVerify(exactly = 0) { getReceiptScansUseCase.execute() }
+    }
+
+    @Test
+    fun `a 402 shows no scans left even when nothing was known`() = runTest {
+        viewModel = scansViewModel(null)
+
+        attachWithAiResult(CreateBudgetEntryFromImageUseCase.Result(BudgetEntry(), AiFailureReason.QUOTA_EXCEEDED))
+
+        assertEquals(0, viewModel.uiState.value.receiptScansLeftNotice())
     }
 
     @Test
