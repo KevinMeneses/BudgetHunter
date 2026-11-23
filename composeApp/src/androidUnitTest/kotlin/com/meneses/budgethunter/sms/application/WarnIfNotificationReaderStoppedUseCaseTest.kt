@@ -38,7 +38,7 @@ class WarnIfNotificationReaderStoppedUseCaseTest {
 
         warnIfStopped()
 
-        verify(exactly = 0) { notificationManager.showOpenSettingsNotification(any(), any()) }
+        verify(exactly = 0) { notificationManager.showReaderStoppedNotification(any(), any()) }
     }
 
     @Test
@@ -47,7 +47,7 @@ class WarnIfNotificationReaderStoppedUseCaseTest {
 
         warnIfStopped()
 
-        verify(exactly = 0) { notificationManager.showOpenSettingsNotification(any(), any()) }
+        verify(exactly = 0) { notificationManager.showReaderStoppedNotification(any(), any()) }
     }
 
     @Test
@@ -56,7 +56,7 @@ class WarnIfNotificationReaderStoppedUseCaseTest {
 
         warnIfStopped()
 
-        verify(exactly = 1) { notificationManager.showOpenSettingsNotification(any(), any()) }
+        verify(exactly = 1) { notificationManager.showReaderStoppedNotification(any(), any()) }
         coVerify { preferencesManager.setReaderStoppedNotified(true) }
     }
 
@@ -67,7 +67,7 @@ class WarnIfNotificationReaderStoppedUseCaseTest {
 
         warnIfStopped()
 
-        verify(exactly = 0) { notificationManager.showOpenSettingsNotification(any(), any()) }
+        verify(exactly = 0) { notificationManager.showReaderStoppedNotification(any(), any()) }
         coVerify(exactly = 0) { preferencesManager.setReaderStoppedNotified(any()) }
     }
 
@@ -89,6 +89,26 @@ class WarnIfNotificationReaderStoppedUseCaseTest {
         warnIfStopped()
 
         coVerify { preferencesManager.setReaderStoppedNotified(false) }
+        verify { notificationManager.cancelReaderStoppedNotification() }
+    }
+
+    @Test
+    fun `a reader running with no warning given cancels nothing`() = runTest {
+        coEvery { isNotificationReaderStopped() } returns false
+
+        warnIfStopped()
+
+        verify(exactly = 0) { notificationManager.cancelReaderStoppedNotification() }
+    }
+
+    @Test
+    fun `a stop is warned about with the reader's own notification`() = runTest {
+        coEvery { isNotificationReaderStopped() } returns true
+
+        warnIfStopped()
+
+        verify(exactly = 1) { notificationManager.showReaderStoppedNotification(any(), any()) }
+        verify(exactly = 0) { notificationManager.showOpenSettingsNotification(any(), any()) }
     }
 
     @Test
@@ -97,7 +117,7 @@ class WarnIfNotificationReaderStoppedUseCaseTest {
 
         warnIfStopped(canNotify = false)
 
-        verify(exactly = 0) { notificationManager.showOpenSettingsNotification(any(), any()) }
+        verify(exactly = 0) { notificationManager.showReaderStoppedNotification(any(), any()) }
         coVerify(exactly = 0) { preferencesManager.setReaderStoppedNotified(any()) }
     }
 
@@ -109,5 +129,6 @@ class WarnIfNotificationReaderStoppedUseCaseTest {
         warnIfStopped(canNotify = false)
 
         coVerify { preferencesManager.setReaderStoppedNotified(false) }
+        verify { notificationManager.cancelReaderStoppedNotification() }
     }
 }

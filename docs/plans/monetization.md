@@ -82,7 +82,17 @@ a new Android OAuth client for Google sign-in, and a new `goog_` key; no code he
 - Deploy the backend (migration V4, the Nginx `client_max_body_size` for `/api/receipts/extract`) before the
   app build that reads receipts through it.
 - Use a paid Gemini key: the whole receipt image is sent, and the free tier may use submitted content.
-- Update the privacy policy: receipts are processed by the server and Google's Gemini API.
-- Google Play: SMS permissions need the Permissions Declaration Form (SMS-based money management).
-- Google Play Data safety: RevenueCat is configured with `automaticDeviceIdentifierCollectionEnabled(false)`
-  (`AndroidStoreBilling`), so it collects no device identifiers for ad attribution and none are declared.
+- Privacy policy: served by the backend at `/privacidad` (`static/privacidad.html` there). Keep it in step with
+  what the app does; it states the paid Gemini key, RevenueCat and 30-day log retention as facts.
+- Account deletion from the web (`/eliminar-cuenta`, which the policy links to), required by Google Play: deploy
+  it with the policy, before the policy URL goes into the Play listing.
+- Privacy policy acceptance: a required checkbox at sign-up, a line under "Continue with Google", a dialog for
+  existing accounts, and the accepted version and date stored by the backend (Ley 1581 requires proof).
+- Database backups: none yet (few users, not published). Before the public launch, turn on a daily `pg_dump`,
+  encrypted, to DigitalOcean Spaces with about 14 days of retention, and add a sentence about it to the privacy
+  policy (a deleted account disappears from the backups within that time). Until then, take a manual dump before
+  deploying a migration that changes or deletes data, and drop any leftover copy tables from earlier migrations.
+- Google Play: SMS permissions need the Permissions Declaration Form (SMS-based money management), and the Data
+  safety form must match the privacy policy (data types, sharing with Google and RevenueCat, retention).
+  RevenueCat is configured with `automaticDeviceIdentifierCollectionEnabled(false)` (`AndroidStoreBilling`), so it
+  collects no device identifiers for ad attribution and none are declared.
