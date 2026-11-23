@@ -64,7 +64,12 @@ class RecentNotifications(private val capacity: Int = DEFAULT_CAPACITY) {
 }
 
 interface BankNotificationService {
-    suspend fun processBankNotification(notification: BankNotification, bankConfig: BankSmsConfig)
+    /**
+     * A movement read from a bank app's notification. [identity] tells this notification apart
+     * from any other (on Android its key and time) and stays the same when the app posts it again;
+     * null when there is none, and then a copy posted after the process died is read again.
+     */
+    suspend fun processBankNotification(notification: BankNotification, bankConfig: BankSmsConfig, identity: String?)
 
     /** A movement read from the notification of an email that [bankConfig] sent. */
     suspend fun processBankEmail(email: BankEmail, bankConfig: BankSmsConfig)

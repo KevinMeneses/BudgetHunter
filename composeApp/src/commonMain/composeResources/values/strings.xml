@@ -504,6 +504,11 @@
     <string name="premium_title">BudgetHunter Premium</string>
     <string name="premium_subtitle">Read all your receipts with AI and support what comes next</string>
     <string name="premium_settings_subtitle">Your plan and your receipt scans</string>
+    <plurals name="receipt_scans_left">
+        <item quantity="one">You have %1$d receipt scan left this month</item>
+        <item quantity="other">You have %1$d receipt scans left this month</item>
+    </plurals>
+    <string name="receipt_scans_none_left">No receipt scans left this month</string>
     <string name="premium_see">See Premium</string>
     <string name="premium_active_title">You have Premium</string>
     <string name="premium_active_until">Renews or ends on %1$s</string>
@@ -552,4 +557,14 @@
     <string name="number_group_separator">,</string>
     <string name="premium_check_again">Check again</string>
     <string name="premium_still_processing">Not confirmed yet. Premium will be active in a few minutes.</string>
+    <!-- Privacy policy: "%1$s" is privacy_policy_link_text, shown as a link to the page -->
+    <string name="privacy_policy_link_text">privacy policy</string>
+    <string name="privacy_policy_accept_checkbox">I accept the %1$s</string>
+    <string name="privacy_policy_google_notice">By continuing with Google you accept the %1$s</string>
+    <string name="privacy_policy_updated_title">We updated our privacy policy</string>
+    <string name="privacy_policy_updated_message">To keep using your account, read it and accept it. If you do not accept it, you can sign out.</string>
+    <string name="privacy_policy_read">Read the privacy policy</string>
+    <string name="privacy_policy_accept">Accept</string>
+    <string name="privacy_policy_settings_title">Privacy policy</string>
+    <string name="privacy_policy_settings_subtitle">What data we keep and how we use it</string>
 </resources>

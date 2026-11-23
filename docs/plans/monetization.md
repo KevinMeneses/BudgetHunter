@@ -35,8 +35,11 @@ Companion changes in the backend repo: `receipts/` package, `users.plan`, `ai_us
    the account runs the same sign out; it never cancels the store subscription, so its confirmation warns
    premium accounts and links to the store's subscriptions page.
 3. **Paywall (done).** `PremiumScreen`, opened from the 402 message ("See Premium") and from settings, showing what
-   premium includes, the prices from RevenueCat and this month's AI usage (`GET /api/ai/usage`). Still open: a
-   "N scans left" hint on the entry screen when few remain.
+   premium includes, the prices from RevenueCat and this month's AI usage (`GET /api/ai/usage`). The entry screen
+   shows a quiet "N scans left this month" line under the receipt card when 3 or fewer remain (a count, not a
+   share: 20 % of PREMIUM's 1000 would warn from 200 on), and "No scans left" with "See Premium" at 0. It reads
+   `GET /api/ai/usage` once when the screen opens (signed in, not offline) and then takes the `usage` each
+   `POST /api/receipts/extract` answers (also on 402); unknown usage shows nothing, and it never blocks a scan.
 4. **Categorization behind the plan (done).** FREE 50, PREMIUM 1000 descriptions sent to the AI per month; rules and
    cache are free. Past the limit there is no 402: the run categorizes what it can and answers `quotaExceeded` and
    `usage`; the metrics screen then says so with a "See Premium" action.
@@ -79,5 +82,17 @@ a new Android OAuth client for Google sign-in, and a new `goog_` key; no code he
 - Deploy the backend (migration V4, the Nginx `client_max_body_size` for `/api/receipts/extract`) before the
   app build that reads receipts through it.
 - Use a paid Gemini key: the whole receipt image is sent, and the free tier may use submitted content.
-- Update the privacy policy: receipts are processed by the server and Google's Gemini API.
-- Google Play: SMS permissions need the Permissions Declaration Form (SMS-based money management).
+- Privacy policy: served by the backend at `/privacidad` (`static/privacidad.html` there). Keep it in step with
+  what the app does; it states the paid Gemini key, RevenueCat and 30-day log retention as facts.
+- Account deletion from the web (`/eliminar-cuenta`, which the policy links to), required by Google Play: deploy
+  it with the policy, before the policy URL goes into the Play listing.
+- Privacy policy acceptance: a required checkbox at sign-up, a line under "Continue with Google", a dialog for
+  existing accounts, and the accepted version and date stored by the backend (Ley 1581 requires proof).
+- Database backups: none yet (few users, not published). Before the public launch, turn on a daily `pg_dump`,
+  encrypted, to DigitalOcean Spaces with about 14 days of retention, and add a sentence about it to the privacy
+  policy (a deleted account disappears from the backups within that time). Until then, take a manual dump before
+  deploying a migration that changes or deletes data, and drop any leftover copy tables from earlier migrations.
+- Google Play: SMS permissions need the Permissions Declaration Form (SMS-based money management), and the Data
+  safety form must match the privacy policy (data types, sharing with Google and RevenueCat, retention).
+  RevenueCat is configured with `automaticDeviceIdentifierCollectionEnabled(false)` (`AndroidStoreBilling`), so it
+  collects no device identifiers for ad attribution and none are declared.

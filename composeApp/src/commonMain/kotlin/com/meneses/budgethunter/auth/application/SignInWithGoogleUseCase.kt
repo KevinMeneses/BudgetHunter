@@ -1,6 +1,7 @@
 package com.meneses.budgethunter.auth.application
 
 import com.meneses.budgethunter.auth.data.AuthRepository
+import com.meneses.budgethunter.auth.domain.PrivacyPolicy
 import com.meneses.budgethunter.budgetEntry.data.BudgetEntrySyncManager
 import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.commons.platform.GoogleSignInManager
@@ -51,7 +52,8 @@ class SignInWithGoogleUseCase(
         }
 
     private suspend fun exchangeForSession(idToken: String): GoogleAuthOutcome =
-        authRepository.signInWithGoogle(idToken).fold(
+        // The sign-in screen says that continuing with Google accepts the privacy policy
+        authRepository.signInWithGoogle(idToken, PrivacyPolicy.VERSION).fold(
             onSuccess = { authResponse ->
                 // Before the sync and the budget list, so a switched account never sees what
                 // the previous one left behind.

@@ -2,6 +2,7 @@ package com.meneses.budgethunter.auth.data
 
 import com.meneses.budgethunter.commons.data.network.ApiEndpoints
 import com.meneses.budgethunter.commons.data.network.bodyOrThrow
+import com.meneses.budgethunter.commons.data.network.models.AcceptPrivacyPolicyRequest
 import com.meneses.budgethunter.commons.data.network.models.AuthResponse
 import com.meneses.budgethunter.commons.data.network.models.CurrentUser
 import com.meneses.budgethunter.commons.data.network.models.GoogleSignInRequest
@@ -38,11 +39,12 @@ class AuthRepository(
     suspend fun signUp(
         email: String,
         name: String,
-        password: String
+        password: String,
+        acceptedPrivacyPolicyVersion: String
     ): Result<SignUpResponse> = withContext(ioDispatcher) {
         try {
             val response = httpClient.post(ApiEndpoints.SIGN_UP) {
-                setBody(SignUpRequest(email, name, password))
+                setBody(SignUpRequest(email, name, password, acceptedPrivacyPolicyVersion))
             }
             if (!response.status.isSuccess()) {
                 // 409 is the answer for an existing account; servers before that change sent a
@@ -123,11 +125,15 @@ class AuthRepository(
      *
      * The server creates the account on first use and links it to an existing password account
      * with the same verified email, so this one call covers both signing up and signing in.
+     * [acceptedPrivacyPolicyVersion] is what the screen's notice says continuing accepts.
      */
-    suspend fun signInWithGoogle(idToken: String): Result<AuthResponse> = withContext(ioDispatcher) {
+    suspend fun signInWithGoogle(
+        idToken: String,
+        acceptedPrivacyPolicyVersion: String
+    ): Result<AuthResponse> = withContext(ioDispatcher) {
         try {
             val response = httpClient.post(ApiEndpoints.SIGN_IN_WITH_GOOGLE) {
-                setBody(GoogleSignInRequest(idToken))
+                setBody(GoogleSignInRequest(idToken, acceptedPrivacyPolicyVersion))
             }
             val authResponse = response.bodyOrThrow<AuthResponse>()
 
@@ -149,6 +155,29 @@ class AuthRepository(
             throw e
         } catch (e: Exception) {
             logger.warn(TAG, "Could not load the current user", e)
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Records that the signed-in account accepted the privacy policy [version], which must be the
+     * server's current one (`privacyPolicy.currentVersion` of [getCurrentUser]); anything else is a 400.
+     */
+    suspend fun acceptPrivacyPolicy(version: String): Result<Unit> = withContext(ioDispatcher) {
+        try {
+            val response = httpClient.post(ApiEndpoints.PRIVACY_POLICY) {
+                setBody(AcceptPrivacyPolicyRequest(version))
+            }
+            if (response.status.isSuccess()) {
+                Result.success(Unit)
+            } else {
+                logger.warn(TAG, "Privacy policy acceptance refused: ${response.status}")
+                Result.failure(IllegalStateException("Privacy policy acceptance answered ${response.status}"))
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            logger.warn(TAG, "Could not record the privacy policy acceptance", e)
             Result.failure(e)
         }
     }

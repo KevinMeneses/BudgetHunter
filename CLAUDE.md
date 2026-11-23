@@ -138,6 +138,25 @@ then pull; `RealTimeSyncManager` pulls a shared budget's entries on SSE events w
 - `safeApiCall` and `AuthRepository` rethrow `CancellationException`: a cancelled call ends its scope, it is not a
   failure.
 
+### Privacy policy
+The backend serves the policy at `/privacidad` (`PrivacyPolicy.url` = `BuildKonfig.BACKEND_URL` + that path) and
+records each account's acceptance (backend CLAUDE.md, "Privacy policy acceptance"; Ley 1581 de 2012).
+- Sign up with email: a required checkbox ("I accept the privacy policy", with the link); the button stays disabled
+  and `SignUpViewModel` sends nothing without it. Google: the welcome says under its button that continuing accepts
+  the policy. Both send `acceptedPrivacyPolicyVersion` = `PrivacyPolicy.VERSION`, a constant: nothing can be asked
+  before there is an account, and the server ignores (never rejects) a version that is not its current one. Keep it
+  equal to the backend's `PRIVACY_POLICY_VERSION`; if it falls behind, the check below asks again right after.
+- Existing accounts and policy changes: after every sign in and when the app opens with a session, navigation sends
+  `PrivacyPolicyIntent.Check`. `CheckPrivacyPolicyUseCase` reads `privacyPolicy` from `GET /api/users/me` and, when
+  `acceptedVersion != currentVersion`, `PrivacyPolicyDialog` (over every screen, no back or tap outside) asks:
+  "Accept" posts the server's `currentVersion` to `POST /api/users/me/privacy-policy`; "Sign out" runs
+  `SignOutUseCase`, first warning like Settings when unsynced changes would be lost.
+  The dialog is never shown over splash or sign in, and reaching sign in drops it (`SessionEnded`): a session can
+  expire while it is open. A new check (a new sign in) also drops any question left from the previous session.
+- It never blocks: offline mode (no account, nothing sent) asks nothing; no connection, an error, a server without
+  `privacyPolicy`, or a failed accept or sign out show nothing or close the dialog, and the next check asks again.
+- Settings has a "Privacy policy" row that opens the page, offline mode too (Google Play asks for it in the app).
+
 ### Navigation
 Type-safe navigation using Navigation Compose with serializable route objects. Main navigation flow:
 - SplashScreen → BudgetListScreen → BudgetDetailScreen → BudgetEntryScreen
@@ -151,6 +170,12 @@ Type-safe navigation using Navigation Compose with serializable route objects. M
 - Reading a receipt needs a signed-in account (offline mode gets `SIGN_IN_REQUIRED`) and counts against the
   plan's monthly scans; past them the server answers 402 (`QUOTA_EXCEEDED`). See "Monetization" below.
 - The HTTP log never prints that request (it carries the whole file).
+- Scans left: the entry screen shows a quiet line under the receipt card when 3 or fewer scans remain this month
+  (`Allowance.isRunningLow`; a count, not a share of the limit, so PREMIUM is not nagged from 200 on), and "No scans
+  left" with "See Premium" at 0 (also after a 402 with no count known). `GetReceiptScansUseCase` reads `GET /api/ai/usage` once when the screen opens (only with AI processing on,
+  signed in and not offline; null on any error, which shows nothing); after that each scan's answer brings the count
+  (`ReceiptExtractionResponse.usage`, also in the 402 body, through `AiExtractionResult.scans`), with no other call.
+  Only informative: the app never blocks a scan.
 - The AI processing toggle in settings is kept on the account too (`SyncUserPreferencesUseCase`), because it also gates the server-side categorization below
 
 ### SMS Processing
@@ -189,6 +214,12 @@ Type-safe navigation using Navigation Compose with serializable route objects. M
   user for that force stop. Title and text are parsed together (`BankNotification`) by the same parser, the entry is
   described by the text (with the bank name, "Nu: ..."), and unreadable notifications are dropped silently (apps also
   post codes and news).
+- With the app closed, `NotificationReaderWatchWorker` (WorkManager, every 15 min, scheduled in `MyApplication`) runs
+  `WarnIfNotificationReaderStoppedUseCase`: a reader still stopped a minute after it was found so gets a notification
+  that opens Settings, once per stop (`PreferencesManager.isReaderStoppedNotified`, cleared when a run finds it
+  running, even with notifications off; with them off nothing is shown nor marked). That notification has a fixed id
+  of its own (`showReaderStoppedNotification`), so movement notifications never replace it, and a run that clears
+  the mark also removes it from the shade (`cancelReaderStoppedNotification`).
 - Bank emails are read from the email app's notification (Gmail, Outlook, Samsung Email...:
   `BankEmail.EMAIL_APP_PACKAGES`) by the same listener, only for banks with the EMAIL channel. The sender is checked
   before anything else is read (`BankEmail.findSender`): the display name (the title) can be written by anyone, so
@@ -200,6 +231,21 @@ Type-safe navigation using Navigation Compose with serializable route objects. M
   the subject) are read like a bank app notification (`BankEmail.toNotification`), only up to the sentence that
   completes the movement: the footer's security tips ("código de seguridad") would otherwise mark it as no movement;
   anything but a movement or a missing default budget is dropped silently.
+- Notifications posted again are registered once. Gmail posts an email again while it is in the shade (on sync, after
+  a reboot), and the process may have died since (frequent LOW_MEMORY kills on the Galaxy A55), so the in-memory
+  `RecentNotifications` (key + `when`) is only a quick filter: `RegisteredMovements.registerOnce` keeps the last 200
+  movements on disk (DataStore key `registered_movements`, hashed by `MovementFingerprints`), under a lock (a Koin
+  single), and remembers one right after its row is stored locally (`BudgetEntryRepository.createLocally`; the push
+  runs after, outside the lock, and a row left unpushed goes up with the next full sync): a failed store is tried
+  again by the next copy, and codes, ads or a missing default budget are never remembered. When in doubt (the list
+  cannot be read or written) it registers: a copy the user can delete is better than a lost movement. An email
+  movement is told by bank, when the email arrived (the notification's `when`, which Gmail keeps on a repost; the read
+  day if missing), type, amount and the email's whole text as shown, subject and body
+  (`RegisterSmsEntryUseCase.registerEmail`), not the description (first sentence only). So a repost is the same
+  movement, while two emails that read alike but arrived apart are two; two email apps showing different snippets or
+  times of an email register it twice. A bank app notification is told by its key + `when` only
+  (`registerNotification`'s `identity`; equal transfers are real: "te envió 1000"), and one without `when` is not
+  remembered on disk. This is not the SMS + email deduplication above: those texts differ.
 - iOS cannot read SMS: a Shortcuts automation (trigger "Mensaje") passes the text to the App Intent
   `RegisterExpenseFromMessageIntent` (iosApp/, also an App Shortcut), which calls
   `SmsShortcutEntryPoint` (iosMain) -> `RegisterSmsFromShortcutUseCase` and answers with a dialog.
@@ -245,10 +291,12 @@ Freemium, with RevenueCat for the store purchases (in progress; plan and decisio
   `POST /api/billing/sync` so premium applies at once (if that fails the webhook applies it a moment later).
   `StoreBilling` is the platform side: `AndroidStoreBilling` uses RevenueCat's Android SDK (`com.revenuecat.purchases`,
   configured lazily with the public `goog_` key from `REVENUECAT_ANDROID_API_KEY`; empty = `isAvailable` false and
-  nothing can be bought). iOS has `UnavailableStoreBilling` until the iOS launch. Sign out logs the store out.
+  nothing can be bought), with `automaticDeviceIdentifierCollectionEnabled(false)`: no device identifiers for ad
+  attribution, so none are declared in Play's Data safety form. iOS has `UnavailableStoreBilling` until the iOS launch. Sign out logs the store out.
   The purchase sheet needs the Activity, handed over by `MainActivity` like Google sign-in.
-- Paywall: `PremiumScreen` / `PremiumViewModel` (`billing/`), opened from Settings (signed-in accounts only) and from
-  the "no scans left" snackbar's "See Premium" action (`BudgetEntryEvent.ShowNotification.offersPremium`). It shows
+- Paywall: `PremiumScreen` / `PremiumViewModel` (`billing/`), opened from Settings (signed-in accounts only), from
+  the "no scans left" snackbar's "See Premium" action (`BudgetEntryEvent.ShowNotification.offersPremium`) and from
+  the entry screen's scans line (`BudgetEntryEvent.OpenPremium`). It shows
   the plan and this month's AI usage from the server (scans and categorizations, `GET /api/ai/usage`), the store's plans (yearly first) and restore; a premium account
   gets "manage in Google Play" instead. A purchase the server has not synced yet says premium arrives in minutes.
   The renewal and cancellation text under the plans is required by Google Play: keep it.

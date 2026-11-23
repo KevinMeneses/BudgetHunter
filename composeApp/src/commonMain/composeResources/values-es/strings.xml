@@ -504,6 +504,11 @@
     <string name="premium_title">BudgetHunter Premium</string>
     <string name="premium_subtitle">Lee todos tus recibos con IA y apoya lo que viene</string>
     <string name="premium_settings_subtitle">Tu plan y tus escaneos de recibos</string>
+    <plurals name="receipt_scans_left">
+        <item quantity="one">Te queda %1$d escaneo de recibos este mes</item>
+        <item quantity="other">Te quedan %1$d escaneos de recibos este mes</item>
+    </plurals>
+    <string name="receipt_scans_none_left">No te quedan escaneos este mes</string>
     <string name="premium_see">Ver Premium</string>
     <string name="premium_active_title">Tienes Premium</string>
     <string name="premium_active_until">Se renueva o termina el %1$s</string>
@@ -552,4 +557,14 @@
     <string name="number_group_separator">.</string>
     <string name="premium_check_again">Revisar de nuevo</string>
     <string name="premium_still_processing">Aún no se confirma. Premium se activará en unos minutos.</string>
+    <!-- Política de privacidad: "%1$s" es privacy_policy_link_text, mostrado como enlace a la página -->
+    <string name="privacy_policy_link_text">política de privacidad</string>
+    <string name="privacy_policy_accept_checkbox">Acepto la %1$s</string>
+    <string name="privacy_policy_google_notice">Al continuar con Google aceptas la %1$s</string>
+    <string name="privacy_policy_updated_title">Actualizamos nuestra política de privacidad</string>
+    <string name="privacy_policy_updated_message">Para seguir usando tu cuenta, léela y acéptala. Si no la aceptas, puedes cerrar sesión.</string>
+    <string name="privacy_policy_read">Leer la política de privacidad</string>
+    <string name="privacy_policy_accept">Aceptar</string>
+    <string name="privacy_policy_settings_title">Política de privacidad</string>
+    <string name="privacy_policy_settings_subtitle">Qué datos guardamos y cómo los usamos</string>
 </resources>

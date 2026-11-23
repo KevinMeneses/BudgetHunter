@@ -8,7 +8,9 @@ package com.meneses.budgethunter.sms.domain
 data class BankEmail(
     val sender: String,
     val subject: String,
-    val body: String
+    val body: String,
+    /** When the email arrived (epoch millis), if the email app tells it. */
+    val receivedAt: Long? = null
 ) {
     /**
      * Read like a bank app notification: the subject opens the message and the body, which says
@@ -58,7 +60,7 @@ data class BankEmail(
          * title and the subject in the text, and the expanded text repeats the subject on its first
          * line before the start of the body, so that line is taken off the body.
          */
-        fun fromNotification(title: String, text: String, bigText: String?): BankEmail {
+        fun fromNotification(title: String, text: String, bigText: String?, receivedAt: Long? = null): BankEmail {
             val subject = text.lineSequence().firstOrNull { it.isNotBlank() }?.trim().orEmpty()
             val fullText = bigText?.takeIf { it.isNotBlank() } ?: text
             val body = fullText.trim().let { content ->
@@ -68,7 +70,8 @@ data class BankEmail(
                 sender = title.trim(),
                 subject = subject,
                 // The body comes in lines cut by the app; one line reads as the message it is
-                body = body.replace(WHITESPACE, " ").trim()
+                body = body.replace(WHITESPACE, " ").trim(),
+                receivedAt = receivedAt
             )
         }
 

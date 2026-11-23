@@ -12,6 +12,8 @@ data class SignUpState(
     val nameError: StringResource? = null,
     val emailError: StringResource? = null,
     val passwordError: StringResource? = null,
+    /** The privacy policy checkbox. The account cannot be created without it. */
+    val isPrivacyPolicyAccepted: Boolean = false,
     /** False when the app was built without a Google client id, which hides the button. */
     val isGoogleAvailable: Boolean = false
 )

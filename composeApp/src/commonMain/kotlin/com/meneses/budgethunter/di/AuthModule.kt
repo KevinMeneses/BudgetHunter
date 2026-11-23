@@ -1,7 +1,9 @@
 package com.meneses.budgethunter.di
 
+import com.meneses.budgethunter.auth.PrivacyPolicyViewModel
 import com.meneses.budgethunter.auth.SignInViewModel
 import com.meneses.budgethunter.auth.SignUpViewModel
+import com.meneses.budgethunter.auth.application.CheckPrivacyPolicyUseCase
 import com.meneses.budgethunter.auth.application.DeleteAccountUseCase
 import com.meneses.budgethunter.auth.application.PrepareDataForAccountUseCase
 import com.meneses.budgethunter.auth.application.SignInWithGoogleUseCase
@@ -109,6 +111,23 @@ val authModule = module {
             syncUserPreferences = get(),
             prepareDataForAccount = get(),
             authSession = get()
+        )
+    }
+
+    factory<CheckPrivacyPolicyUseCase> {
+        CheckPrivacyPolicyUseCase(
+            authRepository = get<AuthRepository>(),
+            preferencesManager = get()
+        )
+    }
+
+    factory<PrivacyPolicyViewModel> {
+        PrivacyPolicyViewModel(
+            checkPrivacyPolicy = get(),
+            authRepository = get<AuthRepository>(),
+            signOutUseCase = get(),
+            applicationScope = get<CoroutineScope>(named("ApplicationScope")),
+            logger = get()
         )
     }
 

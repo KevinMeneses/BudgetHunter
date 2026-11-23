@@ -32,11 +32,18 @@ class AndroidNotificationManager(
     override fun showOpenSettingsNotification(title: String, message: String) =
         show(title, message, opensSettings = true)
 
+    override fun showReaderStoppedNotification(title: String, message: String) =
+        show(title, message, opensSettings = true, fixedId = READER_STOPPED_NOTIFICATION_ID)
+
+    override fun cancelReaderStoppedNotification() =
+        NotificationManagerCompat.from(context).cancel(READER_STOPPED_NOTIFICATION_ID)
+
     private fun show(
         title: String,
         message: String,
         opensDefaultBudget: Boolean = false,
-        opensSettings: Boolean = false
+        opensSettings: Boolean = false,
+        fixedId: Int? = null
     ) {
         // Check if we have notification permission (Android 13+)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -54,7 +61,7 @@ class AndroidNotificationManager(
 
             // Every notification gets its own id so a new one stacks instead of
             // replacing the previous transaction the user has not read yet
-            val notificationId = nextNotificationId()
+            val notificationId = fixedId ?: nextNotificationId()
 
             // Create intent to open the app when notification is tapped
             val intent = Intent(context, MainActivity::class.java).apply {
@@ -105,10 +112,26 @@ class AndroidNotificationManager(
         NOTIFICATION_ID_BASE + notificationCounter.getAndIncrement().mod(MAX_STACKED_NOTIFICATIONS)
 
     companion object {
+        /**
+         * Whether a notification posted now would be seen: the app's notifications are on and the
+         * channel it posts to was not turned off. When it is false, [show] posts nothing.
+         */
+        fun canShowNotifications(context: Context): Boolean {
+            val manager = NotificationManagerCompat.from(context)
+            if (!manager.areNotificationsEnabled()) return false
+            // Not created yet: it is created on the first notification, turned on
+            val channel = manager.getNotificationChannel(CHANNEL_ID) ?: return true
+            // AndroidNotificationManager here is android.app.NotificationManager (imported under that alias)
+            return channel.importance != AndroidNotificationManager.IMPORTANCE_NONE
+        }
+
         const val EXTRA_OPEN_DEFAULT_BUDGET = "com.meneses.budgethunter.OPEN_DEFAULT_BUDGET"
         const val EXTRA_OPEN_SETTINGS = "com.meneses.budgethunter.OPEN_SETTINGS"
         private const val CHANNEL_ID = "sms_transactions"
         private const val NOTIFICATION_GROUP = "com.meneses.budgethunter.SMS_TRANSACTIONS"
+
+        // Outside the ids the other notifications take in turn, so none of them replaces it
+        private const val READER_STOPPED_NOTIFICATION_ID = 1001
         private const val NOTIFICATION_ID_BASE = 1002
         private const val MAX_STACKED_NOTIFICATIONS = 50
         private val notificationCounter = AtomicInteger(0)

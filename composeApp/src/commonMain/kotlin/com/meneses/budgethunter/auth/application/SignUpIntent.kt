@@ -4,6 +4,7 @@ sealed interface SignUpIntent {
     data class EmailChanged(val email: String) : SignUpIntent
     data class NameChanged(val name: String) : SignUpIntent
     data class PasswordChanged(val password: String) : SignUpIntent
+    data class PrivacyPolicyAcceptedChanged(val accepted: Boolean) : SignUpIntent
     data object SignUpClicked : SignUpIntent
     data object GoogleSignUpClicked : SignUpIntent
     data object DismissError : SignUpIntent

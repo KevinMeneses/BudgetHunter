@@ -30,6 +30,7 @@ import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -56,6 +57,9 @@ import budgethunter.composeapp.generated.resources.edited_by
 import budgethunter.composeapp.generated.resources.file_missing
 import budgethunter.composeapp.generated.resources.more_categories
 import budgethunter.composeapp.generated.resources.other_date
+import budgethunter.composeapp.generated.resources.premium_see
+import budgethunter.composeapp.generated.resources.receipt_scans_left
+import budgethunter.composeapp.generated.resources.receipt_scans_none_left
 import budgethunter.composeapp.generated.resources.scan_receipt
 import budgethunter.composeapp.generated.resources.scan_receipt_subtitle
 import budgethunter.composeapp.generated.resources.today
@@ -70,6 +74,7 @@ import com.meneses.budgethunter.theme.AppColors
 import com.meneses.budgethunter.theme.green_success
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.minus
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 
 /** Expense or income, as two halves of one pill; the selected half takes the type's color. */
@@ -252,6 +257,39 @@ fun ReceiptCard(
             contentDescription = null,
             tint = AppColors.onSurfaceVariant
         )
+    }
+}
+
+/**
+ * A quiet line under the receipt card with this month's scans left, shown only when few are; with none left it
+ * leads to the paywall. It never stops a scan: the server decides.
+ */
+@Composable
+fun ReceiptScansLeftLine(
+    scansLeft: Int,
+    onSeePremium: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = if (scansLeft == 0) {
+                stringResource(Res.string.receipt_scans_none_left)
+            } else {
+                pluralStringResource(Res.plurals.receipt_scans_left, scansLeft, scansLeft)
+            },
+            fontSize = 12.sp,
+            color = AppColors.onSurfaceVariant,
+            modifier = Modifier.weight(1f)
+        )
+        if (scansLeft == 0) {
+            TextButton(onClick = onSeePremium) {
+                Text(stringResource(Res.string.premium_see), fontSize = 13.sp)
+            }
+        }
     }
 }
 

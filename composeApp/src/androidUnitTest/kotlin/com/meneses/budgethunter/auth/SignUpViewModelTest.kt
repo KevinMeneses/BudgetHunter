@@ -13,6 +13,7 @@ import com.meneses.budgethunter.auth.application.SignUpEvent
 import com.meneses.budgethunter.auth.application.SignUpIntent
 import com.meneses.budgethunter.auth.data.AuthRepository
 import com.meneses.budgethunter.auth.data.EmailAlreadyRegisteredException
+import com.meneses.budgethunter.auth.domain.PrivacyPolicy
 import com.meneses.budgethunter.commons.data.network.models.SignUpResponse
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -78,11 +79,12 @@ class SignUpViewModelTest {
         viewModel.sendIntent(SignUpIntent.EmailChanged(email))
         viewModel.sendIntent(SignUpIntent.NameChanged(name))
         viewModel.sendIntent(SignUpIntent.PasswordChanged(password))
+        viewModel.sendIntent(SignUpIntent.PrivacyPolicyAcceptedChanged(true))
 
         // API call succeeds and returns the registered user info
         val userResponse = SignUpResponse(email = email, name = name)
         coEvery {
-            authRepository.signUp(email = email, name = name, password = password)
+            authRepository.signUp(email = email, name = name, password = password, acceptedPrivacyPolicyVersion = any())
         } returns Result.success(userResponse)
 
         // When
@@ -100,8 +102,9 @@ class SignUpViewModelTest {
         viewModel.sendIntent(SignUpIntent.EmailChanged(" newuser@example.com "))
         viewModel.sendIntent(SignUpIntent.NameChanged("New User "))
         viewModel.sendIntent(SignUpIntent.PasswordChanged("password123"))
+        viewModel.sendIntent(SignUpIntent.PrivacyPolicyAcceptedChanged(true))
         coEvery {
-            authRepository.signUp(email = "newuser@example.com", name = "New User", password = "password123")
+            authRepository.signUp(email = "newuser@example.com", name = "New User", password = "password123", acceptedPrivacyPolicyVersion = any())
         } returns Result.success(SignUpResponse(email = "newuser@example.com", name = "New User"))
 
         // When
@@ -109,7 +112,7 @@ class SignUpViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         // Then - the trimmed values reached the server and the sign up went through
-        coVerify { authRepository.signUp(email = "newuser@example.com", name = "New User", password = "password123") }
+        coVerify { authRepository.signUp(email = "newuser@example.com", name = "New User", password = "password123", acceptedPrivacyPolicyVersion = any()) }
         assertIs<SignUpEvent.NavigateToSignIn>(viewModel.events.first())
     }
 
@@ -167,10 +170,53 @@ class SignUpViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
     }
 
-    private fun fill(name: String = "New User", email: String = "a@b.com", password: String = "password123") {
+    private fun fill(
+        name: String = "New User",
+        email: String = "a@b.com",
+        password: String = "password123",
+        acceptPrivacyPolicy: Boolean = true
+    ) {
         viewModel.sendIntent(SignUpIntent.NameChanged(name))
         viewModel.sendIntent(SignUpIntent.EmailChanged(email))
         viewModel.sendIntent(SignUpIntent.PasswordChanged(password))
+        viewModel.sendIntent(SignUpIntent.PrivacyPolicyAcceptedChanged(acceptPrivacyPolicy))
+    }
+
+    // ========== Privacy policy Tests ==========
+
+    @Test
+    fun `signUp without the privacy policy checkbox sends nothing`() = runTest {
+        fill(acceptPrivacyPolicy = false)
+        clickSignUp()
+
+        coVerify(exactly = 0) { authRepository.signUp(any(), any(), any(), any()) }
+        assertFalse(viewModel.uiState.value.isLoading)
+    }
+
+    @Test
+    fun `the privacy policy checkbox starts unchecked`() {
+        assertFalse(viewModel.uiState.value.isPrivacyPolicyAccepted)
+    }
+
+    @Test
+    fun `signUp with the privacy policy checkbox sends the current version`() = runTest {
+        coEvery { authRepository.signUp(any(), any(), any(), any()) } returns
+            Result.success(SignUpResponse(email = "a@b.com", name = "New User"))
+        fill()
+        clickSignUp()
+
+        coVerify(exactly = 1) {
+            authRepository.signUp("a@b.com", "New User", "password123", PrivacyPolicy.VERSION)
+        }
+    }
+
+    @Test
+    fun `unticking the privacy policy checkbox stops the sign up again`() = runTest {
+        fill()
+        viewModel.sendIntent(SignUpIntent.PrivacyPolicyAcceptedChanged(false))
+        clickSignUp()
+
+        coVerify(exactly = 0) { authRepository.signUp(any(), any(), any(), any()) }
     }
 
     @Test
@@ -213,13 +259,13 @@ class SignUpViewModelTest {
 
     @Test
     fun `password of exactly 6 characters is accepted`() = runTest {
-        coEvery { authRepository.signUp(any(), any(), any()) } returns
+        coEvery { authRepository.signUp(any(), any(), any(), any()) } returns
             Result.success(SignUpResponse(email = "a@b.com", name = "New User"))
         fill(password = "123456")
         clickSignUp()
 
         assertNull(viewModel.uiState.value.passwordError)
-        coVerify(exactly = 1) { authRepository.signUp(any(), any(), "123456") }
+        coVerify(exactly = 1) { authRepository.signUp(any(), any(), "123456", any()) }
     }
 
     @Test
@@ -231,12 +277,12 @@ class SignUpViewModelTest {
         assertEquals(Res.string.error_name_required, state.nameError)
         assertEquals(Res.string.error_email_required, state.emailError)
         assertEquals(Res.string.error_password_required, state.passwordError)
-        coVerify(exactly = 0) { authRepository.signUp(any(), any(), any()) }
+        coVerify(exactly = 0) { authRepository.signUp(any(), any(), any(), any()) }
     }
 
     @Test
     fun `signUp failing with EmailAlreadyRegisteredException shows the error under the email`() = runTest {
-        coEvery { authRepository.signUp(any(), any(), any()) } returns
+        coEvery { authRepository.signUp(any(), any(), any(), any()) } returns
             Result.failure(EmailAlreadyRegisteredException())
         fill()
         clickSignUp()
@@ -249,7 +295,7 @@ class SignUpViewModelTest {
 
     @Test
     fun `signUp failing for another reason keeps the general error`() = runTest {
-        coEvery { authRepository.signUp(any(), any(), any()) } returns
+        coEvery { authRepository.signUp(any(), any(), any(), any()) } returns
             Result.failure(IllegalStateException("500"))
         fill()
         clickSignUp()
