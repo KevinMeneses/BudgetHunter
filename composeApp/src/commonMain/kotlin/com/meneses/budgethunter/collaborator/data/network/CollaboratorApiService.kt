@@ -69,6 +69,7 @@ class CollaboratorApiService(
                 e.response
             }
             if (!response.status.isSuccess()) throw response.toAddCollaboratorError()
+            // The status was checked above (the 402 needs its body read): plain body() is safe here
             response.body<CollaboratorResponse>().also {
                 logger.debug(tag, "Added a collaborator to budget ${it.budgetId}")
             }

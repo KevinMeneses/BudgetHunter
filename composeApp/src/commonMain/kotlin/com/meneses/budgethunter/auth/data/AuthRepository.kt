@@ -59,6 +59,7 @@ class AuthRepository(
                 logger.warn(TAG, "Sign up refused: ${response.status}")
                 return@withContext Result.failure(error)
             }
+            // The status was checked above: plain body() is safe here
             val signUpResponse = response.body<SignUpResponse>()
 
             // Sign up only returns user info, no tokens
@@ -78,7 +79,7 @@ class AuthRepository(
             val response = httpClient.post(ApiEndpoints.SIGN_IN) {
                 setBody(SignInRequest(email, password))
             }
-            val authResponse = response.body<AuthResponse>()
+            val authResponse = response.bodyOrThrow<AuthResponse>()
 
             persistSession(authResponse)
 
@@ -99,7 +100,7 @@ class AuthRepository(
             val response = httpClient.post(ApiEndpoints.REFRESH_TOKEN) {
                 setBody(RefreshTokenRequest(currentRefreshToken))
             }
-            val authResponse = response.body<AuthResponse>()
+            val authResponse = response.bodyOrThrow<AuthResponse>()
 
             // Token rotation: the server issues a new refresh token with every exchange.
             persistSession(authResponse)
@@ -122,7 +123,7 @@ class AuthRepository(
             val response = httpClient.post(ApiEndpoints.SIGN_IN_WITH_GOOGLE) {
                 setBody(GoogleSignInRequest(idToken))
             }
-            val authResponse = response.body<AuthResponse>()
+            val authResponse = response.bodyOrThrow<AuthResponse>()
 
             persistSession(authResponse)
 
