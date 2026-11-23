@@ -1,13 +1,13 @@
 package com.meneses.budgethunter.budgetEntry.data.network
 
 import com.meneses.budgethunter.commons.data.network.ApiEndpoints
+import com.meneses.budgethunter.commons.data.network.bodyOrThrow
 import com.meneses.budgethunter.commons.data.network.models.BudgetEntryResponse
 import com.meneses.budgethunter.commons.data.network.models.CategorizeEntriesResponse
 import com.meneses.budgethunter.commons.data.network.models.CreateBudgetEntryRequest
 import com.meneses.budgethunter.commons.data.network.models.UpdateBudgetEntryRequest
 import com.meneses.budgethunter.commons.data.network.safeApiCall
 import io.ktor.client.HttpClient
-import io.ktor.client.call.body
 import io.ktor.client.plugins.timeout
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
@@ -44,7 +44,7 @@ class BudgetEntryApiService(
             httpClient.post(ApiEndpoints.budgetEntries(budgetId)) {
                 contentType(ContentType.Application.Json)
                 setBody(request)
-            }.body<BudgetEntryResponse>()
+            }.bodyOrThrow<BudgetEntryResponse>()
         }
     }
 
@@ -67,7 +67,7 @@ class BudgetEntryApiService(
             httpClient.put(ApiEndpoints.budgetEntry(budgetId, entryId)) {
                 contentType(ContentType.Application.Json)
                 setBody(request)
-            }.body<BudgetEntryResponse>()
+            }.bodyOrThrow<BudgetEntryResponse>()
         }
     }
 
@@ -83,7 +83,7 @@ class BudgetEntryApiService(
         withContext(ioDispatcher) {
             safeApiCall {
                 httpClient.get(ApiEndpoints.budgetEntries(budgetId))
-                    .body<List<BudgetEntryResponse>>()
+                    .bodyOrThrow<List<BudgetEntryResponse>>()
             }
         }
 
@@ -108,7 +108,7 @@ class BudgetEntryApiService(
                         requestTimeoutMillis = CATEGORIZE_TIMEOUT_MILLIS
                         socketTimeoutMillis = CATEGORIZE_TIMEOUT_MILLIS
                     }
-                }.body<CategorizeEntriesResponse>()
+                }.bodyOrThrow<CategorizeEntriesResponse>()
             }
         }
 
@@ -126,7 +126,7 @@ class BudgetEntryApiService(
         entryId: Long
     ): Result<Unit> = withContext(ioDispatcher) {
         safeApiCall {
-            httpClient.delete(ApiEndpoints.budgetEntry(budgetId, entryId)).body<Unit>()
+            httpClient.delete(ApiEndpoints.budgetEntry(budgetId, entryId)).bodyOrThrow<Unit>()
         }
     }
 

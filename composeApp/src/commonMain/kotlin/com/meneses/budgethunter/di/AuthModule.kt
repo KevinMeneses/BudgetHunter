@@ -24,6 +24,9 @@ import org.koin.dsl.module
 /** Qualifier of the Ktor engine each platform module provides for the BudgetHunter API client. */
 const val API_HTTP_ENGINE = "ApiHttpEngine"
 
+/** Qualifier of the API client's default socket timeout (ms), given by platforms whose engine waits too long. */
+const val API_SOCKET_TIMEOUT = "ApiSocketTimeout"
+
 val authModule = module {
 
     single<HttpClient>(named("AuthHttpClient")) {
@@ -35,6 +38,7 @@ val authModule = module {
             json = get<Json>(),
             appLogger = get(),
             logLevel = if (Platform.isDebugBuild) LogLevel.ALL else LogLevel.NONE,
+            socketTimeoutMillis = getOrNull<Long>(named(API_SOCKET_TIMEOUT)),
             onSessionExpired = authSession::onSessionExpired
         )
     }

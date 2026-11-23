@@ -1,6 +1,7 @@
 package com.meneses.budgethunter.auth.data
 
 import com.meneses.budgethunter.commons.data.network.ApiEndpoints
+import com.meneses.budgethunter.commons.data.network.bodyOrThrow
 import com.meneses.budgethunter.commons.data.network.models.AuthResponse
 import com.meneses.budgethunter.commons.data.network.models.CurrentUser
 import com.meneses.budgethunter.commons.data.network.models.GoogleSignInRequest
@@ -134,7 +135,7 @@ class AuthRepository(
 
     suspend fun getCurrentUser(): Result<CurrentUser> = withContext(ioDispatcher) {
         try {
-            Result.success(httpClient.get(ApiEndpoints.ME).body<CurrentUser>())
+            Result.success(httpClient.get(ApiEndpoints.ME).bodyOrThrow<CurrentUser>())
         } catch (e: Exception) {
             logger.warn(TAG, "Could not load the current user", e)
             Result.failure(e)
@@ -155,7 +156,7 @@ class AuthRepository(
         try {
             httpClient.post(ApiEndpoints.PASSWORD) {
                 setBody(SetPasswordRequest(currentPassword, newPassword))
-            }.body<Unit>()
+            }.bodyOrThrow<Unit>()
             Result.success(Unit)
         } catch (e: Exception) {
             logger.warn(TAG, "Could not set the password", e)

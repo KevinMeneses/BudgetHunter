@@ -1,11 +1,11 @@
 package com.meneses.budgethunter.budgetList.data.network
 
 import com.meneses.budgethunter.commons.data.network.ApiEndpoints
+import com.meneses.budgethunter.commons.data.network.bodyOrThrow
 import com.meneses.budgethunter.commons.data.network.models.BudgetResponse
 import com.meneses.budgethunter.commons.data.network.models.CreateBudgetRequest
 import com.meneses.budgethunter.commons.data.network.safeApiCall
 import io.ktor.client.HttpClient
-import io.ktor.client.call.body
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.post
@@ -36,7 +36,7 @@ class BudgetApiService(
                 httpClient.post(ApiEndpoints.BUDGETS) {
                     contentType(ContentType.Application.Json)
                     setBody(request)
-                }.body<BudgetResponse>()
+                }.bodyOrThrow<BudgetResponse>()
             }
         }
 
@@ -53,7 +53,7 @@ class BudgetApiService(
                 httpClient.put(ApiEndpoints.budget(budgetId)) {
                     contentType(ContentType.Application.Json)
                     setBody(request)
-                }.body<BudgetResponse>()
+                }.bodyOrThrow<BudgetResponse>()
             }
         }
 
@@ -66,7 +66,7 @@ class BudgetApiService(
         withContext(ioDispatcher) {
             safeApiCall {
                 httpClient.get(ApiEndpoints.BUDGETS)
-                    .body<List<BudgetResponse>>()
+                    .bodyOrThrow<List<BudgetResponse>>()
             }
         }
 
@@ -81,7 +81,7 @@ class BudgetApiService(
     suspend fun deleteBudget(budgetId: Long): Result<Unit> =
         withContext(ioDispatcher) {
             safeApiCall {
-                httpClient.delete(ApiEndpoints.budget(budgetId)).body()
+                httpClient.delete(ApiEndpoints.budget(budgetId)).bodyOrThrow<Unit>()
             }
         }
 }

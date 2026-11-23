@@ -123,6 +123,16 @@ then pull; `RealTimeSyncManager` pulls a shared budget's entries on SSE events w
   like an expired one, anything else keeps it. The confirmation reads the plan (`PremiumRepository.status()`) to warn that a store subscription is not cancelled;
   the sign out it runs also logs the store out.
 
+### Network errors
+- The app's HTTP client does not set `expectSuccess` (tests often do: check both), so a plain `body()` reads a
+  refusal as the answer: an error body fails as `ParseError`, and `body<Unit>()` takes a 404 or 500 as success.
+  Calls read the answer with `bodyOrThrow()` (`ApiError.kt`), which throws the status's `ApiError` first
+  (`HttpStatusCode.toApiError()`); the sync's 400/403/404 handling and categorization's 403/409 depend on it.
+  `ApiStatusTest` runs the services through the real `createHttpClient`.
+- Timeouts: iOS gives the client a 20 s socket timeout (`API_SOCKET_TIMEOUT`; NSURLSession's own is 60 s, and a
+  request sent down a silently dead connection kept the spinner up that long); Android keeps OkHttp's 10 s.
+  Requests that set their own (SSE, receipts, categorization) keep theirs. Any timeout is `ApiError.Timeout`.
+
 ### Navigation
 Type-safe navigation using Navigation Compose with serializable route objects. Main navigation flow:
 - SplashScreen → BudgetListScreen → BudgetDetailScreen → BudgetEntryScreen
@@ -245,5 +255,3 @@ Freemium, with RevenueCat for the store purchases (in progress; plan and decisio
   `BillingStatusResponse.sharing` (null on older servers; a null limit is unlimited) becomes `SharingStatus`: the
   owner (`UserInfo.isOwner`) of a budget on FREE sees a hint with the limits, and the paywall a "Sharing" card. Both
   are only informative.
-- The app's HTTP client does not set `expectSuccess`, so `safeApiCall` sees a 4xx only as an unreadable body
-  (`ParseError`) unless the call checks the status itself, as `addCollaborator` does (`HttpStatusCode.toApiError()`).

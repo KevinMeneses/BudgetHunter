@@ -11,10 +11,16 @@ import budgethunter.composeapp.generated.resources.error_unauthorized
 import budgethunter.composeapp.generated.resources.error_unknown
 import budgethunter.composeapp.generated.resources.sharing_limit_generic
 import com.meneses.budgethunter.billing.domain.SharingLimitType
+import io.ktor.client.call.body
+import io.ktor.client.network.sockets.ConnectTimeoutException
+import io.ktor.client.network.sockets.SocketTimeoutException
 import io.ktor.client.plugins.ClientRequestException
+import io.ktor.client.plugins.HttpRequestTimeoutException
 import io.ktor.client.plugins.ResponseException
 import io.ktor.client.plugins.ServerResponseException
+import io.ktor.client.statement.HttpResponse
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.isSuccess
 import io.ktor.serialization.JsonConvertException
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.serialization.SerializationException
@@ -101,7 +107,10 @@ fun Throwable.toApiError(): ApiError {
             ApiError.Unknown
         }
 
-        // Request timeout
+        // Request timeout: Ktor's own (HttpTimeout, or the engine's, e.g. iOS's NSURLErrorTimedOut) or a coroutine's
+        is HttpRequestTimeoutException,
+        is SocketTimeoutException,
+        is ConnectTimeoutException,
         is TimeoutCancellationException -> {
             ApiError.Timeout
         }
@@ -129,6 +138,16 @@ fun HttpStatusCode.toApiError(): ApiError = when {
     this == HttpStatusCode.Conflict -> ApiError.Conflict
     value >= 500 -> ApiError.ServerError
     else -> ApiError.Unknown
+}
+
+/**
+ * The body of a successful answer; any other status throws its [ApiError]. The app's client does not set
+ * `expectSuccess`, so a plain `body()` reads a refusal as if it were the answer: an error body fails as
+ * [ApiError.ParseError], and `body<Unit>()` (deletions) takes a 404 or a 500 as done.
+ */
+suspend inline fun <reified T> HttpResponse.bodyOrThrow(): T {
+    if (!status.isSuccess()) throw status.toApiError()
+    return body()
 }
 
 /**

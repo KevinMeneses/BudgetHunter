@@ -39,6 +39,11 @@ import platform.Foundation.NSUserDomainMask
 fun iosPlatformModule(native: NativeDependencies) = module {
     single<HttpClientEngineFactory<*>>(named(API_HTTP_ENGINE)) { Darwin }
 
+    // NSURLSession waits 60 s for data before failing a request. A request sent down a connection that died
+    // silently (seen on the simulator: the retry answered at once) kept the spinner up for over a minute;
+    // fail sooner so the user can retry. OkHttp's 10 s default already does this on Android.
+    single(named(API_SOCKET_TIMEOUT)) { 20_000L }
+
     // Android launches first; see UnavailableStoreBilling
     single<StoreBilling> { UnavailableStoreBilling() }
 
