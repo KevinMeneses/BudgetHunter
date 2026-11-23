@@ -15,6 +15,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -27,6 +28,7 @@ import kotlin.test.assertEquals
 /**
  * Tests for the SSE connection lifecycle handled by RealTimeSyncManager.
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 class RealTimeSyncManagerTest {
 
     private val sseClient = mockk<SseClient>()
