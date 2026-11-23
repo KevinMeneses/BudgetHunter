@@ -40,6 +40,13 @@ class SplashScreenViewModel(
             val isOfflineModeEnabled = preferencesManager.isOfflineModeEnabled()
             val isAuthenticated = authRepository.isAuthenticated()
 
+            // Signing in from offline mode used to leave the flag on. With a session it is not
+            // offline mode: clear it before navigating, or the privacy policy check sent with the
+            // navigation would skip this account on every start.
+            if (isOfflineModeEnabled && isAuthenticated) {
+                preferencesManager.setOfflineModeEnabled(false)
+            }
+
             // If offline mode is enabled, skip authentication check
             _uiState.update {
                 it.copy(isAuthenticated = isOfflineModeEnabled || isAuthenticated)

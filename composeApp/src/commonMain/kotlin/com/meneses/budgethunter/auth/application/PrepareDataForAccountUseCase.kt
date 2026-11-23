@@ -12,6 +12,8 @@ import com.meneses.budgethunter.commons.data.PreferencesManager
  * refresh token just drops the tokens and sends the user to sign in again with the old budgets
  * still in the database. Comparing against the last account that signed in covers every path.
  *
+ * It also leaves offline mode, which only signing out cleared before.
+ *
  * Only what reached the server is dropped. Budgets created offline were never tied to an account,
  * and pushing them to whoever signs in is how offline work gets adopted.
  */
@@ -29,6 +31,10 @@ class PrepareDataForAccountUseCase(
             preferencesManager.clearUserPreferences()
         }
         preferencesManager.setLastSignedInEmail(email)
+        // An account is not offline mode. Signing in from it ("Sign in" in the budget list menu)
+        // would otherwise leave the flag on, and whatever skips offline mode (the privacy policy
+        // check, the scans line, the categorization offer) would skip this account too.
+        preferencesManager.setOfflineModeEnabled(false)
     }
 
     /**

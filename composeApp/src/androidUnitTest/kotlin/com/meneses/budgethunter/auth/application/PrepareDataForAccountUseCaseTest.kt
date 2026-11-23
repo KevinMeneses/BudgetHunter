@@ -30,6 +30,17 @@ class PrepareDataForAccountUseCaseTest {
     }
 
     @Test
+    fun `leaves offline mode on every sign in`() = runTest {
+        // Signing in from offline mode ("Sign in" in the budget list menu) left the flag on, and
+        // the privacy policy check, the scans line and the categorization offer skipped the account
+        coEvery { preferencesManager.getLastSignedInEmail() } returns "a@example.com"
+
+        useCase.execute("a@example.com")
+
+        coVerify(exactly = 1) { preferencesManager.setOfflineModeEnabled(false) }
+    }
+
+    @Test
     fun `stores the new email only after clearing`() = runTest {
         coEvery { preferencesManager.getLastSignedInEmail() } returns "a@example.com"
 

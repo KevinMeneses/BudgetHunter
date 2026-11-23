@@ -7,6 +7,7 @@ import com.meneses.budgethunter.commons.platform.AppUpdateResult
 import com.meneses.budgethunter.splash.application.SplashEvent
 import com.meneses.budgethunter.splash.application.SplashIntent
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
@@ -99,5 +100,37 @@ class SplashViewModelTest {
         // Then - navigation to sign-in screen is emitted
         val event = viewModel.events.first()
         assertIs<SplashEvent.NavigateToSignIn>(event)
+    }
+
+    // ========== offline mode left on with a session Tests ==========
+
+    @Test
+    fun `verifyUpdate with a session clears an offline mode left on`() = runTest {
+        // Given - an account that signed in from offline mode before the flag was cleared on sign in
+        coEvery { authRepository.isAuthenticated() } returns true
+        coEvery { preferencesManager.isOfflineModeEnabled() } returns true
+
+        // When
+        viewModel.sendIntent(SplashIntent.VerifyUpdate)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then - the flag is cleared before navigating, so the privacy check sent with it runs
+        coVerify(exactly = 1) { preferencesManager.setOfflineModeEnabled(false) }
+        assertIs<SplashEvent.NavigateToBudgetList>(viewModel.events.first())
+    }
+
+    @Test
+    fun `verifyUpdate keeps offline mode without a session`() = runTest {
+        // Given - plain offline mode
+        coEvery { authRepository.isAuthenticated() } returns false
+        coEvery { preferencesManager.isOfflineModeEnabled() } returns true
+
+        // When
+        viewModel.sendIntent(SplashIntent.VerifyUpdate)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then
+        coVerify(exactly = 0) { preferencesManager.setOfflineModeEnabled(any()) }
+        assertIs<SplashEvent.NavigateToBudgetList>(viewModel.events.first())
     }
 }
