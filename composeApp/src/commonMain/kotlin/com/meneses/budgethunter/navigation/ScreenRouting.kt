@@ -511,10 +511,24 @@ fun BudgetHunterNavigation() {
             }
         }
 
-        PrivacyPolicyDialog(
-            uiState = privacyPolicyState,
-            onIntent = privacyPolicyViewModel::sendIntent
-        )
+        // Never over splash or sign in. Reaching sign in ends the session the question was for
+        // (an expiry can happen while the dialog is open), so it is dropped there.
+        val destination = navController.currentBackStackEntryAsState().value?.destination
+        val isOutsideSession = destination == null ||
+            destination.hasRoute<SplashScreen>() ||
+            destination.hasRoute<SignInScreen>() ||
+            destination.hasRoute<SignUpScreen>()
+        LaunchedEffect(destination?.hasRoute<SignInScreen>() == true) {
+            if (destination?.hasRoute<SignInScreen>() == true) {
+                privacyPolicyViewModel.sendIntent(PrivacyPolicyIntent.SessionEnded)
+            }
+        }
+        if (!isOutsideSession) {
+            PrivacyPolicyDialog(
+                uiState = privacyPolicyState,
+                onIntent = privacyPolicyViewModel::sendIntent
+            )
+        }
     }
 }
 

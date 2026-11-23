@@ -18,4 +18,7 @@ sealed interface PrivacyPolicyIntent {
     data object SignOut : PrivacyPolicyIntent
     data object ConfirmSignOut : PrivacyPolicyIntent
     data object CancelSignOut : PrivacyPolicyIntent
+
+    /** The app is back on sign in (signed out or session expired): the question goes with the session. */
+    data object SessionEnded : PrivacyPolicyIntent
 }

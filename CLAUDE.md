@@ -136,6 +136,8 @@ records each account's acceptance (backend CLAUDE.md, "Privacy policy acceptance
   `acceptedVersion != currentVersion`, `PrivacyPolicyDialog` (over every screen, no back or tap outside) asks:
   "Accept" posts the server's `currentVersion` to `POST /api/users/me/privacy-policy`; "Sign out" runs
   `SignOutUseCase`, first warning like Settings when unsynced changes would be lost.
+  The dialog is never shown over splash or sign in, and reaching sign in drops it (`SessionEnded`): a session can
+  expire while it is open. A new check (a new sign in) also drops any question left from the previous session.
 - It never blocks: offline mode (no account, nothing sent) asks nothing; no connection, an error, a server without
   `privacyPolicy`, or a failed accept or sign out show nothing or close the dialog, and the next check asks again.
 - Settings has a "Privacy policy" row that opens the page, offline mode too (Google Play asks for it in the app).

@@ -143,11 +143,37 @@ class PrivacyPolicyViewModelTest {
     }
 
     @Test
-    fun `a check while the dialog is open asks the server nothing more`() = runTest {
+    fun `a check while another is in flight asks the server once`() = runTest {
+        coEvery { checkPrivacyPolicy.pendingVersion() } returns "2026-11-23"
+
+        viewModel.sendIntent(PrivacyPolicyIntent.Check)
+        viewModel.sendIntent(PrivacyPolicyIntent.Check)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        coVerify(exactly = 1) { checkPrivacyPolicy.pendingVersion() }
+        assertTrue(viewModel.uiState.value.isDialogVisible)
+    }
+
+    @Test
+    fun `a new sign in drops the previous session's question and asks again`() = runTest {
         showDialogFor("2026-11-23")
+        coEvery { checkPrivacyPolicy.pendingVersion() } returns null
 
         send(PrivacyPolicyIntent.Check)
 
-        coVerify(exactly = 1) { checkPrivacyPolicy.pendingVersion() }
+        coVerify(exactly = 2) { checkPrivacyPolicy.pendingVersion() }
+        assertFalse(viewModel.uiState.value.isDialogVisible)
+    }
+
+    @Test
+    fun `the session ending closes the dialog and the next check asks again`() = runTest {
+        showDialogFor("2026-11-23")
+
+        send(PrivacyPolicyIntent.SessionEnded)
+        assertFalse(viewModel.uiState.value.isDialogVisible)
+        coVerify(exactly = 0) { authRepository.acceptPrivacyPolicy(any()) }
+
+        send(PrivacyPolicyIntent.Check)
+        assertTrue(viewModel.uiState.value.isDialogVisible)
     }
 }

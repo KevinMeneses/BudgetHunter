@@ -59,6 +59,13 @@ class CheckPrivacyPolicyUseCaseTest {
     }
 
     @Test
+    fun `a blank current version asks nothing`() = runTest {
+        serverSays(PrivacyPolicyStatus(currentVersion = " ", acceptedVersion = null))
+
+        assertNull(useCase.pendingVersion())
+    }
+
+    @Test
     fun `no connection asks nothing`() = runTest {
         coEvery { authRepository.getCurrentUser() } returns Result.failure(java.io.IOException("offline"))
 

@@ -43,14 +43,21 @@ class PrivacyPolicyViewModel(
             PrivacyPolicyIntent.Accept -> accept()
             PrivacyPolicyIntent.SignOut -> requestSignOut()
             PrivacyPolicyIntent.ConfirmSignOut -> signOut()
+            PrivacyPolicyIntent.SessionEnded -> {
+                checkJob?.cancel()
+                close()
+            }
             PrivacyPolicyIntent.CancelSignOut ->
                 _uiState.update { it.copy(isSignOutConfirmationVisible = false) }
         }
     }
 
     private fun check() {
-        // One question at a time: a check already running, or a dialog already open, answers it
-        if (checkJob?.isActive == true || _uiState.value.pendingVersion != null) return
+        // An answer being sent for this session finishes first; a check already running answers
+        if (_uiState.value.isWorking || checkJob?.isActive == true) return
+        // A check comes with a sign in or an app start, so a question still open belongs to the
+        // previous session (it ended by expiry, without passing through this dialog): ask again
+        close()
         checkJob = viewModelScope.launch {
             val pending = checkPrivacyPolicy.pendingVersion() ?: return@launch
             _uiState.update { it.copy(pendingVersion = pending) }
