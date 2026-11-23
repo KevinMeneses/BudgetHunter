@@ -108,6 +108,18 @@ then pull; `RealTimeSyncManager` pulls a shared budget's entries on SSE events w
   are kept: an entry edited here and deleted elsewhere is created again (its PUT gets 400/404, then a POST).
 - The backend answers 403 for a deleted budget (its access check runs first) and 400 for a deleted entry, not 404.
 - Sync code reads the database, never `BudgetLocalDataSource.getAllCached()`, which lags behind writes.
+- `BudgetSyncManager`'s operations (full sync, push, deletions, pull) are serialized by a mutex, like the entries':
+  two pushes at once would POST the same new budget twice. A create, edit or delete made while a sync runs waits
+  for it. The entries' lock is only ever taken inside the budgets' one.
+- Automatic sync: `BudgetListViewModel` syncs the budgets silently (no message, no spinner) when the app opens
+  with a connection and whenever it comes back (`NetworkMonitor.isOnline` turning true), signed in and not in
+  offline mode; a trigger while one runs is dropped. It lives in the list's view model, the root of every launch
+  with a session, not app-wide: the process also starts in the background (SMS, notification listener, workers,
+  the iOS Shortcut), where nothing should sync. Entries are not part of it (a budget's screen syncs them when shown).
+- Splash: each wait for the store's update answer (`AppUpdateManager.checkForUpdates`) is limited to
+  `SplashScreenViewModel.UPDATE_CHECK_TIMEOUT_MS` (5 s); past it the app goes on as if there were no update and
+  later answers are dropped. Play may never answer (seen after a reboot), and nothing sets the Android
+  `AppUpdateLauncherDelegate`, so an offered update is never launched and never answers again.
 
 ### Session
 - A failed token refresh (`HttpClientFactory`) drops the tokens only when the server refuses the refresh token

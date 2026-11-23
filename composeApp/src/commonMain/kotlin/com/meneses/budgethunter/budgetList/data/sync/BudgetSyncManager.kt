@@ -15,6 +15,8 @@ import com.meneses.budgethunter.commons.data.sync.SyncStats
 import com.meneses.budgethunter.commons.util.today
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.datetime.Clock
 
 /**
@@ -33,12 +35,23 @@ class BudgetSyncManager(
     override val logTag = "BudgetSyncManager"
 
     /**
+     * One operation at a time: two pushes running together (the sync on opening the app and the
+     * push after creating a budget, say) would both read a budget without a server id and POST it
+     * twice. Held across the network calls, like [BudgetEntrySyncManager]'s; the entries' lock is
+     * taken inside this one, never the other way round. Not reentrant: public operations take it,
+     * the `Unlocked` bodies they share never do.
+     */
+    private val syncMutex = Mutex()
+
+    /**
      * Pushes all unsynced local budgets to the server.
      * Updates local budgets with server IDs after successful creation.
      *
      * @return SyncResult with statistics about succeeded/failed syncs
      */
-    suspend fun syncPendingBudgets(): SyncResult<SyncStats> {
+    suspend fun syncPendingBudgets(): SyncResult<SyncStats> = syncMutex.withLock { syncPendingBudgetsUnlocked() }
+
+    private suspend fun syncPendingBudgetsUnlocked(): SyncResult<SyncStats> {
         return authenticatedSync {
             // Get all unsynced budgets
             val unsyncedBudgets = localDataSource.getUnsynced()
@@ -128,7 +141,9 @@ class BudgetSyncManager(
      *
      * @return SyncResult with statistics about succeeded/failed merges
      */
-    suspend fun pullBudgetsFromServer(): SyncResult<SyncStats> {
+    suspend fun pullBudgetsFromServer(): SyncResult<SyncStats> = syncMutex.withLock { pullBudgetsFromServerUnlocked() }
+
+    private suspend fun pullBudgetsFromServerUnlocked(): SyncResult<SyncStats> {
         return authenticatedSync {
             // Taken before the fetch: a budget pushed while the request is in flight gets its
             // server id afterwards and is missing from the response, but must not be pruned.
@@ -246,7 +261,9 @@ class BudgetSyncManager(
      * the budget is gone or out of reach for this account (see [isGoneFromServer]); any other
      * failure (no connection, a server error) keeps it for the next sync.
      */
-    suspend fun syncPendingDeletions(): SyncResult<SyncStats> {
+    suspend fun syncPendingDeletions(): SyncResult<SyncStats> = syncMutex.withLock { syncPendingDeletionsUnlocked() }
+
+    private suspend fun syncPendingDeletionsUnlocked(): SyncResult<SyncStats> {
         return authenticatedSync {
             val serverIds = localDataSource.getPendingDeletions()
             if (serverIds.isEmpty()) return@authenticatedSync SyncStats(totalItems = 0)
@@ -278,23 +295,27 @@ class BudgetSyncManager(
      *
      * @return SyncResult aggregating both push and pull operations
      */
-    suspend fun performFullSync(): SyncResult<SyncStats> {
+    suspend fun performFullSync(): SyncResult<SyncStats> = syncMutex.withLock {
+        performFullSyncUnlocked()
+    }
+
+    private suspend fun performFullSyncUnlocked(): SyncResult<SyncStats> {
         // Deletions first: a budget deleted here must be gone from the server before the pull
-        val deletionResult = syncPendingDeletions()
+        val deletionResult = syncPendingDeletionsUnlocked()
         if (deletionResult is SyncResult.Failure) {
             logger.error(logTag, "Full sync failed while pushing deletions", deletionResult.error)
             return deletionResult
         }
 
         // Push local changes first
-        val pushResult = syncPendingBudgets()
+        val pushResult = syncPendingBudgetsUnlocked()
         if (pushResult is SyncResult.Failure) {
             logger.error(logTag, "Full sync failed during push phase", pushResult.error)
             return pushResult
         }
 
         // Then pull server changes
-        val pullResult = pullBudgetsFromServer()
+        val pullResult = pullBudgetsFromServerUnlocked()
         if (pullResult is SyncResult.Failure) {
             logger.error(logTag, "Full sync failed during pull phase", pullResult.error)
             return pullResult

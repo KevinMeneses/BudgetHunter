@@ -15,7 +15,9 @@ import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.commons.data.PreferencesManager
 import com.meneses.budgethunter.commons.data.sync.Logger
+import com.meneses.budgethunter.commons.platform.NetworkMonitor
 import com.meneses.budgethunter.sms.application.IsNotificationReaderStoppedUseCase
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -32,6 +34,7 @@ class BudgetListViewModel(
     private val authRepository: AuthRepository,
     private val preferencesManager: PreferencesManager,
     private val isNotificationReaderStopped: IsNotificationReaderStoppedUseCase,
+    private val networkMonitor: NetworkMonitor,
     private val logger: Logger
 ) : ViewModel() {
     private val tag = "BudgetListViewModel"
@@ -44,6 +47,40 @@ class BudgetListViewModel(
     init {
         collectBudgetList()
         checkAuthState()
+        syncWhenOnline()
+    }
+
+    private var autoSync: Job? = null
+
+    /**
+     * Syncs the budgets when the app opens with a connection (the first value is true) and each time
+     * the connection comes back, so what was saved offline goes up without a pull-to-refresh. This
+     * screen is the root of every launch with a session and stays in the back stack, so its scope is
+     * "the app in use"; an app-wide trigger would also sync when the process starts in the
+     * background (SMS receiver, notification listener, workers, the iOS Shortcut).
+     */
+    private fun syncWhenOnline() {
+        viewModelScope.launch {
+            networkMonitor.isOnline.collect { online -> if (online) startAutoSync() }
+        }
+    }
+
+    private fun startAutoSync() {
+        // A trigger while one runs is dropped. Syncs from elsewhere (pull-to-refresh, sign in, a
+        // budget saved) are serialized by BudgetSyncManager.
+        if (autoSync?.isActive == true) return
+        autoSync = viewModelScope.launch {
+            // Read at each trigger: offline mode can be entered and the session can end meanwhile
+            if (preferencesManager.isOfflineModeEnabled() || !authRepository.isAuthenticated()) return@launch
+            // Silent: no message and no spinner, nobody asked for it
+            try {
+                budgetRepository.sync().onFailure { logger.warn(tag, "Automatic sync failed", it) }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                logger.warn(tag, "Automatic sync failed", e)
+            }
+        }
     }
 
     private fun checkAuthState() {

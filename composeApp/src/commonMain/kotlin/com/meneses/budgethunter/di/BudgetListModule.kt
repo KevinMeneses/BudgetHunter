@@ -77,6 +77,7 @@ val budgetListModule = module {
             authRepository = get(),
             preferencesManager = get(),
             isNotificationReaderStopped = get(),
+            networkMonitor = get(),
             logger = get()
         )
     }

@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 class SplashScreenViewModel(
     private val appUpdateManager: AppUpdateManager,
@@ -35,7 +36,13 @@ class SplashScreenViewModel(
         }
     }
 
+    private var updateCheckStarted = false
+
     private fun verifyUpdate() {
+        // The screen asks again when it is recomposed (e.g. after a rotation): one check is enough
+        if (updateCheckStarted) return
+        updateCheckStarted = true
+
         viewModelScope.launch {
             val isOfflineModeEnabled = preferencesManager.isOfflineModeEnabled()
             val isAuthenticated = authRepository.isAuthenticated()
@@ -45,29 +52,46 @@ class SplashScreenViewModel(
                 it.copy(isAuthenticated = isOfflineModeEnabled || isAuthenticated)
             }
 
-            appUpdateManager.checkForUpdates { result ->
-                when (result) {
-                    is AppUpdateResult.NoUpdateAvailable -> emitNavigationEvent()
+            // Play may answer from any thread and more than once (an update in progress answers
+            // again when it ends); the answers are handled here, one at a time. Once the app
+            // moves on the channel is closed, so a late answer is dropped.
+            val answers = Channel<AppUpdateResult>(Channel.UNLIMITED)
+            appUpdateManager.checkForUpdates { result -> answers.trySend(result) }
+
+            // Play may never answer (seen right after a device reboot), nor answer again after
+            // an update is offered or reported in progress (nothing launches the update flow on
+            // Android, and iOS just opens the App Store): each wait has a limit, past which the app
+            // goes on as if there were no update.
+            while (true) {
+                val answer = withTimeoutOrNull(UPDATE_CHECK_TIMEOUT_MS) { answers.receive() }
+                when (answer) {
+                    null,
+                    is AppUpdateResult.NoUpdateAvailable,
+                    is AppUpdateResult.UpdateFailed -> break
                     is AppUpdateResult.UpdateInProgress -> setUpdateInProgressState()
-                    is AppUpdateResult.UpdateAvailable -> result.startUpdate()
-                    is AppUpdateResult.UpdateFailed -> emitNavigationEvent()
+                    is AppUpdateResult.UpdateAvailable -> answer.startUpdate()
                 }
             }
+            answers.close()
+            emitNavigationEvent()
         }
     }
 
-    private fun emitNavigationEvent() {
-        viewModelScope.launch {
-            delay(200)
-            val event = if (_uiState.value.isAuthenticated) {
-                SplashEvent.NavigateToBudgetList
-            } else {
-                SplashEvent.NavigateToSignIn
-            }
-            _events.trySend(event)
+    private suspend fun emitNavigationEvent() {
+        delay(200)
+        val event = if (_uiState.value.isAuthenticated) {
+            SplashEvent.NavigateToBudgetList
+        } else {
+            SplashEvent.NavigateToSignIn
         }
+        _events.trySend(event)
     }
 
     private fun setUpdateInProgressState() =
         _uiState.update { it.copy(updatingApp = true) }
+
+    companion object {
+        /** How long the splash waits for each answer of the store about updates. */
+        const val UPDATE_CHECK_TIMEOUT_MS = 5_000L
+    }
 }
