@@ -6,6 +6,7 @@ import com.meneses.budgethunter.budgetEntry.data.network.BudgetEntryApiService
 import com.meneses.budgethunter.budgetList.data.network.BudgetApiService
 import com.meneses.budgethunter.collaborator.data.network.CollaboratorApiService
 import com.meneses.budgethunter.commons.data.network.models.CreateBudgetRequest
+import com.meneses.budgethunter.commons.data.network.models.CurrentUser
 import com.meneses.budgethunter.commons.data.network.models.UpdateBudgetEntryRequest
 import com.meneses.budgethunter.commons.data.network.models.UpdateUserPreferencesRequest
 import com.meneses.budgethunter.commons.data.sync.NoOpLogger
@@ -18,17 +19,20 @@ import io.ktor.client.engine.mock.MockRequestHandleScope
 import io.ktor.client.engine.mock.respond
 import io.ktor.client.network.sockets.SocketTimeoutException
 import io.ktor.client.plugins.HttpTimeoutCapability
+import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.request.HttpRequestData
 import io.ktor.client.request.HttpResponseData
-import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
@@ -60,12 +64,19 @@ class ApiStatusTest {
         socketTimeoutMillis = socketTimeoutMillis
     )
 
+    private val jsonHeaders = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+
     /** The server's usual error body, which is not what any of these calls reads on a success. */
     private fun client(status: HttpStatusCode, body: String = """{"status":${status.value},"message":"No"}""") =
-        client { respond(body, status, headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString())) }
+        client { respond(body, status, jsonHeaders) }
 
     private fun entries(status: HttpStatusCode) = BudgetEntryApiService(client(status), Dispatchers.Unconfined)
     private fun budgets(status: HttpStatusCode) = BudgetApiService(client(status), Dispatchers.Unconfined)
+    private fun members(status: HttpStatusCode) =
+        CollaboratorApiService(client(status), Dispatchers.Unconfined, NoOpLogger())
+    private fun preferences(status: HttpStatusCode) = UserPreferencesRepository(client(status), Dispatchers.Unconfined)
+    private fun auth(status: HttpStatusCode, body: String = "") =
+        AuthRepository(client(status, body), tokens, Dispatchers.Unconfined, NoOpLogger())
 
     private val entryUpdate = UpdateBudgetEntryRequest(
         amount = 10.0,
@@ -90,11 +101,15 @@ class ApiStatusTest {
 
     @Test
     fun `a deletion the server could not do is not taken as done`() = runTest {
-        assertEquals(ApiError.ServerError, entries(HttpStatusCode.InternalServerError).deleteEntry(1, 2).exceptionOrNull())
+        assertEquals(
+            ApiError.ServerError,
+            entries(HttpStatusCode.InternalServerError).deleteEntry(1, 2).exceptionOrNull()
+        )
         assertEquals(ApiError.ServerError, budgets(HttpStatusCode.ServiceUnavailable).deleteBudget(1).exceptionOrNull())
-        val removal = CollaboratorApiService(client(HttpStatusCode.InternalServerError), Dispatchers.Unconfined, NoOpLogger())
-            .removeCollaborator(1, "friend@example.com")
-        assertEquals(ApiError.ServerError, removal.exceptionOrNull())
+        assertEquals(
+            ApiError.ServerError,
+            members(HttpStatusCode.InternalServerError).removeCollaborator(1, "friend@example.com").exceptionOrNull()
+        )
     }
 
     @Test
@@ -111,30 +126,85 @@ class ApiStatusTest {
 
     @Test
     fun `budgets, entries, members and preferences keep their status`() = runTest {
-        assertEquals(ApiError.Forbidden, budgets(HttpStatusCode.Forbidden).updateBudget(1, CreateBudgetRequest("Casa", 10.0)).exceptionOrNull())
-        assertEquals(ApiError.ServerError, budgets(HttpStatusCode.BadGateway).getBudgets().exceptionOrNull())
-        assertEquals(ApiError.Forbidden, entries(HttpStatusCode.Forbidden).getEntries(1).exceptionOrNull())
         assertEquals(
             ApiError.Forbidden,
-            CollaboratorApiService(client(HttpStatusCode.Forbidden), Dispatchers.Unconfined, NoOpLogger()).getCollaborators(1).exceptionOrNull()
+            budgets(HttpStatusCode.Forbidden).updateBudget(1, CreateBudgetRequest("Casa", 10.0)).exceptionOrNull()
         )
+        assertEquals(ApiError.ServerError, budgets(HttpStatusCode.BadGateway).getBudgets().exceptionOrNull())
+        assertEquals(ApiError.Forbidden, entries(HttpStatusCode.Forbidden).getEntries(1).exceptionOrNull())
+        assertEquals(ApiError.Forbidden, members(HttpStatusCode.Forbidden).getCollaborators(1).exceptionOrNull())
+        val preferencesUpdate = UpdateUserPreferencesRequest(smsReadingEnabled = false, aiProcessingEnabled = true)
         assertEquals(
             ApiError.ServerError,
-            UserPreferencesRepository(client(HttpStatusCode.InternalServerError), Dispatchers.Unconfined)
-                .save(UpdateUserPreferencesRequest(smsReadingEnabled = false, aiProcessingEnabled = true)).exceptionOrNull()
+            preferences(HttpStatusCode.InternalServerError).save(preferencesUpdate).exceptionOrNull()
         )
+    }
+
+    @Test
+    fun `a wrong current password is not reported as changed`() = runTest {
+        // The backend answers 401 for it: the client renews the session once, retries and still gets the 401
+        var sessionExpired = false
+        val client = createHttpClient(
+            engine = object : HttpClientEngineFactory<MockEngineConfig> {
+                override fun create(block: MockEngineConfig.() -> Unit): HttpClientEngine = MockEngine(
+                    MockEngineConfig().apply {
+                        addHandler { request ->
+                            if (request.url.encodedPath == ApiEndpoints.REFRESH_TOKEN) {
+                                respond(
+                                    """{"authToken":"a2","refreshToken":"r2","email":"me@example.com","name":"Me"}""",
+                                    HttpStatusCode.OK,
+                                    jsonHeaders
+                                )
+                            } else {
+                                respond(
+                                    """{"status":401,"message":"Current password is incorrect"}""",
+                                    HttpStatusCode.Unauthorized,
+                                    jsonHeaders
+                                )
+                            }
+                        }
+                    }.apply(block)
+                )
+            },
+            baseUrl = "https://api.test",
+            tokenStorage = tokens,
+            appLogger = NoOpLogger(),
+            logLevel = LogLevel.NONE,
+            onSessionExpired = { sessionExpired = true }
+        )
+
+        val repository = AuthRepository(client, tokens, Dispatchers.Unconfined, NoOpLogger())
+
+        val result = repository.setPassword("wrong", "newPassword1")
+
+        assertEquals(ApiError.Unauthorized, result.exceptionOrNull())
+        assertFalse(sessionExpired)
     }
 
     @Test
     fun `a refused password change is not reported as changed`() = runTest {
-        val repository = AuthRepository(client(HttpStatusCode.BadRequest), tokens, Dispatchers.Unconfined, NoOpLogger())
+        assertTrue(auth(HttpStatusCode.BadRequest).setPassword(null, "short").isFailure)
+    }
 
-        assertTrue(repository.setPassword("wrong", "newPassword1").isFailure)
+    @Test
+    fun `a password change and the account read still succeed`() = runTest {
+        assertTrue(auth(HttpStatusCode.NoContent).setPassword("old", "newPassword1").isSuccess)
+        assertEquals(
+            CurrentUser("me@example.com", "Me", hasPassword = true),
+            auth(HttpStatusCode.OK, """{"email":"me@example.com","name":"Me","hasPassword":true}""")
+                .getCurrentUser().getOrNull()
+        )
+    }
+
+    @Test
+    fun `a cancelled call is cancelled, not a failure`() = runTest {
+        assertFailsWith<CancellationException> { safeApiCall { throw CancellationException("left the screen") } }
     }
 
     @Test
     fun `a request the engine gave up on is a timeout`() = runTest {
-        val service = BudgetApiService(client { throw SocketTimeoutException("Request timed out") }, Dispatchers.Unconfined)
+        val client = client { throw SocketTimeoutException("Request timed out") }
+        val service = BudgetApiService(client, Dispatchers.Unconfined)
 
         assertEquals(ApiError.Timeout, service.getBudgets().exceptionOrNull())
     }
@@ -144,7 +214,7 @@ class ApiStatusTest {
         val timeouts = mutableMapOf<String, Long?>()
         val client = client(socketTimeoutMillis = 20_000) { request ->
             timeouts[request.url.encodedPath] = request.getCapabilityOrNull(HttpTimeoutCapability)?.socketTimeoutMillis
-            respond("[]", HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString()))
+            respond("[]", HttpStatusCode.OK, jsonHeaders)
         }
         val entries = BudgetEntryApiService(client, Dispatchers.Unconfined)
 

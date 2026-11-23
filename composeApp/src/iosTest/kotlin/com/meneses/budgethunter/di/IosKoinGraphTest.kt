@@ -18,9 +18,11 @@ import kotlinx.coroutines.test.runTest
 import org.koin.core.Koin
 import org.koin.core.annotation.KoinInternalApi
 import org.koin.core.parameter.parametersOf
+import org.koin.core.qualifier.named
 import org.koin.mp.KoinPlatformTools
 import kotlin.reflect.KClass
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
@@ -90,6 +92,12 @@ class IosKoinGraphTest {
         koin.get<TokenStorage>().saveRefreshToken("refresh-token")
 
         assertTrue(fakeKeychain.values.containsValue("refresh-token"))
+    }
+
+    @Test
+    fun theApiClientFailsSoonerThanNSURLSessionsMinute() {
+        // AuthModule reads it with getOrNull: without the binding iOS would silently wait 60 s again
+        assertEquals(20_000L, koin.get<Long>(named(API_SOCKET_TIMEOUT)))
     }
 
     @Test

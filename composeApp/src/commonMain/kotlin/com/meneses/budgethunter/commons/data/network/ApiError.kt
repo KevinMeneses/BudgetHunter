@@ -23,6 +23,7 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.isSuccess
 import io.ktor.serialization.JsonConvertException
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.serialization.SerializationException
 import org.jetbrains.compose.resources.StringResource
 
@@ -159,6 +160,11 @@ suspend fun <T> safeApiCall(
 ): Result<T> {
     return try {
         Result.success(call())
+    } catch (e: TimeoutCancellationException) {
+        Result.failure(ApiError.Timeout)
+    } catch (e: CancellationException) {
+        // The caller's scope was cancelled: let it end instead of handing back a failure
+        throw e
     } catch (e: Exception) {
         Result.failure(e.toApiError())
     }
