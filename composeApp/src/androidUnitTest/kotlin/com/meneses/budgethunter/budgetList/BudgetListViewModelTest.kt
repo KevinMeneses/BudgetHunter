@@ -318,4 +318,19 @@ class BudgetListViewModelTest {
         assertTrue(events.isEmpty())
         assertFalse(vm.uiState.value.isSyncing)
     }
+
+    @Test
+    fun `unreadable offline mode preference skips the auto sync without crashing`() = runTest {
+        // Given - the preferences cannot be read (e.g. a corrupt DataStore file)
+        coEvery { authRepository.isAuthenticated() } returns true
+        coEvery { preferencesManager.isOfflineModeEnabled() } throws java.io.IOException("corrupt")
+        online.value = true
+        createViewModel()
+
+        // When
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then - no sync, and the exception did not escape the view model scope
+        coVerify(exactly = 0) { budgetRepository.sync() }
+    }
 }

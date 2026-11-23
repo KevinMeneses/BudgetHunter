@@ -287,6 +287,20 @@ class SplashViewModelTest {
     }
 
     @Test
+    fun `startUpdate that throws still navigates after the limit`() = runTest {
+        // Given - offering the update fails
+        val events = startSilentCheck(authenticated = true)
+        captured!!.invoke(AppUpdateResult.UpdateAvailable(startUpdate = { error("no store") }))
+        testScheduler.runCurrent()
+
+        // When
+        pastLimit()
+
+        // Then
+        assertIs<SplashEvent.NavigateToBudgetList>(events.single())
+    }
+
+    @Test
     fun `NoUpdateAvailable delivered twice in time navigates once`() = runTest {
         // Given
         val events = startSilentCheck(authenticated = true)

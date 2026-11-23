@@ -81,7 +81,16 @@ class SplashScreenViewModel(
                     // launched (AppUpdateLauncherDelegate), its install listener answers when it
                     // finishes, and this wait should then allow a long download.
                     is AppUpdateResult.UpdateInProgress -> setUpdateInProgressState()
-                    is AppUpdateResult.UpdateAvailable -> answer.startUpdate()
+                    is AppUpdateResult.UpdateAvailable -> {
+                        // An update that cannot even be offered never answers: go on at once
+                        val offered = try {
+                            answer.startUpdate()
+                            true
+                        } catch (e: Exception) {
+                            false
+                        }
+                        if (!offered) break
+                    }
                 }
             }
             answers.close()

@@ -70,10 +70,10 @@ class BudgetListViewModel(
         // budget saved) are serialized by BudgetSyncManager.
         if (autoSync?.isActive == true) return
         autoSync = viewModelScope.launch {
-            // Read at each trigger: offline mode can be entered and the session can end meanwhile
-            if (preferencesManager.isOfflineModeEnabled() || !authRepository.isAuthenticated()) return@launch
             // Silent: no message and no spinner, nobody asked for it
             try {
+                // Read at each trigger: offline mode can be entered and the session can end meanwhile
+                if (preferencesManager.isOfflineModeEnabled() || !authRepository.isAuthenticated()) return@launch
                 budgetRepository.sync().onFailure { logger.warn(tag, "Automatic sync failed", it) }
             } catch (e: CancellationException) {
                 throw e
