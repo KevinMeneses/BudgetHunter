@@ -1,11 +1,11 @@
 package com.meneses.budgethunter.settings.data
 
 import com.meneses.budgethunter.commons.data.network.ApiEndpoints
+import com.meneses.budgethunter.commons.data.network.bodyOrThrow
 import com.meneses.budgethunter.commons.data.network.models.UpdateUserPreferencesRequest
 import com.meneses.budgethunter.commons.data.network.models.UserPreferencesResponse
 import com.meneses.budgethunter.commons.data.network.safeApiCall
 import io.ktor.client.HttpClient
-import io.ktor.client.call.body
 import io.ktor.client.request.get
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
@@ -22,7 +22,7 @@ class UserPreferencesRepository(
 
     suspend fun get(): Result<UserPreferencesResponse> = withContext(ioDispatcher) {
         safeApiCall {
-            httpClient.get(ApiEndpoints.PREFERENCES).body<UserPreferencesResponse>()
+            httpClient.get(ApiEndpoints.PREFERENCES).bodyOrThrow<UserPreferencesResponse>()
         }
     }
 
@@ -32,7 +32,7 @@ class UserPreferencesRepository(
                 httpClient.put(ApiEndpoints.PREFERENCES) {
                     contentType(ContentType.Application.Json)
                     setBody(request)
-                }.body<UserPreferencesResponse>()
+                }.bodyOrThrow<UserPreferencesResponse>()
             }
         }
 }

@@ -7,6 +7,7 @@ import com.meneses.budgethunter.commons.data.network.models.AddCollaboratorReque
 import com.meneses.budgethunter.commons.data.network.models.CollaboratorResponse
 import com.meneses.budgethunter.commons.data.network.models.SharingErrorResponse
 import com.meneses.budgethunter.commons.data.network.models.UserInfo
+import com.meneses.budgethunter.commons.data.network.bodyOrThrow
 import com.meneses.budgethunter.commons.data.network.safeApiCall
 import com.meneses.budgethunter.commons.data.network.toApiError
 import com.meneses.budgethunter.commons.data.sync.Logger
@@ -68,6 +69,7 @@ class CollaboratorApiService(
                 e.response
             }
             if (!response.status.isSuccess()) throw response.toAddCollaboratorError()
+            // The status was checked above (the 402 needs its body read): plain body() is safe here
             response.body<CollaboratorResponse>().also {
                 logger.debug(tag, "Added a collaborator to budget ${it.budgetId}")
             }
@@ -109,7 +111,7 @@ class CollaboratorApiService(
             logger.debug(tag, "Fetching collaborators for budget $budgetId")
             safeApiCall {
                 httpClient.get(ApiEndpoints.budgetCollaborators(budgetId))
-                    .body<List<UserInfo>>()
+                    .bodyOrThrow<List<UserInfo>>()
                     .also { logger.debug(tag, "Successfully fetched ${it.size} collaborators") }
             }
         }
@@ -130,7 +132,7 @@ class CollaboratorApiService(
         logger.debug(tag, "Removing a collaborator from budget $budgetId")
         safeApiCall {
             val encodedEmail = email.encodeURLPath()
-            httpClient.delete(ApiEndpoints.budgetCollaborator(budgetId, encodedEmail))
+            httpClient.delete(ApiEndpoints.budgetCollaborator(budgetId, encodedEmail)).bodyOrThrow<Unit>()
             logger.debug(tag, "Removed a collaborator from budget $budgetId")
         }
     }

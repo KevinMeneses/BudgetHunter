@@ -1,6 +1,7 @@
 package com.meneses.budgethunter.auth.data
 
 import com.meneses.budgethunter.commons.data.network.ApiEndpoints
+import com.meneses.budgethunter.commons.data.network.bodyOrThrow
 import com.meneses.budgethunter.commons.data.network.models.AcceptPrivacyPolicyRequest
 import com.meneses.budgethunter.commons.data.network.models.AuthResponse
 import com.meneses.budgethunter.commons.data.network.models.CurrentUser
@@ -60,11 +61,14 @@ class AuthRepository(
                 logger.warn(TAG, "Sign up refused: ${response.status}")
                 return@withContext Result.failure(error)
             }
+            // The status was checked above: plain body() is safe here
             val signUpResponse = response.body<SignUpResponse>()
 
             // Sign up only returns user info, no tokens
             // User must sign in separately to get tokens
             Result.success(signUpResponse)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             logger.warn(TAG, "Sign up failed", e)
             Result.failure(e)
@@ -79,11 +83,13 @@ class AuthRepository(
             val response = httpClient.post(ApiEndpoints.SIGN_IN) {
                 setBody(SignInRequest(email, password))
             }
-            val authResponse = response.body<AuthResponse>()
+            val authResponse = response.bodyOrThrow<AuthResponse>()
 
             persistSession(authResponse)
 
             Result.success(authResponse)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             // Includes the writes to TokenStorage: a keychain or keystore that refuses to store
             // the session shows up as a plain "sign in failed", so name the cause in the log.
@@ -100,12 +106,14 @@ class AuthRepository(
             val response = httpClient.post(ApiEndpoints.REFRESH_TOKEN) {
                 setBody(RefreshTokenRequest(currentRefreshToken))
             }
-            val authResponse = response.body<AuthResponse>()
+            val authResponse = response.bodyOrThrow<AuthResponse>()
 
             // Token rotation: the server issues a new refresh token with every exchange.
             persistSession(authResponse)
 
             Result.success(authResponse)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             logger.warn(TAG, "Token refresh failed", e)
             Result.failure(e)
@@ -127,11 +135,13 @@ class AuthRepository(
             val response = httpClient.post(ApiEndpoints.SIGN_IN_WITH_GOOGLE) {
                 setBody(GoogleSignInRequest(idToken, acceptedPrivacyPolicyVersion))
             }
-            val authResponse = response.body<AuthResponse>()
+            val authResponse = response.bodyOrThrow<AuthResponse>()
 
             persistSession(authResponse)
 
             Result.success(authResponse)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             logger.warn(TAG, "Google sign in failed", e)
             Result.failure(e)
@@ -140,7 +150,9 @@ class AuthRepository(
 
     suspend fun getCurrentUser(): Result<CurrentUser> = withContext(ioDispatcher) {
         try {
-            Result.success(httpClient.get(ApiEndpoints.ME).body<CurrentUser>())
+            Result.success(httpClient.get(ApiEndpoints.ME).bodyOrThrow<CurrentUser>())
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             logger.warn(TAG, "Could not load the current user", e)
             Result.failure(e)
@@ -184,8 +196,10 @@ class AuthRepository(
         try {
             httpClient.post(ApiEndpoints.PASSWORD) {
                 setBody(SetPasswordRequest(currentPassword, newPassword))
-            }.body<Unit>()
+            }.bodyOrThrow<Unit>()
             Result.success(Unit)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             logger.warn(TAG, "Could not set the password", e)
             Result.failure(e)
@@ -237,6 +251,8 @@ class AuthRepository(
     suspend fun isAuthenticated(): Boolean = withContext(ioDispatcher) {
         try {
             tokenStorage.getAuthToken() != null
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             // Asked from the splash screen, where an exception would take the whole app down.
             // Treating an unreadable session as "not signed in" sends the user to sign in again.

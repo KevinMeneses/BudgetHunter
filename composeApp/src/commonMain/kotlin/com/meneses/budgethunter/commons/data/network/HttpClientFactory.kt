@@ -42,6 +42,8 @@ private const val TAG = "HttpClient"
  *   left behind (e.g. when switching budgets) stayed open until the network dropped.
  * @param logLevel [LogLevel.NONE] outside debug builds (see Platform.isDebugBuild).
  * @param httpLogger Where the HTTP log goes; tests pass their own to read it.
+ * @param socketTimeoutMillis How long a request may go without receiving data before it fails; null keeps the
+ *   engine's own. Requests that set their own timeout (SSE streams, receipts, categorization) keep theirs.
  * @param onSessionExpired Called when the server rejects the refresh token, after the tokens are
  *   cleared. Not called for network or server errors, which keep the session.
  */
@@ -57,6 +59,7 @@ fun createHttpClient(
     appLogger: AppLogger,
     logLevel: LogLevel,
     httpLogger: Logger = Logger.SIMPLE,
+    socketTimeoutMillis: Long? = null,
     onSessionExpired: () -> Unit = {}
 ): HttpClient {
     return HttpClient(engine) {
@@ -78,8 +81,10 @@ fun createHttpClient(
 
         // Required so individual requests can override the engine's timeouts. Long-lived SSE
         // streams set their own; see SseClient.configureStreamRequest.
-        // Installing it without values keeps the engine defaults for every other request.
-        install(HttpTimeout)
+        // Without socketTimeoutMillis every other request keeps the engine's defaults.
+        install(HttpTimeout) {
+            socketTimeoutMillis?.let { this.socketTimeoutMillis = it }
+        }
 
         // Install Auth plugin with Bearer token and automatic refresh
         install(Auth) {
@@ -122,6 +127,10 @@ fun createHttpClient(
                     val refreshClient = HttpClient(engine) {
                         install(ContentNegotiation) {
                             json(json)
+                        }
+                        // Same timeout as the main client: a refresh down a dead connection must not wait longer
+                        install(HttpTimeout) {
+                            socketTimeoutMillis?.let { this.socketTimeoutMillis = it }
                         }
                         defaultRequest {
                             url(baseUrl)
