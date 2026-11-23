@@ -37,17 +37,20 @@ class SplashScreenViewModel(
 
     private fun verifyUpdate() {
         viewModelScope.launch {
-            val isOfflineModeEnabled = preferencesManager.isOfflineModeEnabled()
             val isAuthenticated = authRepository.isAuthenticated()
-
             // Signing in from offline mode used to leave the flag on. With a session it is not
             // offline mode: clear it before navigating, or the privacy policy check sent with the
             // navigation would skip this account on every start.
-            if (isOfflineModeEnabled && isAuthenticated) {
-                preferencesManager.setOfflineModeEnabled(false)
+            val isOfflineModeEnabled = if (isAuthenticated) {
+                if (preferencesManager.isOfflineModeEnabled()) {
+                    preferencesManager.setOfflineModeEnabled(false)
+                }
+                false
+            } else {
+                preferencesManager.isOfflineModeEnabled()
             }
 
-            // If offline mode is enabled, skip authentication check
+            // Offline mode goes to the budget list without a session
             _uiState.update {
                 it.copy(isAuthenticated = isOfflineModeEnabled || isAuthenticated)
             }

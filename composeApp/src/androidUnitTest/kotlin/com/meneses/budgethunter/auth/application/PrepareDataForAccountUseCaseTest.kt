@@ -41,6 +41,16 @@ class PrepareDataForAccountUseCaseTest {
     }
 
     @Test
+    fun `leaves offline mode when a different account signs in`() = runTest {
+        coEvery { preferencesManager.getLastSignedInEmail() } returns "a@example.com"
+
+        useCase.execute("b@example.com")
+
+        coVerify(exactly = 1) { budgetRepository.clearSyncedData() }
+        coVerify(exactly = 1) { preferencesManager.setOfflineModeEnabled(false) }
+    }
+
+    @Test
     fun `stores the new email only after clearing`() = runTest {
         coEvery { preferencesManager.getLastSignedInEmail() } returns "a@example.com"
 

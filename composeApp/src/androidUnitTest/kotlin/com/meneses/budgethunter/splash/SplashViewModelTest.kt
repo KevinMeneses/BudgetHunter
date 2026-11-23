@@ -8,6 +8,7 @@ import com.meneses.budgethunter.splash.application.SplashEvent
 import com.meneses.budgethunter.splash.application.SplashIntent
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
@@ -116,6 +117,10 @@ class SplashViewModelTest {
 
         // Then - the flag is cleared before navigating, so the privacy check sent with it runs
         coVerify(exactly = 1) { preferencesManager.setOfflineModeEnabled(false) }
+        coVerifyOrder {
+            preferencesManager.setOfflineModeEnabled(false)
+            appUpdateManager.checkForUpdates(any())
+        }
         assertIs<SplashEvent.NavigateToBudgetList>(viewModel.events.first())
     }
 
