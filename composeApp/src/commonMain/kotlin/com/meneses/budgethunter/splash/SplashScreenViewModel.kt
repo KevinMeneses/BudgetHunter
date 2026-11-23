@@ -11,6 +11,7 @@ import com.meneses.budgethunter.splash.application.SplashIntent
 import com.meneses.budgethunter.splash.application.SplashState
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -37,10 +38,26 @@ class SplashScreenViewModel(
 
     private fun verifyUpdate() {
         viewModelScope.launch {
-            val isOfflineModeEnabled = preferencesManager.isOfflineModeEnabled()
             val isAuthenticated = authRepository.isAuthenticated()
+            // Signing in from offline mode used to leave the flag on. With a session it is not
+            // offline mode: clear it before navigating, or the privacy policy check sent with the
+            // navigation would skip this account on every start.
+            val isOfflineModeEnabled = if (isAuthenticated) {
+                try {
+                    if (preferencesManager.isOfflineModeEnabled()) {
+                        preferencesManager.setOfflineModeEnabled(false)
+                    }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (_: Exception) {
+                    // Only a repair: the next start tries again, startup must not stop here
+                }
+                false
+            } else {
+                preferencesManager.isOfflineModeEnabled()
+            }
 
-            // If offline mode is enabled, skip authentication check
+            // Offline mode goes to the budget list without a session
             _uiState.update {
                 it.copy(isAuthenticated = isOfflineModeEnabled || isAuthenticated)
             }
