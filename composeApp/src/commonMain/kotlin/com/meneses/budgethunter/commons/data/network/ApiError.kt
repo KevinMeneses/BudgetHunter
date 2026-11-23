@@ -161,6 +161,7 @@ suspend fun <T> safeApiCall(
     return try {
         Result.success(call())
     } catch (e: TimeoutCancellationException) {
+        // Before CancellationException, which it extends: a timeout is a failure, not the scope ending
         Result.failure(ApiError.Timeout)
     } catch (e: CancellationException) {
         // The caller's scope was cancelled: let it end instead of handing back a failure

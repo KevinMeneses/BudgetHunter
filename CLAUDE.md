@@ -133,6 +133,10 @@ then pull; `RealTimeSyncManager` pulls a shared budget's entries on SSE events w
 - Timeouts: iOS gives the client a 20 s socket timeout (`API_SOCKET_TIMEOUT`; NSURLSession's own is 60 s, and a
   request sent down a silently dead connection kept the spinner up that long); Android keeps OkHttp's 10 s.
   Requests that set their own (SSE, receipts, categorization) keep theirs. Any timeout is `ApiError.Timeout`.
+  Known risk: a POST that timed out may still have reached the server, and the sync's retry then creates a
+  duplicate (an idempotency key on the backend would fix it).
+- `safeApiCall` and `AuthRepository` rethrow `CancellationException`: a cancelled call ends its scope, it is not a
+  failure.
 
 ### Navigation
 Type-safe navigation using Navigation Compose with serializable route objects. Main navigation flow:

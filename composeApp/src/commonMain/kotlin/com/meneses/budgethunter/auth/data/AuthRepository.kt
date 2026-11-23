@@ -65,6 +65,8 @@ class AuthRepository(
             // Sign up only returns user info, no tokens
             // User must sign in separately to get tokens
             Result.success(signUpResponse)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             logger.warn(TAG, "Sign up failed", e)
             Result.failure(e)
@@ -84,6 +86,8 @@ class AuthRepository(
             persistSession(authResponse)
 
             Result.success(authResponse)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             // Includes the writes to TokenStorage: a keychain or keystore that refuses to store
             // the session shows up as a plain "sign in failed", so name the cause in the log.
@@ -106,6 +110,8 @@ class AuthRepository(
             persistSession(authResponse)
 
             Result.success(authResponse)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             logger.warn(TAG, "Token refresh failed", e)
             Result.failure(e)
@@ -128,6 +134,8 @@ class AuthRepository(
             persistSession(authResponse)
 
             Result.success(authResponse)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             logger.warn(TAG, "Google sign in failed", e)
             Result.failure(e)
@@ -137,6 +145,8 @@ class AuthRepository(
     suspend fun getCurrentUser(): Result<CurrentUser> = withContext(ioDispatcher) {
         try {
             Result.success(httpClient.get(ApiEndpoints.ME).bodyOrThrow<CurrentUser>())
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             logger.warn(TAG, "Could not load the current user", e)
             Result.failure(e)
@@ -159,6 +169,8 @@ class AuthRepository(
                 setBody(SetPasswordRequest(currentPassword, newPassword))
             }.bodyOrThrow<Unit>()
             Result.success(Unit)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             logger.warn(TAG, "Could not set the password", e)
             Result.failure(e)
@@ -210,6 +222,8 @@ class AuthRepository(
     suspend fun isAuthenticated(): Boolean = withContext(ioDispatcher) {
         try {
             tokenStorage.getAuthToken() != null
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             // Asked from the splash screen, where an exception would take the whole app down.
             // Treating an unreadable session as "not signed in" sends the user to sign in again.
