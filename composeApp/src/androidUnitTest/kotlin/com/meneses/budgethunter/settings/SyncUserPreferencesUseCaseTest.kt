@@ -12,6 +12,7 @@ import com.meneses.budgethunter.settings.data.UserPreferencesRepository
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -19,6 +20,7 @@ import kotlinx.coroutines.yield
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class SyncUserPreferencesUseCaseTest {
 
     private val preferencesManager = mockk<PreferencesManager>(relaxed = true)

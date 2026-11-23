@@ -7,11 +7,13 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import io.mockk.verify
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class WarnIfNotificationReaderStoppedUseCaseTest {
 
     private val isNotificationReaderStopped = mockk<IsNotificationReaderStoppedUseCase>()
