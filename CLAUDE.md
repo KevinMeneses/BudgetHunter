@@ -128,6 +128,7 @@ then pull; `RealTimeSyncManager` pulls a shared budget's entries on SSE events w
   refusal as the answer: an error body fails as `ParseError`, and `body<Unit>()` takes a 404 or 500 as success.
   Calls read the answer with `bodyOrThrow()` (`ApiError.kt`), which throws the status's `ApiError` first
   (`HttpStatusCode.toApiError()`); the sync's 400/403/404 handling and categorization's 403/409 depend on it.
+  New calls use `bodyOrThrow()`, never a plain `body()`, unless they check the status first (and say so).
   `ApiStatusTest` runs the services through the real `createHttpClient`.
 - Timeouts: iOS gives the client a 20 s socket timeout (`API_SOCKET_TIMEOUT`; NSURLSession's own is 60 s, and a
   request sent down a silently dead connection kept the spinner up that long); Android keeps OkHttp's 10 s.

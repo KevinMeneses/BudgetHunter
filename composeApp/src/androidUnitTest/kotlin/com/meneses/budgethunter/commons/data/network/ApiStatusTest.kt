@@ -187,6 +187,14 @@ class ApiStatusTest {
     }
 
     @Test
+    fun `wrong credentials on sign in are unauthorized`() = runTest {
+        val result = auth(HttpStatusCode.Unauthorized, """{"status":401,"message":"Invalid credentials"}""")
+            .signIn("me@example.com", "wrong")
+
+        assertEquals(ApiError.Unauthorized, result.exceptionOrNull())
+    }
+
+    @Test
     fun `a password change and the account read still succeed`() = runTest {
         assertTrue(auth(HttpStatusCode.NoContent).setPassword("old", "newPassword1").isSuccess)
         assertEquals(
