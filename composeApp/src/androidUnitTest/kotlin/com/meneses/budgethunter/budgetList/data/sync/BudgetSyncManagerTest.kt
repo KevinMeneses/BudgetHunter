@@ -21,7 +21,12 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import io.mockk.verifyOrder
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -1045,5 +1050,44 @@ class BudgetSyncManagerTest {
             apiService.deleteBudget(101)
             apiService.getBudgets()
         }
+    }
+
+    // ========== Concurrency Tests ==========
+
+    @Test
+    fun `concurrent full sync and push create an unsynced budget only once`() = runTest {
+        // Given - the budget leaves getUnsynced once its push stored the server id
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val manager = BudgetSyncManager(
+            localDataSource = localDataSource,
+            budgetApiService = apiService,
+            entrySyncManager = entrySyncManager,
+            authRepository = authRepository,
+            ioDispatcher = dispatcher,
+            logger = logger
+        )
+        coEvery { authRepository.isAuthenticated() } returns true
+        val budget = Budget(id = 1, name = "Local Budget", amount = 1000.0)
+        var pushed = false
+        every { localDataSource.getUnsynced() } answers { if (pushed) emptyList() else listOf(budget) }
+        every { localDataSource.markAsSynced(any(), any(), any(), any()) } answers { pushed = true }
+        val gate = CompletableDeferred<Unit>()
+        coEvery { apiService.createBudget(any()) } coAnswers {
+            gate.await()
+            Result.success(BudgetResponse(id = 101, name = "Local Budget", amount = 1000.0))
+        }
+        coEvery { apiService.getBudgets() } returns Result.success(emptyList())
+
+        // When - both start while the first create is still pending
+        val full = async { manager.performFullSync() }
+        val push = async { manager.syncPendingBudgets() }
+        testScheduler.runCurrent()
+        gate.complete(Unit)
+        testScheduler.advanceUntilIdle()
+        full.await()
+        push.await()
+
+        // Then
+        coVerify(exactly = 1) { apiService.createBudget(any()) }
     }
 }
