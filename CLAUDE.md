@@ -165,6 +165,9 @@ records each account's acceptance (backend CLAUDE.md, "Privacy policy acceptance
   `SignOutUseCase`, first warning like Settings when unsynced changes would be lost.
   The dialog is never shown over splash or sign in, and reaching sign in drops it (`SessionEnded`): a session can
   expire while it is open. A new check (a new sign in) also drops any question left from the previous session.
+- Offline mode is a flag (`PreferencesManager.isOfflineModeEnabled`) that the check skips, so it must not outlive a
+  sign in: `PrepareDataForAccountUseCase` clears it on every sign in (also from offline mode's "Sign in" menu), and
+  the splash clears one found on with a session (left by builds before that fix).
 - It never blocks: offline mode (no account, nothing sent) asks nothing; no connection, an error, a server without
   `privacyPolicy`, or a failed accept or sign out show nothing or close the dialog, and the next check asks again.
 - Settings has a "Privacy policy" row that opens the page, offline mode too (Google Play asks for it in the app).

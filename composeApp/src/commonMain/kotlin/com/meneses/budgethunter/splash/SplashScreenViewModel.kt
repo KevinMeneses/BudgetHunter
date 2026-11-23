@@ -9,9 +9,9 @@ import com.meneses.budgethunter.commons.platform.AppUpdateResult
 import com.meneses.budgethunter.splash.application.SplashEvent
 import com.meneses.budgethunter.splash.application.SplashIntent
 import com.meneses.budgethunter.splash.application.SplashState
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -45,18 +45,34 @@ class SplashScreenViewModel(
         updateCheckStarted = true
 
         viewModelScope.launch {
-            val isOfflineModeEnabled = try {
-                preferencesManager.isOfflineModeEnabled()
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                // Unreadable preferences must not keep the app on the splash, nor take it down:
-                // offline mode off, and the stored session decides
-                false
-            }
             val isAuthenticated = authRepository.isAuthenticated()
+            // Signing in from offline mode used to leave the flag on. With a session it is not
+            // offline mode: clear it before navigating, or the privacy policy check sent with the
+            // navigation would skip this account on every start.
+            val isOfflineModeEnabled = if (isAuthenticated) {
+                try {
+                    if (preferencesManager.isOfflineModeEnabled()) {
+                        preferencesManager.setOfflineModeEnabled(false)
+                    }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (_: Exception) {
+                    // Only a repair: the next start tries again, startup must not stop here
+                }
+                false
+            } else {
+                try {
+                    preferencesManager.isOfflineModeEnabled()
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (_: Exception) {
+                    // Unreadable preferences must not take the app down at the splash: offline
+                    // mode off, so it goes to sign in
+                    false
+                }
+            }
 
-            // If offline mode is enabled, skip authentication check
+            // Offline mode goes to the budget list without a session
             _uiState.update {
                 it.copy(isAuthenticated = isOfflineModeEnabled || isAuthenticated)
             }
