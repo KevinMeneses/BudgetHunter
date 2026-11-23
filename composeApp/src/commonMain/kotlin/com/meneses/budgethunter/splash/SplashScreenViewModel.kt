@@ -11,6 +11,7 @@ import com.meneses.budgethunter.splash.application.SplashIntent
 import com.meneses.budgethunter.splash.application.SplashState
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -42,8 +43,14 @@ class SplashScreenViewModel(
             // offline mode: clear it before navigating, or the privacy policy check sent with the
             // navigation would skip this account on every start.
             val isOfflineModeEnabled = if (isAuthenticated) {
-                if (preferencesManager.isOfflineModeEnabled()) {
-                    preferencesManager.setOfflineModeEnabled(false)
+                try {
+                    if (preferencesManager.isOfflineModeEnabled()) {
+                        preferencesManager.setOfflineModeEnabled(false)
+                    }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (_: Exception) {
+                    // Only a repair: the next start tries again, startup must not stop here
                 }
                 false
             } else {

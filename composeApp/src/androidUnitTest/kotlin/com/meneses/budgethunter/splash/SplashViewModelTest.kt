@@ -138,4 +138,19 @@ class SplashViewModelTest {
         coVerify(exactly = 0) { preferencesManager.setOfflineModeEnabled(any()) }
         assertIs<SplashEvent.NavigateToBudgetList>(viewModel.events.first())
     }
+
+    @Test
+    fun `verifyUpdate still navigates when clearing offline mode fails`() = runTest {
+        // Given - the stuck flag cannot be written: the repair is skipped, startup is not
+        coEvery { authRepository.isAuthenticated() } returns true
+        coEvery { preferencesManager.isOfflineModeEnabled() } returns true
+        coEvery { preferencesManager.setOfflineModeEnabled(false) } throws IllegalStateException("disk")
+
+        // When
+        viewModel.sendIntent(SplashIntent.VerifyUpdate)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then
+        assertIs<SplashEvent.NavigateToBudgetList>(viewModel.events.first())
+    }
 }
