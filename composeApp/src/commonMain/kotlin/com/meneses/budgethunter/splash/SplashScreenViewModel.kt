@@ -9,6 +9,7 @@ import com.meneses.budgethunter.commons.platform.AppUpdateResult
 import com.meneses.budgethunter.splash.application.SplashEvent
 import com.meneses.budgethunter.splash.application.SplashIntent
 import com.meneses.budgethunter.splash.application.SplashState
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -44,7 +45,15 @@ class SplashScreenViewModel(
         updateCheckStarted = true
 
         viewModelScope.launch {
-            val isOfflineModeEnabled = preferencesManager.isOfflineModeEnabled()
+            val isOfflineModeEnabled = try {
+                preferencesManager.isOfflineModeEnabled()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // Unreadable preferences must not keep the app on the splash, nor take it down:
+                // offline mode off, and the stored session decides
+                false
+            }
             val isAuthenticated = authRepository.isAuthenticated()
 
             // If offline mode is enabled, skip authentication check
@@ -68,6 +77,9 @@ class SplashScreenViewModel(
                     null,
                     is AppUpdateResult.NoUpdateAvailable,
                     is AppUpdateResult.UpdateFailed -> break
+                    // Limited too: nothing here learns when it ends. If the update flow is ever
+                    // launched (AppUpdateLauncherDelegate), its install listener answers when it
+                    // finishes, and this wait should then allow a long download.
                     is AppUpdateResult.UpdateInProgress -> setUpdateInProgressState()
                     is AppUpdateResult.UpdateAvailable -> answer.startUpdate()
                 }
@@ -78,7 +90,7 @@ class SplashScreenViewModel(
     }
 
     private suspend fun emitNavigationEvent() {
-        delay(200)
+        delay(NAVIGATION_DELAY_MS)
         val event = if (_uiState.value.isAuthenticated) {
             SplashEvent.NavigateToBudgetList
         } else {
@@ -93,5 +105,8 @@ class SplashScreenViewModel(
     companion object {
         /** How long the splash waits for each answer of the store about updates. */
         const val UPDATE_CHECK_TIMEOUT_MS = 5_000L
+
+        /** Pause before leaving the splash. */
+        const val NAVIGATION_DELAY_MS = 200L
     }
 }

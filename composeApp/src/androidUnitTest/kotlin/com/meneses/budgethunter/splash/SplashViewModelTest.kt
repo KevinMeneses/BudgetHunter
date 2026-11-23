@@ -9,19 +9,6 @@ import com.meneses.budgethunter.splash.application.SplashIntent
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.toList
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.TestScope
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
-import kotlinx.coroutines.test.advanceTimeBy
-import kotlinx.coroutines.test.runCurrent
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -29,6 +16,19 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
 
 /**
  * Unit tests for SplashScreenViewModel event emissions.
@@ -128,7 +128,7 @@ class SplashViewModelTest {
     }
 
     private fun TestScope.pastLimit() {
-        testScheduler.advanceTimeBy(limit + 200 + 1)
+        testScheduler.advanceTimeBy(limit + SplashScreenViewModel.NAVIGATION_DELAY_MS + 1)
         testScheduler.runCurrent()
     }
 
@@ -270,6 +270,19 @@ class SplashViewModelTest {
 
         // Then - the update was offered, and the app moved on anyway
         assertTrue(started)
+        assertIs<SplashEvent.NavigateToBudgetList>(events.single())
+    }
+
+    @Test
+    fun `unreadable offline mode preference still navigates`() = runTest {
+        // Given - the preferences cannot be read (e.g. a corrupt DataStore file)
+        coEvery { preferencesManager.isOfflineModeEnabled() } throws java.io.IOException("corrupt")
+        val events = startSilentCheck(authenticated = true)
+
+        // When
+        pastLimit()
+
+        // Then - treated as offline mode off: the session decides
         assertIs<SplashEvent.NavigateToBudgetList>(events.single())
     }
 
