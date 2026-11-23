@@ -18,6 +18,7 @@ import com.meneses.budgethunter.auth.application.SignUpIntent
 import com.meneses.budgethunter.auth.application.SignUpState
 import com.meneses.budgethunter.auth.data.AuthRepository
 import com.meneses.budgethunter.auth.data.EmailAlreadyRegisteredException
+import com.meneses.budgethunter.auth.domain.PrivacyPolicy
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -44,6 +45,8 @@ class SignUpViewModel(
             is SignUpIntent.EmailChanged -> updateEmail(intent.email)
             is SignUpIntent.NameChanged -> updateName(intent.name)
             is SignUpIntent.PasswordChanged -> updatePassword(intent.password)
+            is SignUpIntent.PrivacyPolicyAcceptedChanged ->
+                _uiState.update { it.copy(isPrivacyPolicyAccepted = intent.accepted) }
             is SignUpIntent.SignUpClicked -> signUp()
             is SignUpIntent.GoogleSignUpClicked -> signUpWithGoogle()
             is SignUpIntent.DismissError -> dismissError()
@@ -66,6 +69,8 @@ class SignUpViewModel(
 
     private fun signUp() {
         val currentState = _uiState.value
+        // The button is disabled without it; the keyboard's Done action is not
+        if (!currentState.isPrivacyPolicyAccepted) return
 
         // Every field is checked at once, so all its problems show in one attempt, each under its
         // field. There is no confirmation field: the eye icon shows the password to check it.
@@ -90,7 +95,8 @@ class SignUpViewModel(
             authRepository.signUp(
                 email = currentState.email.trim(),
                 name = currentState.name.trim(),
-                password = currentState.password
+                password = currentState.password,
+                acceptedPrivacyPolicyVersion = PrivacyPolicy.VERSION
             ).fold(
                 onSuccess = {
                     _uiState.update { it.copy(isLoading = false) }

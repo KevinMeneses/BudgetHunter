@@ -16,6 +16,9 @@ object ApiEndpoints {
     const val PASSWORD = "/api/users/password"
     const val PREFERENCES = "/api/users/me/preferences"
 
+    /** POST `{"version"}`: the signed-in account accepts the privacy policy in force. */
+    const val PRIVACY_POLICY = "/api/users/me/privacy-policy"
+
     // Budget endpoints
     const val BUDGETS = "/api/budgets"
     fun budget(id: Long) = "/api/budgets/$id"

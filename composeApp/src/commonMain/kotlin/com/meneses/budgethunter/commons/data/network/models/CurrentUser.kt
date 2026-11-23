@@ -16,5 +16,7 @@ data class CurrentUser(
      * Whether the account can also be signed into with a password. Settings uses it to choose
      * between offering to set a first password and offering to change an existing one.
      */
-    val hasPassword: Boolean = false
+    val hasPassword: Boolean = false,
+    /** Null on servers that predate the acceptance record: then nothing is asked. */
+    val privacyPolicy: PrivacyPolicyStatus? = null
 )

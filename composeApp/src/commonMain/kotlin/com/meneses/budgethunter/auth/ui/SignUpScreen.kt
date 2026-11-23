@@ -45,7 +45,8 @@ import kotlinx.serialization.Serializable
 import org.jetbrains.compose.resources.stringResource
 
 /**
- * Sign up with email: name, email and password, nothing else. Google lives on the welcome, so it
+ * Sign up with email: name, email, password and the privacy policy checkbox, which the button
+ * waits for. Google lives on the welcome, so it
  * is not repeated here; there is no confirmation field, the eye shows the password to check it.
  * A validation error shows under its field; any other one in the banner on top.
  */
@@ -141,10 +142,17 @@ object SignUpScreen {
                         error = passwordError?.let { stringResource(it) }
                     )
 
+                    PrivacyPolicyCheckbox(
+                        checked = uiState.isPrivacyPolicyAccepted,
+                        onCheckedChange = { onIntent(SignUpIntent.PrivacyPolicyAcceptedChanged(it)) },
+                        enabled = !uiState.isLoading
+                    )
+
                     Button(
                         onClick = { onIntent(SignUpIntent.SignUpClicked) },
-                        modifier = Modifier.padding(top = 8.dp).then(AuthButtonModifier),
-                        enabled = !uiState.isLoading
+                        modifier = Modifier.then(AuthButtonModifier),
+                        // The account needs the privacy policy accepted (Ley 1581 de 2012)
+                        enabled = !uiState.isLoading && uiState.isPrivacyPolicyAccepted
                     ) {
                         Text(stringResource(Res.string.create_account_button), fontSize = 16.sp)
                     }

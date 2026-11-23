@@ -123,6 +123,23 @@ then pull; `RealTimeSyncManager` pulls a shared budget's entries on SSE events w
   like an expired one, anything else keeps it. The confirmation reads the plan (`PremiumRepository.status()`) to warn that a store subscription is not cancelled;
   the sign out it runs also logs the store out.
 
+### Privacy policy
+The backend serves the policy at `/privacidad` (`PrivacyPolicy.url` = `BuildKonfig.BACKEND_URL` + that path) and
+records each account's acceptance (backend CLAUDE.md, "Privacy policy acceptance"; Ley 1581 de 2012).
+- Sign up with email: a required checkbox ("I accept the privacy policy", with the link); the button stays disabled
+  and `SignUpViewModel` sends nothing without it. Google: the welcome says under its button that continuing accepts
+  the policy. Both send `acceptedPrivacyPolicyVersion` = `PrivacyPolicy.VERSION`, a constant: nothing can be asked
+  before there is an account, and the server ignores (never rejects) a version that is not its current one. Keep it
+  equal to the backend's `PRIVACY_POLICY_VERSION`; if it falls behind, the check below asks again right after.
+- Existing accounts and policy changes: after every sign in and when the app opens with a session, navigation sends
+  `PrivacyPolicyIntent.Check`. `CheckPrivacyPolicyUseCase` reads `privacyPolicy` from `GET /api/users/me` and, when
+  `acceptedVersion != currentVersion`, `PrivacyPolicyDialog` (over every screen, no back or tap outside) asks:
+  "Accept" posts the server's `currentVersion` to `POST /api/users/me/privacy-policy`; "Sign out" runs
+  `SignOutUseCase`, first warning like Settings when unsynced changes would be lost.
+- It never blocks: offline mode (no account, nothing sent) asks nothing; no connection, an error, a server without
+  `privacyPolicy`, or a failed accept or sign out show nothing or close the dialog, and the next check asks again.
+- Settings has a "Privacy policy" row that opens the page, offline mode too (Google Play asks for it in the app).
+
 ### Navigation
 Type-safe navigation using Navigation Compose with serializable route objects. Main navigation flow:
 - SplashScreen → BudgetListScreen → BudgetDetailScreen → BudgetEntryScreen

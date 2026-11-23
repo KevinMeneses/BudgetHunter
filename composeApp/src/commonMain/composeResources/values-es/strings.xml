@@ -557,4 +557,14 @@
     <string name="number_group_separator">.</string>
     <string name="premium_check_again">Revisar de nuevo</string>
     <string name="premium_still_processing">Aún no se confirma. Premium se activará en unos minutos.</string>
+    <!-- Política de privacidad: "%1$s" es privacy_policy_link_text, mostrado como enlace a la página -->
+    <string name="privacy_policy_link_text">política de privacidad</string>
+    <string name="privacy_policy_accept_checkbox">Acepto la %1$s</string>
+    <string name="privacy_policy_google_notice">Al continuar con Google aceptas la %1$s</string>
+    <string name="privacy_policy_updated_title">Actualizamos nuestra política de privacidad</string>
+    <string name="privacy_policy_updated_message">Para seguir usando tu cuenta, léela y acéptala. Si no la aceptas, puedes cerrar sesión.</string>
+    <string name="privacy_policy_read">Leer la política de privacidad</string>
+    <string name="privacy_policy_accept">Aceptar</string>
+    <string name="privacy_policy_settings_title">Política de privacidad</string>
+    <string name="privacy_policy_settings_subtitle">Qué datos guardamos y cómo los usamos</string>
 </resources>

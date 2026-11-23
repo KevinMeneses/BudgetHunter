@@ -30,11 +30,14 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.navOptions
 import androidx.navigation.toRoute
+import com.meneses.budgethunter.auth.PrivacyPolicyViewModel
 import com.meneses.budgethunter.auth.SignInViewModel
 import com.meneses.budgethunter.auth.SignUpViewModel
+import com.meneses.budgethunter.auth.application.PrivacyPolicyIntent
 import com.meneses.budgethunter.auth.application.SignInEvent
 import com.meneses.budgethunter.auth.application.SignUpEvent
 import com.meneses.budgethunter.auth.data.AuthSession
+import com.meneses.budgethunter.auth.ui.PrivacyPolicyDialog
 import com.meneses.budgethunter.auth.ui.SignInScreen
 import com.meneses.budgethunter.auth.ui.SignUpScreen
 import com.meneses.budgethunter.billing.PremiumViewModel
@@ -87,6 +90,12 @@ fun BudgetHunterNavigation() {
         val navController = rememberNavController()
         var signedInEmail by remember { mutableStateOf<String?>(null) }
 
+        // Over every screen. Asked after each sign in and when the app opens with a session; the
+        // check itself skips offline mode, which sends nothing to the server.
+        val privacyPolicyViewModel: PrivacyPolicyViewModel = koinInject()
+        val privacyPolicyState by privacyPolicyViewModel.uiState.collectAsStateWithLifecycle()
+        val checkPrivacyPolicy = { privacyPolicyViewModel.sendIntent(PrivacyPolicyIntent.Check) }
+
         OpenDefaultBudgetOnRequest(navController)
         NavigateToSignInOnSignOut(navController)
 
@@ -131,12 +140,15 @@ fun BudgetHunterNavigation() {
                                     popUpTo<SplashScreen> { inclusive = true }
                                 }
                             )
-                            is SplashEvent.NavigateToBudgetList -> navController.navigate(
-                                route = BudgetListScreen,
-                                navOptions = navOptions {
-                                    popUpTo<SplashScreen> { inclusive = true }
-                                }
-                            )
+                            is SplashEvent.NavigateToBudgetList -> {
+                                checkPrivacyPolicy()
+                                navController.navigate(
+                                    route = BudgetListScreen,
+                                    navOptions = navOptions {
+                                        popUpTo<SplashScreen> { inclusive = true }
+                                    }
+                                )
+                            }
                         }
                     }
                 }
@@ -160,6 +172,7 @@ fun BudgetHunterNavigation() {
                         when (event) {
                             is SignInEvent.NavigateToBudgetList -> {
                                 signedInEmail = event.email
+                                checkPrivacyPolicy()
                                 navController.navigate(
                                     route = BudgetListScreen,
                                     navOptions = navOptions {
@@ -190,6 +203,7 @@ fun BudgetHunterNavigation() {
                             is SignUpEvent.NavigateToSignIn -> navController.popBackStackOnce(backStackEntry)
                             is SignUpEvent.NavigateToBudgetList -> {
                                 signedInEmail = event.email
+                                checkPrivacyPolicy()
                                 navController.navigate(
                                     route = BudgetListScreen,
                                     navOptions = navOptions {
@@ -496,6 +510,11 @@ fun BudgetHunterNavigation() {
                 )
             }
         }
+
+        PrivacyPolicyDialog(
+            uiState = privacyPolicyState,
+            onIntent = privacyPolicyViewModel::sendIntent
+        )
     }
 }
 
