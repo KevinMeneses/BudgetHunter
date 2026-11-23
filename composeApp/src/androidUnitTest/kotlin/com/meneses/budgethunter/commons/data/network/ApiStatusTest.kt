@@ -116,6 +116,7 @@ class ApiStatusTest {
     fun `a deletion of something already gone still counts as gone`() = runTest {
         assertTrue(entries(HttpStatusCode.NotFound).deleteEntry(1, 2).exceptionOrNull()!!.isGoneFromServer())
         assertTrue(budgets(HttpStatusCode.Forbidden).deleteBudget(1).exceptionOrNull()!!.isGoneFromServer())
+        assertEquals(ApiError.NotFound, members(HttpStatusCode.NotFound).removeCollaborator(1, "a@b.c").exceptionOrNull())
     }
 
     @Test
@@ -231,5 +232,22 @@ class ApiStatusTest {
 
         assertEquals(20_000L, timeouts["/api/budgets/1/entries"])
         assertEquals(120_000L, timeouts["/api/budgets/1/entries/categorize"])
+    }
+
+    @Test
+    fun `the session refresh gets the platform's socket timeout too`() = runTest {
+        var refreshTimeout: Long? = null
+        val client = client(socketTimeoutMillis = 20_000) { request ->
+            if (request.url.encodedPath == ApiEndpoints.REFRESH_TOKEN) {
+                refreshTimeout = request.getCapabilityOrNull(HttpTimeoutCapability)?.socketTimeoutMillis
+                respond("", HttpStatusCode.InternalServerError, jsonHeaders)
+            } else {
+                respond("", HttpStatusCode.Unauthorized, jsonHeaders)
+            }
+        }
+
+        BudgetApiService(client, Dispatchers.Unconfined).getBudgets()
+
+        assertEquals(20_000L, refreshTimeout)
     }
 }

@@ -128,6 +128,10 @@ fun createHttpClient(
                         install(ContentNegotiation) {
                             json(json)
                         }
+                        // Same timeout as the main client: a refresh down a dead connection must not wait longer
+                        install(HttpTimeout) {
+                            socketTimeoutMillis?.let { this.socketTimeoutMillis = it }
+                        }
                         defaultRequest {
                             url(baseUrl)
                             contentType(ContentType.Application.Json)

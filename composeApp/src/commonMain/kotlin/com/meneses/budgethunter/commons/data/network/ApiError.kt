@@ -22,8 +22,8 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.isSuccess
 import io.ktor.serialization.JsonConvertException
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.TimeoutCancellationException
-import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.serialization.SerializationException
 import org.jetbrains.compose.resources.StringResource
 
