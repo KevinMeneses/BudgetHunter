@@ -1,6 +1,7 @@
 package com.meneses.budgethunter.auth.application
 
 import com.meneses.budgethunter.auth.data.AuthRepository
+import com.meneses.budgethunter.auth.domain.PrivacyPolicy
 import com.meneses.budgethunter.budgetEntry.data.BudgetEntrySyncManager
 import com.meneses.budgethunter.budgetList.data.BudgetRepository
 import com.meneses.budgethunter.commons.data.network.models.AuthResponse
@@ -47,7 +48,7 @@ class SignInWithGoogleUseCaseTest {
     @Test
     fun `success prepares data for the server email before syncing`() = runTest {
         pickerReturns(GoogleSignInResult.Success("id-token"))
-        coEvery { authRepository.signInWithGoogle("id-token") } returns
+        coEvery { authRepository.signInWithGoogle("id-token", any()) } returns
             Result.success(AuthResponse("auth", "refresh", "google@example.com", "Google User"))
 
         val outcome = useCase.execute()
@@ -62,9 +63,20 @@ class SignInWithGoogleUseCaseTest {
     }
 
     @Test
+    fun `sends the privacy policy version the sign-in screen says continuing accepts`() = runTest {
+        pickerReturns(GoogleSignInResult.Success("id-token"))
+        coEvery { authRepository.signInWithGoogle(any(), any()) } returns
+            Result.success(AuthResponse("auth", "refresh", "google@example.com", "Google User"))
+
+        useCase.execute()
+
+        coVerify(exactly = 1) { authRepository.signInWithGoogle("id-token", PrivacyPolicy.VERSION) }
+    }
+
+    @Test
     fun `backend rejection does not prepare or sync`() = runTest {
         pickerReturns(GoogleSignInResult.Success("id-token"))
-        coEvery { authRepository.signInWithGoogle("id-token") } returns Result.failure(Exception("rejected"))
+        coEvery { authRepository.signInWithGoogle("id-token", any()) } returns Result.failure(Exception("rejected"))
 
         val outcome = useCase.execute()
 

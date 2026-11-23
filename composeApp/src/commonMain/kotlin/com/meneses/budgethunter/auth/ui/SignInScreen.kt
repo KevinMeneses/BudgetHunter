@@ -35,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import budgethunter.composeapp.generated.resources.Res
@@ -42,6 +43,7 @@ import budgethunter.composeapp.generated.resources.back_content_description
 import budgethunter.composeapp.generated.resources.continue_with_email
 import budgethunter.composeapp.generated.resources.email
 import budgethunter.composeapp.generated.resources.no_account_prompt
+import budgethunter.composeapp.generated.resources.privacy_policy_google_notice
 import budgethunter.composeapp.generated.resources.sign_in
 import budgethunter.composeapp.generated.resources.sign_in_title
 import budgethunter.composeapp.generated.resources.sign_in_with_google
@@ -168,6 +170,13 @@ object SignInScreen {
                     ) {
                         Text(stringResource(Res.string.sign_in_with_google), fontSize = 16.sp)
                     }
+                    // The account may be created by this tap, so it is where the policy is accepted
+                    // (the version is sent with the sign in)
+                    PrivacyPolicyNotice(
+                        template = Res.string.privacy_policy_google_notice,
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Center
+                    )
                     OutlinedButton(
                         onClick = onContinueWithEmail,
                         modifier = AuthButtonModifier

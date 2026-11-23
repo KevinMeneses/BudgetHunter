@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.PrivacyTip
 import androidx.compose.material.icons.filled.Sms
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.WorkspacePremium
@@ -45,6 +46,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -96,6 +98,9 @@ import budgethunter.composeapp.generated.resources.delete_account
 import budgethunter.composeapp.generated.resources.sign_out
 import budgethunter.composeapp.generated.resources.sign_out_confirmation
 import budgethunter.composeapp.generated.resources.sign_out_unsynced_warning
+import budgethunter.composeapp.generated.resources.privacy_policy_settings_subtitle
+import budgethunter.composeapp.generated.resources.privacy_policy_settings_title
+import com.meneses.budgethunter.auth.ui.openPrivacyPolicy
 import budgethunter.composeapp.generated.resources.signed_in
 import budgethunter.composeapp.generated.resources.sms_permission_missing_description
 import budgethunter.composeapp.generated.resources.sms_permission_missing_title
@@ -131,6 +136,7 @@ object SettingsScreen {
         showPremium: () -> Unit
     ) {
         val snackbarHostState = remember { SnackbarHostState() }
+        val uriHandler = LocalUriHandler.current
         // Notification access is granted in the system settings, so it is read again on the way back
         LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
             onIntent(SettingsIntent.RefreshPermissions)
@@ -240,6 +246,16 @@ object SettingsScreen {
                                 color = AppColors.error
                             )
                         }
+                    }
+
+                    // Always, offline mode too: Google Play asks for the policy inside the app
+                    SettingsGroup {
+                        SettingRow(
+                            icon = Icons.Default.PrivacyTip,
+                            title = stringResource(Res.string.privacy_policy_settings_title),
+                            subtitle = stringResource(Res.string.privacy_policy_settings_subtitle),
+                            onClick = { uriHandler.openPrivacyPolicy() }
+                        )
                     }
 
                     AboutFooter()

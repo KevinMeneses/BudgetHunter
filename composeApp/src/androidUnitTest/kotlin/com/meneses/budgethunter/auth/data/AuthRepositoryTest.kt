@@ -164,7 +164,8 @@ class AuthRepositoryTest {
         val result = repository.signUp(
             email = "test@example.com",
             name = "Test User",
-            password = "password123"
+            password = "password123",
+            acceptedPrivacyPolicyVersion = "2026-11-23"
         )
 
         // Assert
@@ -206,7 +207,8 @@ class AuthRepositoryTest {
         val result = repository.signUp(
             email = "existing@example.com",
             name = "Test User",
-            password = "password123"
+            password = "password123",
+            acceptedPrivacyPolicyVersion = "2026-11-23"
         )
 
         // Assert
@@ -232,7 +234,7 @@ class AuthRepositoryTest {
             }
         }
         val repository = AuthRepository(httpClient, createTestTokenStorage(), Dispatchers.Unconfined, NoOpLogger())
-        return repository.signUp("a@example.com", "Test User", "password123")
+        return repository.signUp("a@example.com", "Test User", "password123", "2026-11-23")
     }
 
     @Test
@@ -625,13 +627,14 @@ class AuthRepositoryTest {
         )
 
         // Act
-        val result = repository.signInWithGoogle("an-id-token")
+        val result = repository.signInWithGoogle("an-id-token", "2026-11-23")
 
         // Assert
         assertTrue(result.isSuccess)
         assertEquals("google@example.com", result.getOrNull()?.email)
         assertEquals(ApiEndpoints.SIGN_IN_WITH_GOOGLE, requestedPaths.single())
         assertTrue(sentBody!!.contains("an-id-token"))
+        assertTrue(sentBody!!.contains("\"acceptedPrivacyPolicyVersion\":\"2026-11-23\""))
         // Both halves of the session have to land, or the next 401 has nothing to refresh with.
         assertEquals("google-auth-token", tokenStorage.getAuthToken())
         assertEquals("google-refresh-token", tokenStorage.getRefreshToken())
@@ -657,7 +660,7 @@ class AuthRepositoryTest {
         )
 
         // Act
-        val result = repository.signInWithGoogle("a-rejected-token")
+        val result = repository.signInWithGoogle("a-rejected-token", "2026-11-23")
 
         // Assert - a rejected sign in must not leave a half-written session behind
         assertTrue(result.isFailure)
@@ -783,4 +786,86 @@ class AuthRepositoryTest {
     }
 
     // endregion
+
+    // ========== Privacy policy ==========
+
+    @Test
+    fun `acceptPrivacyPolicy posts the version and reads 200 as success`() = runTest {
+        var sentPath: String? = null
+        var sentBody: String? = null
+        val repository = AuthRepository(
+            simpleClient(
+                MockEngine { request ->
+                    sentPath = request.url.encodedPath
+                    sentBody = (request.body as io.ktor.http.content.TextContent).text
+                    respond(
+                        content = """{"currentVersion":"2026-11-23","acceptedVersion":"2026-11-23"}""",
+                        status = HttpStatusCode.OK,
+                        headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                    )
+                }
+            ),
+            createTestTokenStorage(),
+            Dispatchers.Unconfined,
+            NoOpLogger()
+        )
+
+        val result = repository.acceptPrivacyPolicy("2026-11-23")
+
+        assertTrue(result.isSuccess)
+        assertEquals(ApiEndpoints.PRIVACY_POLICY, sentPath)
+        assertEquals("""{"version":"2026-11-23"}""", sentBody)
+    }
+
+    @Test
+    fun `acceptPrivacyPolicy reads a 400 for a stale version as failure`() = runTest {
+        val repository = AuthRepository(
+            simpleClient(MockEngine { respond("", HttpStatusCode.BadRequest) }),
+            createTestTokenStorage(),
+            Dispatchers.Unconfined,
+            NoOpLogger()
+        )
+
+        assertTrue(repository.acceptPrivacyPolicy("2020-01-01").isFailure)
+    }
+
+    @Test
+    fun `acceptPrivacyPolicy reads a network error as failure`() = runTest {
+        val repository = AuthRepository(
+            simpleClient(MockEngine { throw java.io.IOException("offline") }),
+            createTestTokenStorage(),
+            Dispatchers.Unconfined,
+            NoOpLogger()
+        )
+
+        assertTrue(repository.acceptPrivacyPolicy("2026-11-23").isFailure)
+    }
+
+    @Test
+    fun `getCurrentUser reads the privacy policy status, and its absence as null`() = runTest {
+        fun repositoryAnswering(body: String) = AuthRepository(
+            simpleClient(
+                MockEngine {
+                    respond(
+                        content = body,
+                        status = HttpStatusCode.OK,
+                        headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                    )
+                }
+            ),
+            createTestTokenStorage(),
+            Dispatchers.Unconfined,
+            NoOpLogger()
+        )
+
+        val withStatus = repositoryAnswering(
+            """{"email":"a@b.com","name":"A","hasPassword":true,
+               "privacyPolicy":{"currentVersion":"2026-11-23","acceptedVersion":null,"acceptedAt":null}}"""
+        ).getCurrentUser().getOrThrow()
+        assertEquals("2026-11-23", withStatus.privacyPolicy?.currentVersion)
+        assertNull(withStatus.privacyPolicy?.acceptedVersion)
+
+        val olderServer = repositoryAnswering("""{"email":"a@b.com","name":"A"}""").getCurrentUser().getOrThrow()
+        assertNull(olderServer.privacyPolicy)
+    }
 }
