@@ -17,10 +17,13 @@ data class AuthResponse(
     val sharedBudgets: List<SharedBudgetResponse> = emptyList()
 )
 
+/**
+ * Every field has a default: this arrives inside the sign in answer, and a field the server
+ * dropped or renamed must not fail the sign in of exactly the users who need the notice.
+ */
 @Serializable
 data class SharedBudgetResponse(
-    val budgetId: Long,
-    val name: String,
-    val ownerEmail: String,
-    val otherMembers: List<String>
+    val name: String = "",
+    val ownerEmail: String = "",
+    val otherMembers: List<String> = emptyList()
 )

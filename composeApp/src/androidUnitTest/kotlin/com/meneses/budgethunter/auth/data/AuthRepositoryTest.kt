@@ -641,7 +641,7 @@ class AuthRepositoryTest {
     }
 
     @Test
-    fun `signInWithGoogle reads the removed password and the shared budgets`() = runTest {
+    fun `signInWithGoogle reads the removed password and the shared budgets even with missing fields`() = runTest {
         val mockEngine = MockEngine {
             respond(
                 content = """
@@ -651,7 +651,8 @@ class AuthRepositoryTest {
                   "passwordRemoved": true,
                   "sharedBudgets": [
                     {"budgetId": 7, "name": "Casa", "ownerEmail": "other@example.com",
-                     "otherMembers": ["other@example.com"]}
+                     "otherMembers": ["other@example.com"]},
+                    {"name": "Missing its owner and members"}
                   ]
                 }
                 """,
@@ -669,8 +670,10 @@ class AuthRepositoryTest {
         val response = repository.signInWithGoogle("an-id-token", "2026-11-23").getOrThrow()
 
         assertTrue(response.passwordRemoved)
-        assertEquals("Casa", response.sharedBudgets.single().name)
-        assertEquals(listOf("other@example.com"), response.sharedBudgets.single().otherMembers)
+        assertEquals("Casa", response.sharedBudgets.first().name)
+        assertEquals(listOf("other@example.com"), response.sharedBudgets.first().otherMembers)
+        // A field the server left out must not fail the sign in
+        assertEquals(emptyList(), response.sharedBudgets.last().otherMembers)
     }
 
     @Test

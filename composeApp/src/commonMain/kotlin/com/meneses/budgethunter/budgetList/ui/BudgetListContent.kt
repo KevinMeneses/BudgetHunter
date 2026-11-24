@@ -40,8 +40,8 @@ import androidx.compose.ui.unit.sp
 import budgethunter.composeapp.generated.resources.Res
 import budgethunter.composeapp.generated.resources.available_label
 import budgethunter.composeapp.generated.resources.budget_options
-import budgethunter.composeapp.generated.resources.not_synced
 import budgethunter.composeapp.generated.resources.google_link_banner
+import budgethunter.composeapp.generated.resources.not_synced
 import budgethunter.composeapp.generated.resources.notification_reader_stopped_banner
 import budgethunter.composeapp.generated.resources.over_budget
 import budgethunter.composeapp.generated.resources.percent_of_total

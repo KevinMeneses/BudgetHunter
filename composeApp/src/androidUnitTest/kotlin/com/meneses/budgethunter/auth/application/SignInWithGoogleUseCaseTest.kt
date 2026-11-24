@@ -121,7 +121,7 @@ class SignInWithGoogleUseCaseTest {
                 "Google User",
                 passwordRemoved = true,
                 sharedBudgets = listOf(
-                    SharedBudgetResponse(7, "Casa", "other@example.com", listOf("other@example.com"))
+                    SharedBudgetResponse("Casa", "other@example.com", listOf("other@example.com"))
                 )
             )
         )
@@ -150,5 +150,19 @@ class SignInWithGoogleUseCaseTest {
         useCase.execute()
 
         coVerify(exactly = 0) { preferencesManager.setGoogleLinkNotice(any()) }
+    }
+
+    @Test
+    fun `a notice that cannot be saved does not fail the sign in`() = runTest {
+        pickerReturns(GoogleSignInResult.Success("id-token"))
+        coEvery { authRepository.signInWithGoogle("id-token", any()) } returns Result.success(
+            AuthResponse("auth", "refresh", "google@example.com", "Google User", passwordRemoved = true)
+        )
+        coEvery { preferencesManager.setGoogleLinkNotice(any()) } throws IllegalStateException("disk full")
+
+        val outcome = useCase.execute()
+
+        assertEquals(GoogleAuthOutcome.Success("google@example.com"), outcome)
+        coVerify { budgetRepository.sync() }
     }
 }

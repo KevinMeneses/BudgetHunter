@@ -10,6 +10,7 @@ import com.meneses.budgethunter.commons.data.network.models.AuthResponse
 import com.meneses.budgethunter.commons.platform.GoogleSignInManager
 import com.meneses.budgethunter.commons.platform.GoogleSignInResult
 import com.meneses.budgethunter.settings.application.SyncUserPreferencesUseCase
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -62,10 +63,10 @@ class SignInWithGoogleUseCase(
                 // Before the sync and the budget list, so a switched account never sees what
                 // the previous one left behind.
                 prepareDataForAccount.execute(authResponse.email)
-                // After preparing, which forgets the previous account's notice on a switch
-                if (authResponse.passwordRemoved) {
-                    preferencesManager.setGoogleLinkNotice(authResponse.toLinkNotice())
-                }
+                // After preparing, which forgets the previous account's notice on a switch. A
+                // sign in that keeps the password leaves a pending notice alone: it stays until
+                // the user dismisses it.
+                if (authResponse.passwordRemoved) saveLinkNotice(authResponse)
 
                 // Deliberately the application scope, not the caller's: the screen is popped the
                 // moment we return, and a sync tied to its lifetime would be cancelled mid-flight.
@@ -79,6 +80,20 @@ class SignInWithGoogleUseCase(
             },
             onFailure = { GoogleAuthOutcome.Failed }
         )
+
+    /**
+     * The session already exists at this point: a failed write loses the notice, never the
+     * sign in.
+     */
+    private suspend fun saveLinkNotice(authResponse: AuthResponse) {
+        try {
+            preferencesManager.setGoogleLinkNotice(authResponse.toLinkNotice())
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            // Nothing to do: the server already applied the change either way
+        }
+    }
 
     private fun AuthResponse.toLinkNotice() = GoogleLinkNotice(
         accountEmail = email,
