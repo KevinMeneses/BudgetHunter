@@ -55,7 +55,9 @@ class BudgetListViewModel(
         viewModelScope.launch {
             preferencesManager.googleLinkNotice.collect { stored ->
                 // A switch of account already forgets it; this also keeps one account's notice,
-                // with other people's emails, from ever reaching another account by some other path
+                // with other people's emails, from ever reaching another account by some other path.
+                // Relies on SignInWithGoogleUseCase saving the notice after PrepareDataForAccountUseCase
+                // stored the new email (its test pins that order).
                 val currentEmail = preferencesManager.getLastSignedInEmail()
                 val notice = stored?.takeIf { it.accountEmail.equals(currentEmail?.trim(), ignoreCase = true) }
                 _uiState.update {
