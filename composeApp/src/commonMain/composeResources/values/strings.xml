@@ -567,4 +567,12 @@
     <string name="privacy_policy_accept">Accept</string>
     <string name="privacy_policy_settings_title">Privacy policy</string>
     <string name="privacy_policy_settings_subtitle">What data we keep and how we use it</string>
+    <string name="google_link_banner">Your account is now linked to Google. Tap to see what changed</string>
+    <string name="google_link_notice_title">Account linked to Google</string>
+    <string name="google_link_notice_password">To protect your account, we turned off the password it had and signed out every other device. From now on you sign in with Google. If you want a password again, set a new one in Settings.</string>
+    <string name="google_link_notice_shared">These budgets were already shared with other people. If you don't recognize one, delete it from your list. If you don't recognize someone in a budget of yours, remove them in Collaborators.</string>
+    <string name="google_link_notice_yours">Yours</string>
+    <string name="google_link_notice_owner">Owner: %1$s</string>
+    <string name="google_link_notice_members">Shared with: %1$s</string>
+    <string name="google_link_notice_dismiss">Got it</string>
 </resources>

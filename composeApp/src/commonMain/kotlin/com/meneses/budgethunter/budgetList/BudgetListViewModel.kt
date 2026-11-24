@@ -48,6 +48,44 @@ class BudgetListViewModel(
         collectBudgetList()
         checkAuthState()
         syncWhenOnline()
+        collectGoogleLinkNotice()
+    }
+
+    private fun collectGoogleLinkNotice() {
+        viewModelScope.launch {
+            preferencesManager.googleLinkNotice.collect { stored ->
+                // A switch of account already forgets it; this also keeps one account's notice,
+                // with other people's emails, from ever reaching another account by some other path.
+                // Relies on SignInWithGoogleUseCase saving the notice after PrepareDataForAccountUseCase
+                // stored the new email (its test pins that order).
+                val currentEmail = preferencesManager.getLastSignedInEmail()
+                val notice = stored?.takeIf { it.accountEmail.equals(currentEmail?.trim(), ignoreCase = true) }
+                _uiState.update {
+                    it.copy(
+                        googleLinkNotice = notice,
+                        isGoogleLinkNoticeOpen = it.isGoogleLinkNoticeOpen && notice != null
+                    )
+                }
+            }
+        }
+    }
+
+    private fun openGoogleLinkNotice() {
+        _uiState.update { it.copy(isGoogleLinkNoticeOpen = it.googleLinkNotice != null) }
+    }
+
+    private fun dismissGoogleLinkNotice() {
+        _uiState.update { it.copy(isGoogleLinkNoticeOpen = false, googleLinkNotice = null) }
+        viewModelScope.launch {
+            // A failed write only brings the notice back on the next launch
+            try {
+                preferencesManager.setGoogleLinkNotice(null)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                logger.warn(tag, "Could not forget the Google link notice", e)
+            }
+        }
     }
 
     private var autoSync: Job? = null
@@ -125,6 +163,8 @@ class BudgetListViewModel(
             is BudgetListIntent.SignIn -> signIn()
             is BudgetListIntent.SyncBudgets -> syncBudgets()
             is BudgetListIntent.CheckNotificationReader -> checkNotificationReader()
+            is BudgetListIntent.OpenGoogleLinkNotice -> openGoogleLinkNotice()
+            is BudgetListIntent.DismissGoogleLinkNotice -> dismissGoogleLinkNotice()
         }
     }
 

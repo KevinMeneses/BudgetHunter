@@ -1,5 +1,6 @@
 package com.meneses.budgethunter.budgetList.application
 
+import com.meneses.budgethunter.auth.domain.GoogleLinkNotice
 import com.meneses.budgethunter.budgetList.domain.Budget
 import com.meneses.budgethunter.budgetList.domain.BudgetFilter
 
@@ -18,5 +19,8 @@ data class BudgetListState(
     val isCreatingBudget: Boolean = false,
     val isUpdatingBudget: Boolean = false,
     /** The bank notification reader should run but the system left it unbound; Settings explains the fix. */
-    val isNotificationReaderStopped: Boolean = false
+    val isNotificationReaderStopped: Boolean = false,
+    /** Google sign in removed the account's password; shown as a banner until dismissed. */
+    val googleLinkNotice: GoogleLinkNotice? = null,
+    val isGoogleLinkNoticeOpen: Boolean = false
 )

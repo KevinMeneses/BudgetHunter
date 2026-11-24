@@ -89,6 +89,7 @@ val authModule = module {
             budgetEntrySyncManager = get(),
             syncUserPreferences = get(),
             prepareDataForAccount = get(),
+            preferencesManager = get(),
             applicationScope = get<CoroutineScope>(named("ApplicationScope"))
         )
     }

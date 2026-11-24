@@ -117,6 +117,7 @@ object BudgetListScreen {
                 showSyncState = uiState.isAuthenticated,
                 isNotificationReaderStopped = uiState.isNotificationReaderStopped,
                 onNotificationReaderStoppedClick = showSettings,
+                showGoogleLinkNotice = uiState.googleLinkNotice != null,
                 paddingValues = paddingValues,
                 onIntent = onIntent
             )
@@ -132,6 +133,12 @@ object BudgetListScreen {
             budget = uiState.budgetToUpdate,
             onIntent = onIntent,
             isUpdating = uiState.isUpdatingBudget
+        )
+
+        GoogleLinkNoticeDialog(
+            notice = uiState.googleLinkNotice,
+            show = uiState.isGoogleLinkNoticeOpen,
+            onDismiss = { BudgetListIntent.DismissGoogleLinkNotice.run(onIntent) }
         )
     }
 }

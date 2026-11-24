@@ -172,6 +172,22 @@ records each account's acceptance (backend CLAUDE.md, "Privacy policy acceptance
   `privacyPolicy`, or a failed accept or sign out show nothing or close the dialog, and the next check asks again.
 - Settings has a "Privacy policy" row that opens the page, offline mode too (Google Play asks for it in the app).
 
+### Google sign in that links an existing account
+When Google sign in finds a password account with the same email and no Google link, the server cannot tell who set
+that password (it may be someone who registered the email first). It removes the password, ends every other session,
+and answers `passwordRemoved: true` with `sharedBudgets` (the budgets the account already shares with other people,
+which it keeps: only the user can tell a stranger's budget from a family one). Backend CLAUDE.md, "Authentication
+and sessions".
+- `SignInWithGoogleUseCase` saves a `GoogleLinkNotice` (`PreferencesManager.googleLinkNotice`, JSON) after
+  `PrepareDataForAccountUseCase`, which would otherwise forget it on an account switch. Sign out forgets it too.
+- The budget list shows it as a banner until the user dismisses it; tapping it opens `GoogleLinkNoticeDialog`
+  (the password is off, set a new one in Settings; the shared budgets with their owner and members, and to delete
+  the ones they do not recognize or remove strangers in Collaborators). Only "Got it" closes it, which clears it.
+- Kept on the device rather than shown once, so an app killed before the user read it shows it again. The list
+  ignores a notice whose `accountEmail` is not the signed-in account (a switch already forgets it).
+- Known trade-off: the server answers `passwordRemoved` only once. If that answer is lost (no connection, app killed
+  mid-request) the next Google sign in answers `false` and the user is never told; the password is still gone.
+
 ### Navigation
 Type-safe navigation using Navigation Compose with serializable route objects. Main navigation flow:
 - SplashScreen → BudgetListScreen → BudgetDetailScreen → BudgetEntryScreen

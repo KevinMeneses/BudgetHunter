@@ -641,6 +641,42 @@ class AuthRepositoryTest {
     }
 
     @Test
+    fun `signInWithGoogle reads the removed password and the shared budgets even with missing fields`() = runTest {
+        val mockEngine = MockEngine {
+            respond(
+                content = """
+                {
+                  "authToken": "a", "refreshToken": "r",
+                  "email": "google@example.com", "name": "Google User",
+                  "passwordRemoved": true,
+                  "sharedBudgets": [
+                    {"budgetId": 7, "name": "Casa", "ownerEmail": "other@example.com",
+                     "otherMembers": ["other@example.com"]},
+                    {"name": "Missing its owner and members"}
+                  ]
+                }
+                """,
+                status = HttpStatusCode.OK,
+                headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+            )
+        }
+        val repository = AuthRepository(
+            simpleClient(mockEngine),
+            createTestTokenStorage(),
+            Dispatchers.Unconfined,
+            NoOpLogger()
+        )
+
+        val response = repository.signInWithGoogle("an-id-token", "2026-11-23").getOrThrow()
+
+        assertTrue(response.passwordRemoved)
+        assertEquals("Casa", response.sharedBudgets.first().name)
+        assertEquals(listOf("other@example.com"), response.sharedBudgets.first().otherMembers)
+        // A field the server left out must not fail the sign in
+        assertEquals(emptyList(), response.sharedBudgets.last().otherMembers)
+    }
+
+    @Test
     fun `signInWithGoogle returns failure and stores nothing when the server rejects the token`() = runTest {
         // Arrange
         val tokenStorage = createTestTokenStorage()

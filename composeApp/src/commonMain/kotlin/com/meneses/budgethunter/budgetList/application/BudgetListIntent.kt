@@ -18,4 +18,10 @@ sealed interface BudgetListIntent {
 
     /** The screen came to the front: the bank notification reader may have stopped meanwhile. */
     data object CheckNotificationReader : BudgetListIntent
+
+    /** The Google link banner was tapped: show what changed. */
+    data object OpenGoogleLinkNotice : BudgetListIntent
+
+    /** The user read the Google link notice; it is not shown again. */
+    data object DismissGoogleLinkNotice : BudgetListIntent
 }

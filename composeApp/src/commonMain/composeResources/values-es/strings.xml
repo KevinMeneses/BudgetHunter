@@ -567,4 +567,12 @@
     <string name="privacy_policy_accept">Aceptar</string>
     <string name="privacy_policy_settings_title">Política de privacidad</string>
     <string name="privacy_policy_settings_subtitle">Qué datos guardamos y cómo los usamos</string>
+    <string name="google_link_banner">Tu cuenta quedó vinculada con Google. Toca para ver qué cambió</string>
+    <string name="google_link_notice_title">Cuenta vinculada con Google</string>
+    <string name="google_link_notice_password">Para proteger tu cuenta, desactivamos la contraseña que tenía y cerramos la sesión en los demás dispositivos. Desde ahora entras con Google. Si quieres volver a usar contraseña, crea una nueva en Configuración.</string>
+    <string name="google_link_notice_shared">Estos presupuestos ya estaban compartidos con otras personas. Si no reconoces alguno, bórralo de tu lista. Si no reconoces a alguien en un presupuesto tuyo, quítalo en Colaboradores.</string>
+    <string name="google_link_notice_yours">Tuyo</string>
+    <string name="google_link_notice_owner">De %1$s</string>
+    <string name="google_link_notice_members">Compartido con: %1$s</string>
+    <string name="google_link_notice_dismiss">Entendido</string>
 </resources>
