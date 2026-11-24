@@ -1,9 +1,12 @@
 package com.meneses.budgethunter.auth.application
 
 import com.meneses.budgethunter.auth.data.AuthRepository
+import com.meneses.budgethunter.auth.domain.GoogleLinkNotice
 import com.meneses.budgethunter.auth.domain.PrivacyPolicy
 import com.meneses.budgethunter.budgetEntry.data.BudgetEntrySyncManager
 import com.meneses.budgethunter.budgetList.data.BudgetRepository
+import com.meneses.budgethunter.commons.data.PreferencesManager
+import com.meneses.budgethunter.commons.data.network.models.AuthResponse
 import com.meneses.budgethunter.commons.platform.GoogleSignInManager
 import com.meneses.budgethunter.commons.platform.GoogleSignInResult
 import com.meneses.budgethunter.settings.application.SyncUserPreferencesUseCase
@@ -27,6 +30,7 @@ class SignInWithGoogleUseCase(
     private val budgetEntrySyncManager: BudgetEntrySyncManager,
     private val syncUserPreferences: SyncUserPreferencesUseCase,
     private val prepareDataForAccount: PrepareDataForAccountUseCase,
+    private val preferencesManager: PreferencesManager,
     private val applicationScope: CoroutineScope
 ) {
 
@@ -58,6 +62,10 @@ class SignInWithGoogleUseCase(
                 // Before the sync and the budget list, so a switched account never sees what
                 // the previous one left behind.
                 prepareDataForAccount.execute(authResponse.email)
+                // After preparing, which forgets the previous account's notice on a switch
+                if (authResponse.passwordRemoved) {
+                    preferencesManager.setGoogleLinkNotice(authResponse.toLinkNotice())
+                }
 
                 // Deliberately the application scope, not the caller's: the screen is popped the
                 // moment we return, and a sync tied to its lifetime would be cancelled mid-flight.
@@ -71,6 +79,13 @@ class SignInWithGoogleUseCase(
             },
             onFailure = { GoogleAuthOutcome.Failed }
         )
+
+    private fun AuthResponse.toLinkNotice() = GoogleLinkNotice(
+        accountEmail = email,
+        sharedBudgets = sharedBudgets.map {
+            GoogleLinkNotice.SharedBudget(it.name, it.ownerEmail, it.otherMembers)
+        }
+    )
 }
 
 sealed interface GoogleAuthOutcome {

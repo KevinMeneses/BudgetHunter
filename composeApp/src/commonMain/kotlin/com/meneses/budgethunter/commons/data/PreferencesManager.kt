@@ -7,11 +7,15 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
+import com.meneses.budgethunter.auth.domain.GoogleLinkNotice
 import com.meneses.budgethunter.sms.domain.BankChannels
 import com.meneses.budgethunter.sms.domain.ReadingChannel
 import com.meneses.budgethunter.sms.domain.SupportedBanks
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.json.Json
 
 class PreferencesManager(private val preferences: DataStore<Preferences>) {
 
@@ -134,6 +138,33 @@ class PreferencesManager(private val preferences: DataStore<Preferences>) {
     }
 
     /**
+     * The notice left by a Google sign in that removed the account's password, until the user
+     * dismisses it. A value this version cannot read counts as none rather than failing the
+     * screen that shows it.
+     */
+    val googleLinkNotice: Flow<GoogleLinkNotice?> = preferences.data.map { prefs ->
+        prefs[KEY_GOOGLE_LINK_NOTICE]?.let { json ->
+            try {
+                noticeJson.decodeFromString<GoogleLinkNotice>(json)
+            } catch (_: SerializationException) {
+                null
+            } catch (_: IllegalArgumentException) {
+                null
+            }
+        }
+    }
+
+    suspend fun setGoogleLinkNotice(value: GoogleLinkNotice?) {
+        preferences.edit {
+            if (value == null) {
+                it.remove(KEY_GOOGLE_LINK_NOTICE)
+            } else {
+                it[KEY_GOOGLE_LINK_NOTICE] = noticeJson.encodeToString(value)
+            }
+        }
+    }
+
+    /**
      * Forgets everything the settings screen saves. Used on sign out so the next account to sign
      * in on this device does not inherit the previous one's choices.
      */
@@ -146,10 +177,14 @@ class PreferencesManager(private val preferences: DataStore<Preferences>) {
             it.remove(KEY_SELECTED_BANK_IDS)
             it.remove(KEY_BANK_CHANNELS)
             it.remove(KEY_AI_PROCESSING_ENABLED)
+            // About the account that signed out, not for whoever signs in next
+            it.remove(KEY_GOOGLE_LINK_NOTICE)
         }
     }
 
     companion object {
+        private val noticeJson = Json { ignoreUnknownKeys = true }
+        private val KEY_GOOGLE_LINK_NOTICE = stringPreferencesKey("google_link_notice")
         private val KEY_SMS_READING_ENABLED = booleanPreferencesKey("sms_reading_enabled")
 
         // The switches of earlier versions, only read once to turn them into channels

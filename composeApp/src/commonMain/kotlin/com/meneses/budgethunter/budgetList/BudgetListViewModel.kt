@@ -48,6 +48,29 @@ class BudgetListViewModel(
         collectBudgetList()
         checkAuthState()
         syncWhenOnline()
+        collectGoogleLinkNotice()
+    }
+
+    private fun collectGoogleLinkNotice() {
+        viewModelScope.launch {
+            preferencesManager.googleLinkNotice.collect { notice ->
+                _uiState.update {
+                    it.copy(
+                        googleLinkNotice = notice,
+                        isGoogleLinkNoticeOpen = it.isGoogleLinkNoticeOpen && notice != null
+                    )
+                }
+            }
+        }
+    }
+
+    private fun openGoogleLinkNotice() {
+        _uiState.update { it.copy(isGoogleLinkNoticeOpen = it.googleLinkNotice != null) }
+    }
+
+    private fun dismissGoogleLinkNotice() {
+        _uiState.update { it.copy(isGoogleLinkNoticeOpen = false, googleLinkNotice = null) }
+        viewModelScope.launch { preferencesManager.setGoogleLinkNotice(null) }
     }
 
     private var autoSync: Job? = null
@@ -125,6 +148,8 @@ class BudgetListViewModel(
             is BudgetListIntent.SignIn -> signIn()
             is BudgetListIntent.SyncBudgets -> syncBudgets()
             is BudgetListIntent.CheckNotificationReader -> checkNotificationReader()
+            is BudgetListIntent.OpenGoogleLinkNotice -> openGoogleLinkNotice()
+            is BudgetListIntent.DismissGoogleLinkNotice -> dismissGoogleLinkNotice()
         }
     }
 

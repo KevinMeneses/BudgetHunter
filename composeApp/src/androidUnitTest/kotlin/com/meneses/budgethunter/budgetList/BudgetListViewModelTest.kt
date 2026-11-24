@@ -1,6 +1,7 @@
 package com.meneses.budgethunter.budgetList
 
 import com.meneses.budgethunter.auth.data.AuthRepository
+import com.meneses.budgethunter.auth.domain.GoogleLinkNotice
 import com.meneses.budgethunter.budgetList.application.BudgetListEvent
 import com.meneses.budgethunter.budgetList.application.BudgetListIntent
 import com.meneses.budgethunter.budgetList.application.DeleteBudgetUseCase
@@ -14,6 +15,7 @@ import com.meneses.budgethunter.sms.application.IsNotificationReaderStoppedUseCa
 import io.mockk.coEvery
 import io.mockk.coJustRun
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -332,5 +334,53 @@ class BudgetListViewModelTest {
 
         // Then - no sync, and the exception did not escape the view model scope
         coVerify(exactly = 0) { budgetRepository.sync() }
+    }
+
+    // ========== Google link notice ==========
+
+    private val linkNotice = GoogleLinkNotice(
+        accountEmail = "google@example.com",
+        sharedBudgets = listOf(GoogleLinkNotice.SharedBudget("Casa", "other@example.com", listOf("other@example.com")))
+    )
+
+    @Test
+    fun `a stored Google link notice shows the banner, and tapping it opens the details`() = runTest {
+        every { preferencesManager.googleLinkNotice } returns flowOf(linkNotice)
+        val viewModel = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(linkNotice, viewModel.uiState.value.googleLinkNotice)
+        assertFalse(viewModel.uiState.value.isGoogleLinkNoticeOpen)
+
+        viewModel.sendIntent(BudgetListIntent.OpenGoogleLinkNotice)
+
+        assertTrue(viewModel.uiState.value.isGoogleLinkNoticeOpen)
+    }
+
+    @Test
+    fun `dismissing the Google link notice hides it and forgets it`() = runTest {
+        every { preferencesManager.googleLinkNotice } returns flowOf(linkNotice)
+        val viewModel = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+        viewModel.sendIntent(BudgetListIntent.OpenGoogleLinkNotice)
+
+        viewModel.sendIntent(BudgetListIntent.DismissGoogleLinkNotice)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.googleLinkNotice)
+        assertFalse(viewModel.uiState.value.isGoogleLinkNoticeOpen)
+        coVerify { preferencesManager.setGoogleLinkNotice(null) }
+    }
+
+    @Test
+    fun `without a notice the banner cannot be opened`() = runTest {
+        every { preferencesManager.googleLinkNotice } returns flowOf(null)
+        val viewModel = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.sendIntent(BudgetListIntent.OpenGoogleLinkNotice)
+
+        assertNull(viewModel.uiState.value.googleLinkNotice)
+        assertFalse(viewModel.uiState.value.isGoogleLinkNoticeOpen)
     }
 }
