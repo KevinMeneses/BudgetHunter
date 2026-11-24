@@ -183,7 +183,10 @@ and sessions".
 - The budget list shows it as a banner until the user dismisses it; tapping it opens `GoogleLinkNoticeDialog`
   (the password is off, set a new one in Settings; the shared budgets with their owner and members, and to delete
   the ones they do not recognize or remove strangers in Collaborators). Only "Got it" closes it, which clears it.
-- Kept on the device rather than shown once, so an app killed before the user read it shows it again.
+- Kept on the device rather than shown once, so an app killed before the user read it shows it again. The list
+  ignores a notice whose `accountEmail` is not the signed-in account (a switch already forgets it).
+- Known trade-off: the server answers `passwordRemoved` only once. If that answer is lost (no connection, app killed
+  mid-request) the next Google sign in answers `false` and the user is never told; the password is still gone.
 
 ### Navigation
 Type-safe navigation using Navigation Compose with serializable route objects. Main navigation flow:

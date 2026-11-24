@@ -71,21 +71,26 @@ fun GoogleLinkNoticeDialog(
 @Composable
 private fun SharedBudgetRow(budget: GoogleLinkNotice.SharedBudget, accountEmail: String) {
     Column {
-        Text(text = budget.name, fontWeight = FontWeight.Bold)
-        val owner = if (budget.ownerEmail.equals(accountEmail, ignoreCase = true)) {
-            stringResource(Res.string.google_link_notice_yours)
-        } else {
-            stringResource(Res.string.google_link_notice_owner, budget.ownerEmail)
+        Text(text = budget.name.ifBlank { "—" }, fontWeight = FontWeight.Bold)
+        // Lines the server left empty are skipped rather than shown blank
+        val owner = when {
+            budget.ownerEmail.isBlank() -> null
+            budget.ownerEmail.equals(accountEmail, ignoreCase = true) ->
+                stringResource(Res.string.google_link_notice_yours)
+            else -> stringResource(Res.string.google_link_notice_owner, budget.ownerEmail)
         }
-        Text(
-            text = owner,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Text(
-            text = stringResource(Res.string.google_link_notice_members, budget.otherMembers.joinToString()),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        owner?.let { DetailLine(it) }
+        if (budget.otherMembers.isNotEmpty()) {
+            DetailLine(stringResource(Res.string.google_link_notice_members, budget.otherMembers.joinToString()))
+        }
     }
+}
+
+@Composable
+private fun DetailLine(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
+    )
 }

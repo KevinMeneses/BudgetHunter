@@ -346,6 +346,7 @@ class BudgetListViewModelTest {
     @Test
     fun `a stored Google link notice shows the banner, and tapping it opens the details`() = runTest {
         every { preferencesManager.googleLinkNotice } returns flowOf(linkNotice)
+        coEvery { preferencesManager.getLastSignedInEmail() } returns "google@example.com"
         val viewModel = createViewModel()
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -360,6 +361,7 @@ class BudgetListViewModelTest {
     @Test
     fun `dismissing the Google link notice hides it and forgets it`() = runTest {
         every { preferencesManager.googleLinkNotice } returns flowOf(linkNotice)
+        coEvery { preferencesManager.getLastSignedInEmail() } returns "google@example.com"
         val viewModel = createViewModel()
         testDispatcher.scheduler.advanceUntilIdle()
         viewModel.sendIntent(BudgetListIntent.OpenGoogleLinkNotice)
@@ -382,5 +384,32 @@ class BudgetListViewModelTest {
 
         assertNull(viewModel.uiState.value.googleLinkNotice)
         assertFalse(viewModel.uiState.value.isGoogleLinkNoticeOpen)
+    }
+
+    @Test
+    fun `a notice left for another account is not shown`() = runTest {
+        every { preferencesManager.googleLinkNotice } returns flowOf(linkNotice)
+        coEvery { preferencesManager.getLastSignedInEmail() } returns "someone.else@example.com"
+        val viewModel = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.sendIntent(BudgetListIntent.OpenGoogleLinkNotice)
+
+        assertNull(viewModel.uiState.value.googleLinkNotice)
+        assertFalse(viewModel.uiState.value.isGoogleLinkNoticeOpen)
+    }
+
+    @Test
+    fun `a failed write when dismissing the notice does not crash`() = runTest {
+        every { preferencesManager.googleLinkNotice } returns flowOf(linkNotice)
+        coEvery { preferencesManager.getLastSignedInEmail() } returns "google@example.com"
+        coEvery { preferencesManager.setGoogleLinkNotice(null) } throws IllegalStateException("disk full")
+        val viewModel = createViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.sendIntent(BudgetListIntent.DismissGoogleLinkNotice)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.googleLinkNotice)
     }
 }

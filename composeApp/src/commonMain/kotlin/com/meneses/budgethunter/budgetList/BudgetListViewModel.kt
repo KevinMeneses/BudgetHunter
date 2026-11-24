@@ -53,7 +53,11 @@ class BudgetListViewModel(
 
     private fun collectGoogleLinkNotice() {
         viewModelScope.launch {
-            preferencesManager.googleLinkNotice.collect { notice ->
+            preferencesManager.googleLinkNotice.collect { stored ->
+                // A switch of account already forgets it; this also keeps one account's notice,
+                // with other people's emails, from ever reaching another account by some other path
+                val currentEmail = preferencesManager.getLastSignedInEmail()
+                val notice = stored?.takeIf { it.accountEmail.equals(currentEmail?.trim(), ignoreCase = true) }
                 _uiState.update {
                     it.copy(
                         googleLinkNotice = notice,
@@ -70,7 +74,16 @@ class BudgetListViewModel(
 
     private fun dismissGoogleLinkNotice() {
         _uiState.update { it.copy(isGoogleLinkNoticeOpen = false, googleLinkNotice = null) }
-        viewModelScope.launch { preferencesManager.setGoogleLinkNotice(null) }
+        viewModelScope.launch {
+            // A failed write only brings the notice back on the next launch
+            try {
+                preferencesManager.setGoogleLinkNotice(null)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                logger.warn(tag, "Could not forget the Google link notice", e)
+            }
+        }
     }
 
     private var autoSync: Job? = null
