@@ -157,6 +157,21 @@ class SignInWithGoogleUseCaseTest {
     }
 
     @Test
+    fun `a failed acknowledgement does not fail the sign in`() = runTest {
+        pickerReturns(GoogleSignInResult.Success("id-token"))
+        coEvery { authRepository.signInWithGoogle("id-token", any()) } returns Result.success(
+            AuthResponse("auth", "refresh", "google@example.com", "Google User", passwordRemoved = true)
+        )
+        coEvery { authRepository.acknowledgeLinkNotice() } returns Result.failure(Exception("offline"))
+
+        val outcome = useCase.execute()
+
+        // The scope is unconfined, so the launched acknowledgement has already run
+        coVerify(exactly = 1) { authRepository.acknowledgeLinkNotice() }
+        assertEquals(GoogleAuthOutcome.Success("google@example.com"), outcome)
+    }
+
+    @Test
     fun `a notice that cannot be saved does not fail the sign in`() = runTest {
         pickerReturns(GoogleSignInResult.Success("id-token"))
         coEvery { authRepository.signInWithGoogle("id-token", any()) } returns Result.success(

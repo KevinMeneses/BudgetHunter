@@ -188,7 +188,7 @@ and sessions".
 - The server answers `passwordRemoved` on every Google sign in until the app acknowledges it
   (`AuthRepository.acknowledgeLinkNotice`, `DELETE /api/users/me/link-notice`), so a lost answer is told by the next
   one. The use case acknowledges only after the notice is stored, without waiting; a notice that could not be stored,
-  or a failed acknowledgement, is simply told again next time.
+  or a failed acknowledgement, is simply told again next time, even if the user already dismissed it.
 
 ### Navigation
 Type-safe navigation using Navigation Compose with serializable route objects. Main navigation flow:

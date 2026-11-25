@@ -694,8 +694,22 @@ class AuthRepositoryTest {
         assertTrue(repository.acknowledgeLinkNotice().isSuccess)
         assertEquals("DELETE ${ApiEndpoints.LINK_NOTICE}", requests.single())
 
-        // A server without the endpoint
+        // A server without the endpoint, or one that fails
         status = HttpStatusCode.NotFound
+        assertTrue(repository.acknowledgeLinkNotice().isFailure)
+        status = HttpStatusCode.InternalServerError
+        assertTrue(repository.acknowledgeLinkNotice().isFailure)
+    }
+
+    @Test
+    fun `acknowledgeLinkNotice reports a network failure instead of throwing`() = runTest {
+        val repository = AuthRepository(
+            simpleClient(MockEngine { throw java.io.IOException("no connection") }),
+            createTestTokenStorage(),
+            Dispatchers.Unconfined,
+            NoOpLogger()
+        )
+
         assertTrue(repository.acknowledgeLinkNotice().isFailure)
     }
 
