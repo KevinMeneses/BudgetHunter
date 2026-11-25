@@ -185,8 +185,10 @@ and sessions".
   the ones they do not recognize or remove strangers in Collaborators). Only "Got it" closes it, which clears it.
 - Kept on the device rather than shown once, so an app killed before the user read it shows it again. The list
   ignores a notice whose `accountEmail` is not the signed-in account (a switch already forgets it).
-- Known trade-off: the server answers `passwordRemoved` only once. If that answer is lost (no connection, app killed
-  mid-request) the next Google sign in answers `false` and the user is never told; the password is still gone.
+- The server answers `passwordRemoved` on every Google sign in until the app acknowledges it
+  (`AuthRepository.acknowledgeLinkNotice`, `DELETE /api/users/me/link-notice`), so a lost answer is told by the next
+  one. The use case acknowledges only after the notice is stored, without waiting; a notice that could not be stored,
+  or a failed acknowledgement, is simply told again next time.
 
 ### Navigation
 Type-safe navigation using Navigation Compose with serializable route objects. Main navigation flow:

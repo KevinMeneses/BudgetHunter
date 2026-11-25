@@ -160,6 +160,28 @@ class AuthRepository(
     }
 
     /**
+     * Tells the server the user has the Google link notice (`passwordRemoved`), so later Google
+     * sign-ins stop answering it. Until then each one answers it again: that is what recovers a
+     * notice whose answer was lost. A server without the endpoint answers 404, which changes nothing.
+     */
+    suspend fun acknowledgeLinkNotice(): Result<Unit> = withContext(ioDispatcher) {
+        try {
+            val response = httpClient.delete(ApiEndpoints.LINK_NOTICE)
+            if (response.status.isSuccess()) {
+                Result.success(Unit)
+            } else {
+                logger.warn(TAG, "Link notice acknowledgement refused: ${response.status}")
+                Result.failure(IllegalStateException("Link notice acknowledgement answered ${response.status}"))
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            logger.warn(TAG, "Could not acknowledge the link notice", e)
+            Result.failure(e)
+        }
+    }
+
+    /**
      * Records that the signed-in account accepted the privacy policy [version], which must be the
      * server's current one (`privacyPolicy.currentVersion` of [getCurrentUser]); anything else is a 400.
      */

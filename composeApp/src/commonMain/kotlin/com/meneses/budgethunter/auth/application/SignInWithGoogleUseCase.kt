@@ -83,7 +83,8 @@ class SignInWithGoogleUseCase(
 
     /**
      * The session already exists at this point: a failed write loses the notice, never the
-     * sign in.
+     * sign in. Only a stored notice is acknowledged, so one that could not be stored is told
+     * again by the next Google sign-in.
      */
     private suspend fun saveLinkNotice(authResponse: AuthResponse) {
         try {
@@ -91,8 +92,10 @@ class SignInWithGoogleUseCase(
         } catch (e: CancellationException) {
             throw e
         } catch (_: Exception) {
-            // Nothing to do: the server already applied the change either way
+            return
         }
+        // Not awaited: a failed acknowledgement only means the next Google sign-in tells it again
+        applicationScope.launch { authRepository.acknowledgeLinkNotice() }
     }
 
     private fun AuthResponse.toLinkNotice() = GoogleLinkNotice(
