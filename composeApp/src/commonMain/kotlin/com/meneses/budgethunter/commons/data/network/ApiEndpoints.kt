@@ -19,6 +19,9 @@ object ApiEndpoints {
     /** POST `{"version"}`: the signed-in account accepts the privacy policy in force. */
     const val PRIVACY_POLICY = "/api/users/me/privacy-policy"
 
+    /** DELETE: the signed-in account has the Google link notice; later Google sign-ins stop answering it. */
+    const val LINK_NOTICE = "/api/users/me/link-notice"
+
     // Budget endpoints
     const val BUDGETS = "/api/budgets"
     fun budget(id: Long) = "/api/budgets/$id"

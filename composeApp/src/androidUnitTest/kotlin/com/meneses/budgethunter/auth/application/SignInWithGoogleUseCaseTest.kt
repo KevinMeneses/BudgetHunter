@@ -125,6 +125,7 @@ class SignInWithGoogleUseCaseTest {
                 )
             )
         )
+        coEvery { authRepository.acknowledgeLinkNotice() } returns Result.success(Unit)
 
         useCase.execute()
 
@@ -134,10 +135,12 @@ class SignInWithGoogleUseCaseTest {
                 GoogleLinkNotice.SharedBudget("Casa", "other@example.com", listOf("other@example.com"))
             )
         )
-        // Preparing forgets the previous account's notice on a switch, so it must not run after
+        // Preparing forgets the previous account's notice on a switch, so it must not run after;
+        // and only a stored notice is acknowledged
         coVerifyOrder {
             prepareDataForAccount.execute("google@example.com")
             preferencesManager.setGoogleLinkNotice(notice)
+            authRepository.acknowledgeLinkNotice()
         }
     }
 
@@ -150,6 +153,22 @@ class SignInWithGoogleUseCaseTest {
         useCase.execute()
 
         coVerify(exactly = 0) { preferencesManager.setGoogleLinkNotice(any()) }
+        coVerify(exactly = 0) { authRepository.acknowledgeLinkNotice() }
+    }
+
+    @Test
+    fun `a failed acknowledgement does not fail the sign in`() = runTest {
+        pickerReturns(GoogleSignInResult.Success("id-token"))
+        coEvery { authRepository.signInWithGoogle("id-token", any()) } returns Result.success(
+            AuthResponse("auth", "refresh", "google@example.com", "Google User", passwordRemoved = true)
+        )
+        coEvery { authRepository.acknowledgeLinkNotice() } returns Result.failure(Exception("offline"))
+
+        val outcome = useCase.execute()
+
+        // The scope is unconfined, so the launched acknowledgement has already run
+        coVerify(exactly = 1) { authRepository.acknowledgeLinkNotice() }
+        assertEquals(GoogleAuthOutcome.Success("google@example.com"), outcome)
     }
 
     @Test
@@ -164,5 +183,7 @@ class SignInWithGoogleUseCaseTest {
 
         assertEquals(GoogleAuthOutcome.Success("google@example.com"), outcome)
         coVerify { budgetRepository.sync() }
+        // Not acknowledged, so the next Google sign-in tells it again
+        coVerify(exactly = 0) { authRepository.acknowledgeLinkNotice() }
     }
 }

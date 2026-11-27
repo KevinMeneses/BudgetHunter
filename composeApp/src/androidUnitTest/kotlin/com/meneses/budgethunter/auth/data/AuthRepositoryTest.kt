@@ -677,6 +677,43 @@ class AuthRepositoryTest {
     }
 
     @Test
+    fun `acknowledgeLinkNotice deletes the link notice and reports the outcome`() = runTest {
+        var status = HttpStatusCode.NoContent
+        val requests = mutableListOf<String>()
+        val mockEngine = MockEngine { request ->
+            requests += "${request.method.value} ${request.url.encodedPath}"
+            respond(content = "", status = status)
+        }
+        val repository = AuthRepository(
+            simpleClient(mockEngine),
+            createTestTokenStorage(),
+            Dispatchers.Unconfined,
+            NoOpLogger()
+        )
+
+        assertTrue(repository.acknowledgeLinkNotice().isSuccess)
+        assertEquals("DELETE ${ApiEndpoints.LINK_NOTICE}", requests.single())
+
+        // A server without the endpoint, or one that fails
+        status = HttpStatusCode.NotFound
+        assertTrue(repository.acknowledgeLinkNotice().isFailure)
+        status = HttpStatusCode.InternalServerError
+        assertTrue(repository.acknowledgeLinkNotice().isFailure)
+    }
+
+    @Test
+    fun `acknowledgeLinkNotice reports a network failure instead of throwing`() = runTest {
+        val repository = AuthRepository(
+            simpleClient(MockEngine { throw java.io.IOException("no connection") }),
+            createTestTokenStorage(),
+            Dispatchers.Unconfined,
+            NoOpLogger()
+        )
+
+        assertTrue(repository.acknowledgeLinkNotice().isFailure)
+    }
+
+    @Test
     fun `signInWithGoogle returns failure and stores nothing when the server rejects the token`() = runTest {
         // Arrange
         val tokenStorage = createTestTokenStorage()
